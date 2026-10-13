@@ -1,0 +1,35 @@
+{
+  "name": "codeinwp/themeisle-sdk",
+  "description": "Themeisle SDK library.",
+  "type": "library",
+  "keywords": [
+    "WordPress"
+  ],
+  "homepage": "https://github.com/Codeinwp/themeisle-sdk",
+  "license": "GPL-2.0+",
+  "authors": [
+    {
+      "name": "ThemeIsle team",
+      "email": "friends@themeisle.com",
+      "homepage": "https://themeisle.com"
+    }
+  ],
+  "version": "3.3.66",
+  "require-dev": {
+    "codeinwp/phpcs-ruleset": "dev-main",
+    "yoast/phpunit-polyfills": "^4.0"
+  },
+  "scripts": {
+	"format": "phpcbf --standard=phpcs.xml --report-summary --report-source -s  --runtime-set testVersion 7.2- ",
+	"phpcs": "phpcs --standard=phpcs.xml -s --runtime-set testVersion 7.2-",
+	"lint": "composer run-script phpcs"
+  },
+  "support": {
+    "issues": "https://github.com/Codeinwp/themeisle-sdk/issues"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  }
+}

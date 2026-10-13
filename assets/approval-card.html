@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval</title>
+<style>
+  /* Self-contained on purpose: no fonts, no images, no fetches. The host's
+     default CSP allows only 'self' and inline, and connect-src is 'none'. */
+  /* Opaque and self-themed: a host does not necessarily propagate
+     prefers-color-scheme into a sandboxed iframe, and dark text on a dark
+     host read as an empty widget (claude.ai, 2026-09-22). The host's
+     hostContext.theme sets data-theme; the media query is the fallback. */
+  :root { color-scheme: light dark; --emai-fg: #1d2327; --emai-bg: #ffffff; --emai-border: #c3c4c7; --emai-muted: #646970; }
+  :root[data-theme="dark"] { --emai-fg: #e2e4e7; --emai-bg: #1f1f1f; --emai-border: #3c434a; --emai-muted: #a7aaad; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --emai-fg: #e2e4e7; --emai-bg: #1f1f1f; --emai-border: #3c434a; --emai-muted: #a7aaad; } }
+  body { margin: 0; padding: 12px 14px; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--emai-fg); background: var(--emai-bg); }
+  .card { border: 1px solid var(--emai-border); border-radius: 8px; padding: 12px 14px; background: var(--emai-bg); color: var(--emai-fg); }
+  .card.pending { border-left: 4px solid #d63638; }
+  .card.done { border-left: 4px solid #00a32a; }
+  .card.refused { border-left: 4px solid #dba617; }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  p { margin: 0 0 8px; }
+  .preview { font-weight: 600; }
+  .meta { font-size: 12px; color: var(--emai-muted); }
+  .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  button { font: inherit; padding: 7px 16px; border-radius: 5px; border: 1px solid transparent; cursor: pointer; }
+  button[disabled] { opacity: .6; cursor: default; }
+  .approve { background: #2271b1; color: #fff; }
+  .deny { background: transparent; border-color: var(--emai-border); color: inherit; }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; margin: 8px 0 0; max-height: 240px; overflow: auto; }
+  /* Nothing to ask: collapse to zero height so the host shows no frame. */
+  :root[data-empty] { color-scheme: light; background: transparent; }
+  :root[data-empty], :root[data-empty] body { height: 0; margin: 0; padding: 0; overflow: hidden; }
+  :root[data-empty] body { display: none; }
+</style>
+</head>
+<body>
+<div id="root" class="card"><p class="meta">Connecting to the chat host…</p></div>
+<!-- easy-mcp-ai:i18n -->
+<script>
+(function () {
+  'use strict';
+  var META_KEY = 'easy-mcp-ai/approval';
+  var APPROVE_TOOL = 'wp_approve_operation';
+  var DENY_TOOL = 'wp_deny_operation';
+  var nextId = 1;
+  var pending = {};
+  var state = { tool: null, args: null, result: null, approval: null, busy: false, outcome: null, connected: false };
+  var root = document.getElementById('root');
+  // English defaults. Approval_Card_Resource::read() injects the translated
+  // map in place of the i18n marker above; the raw file (the probe harness)
+  // runs on these. Keys and English text must match the PHP map —
+  // ApprovalCardTest compares the two.
+  var I18N = {
+    connecting: 'Connecting to the chat host…',
+    waiting: 'Waiting for the tool result…',
+    title: 'Approve this operation?',
+    meta: 'Tool: %1$s · expires %2$s UTC',
+    working: 'Working…',
+    approve: 'Approve',
+    deny: 'Deny',
+    noSecret: 'This host did not receive a card secret; use the link in the chat to approve.',
+    notRun: 'Not run',
+    decisionRefused: 'The decision was refused.',
+    denied: 'Denied',
+    deniedText: 'Nothing was changed. Your assistant has been told the operation was refused.',
+    failedText: 'The operation was approved but could not be carried out.',
+    done: 'Done',
+    doneText: 'Approved and carried out.',
+    hostRefused: 'The host refused the call.',
+    needed: 'Approval needed',
+    noHandshake: 'This chat host did not complete the card handshake. Use the approval link in the message above, then ask the assistant to run the operation again.'
+  };
+  var injected = window.EASY_MCP_AI_CARD_I18N || {};
+  function t(key) {
+    return typeof injected[key] === 'string' && injected[key] !== '' ? injected[key] : I18N[key];
+  }
+  function fmt(text, args) {
+    return text.replace(/%(\d+)\$s/g, function (m, n) { var v = args[n - 1]; return v === undefined ? '' : String(v); });
+  }
+  // The Apps protocol revision the SDK's LATEST_PROTOCOL_VERSION names
+  // (ext-apps spec.types.ts, read 2026-09-22). A host that validates the
+  // initialize request answers only a well-formed one.
+  var APPS_PROTOCOL = '2026-01-26';
+
+  root.innerHTML = '';
+  root.appendChild(el('p', 'meta', t('connecting')));
+
+  // --- JSON-RPC over postMessage ---------------------------------------
+  function send(method, params) {
+    return new Promise(function (resolve, reject) {
+      var id = nextId++;
+      pending[id] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({ jsonrpc: '2.0', id: id, method: method, params: params || {} }, '*');
+    });
+  }
+  function notify(method, params) {
+    window.parent.postMessage({ jsonrpc: '2.0', method: method, params: params || {} }, '*');
+  }
+  function reply(id, result) {
+    window.parent.postMessage({ jsonrpc: '2.0', id: id, result: result }, '*');
+  }
+  window.addEventListener('message', function (event) {
+    var msg = event.data;
+    if (!msg || msg.jsonrpc !== '2.0') { return; }
+    if (msg.id !== undefined && msg.method === undefined) {
+      var p = pending[msg.id];
+      if (!p) { return; }
+      delete pending[msg.id];
+      if (msg.error) { p.reject(msg.error); } else { p.resolve(msg.result); }
+      return;
+    }
+    switch (msg.method) {
+      case 'ui/notifications/tool-input':
+        state.args = (msg.params && msg.params.arguments) || {};
+        render();
+        break;
+      case 'ui/notifications/tool-result':
+        state.result = msg.params || {};
+        state.approval = (state.result._meta && state.result._meta[META_KEY]) || null;
+        render();
+        break;
+      case 'ui/notifications/host-context-changed':
+        applyContext(msg.params || {});
+        break;
+      case 'ui/resource-teardown':
+        reply(msg.id, {});
+        break;
+      default:
+        if (msg.id !== undefined) { reply(msg.id, {}); }
+    }
+  });
+
+  function applyContext(ctx) {
+    if (!ctx) { return; }
+    if (ctx.theme === 'dark' || ctx.theme === 'light') {
+      document.documentElement.setAttribute('data-theme', ctx.theme);
+    }
+    if (ctx.styles && ctx.styles.variables) {
+      Object.keys(ctx.styles.variables).forEach(function (k) {
+        document.documentElement.style.setProperty(k, ctx.styles.variables[k]);
+      });
+    }
+  }
+
+  // --- rendering ---------------------------------------------------------
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text !== undefined) { n.textContent = text; }
+    return n;
+  }
+  function resultText(result) {
+    if (!result) { return ''; }
+    var parts = (result.content || []).filter(function (c) { return c && c.type === 'text'; }).map(function (c) { return c.text; });
+    return parts.join('\n');
+  }
+  function sized() {
+    var empty = document.documentElement.hasAttribute('data-empty');
+    notify('ui/notifications/size-changed', { width: document.documentElement.scrollWidth, height: empty ? 0 : document.documentElement.scrollHeight });
+  }
+  // A result that carries no approval (the switch is off, the key is
+  // unattended, the tool is exempt) has nothing to ask. A host keeps the tool
+  // definition it fetched at connection time, so the card can still be
+  // mounted after the owner switched approvals off (claude.ai, 2026-09-22):
+  // it must then take no space at all rather than echo the result.
+  function collapse() {
+    document.documentElement.setAttribute('data-empty', '');
+    root.innerHTML = '';
+    root.hidden = true;
+    sized();
+  }
+  // Hosts size a flexible iframe from size-changed; report on every layout
+  // change, not only after our own renders.
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () { if (state.connected) { sized(); } }).observe(document.documentElement);
+  }
+  function render() {
+    root.innerHTML = '';
+    root.className = 'card';
+    if (state.outcome) {
+      root.classList.add(state.outcome.ok ? 'done' : 'refused');
+      root.appendChild(el('h1', null, state.outcome.title));
+      root.appendChild(el('p', null, state.outcome.text));
+      if (state.outcome.detail) { var pre = el('pre'); pre.textContent = state.outcome.detail; root.appendChild(pre); }
+      sized();
+      return;
+    }
+    if (!state.result) {
+      root.appendChild(el('p', 'meta', state.connected ? t('waiting') : t('connecting')));
+      sized();
+      return;
+    }
+    var a = state.approval;
+    if (!a) {
+      collapse();
+      return;
+    }
+    if (a && a.status === 'pending' && a.id) {
+      root.classList.add('pending');
+      root.appendChild(el('h1', null, t('title')));
+      root.appendChild(el('p', 'preview', a.preview || ''));
+      root.appendChild(el('p', 'meta', fmt(t('meta'), [a.tool || (state.tool && state.tool.name) || '?', a.expires_at || ''])));
+      var row = el('div', 'row');
+      var approve = el('button', 'approve', state.busy ? t('working') : t('approve'));
+      var deny = el('button', 'deny', t('deny'));
+      approve.disabled = deny.disabled = state.busy;
+      approve.onclick = function () { decide(true); };
+      deny.onclick = function () { decide(false); };
+      row.appendChild(approve); row.appendChild(deny);
+      root.appendChild(row);
+      if (!a.card_secret) {
+        root.appendChild(el('p', 'meta', t('noSecret')));
+        approve.disabled = true;
+      }
+      sized();
+      return;
+    }
+    if (a && a.status === 'refused') {
+      root.classList.add('refused');
+      root.appendChild(el('h1', null, t('notRun')));
+      root.appendChild(el('p', null, resultText(state.result)));
+      sized();
+      return;
+    }
+    // Any other approval status (approved, replayed, expired): the text
+    // result says what happened; the card has nothing to add.
+    collapse();
+  }
+
+  // --- the decision --------------------------------------------------------
+  function decide(approve) {
+    var a = state.approval;
+    if (!a || state.busy) { return; }
+    state.busy = true; render();
+    send('tools/call', { name: approve ? APPROVE_TOOL : DENY_TOOL, arguments: { id: a.id, secret: a.card_secret || '' } })
+      .then(function (res) {
+        if (res && res.isError) { throw new Error(resultText(res) || t('decisionRefused')); }
+        if (!approve) {
+          state.outcome = { ok: true, title: t('denied'), text: t('deniedText') };
+          return null;
+        }
+        // Approved: run the original call again, exactly as it was asked.
+        var name = a.tool || (state.tool && state.tool.name);
+        return send('tools/call', { name: name, arguments: state.args || {} }).then(function (run) {
+          var text = resultText(run);
+          state.outcome = run && run.isError
+            ? { ok: false, title: t('notRun'), text: t('failedText'), detail: text }
+            : { ok: true, title: t('done'), text: t('doneText'), detail: text };
+          return null;
+        });
+      })
+      .catch(function (err) {
+        state.outcome = { ok: false, title: t('notRun'), text: (err && err.message) || t('hostRefused') };
+      })
+      .then(function () { state.busy = false; render(); });
+  }
+
+  // --- boot ----------------------------------------------------------------
+  // The handshake exactly as the extension defines it: appInfo (the SDK's
+  // name for it), appCapabilities, protocolVersion. The host answers, we send
+  // initialized, then it delivers tool-input and tool-result. Reporting a size
+  // right after initialized matters: a strict host keeps the iframe hidden
+  // until the handshake completes and it has a size to apply.
+  var booted = false;
+  function boot(res) {
+    if (booted) { return; }
+    booted = true;
+    state.connected = true;
+    if (res && res.hostContext) {
+      if (res.hostContext.toolInfo && res.hostContext.toolInfo.tool) { state.tool = res.hostContext.toolInfo.tool; }
+      applyContext(res.hostContext);
+    }
+    notify('ui/notifications/initialized', {});
+    render();
+    sized();
+  }
+  send('ui/initialize', {
+    appInfo: { name: 'easy-mcp-ai-approval-card', version: '1.1' },
+    appCapabilities: {},
+    protocolVersion: APPS_PROTOCOL
+  }).then(boot).catch(function () { boot(null); });
+  // A host that never answers: say so in the card instead of staying blank,
+  // and keep reporting a size so the frame is at least visible.
+  setTimeout(function () {
+    if (!booted) {
+      root.innerHTML = '';
+      root.className = 'card refused';
+      root.appendChild(el('h1', null, t('needed')));
+      root.appendChild(el('p', null, t('noHandshake')));
+      sized();
+    }
+  }, 4000);
+})();
+</script>
+</body>
+</html>

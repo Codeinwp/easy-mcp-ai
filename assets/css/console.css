@@ -1,0 +1,647 @@
+/*
+ * Console styles for the surfaces with no React page: the OAuth consent
+ * screen, the RFC 8628 device verification page and the authorize error
+ * page. One stylesheet, no framework, no build step — `assets/src` is
+ * excluded from the shipped tree by .distignore, so this lives under
+ * `assets/css` with the other shipped CSS.
+ *
+ * The tokens mirror `assets/src/theme/tokens.ts` and `semanticTokens.ts`;
+ * the component layer mirrors `assets/src/theme/recipes/*.ts`. Both copies
+ * describe the same design system, so `tests/Unit/ConsoleStylesTest.php`
+ * pins the palette here against the TypeScript one.
+ *
+ * Consumed by `Console_Styles::inline()`, which prints it inside a single
+ * <style> element together with the generated @font-face rules — these
+ * pages render outside wp-admin, where no plugin stylesheet is enqueued.
+ */
+
+/* ── tokens ─────────────────────────────────────────────────────────── */
+
+:root {
+	--emcp-white: #FFFFFF;
+	--emcp-ink-900: #101828;
+	--emcp-ink-800: #1D2433;
+	--emcp-ink-700: #3F4654;
+	--emcp-ink-600: #5B6270;
+	--emcp-ink-500: #8A909B;
+	--emcp-ink-400: #B8BDC6;
+	--emcp-ink-300: #D9DCE1;
+	--emcp-ink-200: #EEF0F3;
+	--emcp-ink-100: #F3F4F6;
+	--emcp-ink-50: #F9FAFB;
+
+	--emcp-lime-700: #5E7A00;
+	--emcp-lime-600: #B0D914;
+	--emcp-lime-500: #C5F121;
+	--emcp-lime-400: #D4F559;
+	--emcp-lime-100: #F1FCC8;
+
+	--emcp-green-700: #3A7D0A;
+	--emcp-green-100: #E8F5DD;
+	--emcp-amber-700: #B54708;
+	--emcp-amber-100: #FDEFD8;
+	--emcp-red-700: #B42318;
+	--emcp-red-100: #FDE3E1;
+	--emcp-blue-700: #2271B1;
+	--emcp-blue-100: #E3EEF8;
+
+	--emcp-canvas: var(--emcp-ink-100);
+	--emcp-surface: var(--emcp-white);
+	--emcp-sunken: var(--emcp-ink-50);
+	--emcp-border: var(--emcp-ink-300);
+	--emcp-border-subtle: var(--emcp-ink-200);
+	--emcp-fg: var(--emcp-ink-900);
+	--emcp-fg-muted: var(--emcp-ink-600);
+	--emcp-fg-subtle: var(--emcp-ink-500);
+
+	--emcp-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--emcp-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+	--emcp-text-xs: 0.6875rem;
+	--emcp-text-sm: 0.75rem;
+	--emcp-text-md: 0.8125rem;
+	--emcp-text-lg: 0.875rem;
+	--emcp-text-xl: 1rem;
+	--emcp-text-2xl: 1.25rem;
+	--emcp-text-3xl: 1.5rem;
+
+	/* 3px everywhere; the pill radius is for status dots only. */
+	--emcp-radius: 3px;
+	--emcp-radius-pill: 999px;
+
+	--emcp-control-sm: 28px;
+	--emcp-control-md: 32px;
+	--emcp-control-lg: 36px;
+
+	--emcp-focus-ring: 0 0 0 2px var(--emcp-white), 0 0 0 4px var(--emcp-ink-900);
+	--emcp-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── base ───────────────────────────────────────────────────────────── */
+
+body.emcp-page {
+	margin: 0;
+	padding: 40px 20px;
+	min-height: 100vh;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-family: var(--emcp-font);
+	font-size: var(--emcp-text-md);
+	line-height: 1.45;
+	color: var(--emcp-fg);
+	background: var(--emcp-canvas);
+	-webkit-font-smoothing: antialiased;
+}
+
+.emcp-page code,
+.emcp-page kbd,
+.emcp-page pre {
+	font-family: var(--emcp-mono);
+	font-size: var(--emcp-text-sm);
+}
+
+.emcp-page a {
+	color: var(--emcp-ink-900);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.emcp-page a:hover {
+	color: var(--emcp-ink-700);
+}
+
+.emcp-page :focus-visible {
+	outline: none;
+	box-shadow: var(--emcp-focus-ring);
+}
+
+.emcp-page [hidden] {
+	display: none !important;
+}
+
+/* ── shell ──────────────────────────────────────────────────────────── */
+
+.emcp-shell {
+	width: 100%;
+	max-width: 620px;
+	background: var(--emcp-surface);
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+}
+
+.emcp-shell--narrow {
+	max-width: 480px;
+}
+
+.emcp-topbar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 52px;
+	padding: 0 20px;
+	border-bottom: 1px solid var(--emcp-border-subtle);
+}
+
+.emcp-topbar__mark {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: var(--emcp-radius);
+	background: var(--emcp-ink-900);
+}
+
+.emcp-topbar__mark svg {
+	display: block;
+}
+
+.emcp-topbar__title {
+	margin: 0;
+	font-size: var(--emcp-text-lg);
+	font-weight: 600;
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+}
+
+.emcp-topbar__site {
+	margin-inline-start: auto;
+	padding-inline-start: 10px;
+	font-size: var(--emcp-text-sm);
+	color: var(--emcp-fg-muted);
+}
+
+.emcp-body {
+	padding: 20px;
+}
+
+.emcp-body > * + * {
+	margin-top: 16px;
+}
+
+.emcp-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 16px 20px;
+	border-top: 1px solid var(--emcp-border-subtle);
+}
+
+.emcp-pagenote {
+	margin: 12px 0 0;
+	font-size: var(--emcp-text-sm);
+	color: var(--emcp-fg-muted);
+}
+
+/* ── typography ─────────────────────────────────────────────────────── */
+
+.emcp-h2 {
+	margin: 0;
+	font-size: var(--emcp-text-lg);
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.emcp-eyebrow {
+	margin: 0;
+	font-size: var(--emcp-text-xs);
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--emcp-fg-subtle);
+}
+
+.emcp-text {
+	margin: 0;
+	font-size: var(--emcp-text-md);
+	line-height: 1.6;
+}
+
+.emcp-text--muted {
+	color: var(--emcp-fg-muted);
+}
+
+/* Text a person wrote with line breaks (an agent's feedback report). */
+.emcp-text--pre {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.emcp-text--small {
+	font-size: var(--emcp-text-sm);
+}
+
+.emcp-mono {
+	padding: 1px 5px;
+	font-family: var(--emcp-mono);
+	font-size: var(--emcp-text-sm);
+	background: var(--emcp-ink-100);
+	border-radius: var(--emcp-radius);
+}
+
+/* ── card ───────────────────────────────────────────────────────────── */
+
+.emcp-card {
+	padding: 16px;
+	background: var(--emcp-surface);
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+}
+
+.emcp-card--subtle {
+	background: var(--emcp-sunken);
+}
+
+/* The only decorative lime on these pages. */
+.emcp-card--attention {
+	border-inline-start: 3px solid var(--emcp-lime-500);
+}
+
+.emcp-card > * + * {
+	margin-top: 8px;
+}
+
+/* ── notice ─────────────────────────────────────────────────────────── */
+
+/*
+ * Tinted surface, 700-tone text, border the same tint as the background —
+ * the Notice recipe's TONED variant, not a contrasting outline.
+ */
+.emcp-notice {
+	padding: 12px 14px;
+	font-size: var(--emcp-text-md);
+	line-height: 1.6;
+	background: var(--emcp-ink-100);
+	color: var(--emcp-ink-900);
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+}
+
+.emcp-notice--info {
+	background: var(--emcp-blue-100);
+	color: var(--emcp-blue-700);
+	border-color: var(--emcp-blue-100);
+}
+
+.emcp-notice--warn {
+	background: var(--emcp-amber-100);
+	color: var(--emcp-amber-700);
+	border-color: var(--emcp-amber-100);
+}
+
+.emcp-notice--error {
+	background: var(--emcp-red-100);
+	color: var(--emcp-red-700);
+	border-color: var(--emcp-red-100);
+}
+
+.emcp-notice--ok {
+	background: var(--emcp-green-100);
+	color: var(--emcp-green-700);
+	border-color: var(--emcp-green-100);
+}
+
+.emcp-notice__title {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.emcp-notice p {
+	margin: 0;
+}
+
+/* ── button ─────────────────────────────────────────────────────────── */
+
+.emcp-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: var(--emcp-control-md);
+	padding: 0 14px;
+	font-family: var(--emcp-font);
+	font-size: var(--emcp-text-md);
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-radius: var(--emcp-radius);
+	transition:
+		background-color 120ms var(--emcp-ease),
+		border-color 120ms var(--emcp-ease),
+		color 120ms var(--emcp-ease);
+}
+
+.emcp-btn--sm {
+	height: var(--emcp-control-sm);
+	padding: 0 10px;
+	font-size: var(--emcp-text-sm);
+}
+
+.emcp-btn--lg {
+	height: var(--emcp-control-lg);
+}
+
+.emcp-btn--primary {
+	background: var(--emcp-ink-900);
+	border-color: var(--emcp-ink-900);
+	color: var(--emcp-white);
+}
+
+.emcp-btn--primary:hover {
+	background: var(--emcp-ink-800);
+	border-color: var(--emcp-ink-800);
+	color: var(--emcp-white);
+}
+
+.emcp-btn--primary:active {
+	background: var(--emcp-ink-700);
+	border-color: var(--emcp-ink-700);
+}
+
+.emcp-btn--accent {
+	background: var(--emcp-lime-500);
+	border-color: var(--emcp-lime-500);
+	color: var(--emcp-ink-900);
+	font-weight: 600;
+}
+
+.emcp-btn--accent:hover {
+	background: var(--emcp-lime-400);
+	border-color: var(--emcp-lime-400);
+	color: var(--emcp-ink-900);
+}
+
+.emcp-btn--accent:active {
+	background: var(--emcp-lime-600);
+	border-color: var(--emcp-ink-900);
+}
+
+.emcp-btn--secondary {
+	background: var(--emcp-surface);
+	border-color: var(--emcp-border);
+	color: var(--emcp-ink-900);
+}
+
+.emcp-btn--secondary:hover {
+	background: var(--emcp-ink-50);
+	color: var(--emcp-ink-900);
+}
+
+.emcp-btn--secondary:active {
+	background: var(--emcp-ink-100);
+}
+
+.emcp-btn-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.emcp-btn-row--end {
+	justify-content: flex-end;
+}
+
+/* ── field ──────────────────────────────────────────────────────────── */
+
+.emcp-field > * + * {
+	margin-top: 6px;
+}
+
+.emcp-label {
+	display: block;
+	font-size: var(--emcp-text-xs);
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--emcp-fg-subtle);
+}
+
+.emcp-input {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: var(--emcp-control-md);
+	padding: 0 10px;
+	font-family: var(--emcp-font);
+	font-size: var(--emcp-text-md);
+	color: var(--emcp-ink-900);
+	background: var(--emcp-white);
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+}
+
+.emcp-input:focus-visible {
+	border-color: var(--emcp-ink-900);
+	outline: none;
+	box-shadow: var(--emcp-focus-ring);
+}
+
+/* The device user code: one glyph per symbol, so it reads back as typed. */
+.emcp-input--code {
+	height: auto;
+	padding: 14px;
+	font-family: var(--emcp-mono);
+	font-size: var(--emcp-text-3xl);
+	letter-spacing: 0.25em;
+	text-align: center;
+	text-transform: uppercase;
+	background: var(--emcp-sunken);
+}
+
+.emcp-checkbox {
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	accent-color: var(--emcp-ink-900);
+}
+
+/* ── table ──────────────────────────────────────────────────────────── */
+
+.emcp-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--emcp-text-md);
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+}
+
+.emcp-table th {
+	padding: 8px 12px;
+	text-align: start;
+	font-size: var(--emcp-text-xs);
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--emcp-fg-subtle);
+	background: var(--emcp-sunken);
+	border-bottom: 1px solid var(--emcp-border);
+}
+
+.emcp-table td {
+	padding: 8px 12px;
+	border-top: 1px solid var(--emcp-border-subtle);
+}
+
+.emcp-table tbody tr:first-child td {
+	border-top: none;
+}
+
+.emcp-table th.emcp-table__toggle,
+.emcp-table td.emcp-table__toggle {
+	width: 72px;
+	text-align: center;
+}
+
+.emcp-table .emcp-none {
+	color: var(--emcp-ink-400);
+}
+
+/* ── labelled divider ───────────────────────────────────────────────── */
+
+.emcp-divider {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: var(--emcp-text-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--emcp-fg-subtle);
+}
+
+.emcp-divider::before,
+.emcp-divider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--emcp-border-subtle);
+}
+
+/* ── status dot ─────────────────────────────────────────────────────── */
+
+.emcp-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin-inline-end: 6px;
+	border-radius: var(--emcp-radius-pill);
+	background: var(--emcp-lime-500);
+}
+
+/* ── stack ──────────────────────────────────────────────────────────── */
+
+/* Vertical rhythm for a group of siblings, as `.emcp-body` does for the page. */
+.emcp-stack > * + * {
+	margin-top: 12px;
+}
+
+/* ── access-level choices ───────────────────────────────────────────── */
+
+.emcp-choices {
+	margin-inline: 0;
+	margin-bottom: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+.emcp-choices legend {
+	padding: 0;
+	margin-bottom: 8px;
+}
+
+.emcp-choices__list {
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+	overflow: hidden;
+}
+
+.emcp-choice {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px 14px;
+	border-top: 1px solid var(--emcp-border-subtle);
+	border-inline-start: 3px solid transparent;
+	cursor: pointer;
+}
+
+.emcp-choice:first-child {
+	border-top: none;
+}
+
+.emcp-choice:has(input:checked) {
+	background: var(--emcp-lime-100);
+	border-inline-start-color: var(--emcp-ink-900);
+}
+
+.emcp-choice > span {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.emcp-choice__name {
+	font-size: var(--emcp-text-lg);
+	font-weight: 600;
+	color: var(--emcp-fg);
+}
+
+.emcp-radio {
+	width: 16px;
+	height: 16px;
+	margin: 2px 0 0;
+	flex: none;
+	cursor: pointer;
+	accent-color: var(--emcp-ink-900);
+}
+
+/* ── privileged access (GitHub #94): the Full access notice and the Custom label ── */
+
+.emcp-text--danger {
+	display: block;
+	margin-top: 4px;
+	color: var(--emcp-red-700);
+}
+
+.emcp-flag {
+	display: inline-block;
+	margin-inline-start: 6px;
+	padding: 0 6px;
+	border-radius: 999px;
+	font-size: var(--emcp-text-sm);
+	font-weight: 500;
+	line-height: 1.6;
+	vertical-align: baseline;
+}
+
+.emcp-flag--danger {
+	background: var(--emcp-red-100);
+	color: var(--emcp-red-700);
+}
+
+/* ── disclosure ─────────────────────────────────────────────────────── */
+
+.emcp-details > summary {
+	cursor: pointer;
+	font-size: var(--emcp-text-md);
+	font-weight: 500;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	color: var(--emcp-fg);
+}
+
+/* .emcp-text resets margin; keep the page rhythm for a paragraph after a block. */
+.emcp-body > * + .emcp-text {
+	margin-top: 16px;
+}
+
+.emcp-details[open] > summary {
+	margin-bottom: 12px;
+}

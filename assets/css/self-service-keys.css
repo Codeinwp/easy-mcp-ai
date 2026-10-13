@@ -1,0 +1,80 @@
+.easy-mcp-key-create {
+    margin: 16px 0;
+}
+.easy-mcp-key-create > summary {
+    display: inline-block;
+    list-style: none;
+    cursor: pointer;
+}
+.easy-mcp-key-create > summary::-webkit-details-marker {
+    display: none;
+}
+.easy-mcp-key-create-panel {
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid #c3c4c7;
+    background: #fff;
+}
+.easy-mcp-key-create-panel .form-table {
+    margin-top: 0;
+}
+/* Specific enough to beat core's `.form-table td p`, which zeroes the bottom margin. */
+.easy-mcp-key-create-panel .form-table td .easy-mcp-key-selection {
+    margin: 0 0 12px;
+}
+
+/*
+ * Tool picker: one tool per row, the same layout the Plugin Integrations page
+ * uses (.wp-mcp-tool-row in admin.css). Those rules live in the plugin's admin
+ * stylesheet, which is not loaded on profile.php, so the subset the picker
+ * needs is repeated here, scoped to the picker.
+ */
+.easy-mcp-key-tools {
+    max-height: 24em;
+    overflow: auto;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    background: #fff;
+}
+.easy-mcp-key-tools .wp-mcp-tool-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f0f1;
+}
+.easy-mcp-key-tools .wp-mcp-tool-row:last-child {
+    border-bottom: none;
+}
+.easy-mcp-key-tools .wp-mcp-tool-row:hover {
+    background: #fafafa;
+}
+.easy-mcp-key-tools .wp-mcp-tool-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    flex: 1;
+    margin: 0;
+    cursor: pointer;
+}
+.easy-mcp-key-tools .wp-mcp-tool-label input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+.easy-mcp-key-tools .wp-mcp-tool-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.easy-mcp-key-tools .wp-mcp-tool-name {
+    font-size: 12px;
+    background: none;
+    padding: 0;
+}
+.easy-mcp-key-tools .wp-mcp-tool-description {
+    font-size: 12px;
+    color: #50575e;
+    line-height: 1.4;
+}
