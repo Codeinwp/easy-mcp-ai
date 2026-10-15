@@ -9,6 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+require_once __DIR__ . '/class-list-terms.php';
+
+
+
 
 
 
@@ -20,7 +24,7 @@ class Delete_Term extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Deletes a term from any taxonomy exposed in the REST API (show_in_rest); WooCommerce attribute taxonomies (pa_*) are not. Required: `term_id`, `taxonomy`. Returns { deleted: true, term_id, taxonomy }. Capability resolved dynamically via taxonomy cap->delete_terms. Note: deleting a term removes the term-object relationships but does not delete the related posts.';
+        return 'Deletes a term from any taxonomy exposed in the REST API (show_in_rest); WooCommerce attribute taxonomies (pa_*) are not. Required: `term_id`, `taxonomy`. Returns { deleted: true, term_id, taxonomy }. Capability resolved dynamically via taxonomy cap->delete_terms. Note: deleting a term removes the term-object relationships but does not delete the related posts. Deletes through the taxonomy\'s own REST route, so a taxonomy registered under a custom `rest_namespace` works too.';
     }
 
     public function get_category() {
@@ -64,15 +68,11 @@ class Delete_Term extends Base_Tool {
     public function describe( array $arguments ) {
         $id       = isset( $arguments['term_id'] ) ? (int) $arguments['term_id'] : 0;
         $taxonomy = isset( $arguments['taxonomy'] ) ? (string) $arguments['taxonomy'] : '';
-        $tax_obj  = '' !== $taxonomy && function_exists( 'get_taxonomy' ) ? \get_taxonomy( $taxonomy ) : null;
-        if ( $id <= 0 || ! $tax_obj ) {
+        $route    = $id > 0 ? $this->preview_collection_route( $taxonomy ) : null;
+        if ( null === $route ) {
             return '';
         }
-        $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
-        if ( ! preg_match( '/^[A-Za-z0-9_-]+$/', $rest_base ) ) {
-            return '';
-        }
-        $term = $this->peek( '/wp/v2/' . $rest_base . '/' . $id, 'id,name,count' );
+        $term = $this->peek( $route . '/' . $id, 'id,name,count' );
         if ( ! $term ) {
             return '';
         }
@@ -81,6 +81,32 @@ class Delete_Term extends Base_Tool {
             __( "Permanently delete the %2\$s '%1\$s' (ID %3\$d), currently on %4\$d post(s); this cannot be undone.", 'easy-mcp-ai' ),
             self::rest_title( $term, 'name' ), $taxonomy, $id, isset( $term['count'] ) ? (int) $term['count'] : 0
         );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private function preview_collection_route( string $taxonomy ): ?string {
+        $tax_obj = '' !== $taxonomy && function_exists( 'get_taxonomy' ) ? \get_taxonomy( $taxonomy ) : null;
+        if ( ! $tax_obj ) {
+            return null;
+        }
+        $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
+        if ( ! preg_match( '/^[A-Za-z0-9_-]+$/', $rest_base ) ) {
+            return null;
+        }
+        try {
+            $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
+        } catch ( \Throwable $e ) {
+            return null; 
+        }
+        return '/' . $namespace . '/' . $rest_base;
     }
 
     public function execute( array $arguments ) {
@@ -100,7 +126,11 @@ class Delete_Term extends Base_Tool {
         $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
         $rest_base = $this->validate_rest_route_segment( $rest_base, 'rest_base' );
 
-        $this->rest_request( 'DELETE', '/wp/v2/' . $rest_base . '/' . $term_id, array( 'force' => true ) );
+        
+        
+        $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
+
+        $this->rest_request( 'DELETE', '/' . $namespace . '/' . $rest_base . '/' . $term_id, array( 'force' => true ) );
 
         return array(
             'deleted'  => true,

@@ -14,7 +14,7 @@ class Get_Comment extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Gets a single WordPress comment by ID. Returns { id, post (post ID), author_name, author_email, content (raw), status (approve/hold/spam/trash), date, parent (0 if top-level), link }. Use `wp_list_comments` to discover comment IDs.';
+        return 'Gets a single WordPress comment by ID. Returns { id, post (post ID), author_name, author_email, content (raw), status (approved/hold/spam/trash/post-trashed), date, parent (0 if top-level), link, author (user ID, 0 for a guest), author_url, author_ip, author_user_agent, date_gmt, type (comment, pingback, trackback, note or a custom type), karma, comment_approved (the raw stored value: "1", "0", "spam", "trash" or "post-trashed") }. Use `wp_list_comments` to discover comment IDs.';
     }
 
     public function get_category() {
@@ -73,8 +73,16 @@ class Get_Comment extends Base_Tool {
 
 
 
-    public static function format( array $data ) {
-        return array(
+
+
+
+
+
+
+
+
+    public static function format( array $data ): array {
+        $out = array(
             'id'           => $data['id'],
             'post'         => $data['post'],
             'author_name'  => $data['author_name'],
@@ -85,5 +93,19 @@ class Get_Comment extends Base_Tool {
             'parent'       => $data['parent'],
             'link'         => $data['link'],
         );
+
+        foreach ( array( 'author', 'author_url', 'author_ip', 'author_user_agent', 'date_gmt', 'type' ) as $key ) {
+            if ( array_key_exists( $key, $data ) ) {
+                $out[ $key ] = $data[ $key ];
+            }
+        }
+
+        $comment = get_comment( (int) $data['id'] );
+        if ( $comment ) {
+            $out['karma']            = isset( $comment->comment_karma ) ? (int) $comment->comment_karma : 0;
+            $out['comment_approved'] = (string) $comment->comment_approved;
+        }
+
+        return $out;
     }
 }

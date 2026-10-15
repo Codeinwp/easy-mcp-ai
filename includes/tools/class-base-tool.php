@@ -63,17 +63,6 @@ abstract class Base_Tool {
 
 
 
-    protected static $deferred_purge_ids = array();
-
-    
-
-
-
-
-
-
-
-
 
     protected static $already_invalidated = array();
 
@@ -159,6 +148,19 @@ abstract class Base_Tool {
 
 
 
+
+    public function get_covers(): string {
+        return '';
+    }
+
+    
+
+
+
+
+
+
+
     public function is_disabled_by_default() {
         return false;
     }
@@ -187,8 +189,47 @@ abstract class Base_Tool {
 
 
 
-    public function is_composite() {
+
+
+
+
+
+
+
+    public function is_composite( array $arguments = array() ) {
         return false;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public function is_read_only_call( array $arguments ) {
+        $annotations = $this->get_annotations();
+        return ! empty( $annotations['readOnlyHint'] );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public function redact_for_record( array $arguments ) {
+        return $arguments;
     }
 
     
@@ -521,6 +562,148 @@ abstract class Base_Tool {
 
 
 
+    protected function resolve_post_type_rest_base( $value, string $label ): string {
+        $value = $this->validate_rest_route_segment( $value, $label );
+        if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
+            require_once __DIR__ . '/class-post-type-rest-base.php';
+        }
+        $base = Post_Type_Rest_Base::resolve( $value );
+        Post_Type_Rest_Base::require_served_type( $base );
+        return $base;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected static function post_type_route( string $base, ?int $id, string ...$methods ): string {
+        $route = '/wp/v2/' . $base . ( null === $id ? '' : '/' . $id );
+        if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
+            require_once __DIR__ . '/class-post-type-rest-base.php';
+        }
+        foreach ( $methods as $method ) {
+            Post_Type_Rest_Base::require_own_route( $method, $base, $route );
+        }
+        return $route;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected function precheck_post_type_route( array $arguments, string $key, string $default, ?string $id_key, string ...$methods ): void {
+        $given = '' === $default
+            ? isset( $arguments[ $key ] ) && '' !== $arguments[ $key ]
+            : ! empty( $arguments[ $key ] );
+        if ( $given ) {
+            $base = $this->resolve_post_type_rest_base( $arguments[ $key ], $key );
+        } elseif ( '' !== $default ) {
+            $base = $default;
+        } else {
+            return;
+        }
+        $id = null;
+        if ( null !== $id_key ) {
+            try {
+                $id = $this->parse_required_id( $arguments[ $id_key ] ?? null, $id_key );
+            } catch ( \InvalidArgumentException $e ) {
+                return;
+            }
+        }
+        self::post_type_route( $base, $id, ...$methods );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected function refuse_other_type( int $post_id, string $expected_type, string $verb ): void {
+        $post = get_post( $post_id );
+        if ( ! is_object( $post ) || $expected_type === $post->post_type || ! get_post_type_object( $post->post_type ) || ! current_user_can( 'read_post', $post_id ) ) {
+            return;
+        }
+        if ( 'revision' === $post->post_type && ! current_user_can( 'edit_post', (int) $post->post_parent ) ) {
+            return;
+        }
+        if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
+            require_once __DIR__ . '/class-post-type-tool-hint.php';
+        }
+        throw new \InvalidArgumentException( Post_Type_Tool_Hint::other_type( $post, $expected_type, $verb, $this->get_name() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    protected function precheck_other_type( array $arguments, string $id_key, string $expected_type, string $verb ): void {
+        try {
+            $post_id = $this->parse_required_id( $arguments[ $id_key ] ?? null, $id_key );
+        } catch ( \InvalidArgumentException $e ) {
+            return;
+        }
+        $this->refuse_other_type( $post_id, $expected_type, $verb );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
     protected function rest_taxonomies_for( $object_type ) {
         $map = array();
         foreach ( (array) get_object_taxonomies( $object_type, 'objects' ) as $key => $tax ) {
@@ -618,6 +801,51 @@ abstract class Base_Tool {
             $message .= ' Attribute values: Products > Attributes > Configure terms.';
         }
         throw new \InvalidArgumentException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    protected static function image_filename_from_bytes( string $filename, string $path ): ?string {
+        if ( ! function_exists( 'wp_get_image_mime' ) ) {
+            return null;
+        }
+        $mime = wp_get_image_mime( $path );
+        return is_string( $mime ) ? self::image_filename_for_type( $filename, $mime ) : null;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected static function image_filename_for_type( string $filename, string $mime ): ?string {
+        $mime = strtolower( trim( $mime ) );
+        if ( 0 !== strpos( $mime, 'image/' ) || 'image/svg+xml' === $mime || ! function_exists( 'get_allowed_mime_types' ) ) {
+            return null;
+        }
+        foreach ( (array) get_allowed_mime_types() as $extensions => $type ) {
+            if ( $type === $mime ) {
+                $base = (string) pathinfo( $filename, PATHINFO_FILENAME );
+                return ( '' !== $base ? $base : 'image' ) . '.' . explode( '|', (string) $extensions )[0];
+            }
+        }
+        return null;
     }
 
     
@@ -961,8 +1189,6 @@ abstract class Base_Tool {
 
 
 
-
-
     protected function invalidate_post_cache( $post_id, array $context = array() ) {
         $post_id = (int) $post_id;
         if ( $post_id <= 0 ) {
@@ -997,11 +1223,6 @@ abstract class Base_Tool {
 
 
         do_action( 'easy_mcp_ai_post_changed', $post_id, $context );
-
-        
-        
-        
-        self::$deferred_purge_ids[ $post_id ] = true;
     }
 
     
@@ -1016,35 +1237,25 @@ abstract class Base_Tool {
 
 
 
+    protected function clear_page_cache( array $post_ids, array $urls = array() ): void {
+        
 
-    public static function flush_deferred_purges() {
-        if ( empty( self::$deferred_purge_ids ) ) {
-            return;
-        }
-        foreach ( array_keys( self::$deferred_purge_ids ) as $id ) {
-            
-            if ( function_exists( 'rocket_clean_post' ) ) {
-                rocket_clean_post( $id );
-            }
-            
-            do_action( 'litespeed_purge_post', $id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party hook owned by LiteSpeed Cache plugin.
-            
-            if ( function_exists( 'w3tc_flush_post' ) ) {
-                w3tc_flush_post( $id );
-            }
-        }
-        self::$deferred_purge_ids = array();
+
+
+
+
+
+
+        do_action( 'easy_mcp_ai_clear_page_cache', $post_ids, $urls );
     }
 
     
-
 
 
 
 
 
     public static function reset_cache_invalidation_state() {
-        self::$deferred_purge_ids   = array();
         self::$already_invalidated = array();
     }
 
@@ -1230,31 +1441,158 @@ abstract class Base_Tool {
 
 
 
-    protected function ignored_meta_report( array $sent, $persisted ) {
-        $persisted = is_array( $persisted ) ? $persisted : array();
-        $ignored   = array();
+
+
+
+
+
+
+
+
+
+
+
+    protected function ignored_meta_report( array $sent, $persisted, string $object_type = 'post', string $post_type = '' ): array {
+        $registered = self::takes_meta( $object_type, $post_type ) ? self::rest_meta_names( $object_type, $post_type ) : array();
+        $persisted  = is_array( $persisted ) ? $persisted : array();
+        $ignored    = array();
         foreach ( array_keys( $sent ) as $key ) {
-            if ( ! array_key_exists( $key, $persisted ) ) {
+            if ( ! array_key_exists( $key, $persisted ) && ! isset( $registered[ $key ] ) ) {
                 $ignored[] = (string) $key;
             }
         }
         if ( empty( $ignored ) ) {
             return array();
         }
+        $scopes = array(
+            'post'    => 'this post type',
+            'comment' => 'comments',
+        );
         $notice = sprintf(
-            'The following meta keys were sent but not persisted (they are not registered with show_in_rest=true for this post type): %s.',
+            'The following meta keys were sent but not persisted (they are not registered with show_in_rest=true for %1$s): %2$s.',
+            $scopes[ $object_type ],
             implode( ', ', $ignored )
         );
+        $explained = array();
         if ( class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {
             $explained = \Easy_MCP_AI\Meta\Meta_Exposure::explain_ignored_keys( $ignored );
             if ( ! empty( $explained ) ) {
                 $notice .= ' ' . implode( ' ', array_values( $explained ) );
             }
         }
+        if ( 'post' === $object_type ) {
+            $acf = self::acf_field_hint( array_values( array_diff( $ignored, array_keys( $explained ) ) ) );
+            if ( '' !== $acf ) {
+                $notice .= ' ' . $acf;
+            }
+        }
         return array(
             'meta_ignored' => $ignored,
             'notice'       => $notice,
         );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private static function takes_meta( string $object_type, string $post_type ): bool {
+        if ( 'comment' === $object_type ) {
+            return true;
+        }
+        $fields = self::rest_item_fields( get_post_type_object( $post_type ) );
+        return null !== $fields && in_array( 'meta', $fields, true );
+    }
+
+    
+
+
+
+
+
+
+
+    public static function rest_item_fields( ?object $post_type_object ): ?array {
+        if ( ! is_object( $post_type_object ) || ! method_exists( $post_type_object, 'get_rest_controller' ) ) {
+            return null;
+        }
+        $controller = $post_type_object->get_rest_controller();
+        if ( ! is_object( $controller ) || ! method_exists( $controller, 'get_item_schema' ) ) {
+            return null;
+        }
+        $schema = $controller->get_item_schema();
+        if ( ! is_array( $schema ) || ! isset( $schema['properties'] ) || ! is_array( $schema['properties'] ) ) {
+            return null;
+        }
+        return array_map( 'strval', array_keys( $schema['properties'] ) );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    private static function rest_meta_names( string $object_type, string $post_type ): array {
+        $fields = 'comment' === $object_type ? new \WP_REST_Comment_Meta_Fields() : new \WP_REST_Post_Meta_Fields( $post_type );
+        return $fields->get_field_schema()['properties'];
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private static function acf_field_hint( array $keys ): string {
+        if ( ! function_exists( 'acf_get_field' ) ) {
+            return '';
+        }
+        if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
+            require_once __DIR__ . '/class-post-type-tool-hint.php';
+        }
+        if ( ! Post_Type_Tool_Hint::may_use( 'wp_acf_update_fields' ) ) {
+            return '';
+        }
+        $fields = array();
+        foreach ( $keys as $key ) {
+            if ( is_array( acf_get_field( $key ) ) ) {
+                $fields[] = $key;
+            }
+        }
+        if ( empty( $fields ) ) {
+            return '';
+        }
+        return sprintf( 'ACF fields are not saved through meta: %s. Write them with wp_acf_update_fields (post_id, post_type, and fields as { field name: value }).', implode( ', ', $fields ) );
     }
 
     

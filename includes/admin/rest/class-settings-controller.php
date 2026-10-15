@@ -19,12 +19,15 @@ use Easy_MCP_AI\Admin\Admin_Page;
 use Easy_MCP_AI\Admin\History_Settings_Page;
 use Easy_MCP_AI\Admin\Settings_Validator;
 use Easy_MCP_AI\Admin\Tool_Catalogue;
+use Easy_MCP_AI\Auth\Connect_Policy;
 use Easy_MCP_AI\Config;
 use Easy_MCP_AI\Tools\Tool_State;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+require_once dirname( __DIR__, 2 ) . '/auth/class-connect-policy.php';
 
 class Settings_Controller extends Admin_Rest_Controller {
 
@@ -40,6 +43,9 @@ class Settings_Controller extends Admin_Rest_Controller {
     const FIELDS = array(
         'access'   => array(
             'oauthMinCapability'  => 'oauth_min_capability',
+            
+            
+            'connectRoles'        => 'connect_roles',
             'forceDraftOnCreate'  => 'force_draft_on_create',
             'selfServiceKeys'     => 'self_service_keys',
             'approvalRequired'    => 'approval_required',
@@ -168,7 +174,9 @@ class Settings_Controller extends Admin_Rest_Controller {
 
         $sections = array(
             'access'   => array(
-                'oauthMinCapability'  => Admin_Page::sanitize_oauth_min_capability( Config::get( 'easy_mcp_ai_oauth_min_capability', 'publish_posts' ) ),
+                'oauthMinCapability'  => Connect_Policy::stored_floor(),
+                
+                'connectRoles'        => Connect_Policy::ticked_roles(),
                 'forceDraftOnCreate'  => (bool) Config::get( 'easy_mcp_ai_force_draft_on_create', false ),
                 'selfServiceKeys'     => true === Config::get( 'self_service_keys' ),
                 
@@ -216,12 +224,20 @@ class Settings_Controller extends Admin_Rest_Controller {
                 }
             }
         }
+        
+        if ( ! isset( $locked['connectRoles'] ) && isset( $locked['oauthMinCapability'] ) ) {
+            $locked['connectRoles'] = $locked['oauthMinCapability'];
+        }
 
         return array(
             'sections'   => $sections,
             'locked'     => $locked,
             'choices'    => array(
                 'oauthCapabilities'        => self::capability_choices( Admin_Page::oauth_min_capability_choices() ),
+                'connectRoles'             => Connect_Policy::role_choices(),
+                
+                
+                'connectRolesFiltered'     => Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_OAUTH ),
                 'externalDataCapabilities' => self::capability_choices( Admin_Page::external_data_min_capability_choices() ),
                 'optionModes'              => array(
                     array( 'value' => 'all_except_denylist', 'label' => \__( 'All options except churn (recommended)', 'easy-mcp-ai' ) ),
@@ -363,16 +379,7 @@ class Settings_Controller extends Admin_Rest_Controller {
                 continue;
             }
             if ( 'logger_flag' !== $suffix && Config::is_locked( $suffix ) ) {
-                return $this->fail(
-                    'easy_mcp_ai_setting_locked',
-                    sprintf(
-                        /* translators: %s: the wp-config constant name */
-                        \__( 'This setting is set by %s in wp-config.php or the environment and cannot be changed here.', 'easy-mcp-ai' ),
-                        Config::constant_name( $suffix )
-                    ),
-                    409,
-                    array( 'field' => $field )
-                );
+                return $this->deployed( $field, $suffix );
             }
             $value = $this->validate_field( $field, $body[ $field ] );
             if ( \is_wp_error( $value ) ) {
@@ -387,11 +394,91 @@ class Settings_Controller extends Admin_Rest_Controller {
             } elseif ( 'disabled_tools' === $suffix ) {
                 self::load_tool_state();
                 $this->write_disabled_tools( $value );
+            } elseif ( 'connect_roles' === $suffix ) {
+                
+                
+                Config::update( Connect_Policy::FLOOR_OPTION, $value[0] );
+                Config::update( 'easy_mcp_ai_connect_roles', $value[1] );
             } else {
                 Config::update( 'easy_mcp_ai_' . $suffix, $value );
             }
         }
         return $this->ok( $this->payload() );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    private function connect_roles( $raw ) {
+        $field = 'connectRoles';
+        if ( Config::is_locked( 'oauth_min_capability' ) ) {
+            return $this->deployed( $field, 'oauth_min_capability' );
+        }
+        if ( Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_OAUTH ) ) {
+            return $this->locked( $field, self::filter_decides() );
+        }
+        $choices = Connect_Policy::role_choices();
+        $known   = array_column( $choices, 'value' );
+        if ( ! is_array( $raw ) || array_filter( $raw, static function ( $role ) use ( $known ) {
+            return ! is_string( $role ) || ! in_array( $role, $known, true );
+        } ) ) {
+            return $this->invalid( $field, \__( 'Pick roles from the list.', 'easy-mcp-ai' ) );
+        }
+        foreach ( $choices as $choice ) {
+            if ( $choice['always'] && ! in_array( $choice['value'], $raw, true ) ) {
+                return $this->invalid( $field, \__( 'Administrators can always connect.', 'easy-mcp-ai' ) );
+            }
+        }
+        $split = Connect_Policy::split_ticks( array_values( array_unique( $raw ) ) );
+        
+        
+        if ( Connect_Policy::filter_overrides( $split[0] ) ) {
+            return $this->locked( $field, self::filter_decides() );
+        }
+        return $split;
+    }
+
+    
+
+
+
+
+
+
+    private function locked( string $field, string $message ): \WP_Error {
+        return $this->fail( 'easy_mcp_ai_setting_locked', $message, 409, array( 'field' => $field ) );
+    }
+
+    
+
+
+
+
+
+
+    private function deployed( string $field, string $suffix ): \WP_Error {
+        return $this->locked(
+            $field,
+            sprintf(
+                /* translators: %s: the wp-config constant name */
+                \__( 'This setting is set by %s in wp-config.php or the environment and cannot be changed here.', 'easy-mcp-ai' ),
+                Config::constant_name( $suffix )
+            )
+        );
+    }
+
+    
+    private static function filter_decides(): string {
+        return \__( 'Who can connect is set in code by the easy_mcp_ai_oauth_min_capability filter and cannot be changed here.', 'easy-mcp-ai' );
     }
 
     
@@ -425,6 +512,9 @@ class Settings_Controller extends Admin_Rest_Controller {
                     return $this->invalid( $field, \__( 'Pick one of the listed capabilities. The floor is Author.', 'easy-mcp-ai' ) );
                 }
                 return $raw;
+
+            case 'connectRoles':
+                return $this->connect_roles( $raw );
 
             case 'externalDataMinCapability':
                 if ( ! is_string( $raw ) || ! array_key_exists( $raw, Admin_Page::external_data_min_capability_choices() ) ) {
@@ -571,19 +661,23 @@ class Settings_Controller extends Admin_Rest_Controller {
 
 
 
-    private function grid() {
+
+
+
+    private function grid(): array {
         $grid = Settings_Validator::destructive_tools();
         if ( ! $this->tool_registry || ! method_exists( $this->tool_registry, 'get_all_tool_names' ) || ! method_exists( $this->tool_registry, 'get_tool' ) ) {
             return $grid;
         }
-        $privileged = array();
+        $default_off = array();
         foreach ( (array) $this->tool_registry->get_all_tool_names() as $name ) {
-            if ( $this->tool_registry->get_tool( $name ) instanceof \Easy_MCP_AI\Tools\Privileged_Tool ) {
-                $privileged[] = (string) $name;
+            $tool = $this->tool_registry->get_tool( $name );
+            if ( $tool instanceof \Easy_MCP_AI\Tools\Base_Tool && $tool->is_disabled_by_default() ) {
+                $default_off[] = (string) $name;
             }
         }
-        sort( $privileged );
-        return array_values( array_unique( array_merge( $grid, $privileged ) ) );
+        sort( $default_off );
+        return array_values( array_unique( array_merge( $grid, $default_off ) ) );
     }
 
     

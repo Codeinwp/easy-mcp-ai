@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
+
+
+if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
+	require_once dirname( __DIR__, 2 ) . '/class-post-type-rest-base.php';
+}
 
 class Yoast_Get_Post_Seo extends Base_Tool {
 
@@ -73,7 +79,7 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 				),
 				'post_type' => array(
 					'type'        => 'string',
-					'description' => 'The REST API base for the post type (e.g. posts, pages). Omit it to use the post\'s own type.',
+					'description' => 'The REST API base for the post type (e.g. posts, pages); a post_type slug is also accepted. Omit it to use the post\'s own type.',
 					'default'     => 'posts',
 				),
 			),
@@ -94,17 +100,16 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 		}
 
 		if ( ! empty( $arguments['post_type'] ) ) {
-			$rest_base = $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' );
+			$rest_base = $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' );
 		} else {
-			$pt_obj    = get_post_type_object( $post->post_type );
-			$rest_base = ( $pt_obj && ! empty( $pt_obj->rest_base ) ) ? $pt_obj->rest_base : null;
+			$rest_base = self::own_rest_base( (string) $post->post_type );
 		}
 
 		
 		$rest_error = null;
 		if ( $rest_base ) {
 			try {
-				$data = $this->rest_request( 'GET', '/wp/v2/' . $rest_base . '/' . $post_id );
+				$data = $this->rest_request( 'GET', self::post_type_route( $rest_base, $post_id, 'GET' ) );
 				if ( ! empty( $data['yoast_head_json'] ) ) {
 					return $this->head_result( $post_id, $data['yoast_head_json'] );
 				}
@@ -124,6 +129,26 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 			'post_id'             => $post_id,
 			'yoast_meta_fallback' => $this->fallback_meta( $post_id ),
 		);
+	}
+
+	
+
+
+
+
+
+
+
+
+
+
+	private static function own_rest_base( string $post_type ): ?string {
+		$object = get_post_type_object( $post_type );
+		if ( ! is_object( $object ) || empty( $object->rest_base ) || ! is_string( $object->rest_base ) ) {
+			return null;
+		}
+		$served = Post_Type_Rest_Base::served_type( $object->rest_base );
+		return null !== $served && $served[0] === $post_type ? $object->rest_base : null;
 	}
 
 	

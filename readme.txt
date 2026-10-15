@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -120,7 +120,7 @@ Giving an AI client access to your site is a serious step. This MCP server runs 
 * **Least privilege**: choose which tools each API token or OAuth grant can use, including read-only access
 * **Hashed tokens, encrypted credentials**: token records are SHA-256 hashes, and external data credentials use AES-256-GCM encryption
 * **Rate limits and IP allowlist**: 60 requests per minute per token by default, plus an optional IP allowlist for API tokens
-* **Force Draft on Create** (off by default): any content your AI client creates is saved as a draft
+* **Force Draft on Create** (off by default): Easy MCP's own create tools save new posts, pages, custom post type items, products and events as drafts. Plugin abilities and later edits are not covered
 * **HTTPS**: OAuth requires HTTPS on live sites (local loopback addresses are exempt), and API tokens should use HTTPS too
 
 == Installation ==
@@ -171,6 +171,8 @@ Most WordPress AI plugins embed one AI provider inside wp-admin and bill you for
 = Are my AI requests private, and do they pass through your servers? =
 
 No. Requests and tool results travel between your AI client and your own site, with no hosted relay or third-party server. If you are comparing with a hosted MCP service such as WPVibe, the difference is where the server runs: a hosted service proxies every request through the vendor's servers, while Easy MCP AI runs inside your own WordPress install. The connection depends only on your site and your AI client, so it keeps working even if our service is down. The plugin is free, all 280+ tools are included, and there is no vendor quota, only rate limits you set yourself, 60 requests per minute per token by default. The plugin sends nothing to us. The optional outside reachability check is a link that opens easymcpai.com in your browser, and it uses only your site address.
+
+Once an AI client has connected, the plugin downloads signed skills (step-by-step instructions for common WordPress tasks) once a day from skills.easymcpai.com. The request carries only the plugin version. To turn it off, add `define( 'EASY_MCP_AI_SKILLS_SYNC', false );` to wp-config.php.
 
 = Is Easy MCP AI free? =
 
@@ -225,16 +227,35 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.1.1 =
-- Fixed ChatGPT connector failing when a tool declares a required field
-- Fixed large tool replies by omitting unused SEO markup and links.
-- Added Redirection tools to manage redirects and review 404 logs
-- Fixed false diagnostics warning for the Elementor manage-elements ability
-- Fixed the site settings tool setting the homepage and posts page.
-- Fixed API keys failing on MariaDB 5.5 databases
-- Fixed Customizer tools failing on Astra and Astra Pro
-- Fixed Customizer tools failing on Twenty Twenty, PopularFX, Zakra, ColorMag and other themes
-- Added staging for theme mod changes, with a preview link to review them.
+= 2.2.0 =
+- Added WP-CLI command runner with plugin, theme and core tools ([docs](https://docs.easymcpai.com/run-wp-cli-commands-with-ai)).
+- Added managed skills served to AI clients over MCP.
+- Added a cache clearing tool for posts, URLs, or whole site.
+- Added WooCommerce log tools to list and read store logs.
+- Added instructions telling agents when to report problems.
+- Added gallery image management to WooCommerce product tools.
+- Added wp_list_disabled_tools showing switched-off tools and where to enable them.
+- Added a header-only option that refuses API keys sent in URLs ([docs](https://docs.easymcpai.com/creating-and-managing-api-tokens#keep-api-keys-out-of-urls)).
+- Added media tools to crop, resize and rebuild image thumbnails.
+- Added a extra roles compatibility which can connect with AI clients
+- Fixed clearing product lists with an empty list sent through MCP.
+- Fixed new menu items landing in the wrong menu position.
+- Fixed write access updating ACF post and page fields
+- Fixed cached pages staying old after SEO and term edits.
+- Fixed post type tools to accept slugs and name the correct tool.
+- Fixed updating a custom post type item silently dropping custom fields.
+- Fixed saved custom fields wrongly reported as dropped.
+- Fixed saved custom fields misreported when plugins hide response data.
+- Fixed deleting many posts and media with one command
+- Fixed the ChatGPT button opening the Plugins page with updated setup steps
+- Fixed the AI connect button opening ChatGPTs Plugins page directly
+- Fixed feedback hints telling editors to switch on tools they cannot use.
+- Fixed the Force Draft setting description to state its coverage.
+- Fixed the admin OAuth client list showing grant types as one item
+- Fixed OAuth sign-in failing on some server setups and AI clients.
+- Fixed API key and Activity log issues on some sites.
+- Fixed several edge cases in media uploads, tasks, terms and approvals.
+- Fixed post tools accepting names that are not post types
 
 [See changelog for all versions](https://easymcpai.com/changelog).
 

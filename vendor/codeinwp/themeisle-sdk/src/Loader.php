@@ -390,7 +390,7 @@ final class Loader {
 			'connect_chatgpt'  => 'Connect to ChatGPT',
 			'connect_cursor'   => 'Add to Cursor',
 			'hint_off'         => 'Your agents can connect once Easy MCP is active.',
-			'hint_on'          => 'Each button opens your agent with this site pre-filled. ChatGPT asks you to paste the URL above.',
+			'hint_on'          => 'Each button opens your agent with this site pre-filled. In ChatGPT, click Add, then Add custom MCP server, and paste the URL above.',
 			'more_agents'      => 'Using another agent?',
 			'more_agents_link' => 'See how to connect it.',
 			'prompts_off'      => 'Once Easy MCP is active, you can ask your AI agent things like',

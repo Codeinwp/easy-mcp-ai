@@ -51,7 +51,9 @@ class Get_Page extends Base_Tool {
         $this->validate_required( $arguments, array( 'page_id' ) );
 
         $page_id = $this->parse_required_id( $arguments['page_id'], 'page_id' );
-        $data    = $this->rest_request( 'GET', '/wp/v2/pages/' . $page_id, array( 'context' => 'edit' ) );
+        $this->refuse_other_type( $page_id, 'page', 'get' );
+
+        $data = $this->rest_request( 'GET', '/wp/v2/pages/' . $page_id, array( 'context' => 'edit' ) );
 
         return array(
             'id'         => $data['id'],

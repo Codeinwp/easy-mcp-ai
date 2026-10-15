@@ -168,7 +168,7 @@ class Tool_Registry {
 
 
 
-    public function auto_discover( $quiet = false ) {
+    public function auto_discover( bool $quiet = false ): void {
         $tool_classes = array(
             'Easy_MCP_AI\\Tools\\Posts\\List_Posts',
             'Easy_MCP_AI\\Tools\\Posts\\Get_Post',
@@ -186,6 +186,8 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\Media\\Upload_Media',
             'Easy_MCP_AI\\Tools\\Media\\Update_Media',
             'Easy_MCP_AI\\Tools\\Media\\Delete_Media',
+            'Easy_MCP_AI\\Tools\\Media\\Edit_Media_Image',
+            'Easy_MCP_AI\\Tools\\Media\\Regenerate_Media_Sizes',
             'Easy_MCP_AI\\Tools\\Taxonomy\\List_Categories',
             'Easy_MCP_AI\\Tools\\Taxonomy\\Get_Category',
             'Easy_MCP_AI\\Tools\\Taxonomy\\Create_Category',
@@ -227,10 +229,16 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\Plugins\\Deactivate_Plugin',
             'Easy_MCP_AI\\Tools\\Plugins\\List_Plugin_Updates',
             'Easy_MCP_AI\\Tools\\Plugins\\Update_Plugin',
+            
+            'Easy_MCP_AI\\Tools\\Plugins\\Install_Plugin',
+            'Easy_MCP_AI\\Tools\\Plugins\\Delete_Plugin',
+            'Easy_MCP_AI\\Tools\\Plugins\\Uninstall_Plugin',
             'Easy_MCP_AI\\Tools\\Themes\\List_Themes',
             'Easy_MCP_AI\\Tools\\Themes\\Get_Active_Theme',
             'Easy_MCP_AI\\Tools\\Themes\\Switch_Theme',
             'Easy_MCP_AI\\Tools\\Themes\\Update_Theme',
+            'Easy_MCP_AI\\Tools\\Themes\\Install_Theme',
+            'Easy_MCP_AI\\Tools\\Themes\\Delete_Theme',
             
             'Easy_MCP_AI\\Tools\\Revisions\\List_Revisions',
             'Easy_MCP_AI\\Tools\\Revisions\\Get_Revision',
@@ -328,6 +336,8 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\WooCommerce\\List_Shipping_Methods',
             'Easy_MCP_AI\\Tools\\WooCommerce\\List_Tax_Rates',
             'Easy_MCP_AI\\Tools\\WooCommerce\\List_Payment_Gateways',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\List_Logs',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Get_Log',
             
             'Easy_MCP_AI\\Tools\\ACF\\Get_Fields',
             'Easy_MCP_AI\\Tools\\ACF\\Update_Fields',
@@ -458,6 +468,8 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\Posts\\Replace_In_Post',
             
             'Easy_MCP_AI\\Tools\\Posts\\Create_Preview_Link',
+            
+            'Easy_MCP_AI\\Tools\\Cache\\Clear_Cache',
 
             
             'Easy_MCP_AI\\Tools\\Taxonomy\\List_Terms',
@@ -477,6 +489,13 @@ class Tool_Registry {
             
             
             'Easy_MCP_AI\\Tools\\Feedback\\Send_Feedback',
+            
+            'Easy_MCP_AI\\Tools\\Skills\\Get_Skill',
+            
+            'Easy_MCP_AI\\Tools\\Site\\List_Disabled_Tools',
+
+            
+            'Easy_MCP_AI\\Tools\\Cli\\Cli_Run',
 
             
             'Easy_MCP_AI\\Tools\\Site_Health\\Get_Site_Health',
@@ -484,6 +503,8 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\Site_Health\\Run_Cron_Event',
             'Easy_MCP_AI\\Tools\\Site_Health\\Get_Error_Log',
             'Easy_MCP_AI\\Tools\\Site_Health\\Get_Easy_Mcp_Diagnostics',
+            
+            'Easy_MCP_AI\\Tools\\Site_Health\\Update_Core',
 
             
             'Easy_MCP_AI\\Tools\\Rest\\Rest_Routes',
@@ -527,38 +548,13 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\SeRanking\\Ai_Prompts',
 
         );
-        $plugin_namespaces = array(
-            'Easy_MCP_AI\\Tools\\WooCommerce\\',
-            'Easy_MCP_AI\\Tools\\ACF\\',
-            'Easy_MCP_AI\\Tools\\Events_Calendar\\',
-            'Easy_MCP_AI\\Tools\\Redirection\\',
-            'Easy_MCP_AI\\Tools\\BuddyPress\\',
-            'Easy_MCP_AI\\Tools\\SEO\\',
-            'Easy_MCP_AI\\Tools\\GSC\\',
-            'Easy_MCP_AI\\Tools\\GA\\',
-            'Easy_MCP_AI\\Tools\\DFS\\',
-            'Easy_MCP_AI\\Tools\\Semrush\\',
-            'Easy_MCP_AI\\Tools\\Ahrefs\\',
-            'Easy_MCP_AI\\Tools\\SeRanking\\',
-        );
 
         foreach ( $tool_classes as $class ) {
-            
-            
-            
-            
-            if ( 'Easy_MCP_AI\\Tools\\Feedback\\Send_Feedback' === $class && class_exists( '\\Easy_MCP_AI\\Config' ) && \Easy_MCP_AI\Config::is_white_labelled() ) {
+            if ( self::is_withheld( $class ) ) {
                 continue;
             }
             if ( ! class_exists( $class ) ) {
-                $is_plugin_class = false;
-                foreach ( $plugin_namespaces as $ns ) {
-                    if ( strncmp( $class, $ns, strlen( $ns ) ) === 0 ) {
-                        $is_plugin_class = true;
-                        break;
-                    }
-                }
-                if ( ! $is_plugin_class && ! $quiet ) {
+                if ( ! $quiet && ! self::is_plugin_class( $class ) ) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log( 'Easy MCP AI: Tool class not found, skipping: ' . $class );
                 }
@@ -567,15 +563,70 @@ class Tool_Registry {
             $this->lazy_classes[] = $class;
         }
 
-        
-        
-        
-        
-        if ( class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
-            foreach ( \Easy_MCP_AI\Privileged\Privileged_Groups::TOOL_CLASSES as $class ) {
-                if ( class_exists( $class ) ) {
-                    $this->register( new $class() );
-                }
+        $this->register_privileged_tools();
+    }
+
+    
+
+
+
+
+
+
+    private const PLUGIN_NAMESPACES = array(
+        'Easy_MCP_AI\\Tools\\WooCommerce\\',
+        'Easy_MCP_AI\\Tools\\ACF\\',
+        'Easy_MCP_AI\\Tools\\Events_Calendar\\',
+        'Easy_MCP_AI\\Tools\\Redirection\\',
+        'Easy_MCP_AI\\Tools\\BuddyPress\\',
+        'Easy_MCP_AI\\Tools\\SEO\\',
+        'Easy_MCP_AI\\Tools\\GSC\\',
+        'Easy_MCP_AI\\Tools\\GA\\',
+        'Easy_MCP_AI\\Tools\\DFS\\',
+        'Easy_MCP_AI\\Tools\\Semrush\\',
+        'Easy_MCP_AI\\Tools\\Ahrefs\\',
+        'Easy_MCP_AI\\Tools\\SeRanking\\',
+    );
+
+    
+
+
+
+
+
+
+
+    private static function is_withheld( string $class ): bool {
+        return 'Easy_MCP_AI\\Tools\\Feedback\\Send_Feedback' === $class && class_exists( '\\Easy_MCP_AI\\Config' ) && \Easy_MCP_AI\Config::is_white_labelled();
+    }
+
+    
+
+
+
+
+    private static function is_plugin_class( string $class ): bool {
+        foreach ( self::PLUGIN_NAMESPACES as $ns ) {
+            if ( strncmp( $class, $ns, strlen( $ns ) ) === 0 ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+
+    private function register_privileged_tools(): void {
+        if ( ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
+            return;
+        }
+        foreach ( \Easy_MCP_AI\Privileged\Privileged_Groups::TOOL_CLASSES as $class ) {
+            if ( class_exists( $class ) ) {
+                $this->register( new $class() );
             }
         }
     }

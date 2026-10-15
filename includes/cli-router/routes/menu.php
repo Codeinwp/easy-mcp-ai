@@ -1,0 +1,132 @@
+<?php
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+return array(
+    'menu create'          => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'create',
+        'tools'   => array( 'wp_create_menu' ),
+        'write'   => true,
+        'params'  => array( 'menu-name', 'porcelain' ),
+    ),
+    'menu delete'          => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'delete',
+        'tools'   => array( 'wp_delete_menu' ),
+        'write'   => true,
+        'bulk'      => 50,
+        'plan'      => 'plan_delete',
+        'preflight' => 'preflight_delete',
+        'params'    => array( 'menu' ),
+    ),
+    'menu item add-custom' => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'item_add_custom',
+        'tools'   => array( 'wp_create_menu_item' ),
+        'write'   => true,
+        'params'  => array( 'menu', 'title', 'link', 'description', 'attr-title', 'target', 'classes', 'position', 'parent-id', 'porcelain' ),
+    ),
+    'menu item add-post'   => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'item_add_post',
+        'tools'   => array( 'wp_create_menu_item' ),
+        'write'   => true,
+        'params'  => array( 'menu', 'post-id', 'title', 'link', 'description', 'attr-title', 'target', 'classes', 'position', 'parent-id', 'porcelain' ),
+    ),
+    'menu item add-term'   => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'item_add_term',
+        'tools'   => array( 'wp_create_menu_item' ),
+        'write'   => true,
+        'params'  => array( 'menu', 'taxonomy', 'term-id', 'title', 'link', 'description', 'attr-title', 'target', 'classes', 'position', 'parent-id', 'porcelain' ),
+    ),
+    'menu item delete'     => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'item_delete',
+        'tools'   => array( 'wp_delete_menu_item' ),
+        'write'   => true,
+        'bulk'    => 50,
+        'plan'    => 'plan_item_delete',
+        'params'  => array( 'db-id' ),
+    ),
+    'menu item list'       => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'item_list',
+        'tools'   => array( 'wp_list_menu_items' ),
+        'write'   => false,
+        'params'  => array( 'menu', 'fields', 'format' ),
+    ),
+    'menu item update'     => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'item_update',
+        'tools'   => array( 'wp_update_menu_item' ),
+        'write'   => true,
+        'params'  => array( 'db-id', 'title', 'link', 'description', 'attr-title', 'target', 'classes', 'position', 'parent-id' ),
+    ),
+    'menu list'            => array(
+        'route'   => 'delegate',
+        'adapter' => 'Menu_Adapter',
+        'method'  => 'list_menus',
+        'tools'   => array( 'wp_list_menus' ),
+        'write'   => false,
+        'params'  => array( 'fields', 'format' ),
+    ),
+    'menu location assign' => array(
+        'route'    => 'own',
+        'handler'  => 'Menu_Handler',
+        'method'   => 'location_assign',
+        'cap'      => 'edit_theme_options',
+        'network'  => null,
+        'write'    => true,
+        'describe' => 'describe_assign',
+        'params'   => array( 'menu', 'location' ),
+    ),
+    'menu location list'   => array(
+        'route'   => 'own',
+        'handler' => 'Menu_Handler',
+        'method'  => 'location_list',
+        'cap'     => 'edit_theme_options',
+        'network' => null,
+        'write'   => false,
+        'params'  => array( 'format' ),
+    ),
+    'menu location remove' => array(
+        'route'    => 'own',
+        'handler'  => 'Menu_Handler',
+        'method'   => 'location_remove',
+        'cap'      => 'edit_theme_options',
+        'network'  => null,
+        'write'    => true,
+        'describe' => 'describe_remove',
+        'params'   => array( 'menu', 'location' ),
+    ),
+);

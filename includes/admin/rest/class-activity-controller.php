@@ -232,7 +232,10 @@ class Activity_Controller extends Admin_Rest_Controller {
         }
         $error = null;
         
-        if ( 'auth_failure' === $status && is_array( $arguments ) && isset( $arguments['reason'] ) && is_string( $arguments['reason'] ) ) {
+        
+        if ( 'error' === $status && isset( $row['error_message'] ) && is_string( $row['error_message'] ) && '' !== $row['error_message'] ) {
+            $error = $row['error_message'];
+        } elseif ( 'auth_failure' === $status && is_array( $arguments ) && isset( $arguments['reason'] ) && is_string( $arguments['reason'] ) ) {
             $error = $arguments['reason'];
         }
         $ip = (string) ( $row['ip_address'] ?? '' );

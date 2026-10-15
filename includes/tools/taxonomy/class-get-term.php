@@ -22,7 +22,7 @@ class Get_Term extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Gets a single term from any taxonomy. Required: `term_id`, `taxonomy` (the taxonomy slug, e.g. category, post_tag, product_cat, product_brand). Returns { id, name, slug, description, parent, count, taxonomy }. Capability resolved dynamically per taxonomy via cap->assign_terms. Use this for custom taxonomies that the category/tag-specific tools cannot reach.';
+        return 'Gets a single term from any taxonomy. Required: `term_id`, `taxonomy` (the taxonomy slug, e.g. category, post_tag, product_cat, product_brand). Returns { id, name, slug, description, parent, count, taxonomy, term_group, term_taxonomy_id, filter, url } — every field of the WordPress term object, plus `url`, the term\'s archive link (null when WordPress cannot build one). Capability resolved dynamically per taxonomy via cap->assign_terms. Use this for custom taxonomies that the category/tag-specific tools cannot reach.';
     }
 
     public function get_category() {
@@ -84,14 +84,22 @@ class Get_Term extends Base_Tool {
             throw new \InvalidArgumentException( 'Term not found.' );
         }
 
+        
+        
+        $url = get_term_link( $term );
+
         return array(
-            'id'          => (int) $term->term_id,
-            'name'        => (string) $term->name,
-            'slug'        => (string) $term->slug,
-            'description' => (string) $term->description,
-            'parent'      => (int) $term->parent,
-            'count'       => (int) $term->count,
-            'taxonomy'    => (string) $term->taxonomy,
+            'id'               => (int) $term->term_id,
+            'name'             => (string) $term->name,
+            'slug'             => (string) $term->slug,
+            'description'      => (string) $term->description,
+            'parent'           => (int) $term->parent,
+            'count'            => (int) $term->count,
+            'taxonomy'         => (string) $term->taxonomy,
+            'term_group'       => isset( $term->term_group ) ? (int) $term->term_group : null,
+            'term_taxonomy_id' => isset( $term->term_taxonomy_id ) ? (int) $term->term_taxonomy_id : null,
+            'filter'           => isset( $term->filter ) ? (string) $term->filter : null,
+            'url'              => is_string( $url ) ? $url : null,
         );
     }
 }

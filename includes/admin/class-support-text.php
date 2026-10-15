@@ -201,7 +201,13 @@ class Support_Text {
                 . ( \Easy_MCP_AI\Tools\Tool_State::is_strict() ? ', strict' : '' ) . ')';
         }
         $set_allowed_patterns = count( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() ) );
-        $set_oauth_cap        = (string) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_min_capability', 'publish_posts' );
+        require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
+        $set_oauth_cap        = \Easy_MCP_AI\Auth\Connect_Policy::stored_floor();
+        
+        $set_connect_roles    = \Easy_MCP_AI\Auth\Connect_Policy::is_filtered_for( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_OAUTH )
+            ? array()
+            : \Easy_MCP_AI\Auth\Connect_Policy::extra_roles();
+        $set_connect_roles    = $set_connect_roles ? implode( ', ', $set_connect_roles ) : 'None';
         $set_ext_cap          = (string) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_external_data_min_capability', 'manage_options' );
         $set_ip_entries       = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_ip_whitelist', '' ) ) ) );
         $set_ip_count         = count( $set_ip_entries );
@@ -306,6 +312,7 @@ class Support_Text {
             'Tool Overrides:        ' . $set_tool_overrides,
             'Allowed Tool Patterns: ' . $set_allowed_patterns,
             'OAuth Min Capability:  ' . $set_oauth_cap,
+            'Connect Roles:         ' . $set_connect_roles,
             'External Data Min Cap: ' . $set_ext_cap,
             'IP Whitelist:          ' . $set_ip_display,
         ) );

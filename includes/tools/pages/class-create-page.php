@@ -2,9 +2,15 @@
 namespace Easy_MCP_AI\Tools\Pages;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\CPT\Create_CPT_Item;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
+}
+
+
+if ( ! class_exists( Create_CPT_Item::class, false ) ) {
+    require_once dirname( __DIR__ ) . '/cpt/class-create-cpt-item.php';
 }
 
 class Create_Page extends Base_Tool {
@@ -14,7 +20,7 @@ class Create_Page extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Creates a new WordPress page. Required: `title`. Optional: `content` (HTML/Gutenberg blocks; sanitized by WordPress per the calling user capability), `status` (publish/draft/pending/private/future — default draft; use "future" with `date` to schedule), `date` (ISO 8601), `excerpt`, `parent` (parent page ID — 0 = top-level; pages support hierarchical nesting), `template` (theme template file slug), `menu_order` (integer, for ordering), `slug`, `author` (user ID), `featured_media` (attachment ID), `comment_status` (open/closed), `ping_status` (open/closed). If **Easy MCP AI → Settings → Force draft on create** is enabled, `status` is silently overridden to `draft` regardless of the value supplied. Optional `meta` (object of meta key-value pairs; only REST-registered keys persist, including the SEO keys of enabled plugin integrations, and dropped keys are reported back as `meta_ignored` with a `notice`). Returns { id, title, status, link }.';
+        return 'Creates a new WordPress page. Required: `title` (unless `allow_empty_title` is true and `content` or `excerpt` is given). Optional: `content` (HTML/Gutenberg blocks; sanitized by WordPress per the calling user capability), `status` (default draft; publish/draft/pending/private/future or a custom status registered on this site; use "future" with `date` or `date_gmt` to schedule), `date` (ISO 8601, site time) or `date_gmt` (UTC) — never both, `excerpt`, `parent` (parent page ID — 0 = top-level; pages support hierarchical nesting), `template` (theme template file slug), `menu_order` (integer, for ordering), `slug`, `author` (user ID), `featured_media` (attachment ID), `comment_status` (open/closed), `ping_status` (open/closed), `password` (protects the content and excerpt), `tax_input` ({ taxonomy slug: [term IDs] } for taxonomies registered on pages and shown in the REST API — core registers none; every term must exist in that taxonomy), `allow_empty_title` (boolean, default false). If **Easy MCP AI → Settings → Force draft on create** is enabled, `status` is silently overridden to `draft` regardless of the value supplied. Optional `meta` (object of meta key-value pairs; only REST-registered keys persist, including the SEO keys of enabled plugin integrations, and dropped keys are reported back as `meta_ignored` with a `notice`). Returns { id, title, status, link }.';
     }
 
     public function get_category() {
@@ -23,6 +29,11 @@ class Create_Page extends Base_Tool {
 
     public function get_required_capability() {
         return 'edit_pages';
+    }
+
+    
+    public function get_redacted_arguments() {
+        return array( 'password' );
     }
 
     public function get_annotations() {
@@ -40,7 +51,7 @@ class Create_Page extends Base_Tool {
             'properties' => array(
                 'title'      => array(
                     'type'        => 'string',
-                    'description' => 'The title for the page.',
+                    'description' => 'The title for the page. Required unless allow_empty_title is true.',
                 ),
                 'content'    => array(
                     'type'        => 'string',
@@ -48,8 +59,8 @@ class Create_Page extends Base_Tool {
                 ),
                 'status'     => array(
                     'type'        => 'string',
-                    'description' => 'The status for the page.',
-                    'enum'        => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+                    'description' => 'The status for the page: any status the REST API accepts on this site (core: publish, draft, pending, private, future; plus custom statuses plugins registered). "future" needs date or date_gmt.',
+                    'enum'        => Create_CPT_Item::status_enum(),
                     'default'     => 'draft',
                 ),
                 'parent'     => array(
@@ -71,6 +82,18 @@ class Create_Page extends Base_Tool {
                 'date'       => array(
                     'type'        => 'string',
                     'description' => 'Publication date in ISO 8601 format. Use with status "future" to schedule.',
+                ),
+                'date_gmt'   => array(
+                    'type'        => 'string',
+                    'description' => 'Publication date in UTC, ISO 8601 (e.g. 2026-06-01T09:00:00). Use instead of date, never with it: WordPress uses date and ignores date_gmt when both are present.',
+                ),
+                'password'   => array(
+                    'type'        => 'string',
+                    'description' => 'Password that protects the page\'s content and excerpt.',
+                ),
+                'tax_input'  => array(
+                    'type'        => 'object',
+                    'description' => 'Terms to assign, as { taxonomy slug: [term IDs] }. Only taxonomies registered for pages and shown in the REST API are accepted (WordPress core registers none for pages; a plugin may); every term ID must exist in that taxonomy.',
                 ),
                 'excerpt'    => array(
                     'type'        => 'string',
@@ -98,20 +121,72 @@ class Create_Page extends Base_Tool {
                     'type'        => 'object',
                     'description' => 'Meta key-value pairs to set. Only keys registered for the REST API persist, including the SEO keys of enabled plugin integrations (Rank Math, Yoast, SEOPress, The SEO Framework — see wp_update_post_meta for the list on this site); dropped keys are reported back as meta_ignored.',
                 ),
+                'allow_empty_title' => array(
+                    'type'        => 'boolean',
+                    'description' => 'When true, title may be omitted or empty as long as content or excerpt is given. Default false, which keeps title required.',
+                    'default'     => false,
+                ),
             ),
-            'required'   => array( 'title' ),
         );
     }
 
     public function execute( array $arguments ) {
-        $this->validate_required( $arguments, array( 'title' ) );
+        if ( Create_CPT_Item::allows_empty_title( $arguments ) ) {
+            Create_CPT_Item::require_title_content_or_excerpt( $arguments );
+        } else {
+            $this->validate_required( $arguments, array( 'title' ) );
+        }
 
-        $this->validate_title_length( $arguments['title'] );
+        $params = array_merge(
+            $this->content_params( $arguments ),
+            self::detail_params( $arguments ),
+            self::cli_params( $arguments )
+        );
 
+        $meta_sent = $this->apply_meta_argument( $arguments, $params );
+
+        if ( isset( $arguments['tax_input'] ) ) {
+            $params = array_merge( $params, Create_CPT_Item::tax_input_params( $arguments['tax_input'], 'page', $params ) );
+        }
+
+        self::refuse_future_without_date( $params );
+
+        $this->maybe_force_draft( $params );
+
+        
+        
+        
+        $data = $this->rest_request( 'POST', '/wp/v2/pages', $params, 'id,title,status,link' . ( $meta_sent ? ',meta' : '' ) );
+
+        $result = array(
+            'id'     => $data['id'],
+            'title'  => $data['title']['raw'] ?? $data['title']['rendered'],
+            'status' => $data['status'],
+            'link'   => $data['link'],
+        );
+        if ( $meta_sent ) {
+            $result = array_merge( $result, $this->ignored_meta_report( $params['meta'], $data['meta'] ?? null, 'post', 'page' ) );
+        }
+
+        return $result;
+    }
+
+    
+
+
+
+
+
+
+
+    private function content_params( array $arguments ): array {
         $params = array(
-            'title'  => sanitize_text_field( $arguments['title'] ),
             'status' => isset( $arguments['status'] ) ? sanitize_text_field( $arguments['status'] ) : 'draft',
         );
+        if ( Create_CPT_Item::has_text( $arguments, 'title' ) ) {
+            $this->validate_title_length( $arguments['title'] );
+            $params['title'] = sanitize_text_field( $arguments['title'] );
+        }
 
         if ( isset( $arguments['content'] ) ) {
             
@@ -132,7 +207,18 @@ class Create_Page extends Base_Tool {
         if ( isset( $arguments['menu_order'] ) ) {
             $params['menu_order'] = intval( $arguments['menu_order'] );
         }
+        return $params;
+    }
 
+    
+
+
+
+
+
+
+    private static function detail_params( array $arguments ): array {
+        $params = array();
         if ( ! empty( $arguments['slug'] ) ) {
             $params['slug'] = sanitize_title( $arguments['slug'] );
         }
@@ -165,30 +251,43 @@ class Create_Page extends Base_Tool {
         if ( isset( $arguments['ping_status'] ) ) {
             $params['ping_status'] = sanitize_text_field( $arguments['ping_status'] );
         }
+        return $params;
+    }
 
-        $meta_sent = $this->apply_meta_argument( $arguments, $params );
+    
 
-        if ( isset( $params['status'] ) && 'future' === $params['status'] && empty( $params['date'] ) ) {
-            throw new \InvalidArgumentException( 'The "date" field is required when status is "future".' );
+
+
+
+
+
+
+    private static function cli_params( array $arguments ): array {
+        $params = array();
+        Create_CPT_Item::refuse_both_dates( $arguments );
+        if ( ! empty( $arguments['date_gmt'] ) ) {
+            $params['date_gmt'] = sanitize_text_field( (string) $arguments['date_gmt'] );
         }
-
-        $this->maybe_force_draft( $params );
-
-        
-        
-        
-        $data = $this->rest_request( 'POST', '/wp/v2/pages', $params, 'id,title,status,link' . ( $meta_sent ? ',meta' : '' ) );
-
-        $result = array(
-            'id'     => $data['id'],
-            'title'  => $data['title']['raw'] ?? $data['title']['rendered'],
-            'status' => $data['status'],
-            'link'   => $data['link'],
-        );
-        if ( $meta_sent ) {
-            $result = array_merge( $result, $this->ignored_meta_report( $params['meta'], isset( $data['meta'] ) ? $data['meta'] : array() ) );
+        if ( isset( $arguments['password'] ) ) {
+            if ( ! is_string( $arguments['password'] ) ) {
+                throw new \InvalidArgumentException( 'Invalid password: must be a string.' );
+            }
+            
+            $params['password'] = $arguments['password'];
         }
+        return $params;
+    }
 
-        return $result;
+    
+
+
+
+
+
+
+    private static function refuse_future_without_date( array $params ): void {
+        if ( isset( $params['status'] ) && 'future' === $params['status'] && empty( $params['date'] ) && empty( $params['date_gmt'] ) ) {
+            throw new \InvalidArgumentException( 'The "date" or "date_gmt" field is required when status is "future".' );
+        }
     }
 }

@@ -78,7 +78,14 @@ require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
 
     ?>
     <form method="post" action="<?php echo esc_url( $form_action ); ?>">
-        <?php wp_nonce_field( $nonce_action ); ?>
+        <?php
+        
+
+
+
+
+        wp_nonce_field( $nonce_action, '_wpnonce', false );
+        ?>
 
         <?php
         

@@ -71,7 +71,7 @@ class History_Apply extends Base_Tool {
         );
     }
 
-    public function is_composite() {
+    public function is_composite( array $arguments = array() ) {
         return true;
     }
 

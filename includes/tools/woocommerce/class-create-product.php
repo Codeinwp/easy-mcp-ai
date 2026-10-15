@@ -7,14 +7,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once __DIR__ . '/trait-product-images.php';
+
 class Create_Product extends Base_Tool {
+
+    use Product_Images;
 
     public function get_name() {
         return 'wp_wc_create_product';
     }
 
     public function get_description() {
-        return 'Creates a new WooCommerce product. Required: name. Optional: type (simple/variable/grouped/external), regular_price, sale_price, description, short_description, sku, stock_quantity, manage_stock, stock_status, status (draft/publish/pending/private), virtual, downloadable, weight, categories (array of {id}), tags (array of {id}), images (array of {src}), featured (boolean), catalog_visibility (visible/catalog/search/hidden), tax_status (taxable/shipping/none), tax_class, date_on_sale_from, date_on_sale_to, backorders (no/notify/yes), sold_individually (boolean), dimensions (object with length/width/height), attributes, upsell_ids (array of product IDs), cross_sell_ids (array of product IDs).';
+        return 'Creates a new WooCommerce product. Required: name. Optional: type (simple/variable/grouped/external), regular_price, sale_price, description, short_description, sku, stock_quantity, manage_stock, stock_status, status (draft/publish/pending/private), virtual, downloadable, weight, categories (array of {id}), tags (array of {id}), images (first = featured image, rest = gallery in order; prefer {id} from the media library, since each {src} is downloaded as a new media item), featured (boolean), catalog_visibility (visible/catalog/search/hidden), tax_status (taxable/shipping/none), tax_class, date_on_sale_from, date_on_sale_to, backorders (no/notify/yes), sold_individually (boolean), dimensions (object with length/width/height), attributes, upsell_ids (array of product IDs), cross_sell_ids (array of product IDs). Returns id, name, status, permalink, plus images as saved when sent.';
     }
 
     public function get_category() {
@@ -95,13 +99,8 @@ class Create_Product extends Base_Tool {
                 ),
                 'images'            => array(
                     'type'        => 'array',
-                    'description' => 'Array of image objects with src.',
-                    'items'       => array(
-                        'type'       => 'object',
-                        'properties' => array(
-                            'src' => array( 'type' => 'string' ),
-                        ),
-                    ),
+                    'description' => 'First = featured image, rest = gallery, in order.',
+                    'items'       => $this->image_item_schema(),
                 ),
                 'sale_price'        => array(
                     'type'        => 'string',
@@ -232,8 +231,8 @@ class Create_Product extends Base_Tool {
         if ( ! empty( $arguments['categories'] ) ) {
             $params['categories'] = $this->parse_json_param( $arguments['categories'], 'categories' );
         }
-        if ( ! empty( $arguments['images'] ) ) {
-            $params['images'] = $this->parse_json_param( $arguments['images'], 'images' );
+        if ( isset( $arguments['images'] ) ) {
+            $params['images'] = $this->product_images_param( $arguments['images'] );
         }
         if ( isset( $arguments['sale_price'] ) ) {
             $params['sale_price'] = sanitize_text_field( $arguments['sale_price'] );
@@ -293,11 +292,15 @@ class Create_Product extends Base_Tool {
 
         $data = $this->rest_request( 'POST', '/wc/v3/products', $params );
 
-        return array(
+        $reply = array(
             'id'        => $data['id'],
             'name'      => $data['name'],
             'status'    => $data['status'],
             'permalink' => $data['permalink'],
         );
+        if ( isset( $params['images'] ) ) {
+            $reply['images'] = $this->images_reply( $data['images'] ?? array() );
+        }
+        return $reply;
     }
 }

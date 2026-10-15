@@ -57,7 +57,7 @@ class Upload_Media_From_Url extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Downloads a file from a URL and imports it into the WordPress media library. Supply exactly one source: `url` (a public HTTPS URL — HTTPS only by default, local/private IPs blocked via DNS-resolved SSRF check; site owners can allow http via the easy_mcp_ai_allow_http_media_url filter) or `file` (a client file handoff — a generated or user-attached file the client references as an object with download_url and file_id, which the client fills in). Local paths and bare file IDs cannot be fetched. Optional: `filename` (override; for a file handoff the resolved name must carry an allowed extension such as image.png), `title`, `alt_text`, `caption`, `post_id` (attach to a parent post). Size limit: site `wp_max_upload_size()`. Returns { id, source_url, mime_type, title, file_size }; use id as featured_media or source_url in post content. Avoids the ~33% base64 overhead of wp_upload_media.';
+        return 'Downloads a file from a URL and imports it into the WordPress media library. Supply exactly one source: `url` (a public HTTPS URL — HTTPS only by default, local/private IPs blocked via DNS-resolved SSRF check; site owners can allow http via the easy_mcp_ai_allow_http_media_url filter) or `file` (a client file handoff — a generated or user-attached file the client references as an object with download_url and file_id, which the client fills in). Local paths and bare file IDs cannot be fetched. Optional: `filename` (override; for a file handoff the resolved name must carry an allowed extension such as image.png), `title`, `alt_text`, `caption`, `description` (the attachment\'s Description field, stored as post_content), `slug` (the attachment\'s URL slug; WordPress adds a suffix when it is taken), `post_id` (attach to a parent post), `featured_image` (true, with `post_id`: also make the imported image that post\'s featured image; needs edit rights on the post, a post type with featured images, and an image file — otherwise nothing is imported). Size limit: site `wp_max_upload_size()`. Returns { id, source_url, mime_type, title, file_size }, plus `slug` (as stored) when `slug` was sent and `featured_image` (true when it was set) when that was sent; use id as featured_media or source_url in post content. Avoids the ~33% base64 overhead of wp_upload_media.';
     }
 
     public function get_category() {
@@ -98,7 +98,7 @@ class Upload_Media_From_Url extends Base_Tool {
                 ),
                 'filename' => array(
                     'type'        => 'string',
-                    'description' => 'Optional filename override. Resolution order: this value, then file.file_name, then the URL basename. For a file handoff the resolved name must carry an allowed extension (signed download URLs often have none).',
+                    'description' => 'Optional filename override. Resolution order: this value, then file.file_name, then the URL basename. For a file handoff the resolved name must carry an allowed extension (signed download URLs often have none), unless file.mime_type names an image type the site allows. An image whose name has an unknown extension (.jfif) is stored under the type its bytes hold.',
                 ),
                 'title'    => array(
                     'type'        => 'string',
@@ -112,9 +112,21 @@ class Upload_Media_From_Url extends Base_Tool {
                     'type'        => 'string',
                     'description' => 'Optional caption (stored as post_excerpt).',
                 ),
-                'post_id'  => array(
+                'post_id'        => array(
                     'type'        => 'integer',
                     'description' => 'Optional parent post ID to attach the media to.',
+                ),
+                'description'    => array(
+                    'type'        => 'string',
+                    'description' => 'Optional attachment description (the Description field, stored as post_content). WordPress filters HTML as it does for this user in the media editor.',
+                ),
+                'slug'           => array(
+                    'type'        => 'string',
+                    'description' => 'Optional attachment slug (post_name). WordPress sanitizes it and adds a suffix such as -2 when it is taken; the stored slug is returned.',
+                ),
+                'featured_image' => array(
+                    'type'        => 'boolean',
+                    'description' => 'With post_id: also set the imported image as that post\'s featured image. Default false. Refused, before anything is fetched, without post_id, for a post you cannot edit or whose type has no featured images; refused before import when the file is not an image.',
                 ),
             ),
             
@@ -166,92 +178,20 @@ class Upload_Media_From_Url extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
-        
-        $has_url  = array_key_exists( 'url', $arguments );
-        $has_file = array_key_exists( 'file', $arguments );
-        if ( $has_url === $has_file ) {
-            throw new \InvalidArgumentException( 'Supply exactly one source: url, or file (a client file handoff carrying download_url and file_id).' );
-        }
-
-        $filename_hint = '';
-        if ( $has_file ) {
-            $file          = $this->validate_file_reference( $arguments['file'] );
-            $source_url    = $file['download_url'];
-            $filename_hint = isset( $file['file_name'] ) ? (string) $file['file_name'] : '';
-        } else {
-            $this->validate_required( $arguments, array( 'url' ) );
-            $source_url = (string) $arguments['url'];
-        }
-
-        $url = $this->validate_remote_url( $source_url );
+        $source = $this->resolve_source( $arguments );
 
         
         
         
-        
-        $filename = '';
-        if ( ! empty( $arguments['filename'] ) ) {
-            $filename = sanitize_file_name( (string) $arguments['filename'] );
-        }
-        if ( '' === $filename && '' !== $filename_hint ) {
-            $filename = sanitize_file_name( $filename_hint );
-        }
-        if ( '' === $filename ) {
-            $path     = (string) wp_parse_url( $url, PHP_URL_PATH );
-            $filename = sanitize_file_name( basename( $path ) );
-        }
-        if ( $has_file ) {
-            
-            
-            
-            
-            $type = wp_check_filetype( $filename );
-            if ( '' === $filename || empty( $type['type'] ) ) {
-                throw new \InvalidArgumentException( 'Supply filename with an allowed file extension (for example image.png): the file handoff carries no usable filename.' );
-            }
-        }
-        if ( '' === $filename ) {
-            $filename = 'remote-' . wp_generate_password( 8, false ) . '.bin';
-        }
+        self::refuse_non_text_description( $arguments );
+        $slug     = $this->parse_slug( $arguments );
+        $featured = $this->featured_image_target( $arguments );
+
+        $url      = $this->validate_remote_url( $source['url'] );
+        $filename = $this->resolve_filename( $arguments, $source['filename_hint'], $source['handoff'], $url, $source['mime_hint'] );
 
         $max_bytes = wp_max_upload_size();
-
-        
-        
-        
-        
-        
-        
-        
-        $head_validated_size = false;
-
-        
-        
-        $head = wp_safe_remote_head(
-            $url,
-            array(
-                'timeout'     => self::HTTP_TIMEOUT_SECONDS,
-                'redirection' => 5,
-            )
-        );
-        if ( ! is_wp_error( $head ) ) {
-            $code = (int) wp_remote_retrieve_response_code( $head );
-            if ( $code >= 200 && $code < 400 ) {
-                $declared_len = (int) wp_remote_retrieve_header( $head, 'content-length' );
-                if ( $declared_len > 0 ) {
-                    if ( $declared_len > $max_bytes ) {
-                        throw new \InvalidArgumentException(
-                            sprintf( 'Remote file too large (%s). Maximum upload size is %s.', size_format( $declared_len ), size_format( $max_bytes ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                        );
-                    }
-                    
-                    
-                    $head_validated_size = true;
-                }
-            }
-        }
+        $this->refuse_declared_oversize( $url, $max_bytes );
 
         
         
@@ -266,10 +206,202 @@ class Upload_Media_From_Url extends Base_Tool {
             throw new \RuntimeException( 'Could not create temporary file.' );
         }
 
+        $body_len = $this->download_to( $url, $tmp_file, $max_bytes );
+        $checked  = self::checked_file( $tmp_file, $filename, $featured );
+
+        $file_array = array(
+            'name'     => $checked['name'],
+            'tmp_name' => $tmp_file,
+            'type'     => $checked['type'],
+            'size'     => $body_len,
+        );
+
+        $parent_post_id = self::attachable_parent( $arguments, $tmp_file );
+
         
         
         
         
+        $attachment_id = media_handle_sideload( $file_array, $parent_post_id );
+        if ( \is_wp_error( $attachment_id ) ) {
+            \wp_delete_file( $tmp_file );
+            throw new \RuntimeException( $attachment_id->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        self::apply_attachment_fields( $attachment_id, $arguments, $slug );
+        if ( $featured > 0 ) {
+            self::set_featured_image( $featured, (int) $attachment_id );
+        }
+
+        $attachment = get_post( $attachment_id );
+
+        $result = array(
+            'id'         => (int) $attachment_id,
+            'source_url' => wp_get_attachment_url( $attachment_id ),
+            'mime_type'  => $attachment ? (string) $attachment->post_mime_type : (string) $checked['type'],
+            'title'      => $attachment ? (string) $attachment->post_title : '',
+            'file_size'  => $body_len,
+        );
+        if ( null !== $slug ) {
+            $result['slug'] = $attachment ? (string) $attachment->post_name : '';
+        }
+        if ( array_key_exists( 'featured_image', $arguments ) ) {
+            $result['featured_image'] = $featured > 0;
+        }
+        return $result;
+    }
+
+    
+
+
+
+
+
+
+
+
+    private function resolve_source( array $arguments ): array {
+        $has_url  = array_key_exists( 'url', $arguments );
+        $has_file = array_key_exists( 'file', $arguments );
+        if ( $has_url === $has_file ) {
+            throw new \InvalidArgumentException( 'Supply exactly one source: url, or file (a client file handoff carrying download_url and file_id).' );
+        }
+
+        if ( $has_file ) {
+            $file = $this->validate_file_reference( $arguments['file'] );
+            return array(
+                'url'           => $file['download_url'],
+                'filename_hint' => isset( $file['file_name'] ) ? (string) $file['file_name'] : '',
+                'mime_hint'     => isset( $file['mime_type'] ) ? (string) $file['mime_type'] : '',
+                'handoff'       => true,
+            );
+        }
+        $this->validate_required( $arguments, array( 'url' ) );
+        return array(
+            'url'           => (string) $arguments['url'],
+            'filename_hint' => '',
+            'mime_hint'     => '',
+            'handoff'       => false,
+        );
+    }
+
+    
+
+
+
+
+
+
+    private static function refuse_non_text_description( array $arguments ): void {
+        if ( array_key_exists( 'description', $arguments ) && null !== $arguments['description'] && ! is_scalar( $arguments['description'] ) ) {
+            throw new \InvalidArgumentException( 'description must be text. Nothing was imported.' );
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function resolve_filename( array $arguments, string $filename_hint, bool $handoff, string $url, string $mime_hint = '' ): string {
+        $filename = '';
+        if ( ! empty( $arguments['filename'] ) ) {
+            $filename = sanitize_file_name( (string) $arguments['filename'] );
+        }
+        if ( '' === $filename && '' !== $filename_hint ) {
+            $filename = sanitize_file_name( $filename_hint );
+        }
+        if ( '' === $filename ) {
+            $path     = (string) wp_parse_url( $url, PHP_URL_PATH );
+            $filename = sanitize_file_name( basename( $path ) );
+        }
+        if ( $handoff ) {
+            
+            
+            
+            
+            $type = wp_check_filetype( $filename );
+            if ( empty( $type['type'] ) ) {
+                
+                
+                
+                $hinted   = self::image_filename_for_type( $filename, $mime_hint );
+                $filename = null !== $hinted ? $hinted : $filename;
+                $type     = wp_check_filetype( $filename );
+            }
+            if ( '' === $filename || empty( $type['type'] ) ) {
+                throw new \InvalidArgumentException( 'Supply filename with an allowed file extension (for example image.png): the file handoff carries no usable filename.' );
+            }
+        }
+        if ( '' === $filename ) {
+            $filename = 'remote-' . wp_generate_password( 8, false ) . '.bin';
+        }
+        return $filename;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private function refuse_declared_oversize( string $url, int $max_bytes ): void {
+        $head = wp_safe_remote_head(
+            $url,
+            array(
+                'timeout'     => self::HTTP_TIMEOUT_SECONDS,
+                'redirection' => 5,
+            )
+        );
+        if ( is_wp_error( $head ) ) {
+            return;
+        }
+        $code = (int) wp_remote_retrieve_response_code( $head );
+        if ( $code < 200 || $code >= 400 ) {
+            return;
+        }
+        $declared_len = (int) wp_remote_retrieve_header( $head, 'content-length' );
+        if ( $declared_len > 0 && $declared_len > $max_bytes ) {
+            throw new \InvalidArgumentException(
+                sprintf( 'Remote file too large (%s). Maximum upload size is %s.', size_format( $declared_len ), size_format( $max_bytes ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function download_to( string $url, string $tmp_file, int $max_bytes ): int {
         $response = wp_safe_remote_get(
             $url,
             array(
@@ -313,8 +445,28 @@ class Upload_Media_From_Url extends Base_Tool {
                 sprintf( 'Remote file too large at %s. Maximum upload size is %s.', size_format( $body_len ), size_format( $max_bytes ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
-        unset( $head_validated_size ); 
+        return $body_len;
+    }
 
+    
+
+
+
+
+
+
+
+
+
+    private static function checked_file( string $tmp_file, string $filename, int $featured ): array {
+        
+        
+        
+        $known = wp_check_filetype( $filename );
+        if ( empty( $known['type'] ) ) {
+            $renamed  = self::image_filename_from_bytes( $filename, $tmp_file );
+            $filename = null !== $renamed ? $renamed : $filename;
+        }
         $check = wp_check_filetype_and_ext( $tmp_file, $filename );
         if ( empty( $check['type'] ) ) {
             \wp_delete_file( $tmp_file );
@@ -325,45 +477,60 @@ class Upload_Media_From_Url extends Base_Tool {
         if ( ! empty( $check['proper_filename'] ) ) {
             $filename = $check['proper_filename'];
         }
-
-        $file_array = array(
-            'name'     => $filename,
-            'tmp_name' => $tmp_file,
-            'type'     => $check['type'],
-            'size'     => $body_len,
+        $not_image = self::featured_image_type_refusal( $featured, (string) $check['type'] );
+        if ( null !== $not_image ) {
+            \wp_delete_file( $tmp_file );
+            throw new \InvalidArgumentException( $not_image ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        return array(
+            'type' => $check['type'],
+            'name' => $filename,
         );
+    }
 
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private static function attachable_parent( array $arguments, string $tmp_file ): int {
         $parent_post_id = isset( $arguments['post_id'] ) ? (int) $arguments['post_id'] : 0;
         if ( $parent_post_id < 0 ) {
             $parent_post_id = 0;
         }
-
-        
-        
-        
-        
-        
         if ( $parent_post_id > 0 && ! current_user_can( 'edit_post', $parent_post_id ) ) {
             \wp_delete_file( $tmp_file );
             throw new \RuntimeException(
                 sprintf( 'You do not have permission to attach media to post %d.', $parent_post_id ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
+        return $parent_post_id;
+    }
 
-        
-        
-        
-        
-        $attachment_id = media_handle_sideload( $file_array, $parent_post_id );
-        if ( \is_wp_error( $attachment_id ) ) {
-            \wp_delete_file( $tmp_file );
-            throw new \RuntimeException( $attachment_id->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        }
+    
 
-        
-        
-        
-        
+
+
+
+
+
+
+
+
+
+
+
+    private static function apply_attachment_fields( int $attachment_id, array $arguments, ?string $slug ): void {
         $post_update = array( 'ID' => $attachment_id );
         if ( array_key_exists( 'title', $arguments ) ) {
             $post_update['post_title'] = sanitize_text_field( (string) $arguments['title'] );
@@ -371,22 +538,131 @@ class Upload_Media_From_Url extends Base_Tool {
         if ( array_key_exists( 'caption', $arguments ) ) {
             $post_update['post_excerpt'] = sanitize_text_field( (string) $arguments['caption'] );
         }
+        $post_update = self::add_post_fields( $post_update, $arguments, $slug );
         if ( count( $post_update ) > 1 ) {
             wp_update_post( $post_update );
         }
         if ( array_key_exists( 'alt_text', $arguments ) ) {
             update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( (string) $arguments['alt_text'] ) );
         }
+    }
 
-        $attachment = get_post( $attachment_id );
+    
 
-        return array(
-            'id'         => (int) $attachment_id,
-            'source_url' => wp_get_attachment_url( $attachment_id ),
-            'mime_type'  => $attachment ? (string) $attachment->post_mime_type : (string) $check['type'],
-            'title'      => $attachment ? (string) $attachment->post_title : '',
-            'file_size'  => $body_len,
-        );
+
+
+
+
+
+
+
+    private function parse_slug( array $arguments ): ?string {
+        if ( ! isset( $arguments['slug'] ) ) {
+            return null;
+        }
+        $slug = $arguments['slug'];
+        if ( ! is_string( $slug ) || '' === trim( $slug ) || '' === sanitize_title( $slug ) ) {
+            throw new \InvalidArgumentException( 'slug must contain letters or numbers that can form a URL slug; omit it to keep the slug WordPress derives from the title. Nothing was imported.' );
+        }
+        return trim( $slug );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function featured_image_target( array $arguments ): int {
+        if ( ! isset( $arguments['featured_image'] ) || ! rest_sanitize_boolean( $arguments['featured_image'] ) ) {
+            return 0;
+        }
+        $post_id = isset( $arguments['post_id'] ) ? (int) $arguments['post_id'] : 0;
+        if ( $post_id <= 0 ) {
+            throw new \InvalidArgumentException( 'featured_image needs post_id: the featured image is set on that post. Nothing was imported.' );
+        }
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            throw new \InvalidArgumentException( sprintf( 'Post %d not found, so its featured image cannot be set. Nothing was imported.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        $type = isset( $post->post_type ) ? (string) $post->post_type : 'post';
+        if ( ! post_type_supports( $type, 'thumbnail' ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Post %1$d is a "%2$s", a post type without featured images. Nothing was imported.', $post_id, $type ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            throw new \RuntimeException( sprintf( 'You do not have permission to edit post %d, so its featured image cannot be set. Nothing was imported.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        return $post_id;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private static function featured_image_type_refusal( int $featured, string $type ): ?string {
+        if ( $featured <= 0 || 0 === strpos( $type, 'image/' ) ) {
+            return null;
+        }
+        return sprintf( 'featured_image needs an image, and this file is %s. Nothing was imported.', '' !== $type ? $type : 'of an unknown type' );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function add_post_fields( array $post_update, array $arguments, ?string $slug ): array {
+        if ( array_key_exists( 'description', $arguments ) ) {
+            
+            
+            $post_update['post_content'] = wp_slash( (string) $arguments['description'] );
+        }
+        if ( null !== $slug ) {
+            $post_update['post_name'] = wp_slash( $slug );
+        }
+        return $post_update;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function set_featured_image( int $post_id, int $attachment_id ): void {
+        set_post_thumbnail( $post_id, $attachment_id );
+        if ( (int) get_post_meta( $post_id, '_thumbnail_id', true ) !== (int) $attachment_id ) {
+            throw new \RuntimeException(
+                sprintf( 'Attachment %1$d was imported, but WordPress did not set it as the featured image of post %2$d. Set it with wp_update_post (featured_media), or remove the attachment with wp_delete_media.', $attachment_id, $post_id ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
     }
 
     

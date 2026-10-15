@@ -48,7 +48,7 @@ class Aioseo_Get_Post_Seo extends Base_Tool {
 				),
 				'post_type' => array(
 					'type'        => 'string',
-					'description' => 'The REST API base for the post type (e.g. posts, pages).',
+					'description' => 'The REST API base for the post type (e.g. posts, pages). A post_type slug is also accepted.',
 					'default'     => 'posts',
 				),
 			),
@@ -62,9 +62,9 @@ class Aioseo_Get_Post_Seo extends Base_Tool {
 		}
 
 		$post_id   = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
-		$post_type = ! empty( $arguments['post_type'] ) ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' ) : 'posts';
+		$post_type = ! empty( $arguments['post_type'] ) ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' ) : 'posts';
 
-		$data = $this->rest_request( 'GET', '/wp/v2/' . $post_type . '/' . $post_id );
+		$data = $this->rest_request( 'GET', self::post_type_route( $post_type, $post_id, 'GET' ) );
 
 		return array(
 			'post_id'          => $post_id,

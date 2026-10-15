@@ -426,7 +426,7 @@ class Task_Manager {
         $now    = $this->now();
         $fields = array_merge( $fields, array(
             'status'         => $status,
-            'status_message' => substr( (string) $message, 0, 500 ),
+            'status_message' => Task_Contract::stored_message( $message ),
             'arguments'      => null, 
             'task_cursor'    => null,
             'updated_at'     => self::datetime( $now ),
@@ -439,7 +439,7 @@ class Task_Manager {
         if ( 'failed' === $status ) {
             $fields['error'] = \wp_json_encode( array(
                 'code'    => null === $error_code ? Error_Codes::INTERNAL_ERROR : (int) $error_code,
-                'message' => '' !== (string) $message ? substr( (string) $message, 0, 500 ) : 'Task failed',
+                'message' => '' !== (string) $message ? Task_Contract::stored_message( $message ) : 'Task failed',
             ) );
         }
         if ( ! $this->store->update_working( $row['task_id'], $fields, $lock ) ) {

@@ -235,6 +235,103 @@ class Transport {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function refuse_url_key( \WP_REST_Request $request ): ?\WP_REST_Response {
+        $api_keys = self::url_key_values( $request );
+        if ( ! $api_keys ) {
+            return null;
+        }
+        if ( ! class_exists( '\\Easy_MCP_AI\\Config' ) ) {
+            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config.php';
+        }
+        if ( true !== \Easy_MCP_AI\Config::get( 'api_key_header_only' ) ) {
+            return null;
+        }
+        $identity = array();
+        foreach ( $api_keys as $api_key ) {
+            $identity = $this->url_key_identity( $api_key );
+            if ( $identity ) {
+                break;
+            }
+        }
+        if ( $identity && $this->refusal_log_budget_allows( 'easy_mcp_ai_urlkeyreflog_', 'legacy', $identity['token_id'] ) ) {
+            $ip = class_exists( '\\Easy_MCP_AI\\Client_IP' )
+                ? (string) \Easy_MCP_AI\Client_IP::get()
+                : ( isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '' );
+            $this->server->log_auth_failure( $ip, self::ERROR_URL_KEY, $identity );
+        }
+        return $this->make_unauthorized_response( null, 401, 'invalid_request', self::URL_KEY_DESCRIPTION );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    private static function url_key_values( \WP_REST_Request $request ): array {
+        $first   = $request->get_param( 'api_key' );
+        $values  = empty( $first ) ? array() : array( $first );
+        $sources = array( $request->get_json_params(), $request->get_body_params(), $request->get_query_params(), $request->get_url_params() );
+        foreach ( $sources as $source ) {
+            if ( is_array( $source ) && ! empty( $source['api_key'] ) ) {
+                $values[] = $source['api_key'];
+            }
+        }
+        return $values;
+    }
+
+    
+
+
+
+
+
+
+
+
+    private function url_key_identity( $api_key ): array {
+        if ( ! is_string( $api_key ) || 0 !== strpos( $api_key, 'wpmcp_' ) ) {
+            return array();
+        }
+        $row = $this->token_manager->validate_token( $api_key );
+        if ( is_array( $row ) ) {
+            return array(
+                'auth_source' => 'legacy',
+                'token_id'    => (int) $row['id'],
+                'wp_user_id'  => (int) $row['wp_user_id'],
+            );
+        }
+        $reason = $this->token_manager->get_last_validation_error();
+        return $this->is_site_mismatch( $reason ) ? $this->site_mismatch_identity( $reason ) : array();
+    }
+
+    
+
+
+
     private function inject_url_token( \WP_REST_Request $request ) {
         $api_key = $request->get_param( 'api_key' );
         if ( $api_key && ! $request->get_header( 'authorization' ) ) {
@@ -298,6 +395,10 @@ class Transport {
         $this->server->set_request_client_caps( null );
         $this->oauth_scope          = null;
         $this->last_scope_challenge = null;
+        $url_key_refusal = $this->refuse_url_key( $request );
+        if ( $url_key_refusal ) {
+            return $url_key_refusal;
+        }
         $this->inject_url_token( $request );
         $this->inject_basic_api_key( $request );
 
@@ -956,6 +1057,10 @@ class Transport {
     }
 
     public function handle_get( \WP_REST_Request $request ) {
+        $url_key_refusal = $this->refuse_url_key( $request );
+        if ( $url_key_refusal ) {
+            return $url_key_refusal;
+        }
         $this->inject_url_token( $request );
 
         
@@ -991,6 +1096,10 @@ class Transport {
     }
 
     public function handle_delete( \WP_REST_Request $request ) {
+        $url_key_refusal = $this->refuse_url_key( $request );
+        if ( $url_key_refusal ) {
+            return $url_key_refusal;
+        }
         $this->inject_url_token( $request );
         $this->inject_basic_api_key( $request );
 
@@ -1509,7 +1618,7 @@ class Transport {
         $ip = class_exists( '\\Easy_MCP_AI\\Client_IP' )
             ? (string) \Easy_MCP_AI\Client_IP::get()
             : ( isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '' );
-        if ( $this->ip_refusal_log_budget_allows( $auth_source, $token_id ) ) {
+        if ( $this->refusal_log_budget_allows( 'easy_mcp_ai_ipreflog_', $auth_source, $token_id ) ) {
             $this->server->log_auth_failure( $ip, 'ip_forbidden', array(
                 'token_id'        => (int) $token_id,
                 'auth_source'     => $auth_source,
@@ -1536,14 +1645,16 @@ class Transport {
 
 
 
-    private function ip_refusal_log_budget_allows( $auth_source, $token_id ) {
+
+
+    private function refusal_log_budget_allows( string $family, ?string $auth_source, int $token_id ): bool {
         
         
         $limit = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
         if ( $limit < 1 ) {
             $limit = 60;
         }
-        $key = 'easy_mcp_ai_ipreflog_' . ( 'oauth' === $auth_source ? 'oauth' : 'legacy' ) . '_' . (int) $token_id;
+        $key = $family . ( 'oauth' === $auth_source ? 'oauth' : 'legacy' ) . '_' . (int) $token_id;
 
         if ( \wp_using_ext_object_cache() ) {
             \wp_cache_add( $key, 0, 'easy_mcp_ai', 60 );
@@ -1568,6 +1679,15 @@ class Transport {
 
 
     const SITE_MISMATCH_DESCRIPTION = 'The API key is bound to another site';
+
+    
+
+
+
+    const URL_KEY_DESCRIPTION = 'This site accepts API keys only in the Authorization header, never in the URL';
+
+    
+    const ERROR_URL_KEY = 'api_key_in_url';
 
     
     private function is_site_mismatch( $result ) {

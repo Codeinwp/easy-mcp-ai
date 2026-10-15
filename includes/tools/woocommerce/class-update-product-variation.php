@@ -7,14 +7,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once __DIR__ . '/trait-product-images.php';
+
 class Update_Product_Variation extends Base_Tool {
+
+    use Product_Images;
 
     public function get_name() {
         return 'wp_wc_update_product_variation';
     }
 
     public function get_description() {
-        return 'Updates an existing WooCommerce product variation (PUT/PATCH semantics). Required: `product_id`, `id`. Optional: `regular_price`, `sale_price` (set "" to remove a sale), `sku`, `stock_quantity`, `manage_stock`, `stock_status` (instock/outofstock/onbackorder), `status` (publish/private), `weight`, `description`, `virtual`, `downloadable`, `attributes` (array of {name, option}), `image` ({src}). Returns the updated variation summary. Requires WooCommerce active.';
+        return 'Updates an existing WooCommerce product variation (PUT/PATCH semantics). Required: `product_id`, `id`. Optional: `regular_price`, `sale_price` (set "" to remove a sale), `sku`, `stock_quantity`, `manage_stock`, `stock_status` (instock/outofstock/onbackorder), `status` (publish/private), `weight`, `description`, `virtual`, `downloadable`, `attributes` (array of {name, option}; [] clears them, so the variation matches any value), `image` ({id} or {src}, as for product images; {} removes it), `gallery_image_ids` (WooCommerce 11.1+: media library image IDs in order; replaces the gallery, [] clears it, the main image is left out). Returns the updated variation summary, plus `image` / `gallery_image_ids` as saved, each when sent. Requires WooCommerce active.';
     }
 
     public function get_category() {
@@ -103,9 +107,14 @@ class Update_Product_Variation extends Base_Tool {
                         ),
                     ),
                 ),
-                'image'          => array(
-                    'type'        => 'object',
-                    'description' => 'Variation image. Object with "src" key.',
+                'image'          => array_merge(
+                    $this->image_item_schema(),
+                    array( 'description' => 'Main variation image. {} removes it.' )
+                ),
+                'gallery_image_ids' => array(
+                    'type'        => 'array',
+                    'description' => 'WooCommerce 11.1+: media library image IDs, in order. Replaces the gallery; [] clears it.',
+                    'items'       => array( 'type' => 'integer' ),
                 ),
             ),
             'required'   => array( 'product_id', 'id' ),
@@ -156,16 +165,20 @@ class Update_Product_Variation extends Base_Tool {
         if ( isset( $arguments['downloadable'] ) ) {
             $params['downloadable'] = (bool) $arguments['downloadable'];
         }
-        if ( ! empty( $arguments['attributes'] ) ) {
+        if ( isset( $arguments['attributes'] ) ) {
             $params['attributes'] = $this->parse_json_param( $arguments['attributes'], 'attributes' );
         }
-        if ( ! empty( $arguments['image'] ) ) {
-            $params['image'] = $this->parse_json_param( $arguments['image'], 'image' );
+        if ( isset( $arguments['image'] ) ) {
+            $params['image'] = $this->image_param( $arguments['image'], 'image', true );
+        }
+        if ( isset( $arguments['gallery_image_ids'] ) ) {
+            $params['gallery_image_ids'] = $this->variation_gallery_param( $arguments['gallery_image_ids'] );
+            $this->require_variation_gallery_support( $product_id );
         }
 
         $data = $this->rest_request( 'PUT', '/wc/v3/products/' . $product_id . '/variations/' . $id, $params );
 
-        return array(
+        return $this->with_variation_images( $params, $data, array(
             'id'             => $data['id'],
             'product_id'     => $product_id,
             'sku'            => $data['sku'] ?? '',
@@ -175,6 +188,6 @@ class Update_Product_Variation extends Base_Tool {
             'stock_status'   => $data['stock_status'] ?? 'instock',
             'stock_quantity' => $data['stock_quantity'] ?? null,
             'attributes'     => $data['attributes'] ?? array(),
-        );
+        ) );
     }
 }

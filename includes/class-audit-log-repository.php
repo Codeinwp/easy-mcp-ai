@@ -175,7 +175,7 @@ class Audit_Log_Repository {
         global $wpdb;
         $table  = $this->table();
         $w      = self::build_where( $filters );
-        $cols   = self::qualify_columns( self::list_columns() );
+        $cols   = self::qualify_columns( self::list_columns() . $this->error_column() );
         $params = array_merge( $w['params'], array( (int) $limit, (int) $offset ) );
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; column list and WHERE are server-built, every user value bound via placeholders.
         $rows = $wpdb->get_results(
@@ -192,6 +192,28 @@ class Audit_Log_Repository {
     }
 
     
+    private static ?bool $has_error_column = null;
+
+    
+
+
+
+
+
+
+    private function error_column(): string {
+        if ( null === self::$has_error_column ) {
+            global $wpdb;
+            $found                  = ( is_object( $wpdb ) && method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'prepare' ) )
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one existence check on the plugin's own table.
+                ? $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$this->table()}` LIKE %s", 'error_message' ) )
+                : null;
+            self::$has_error_column = 'error_message' === $found;
+        }
+        return self::$has_error_column ? ', error_message' : '';
+    }
+
+    
 
 
 
@@ -201,7 +223,7 @@ class Audit_Log_Repository {
     public function find( $id ) {
         global $wpdb;
         $table = $this->table();
-        $cols  = self::qualify_columns( self::list_columns() );
+        $cols  = self::qualify_columns( self::list_columns() . $this->error_column() );
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; constant column list; the id is bound.
         $row = $wpdb->get_row( $wpdb->prepare( "SELECT {$cols} FROM `{$table}` l WHERE l.id = %d", (int) $id ), ARRAY_A );
         return is_array( $row ) ? $row : null;

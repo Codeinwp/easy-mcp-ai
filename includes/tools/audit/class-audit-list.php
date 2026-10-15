@@ -134,6 +134,9 @@ class Audit_List extends Base_Tool {
                 'duration_ms'     => isset( $r['duration_ms'] ) && null !== $r['duration_ms'] && '' !== $r['duration_ms'] ? (int) $r['duration_ms'] : null,
                 'ip_address'      => isset( $r['ip_address'] ) ? (string) $r['ip_address'] : null,
                 'arguments'       => $arguments,
+                
+                
+                'error'           => isset( $r['error_message'] ) && '' !== $r['error_message'] ? (string) $r['error_message'] : null,
             );
         }
         return array( 'items' => $items, 'total' => $total, 'limit' => $limit, 'offset' => $offset, 'count' => count( $items ), 'before_id' => $before_id );

@@ -25,10 +25,13 @@
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Access_Presets;
+use Easy_MCP_AI\Auth\Connect_Policy;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+require_once dirname( __DIR__, 2 ) . '/auth/class-connect-policy.php';
 
 class Tokens_Controller extends Admin_Rest_Controller {
 
@@ -503,15 +506,22 @@ class Tokens_Controller extends Admin_Rest_Controller {
     private function invalid_user() {
         return $this->fail(
             'easy_mcp_ai_invalid_user',
-            \__( 'Tokens can only be assigned to users who can publish posts (Authors and above).', 'easy-mcp-ai' ),
+            \__( 'Tokens can only be assigned to users who can publish posts (Authors and above), or who hold a role allowed to connect under Settings.', 'easy-mcp-ai' ),
             400,
             array( 'field' => 'userId' )
         );
     }
 
     
+
+
+
+
+
+
+
     public static function min_capability() {
-        return (string) \apply_filters( 'easy_mcp_ai_oauth_min_capability', 'publish_posts' );
+        return Connect_Policy::admin_key_capability();
     }
 
     
@@ -522,8 +532,7 @@ class Tokens_Controller extends Admin_Rest_Controller {
         if ( ! $user_id ) {
             return false;
         }
-        $user = \get_userdata( $user_id );
-        return $user ? (bool) \user_can( $user, self::min_capability() ) : false;
+        return Connect_Policy::user_can_connect( $user_id, Connect_Policy::CHANNEL_ADMIN_KEY );
     }
 
     
@@ -602,16 +611,41 @@ class Tokens_Controller extends Admin_Rest_Controller {
 
 
 
+
+
+
+    private static function assignable_users_query(): array {
+        $capability = self::min_capability();
+        if ( Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_ADMIN_KEY ) ) {
+            return array( 'capability' => $capability );
+        }
+        $query = array( 'capability__in' => array_values( array_unique( array( $capability, Connect_Policy::ALWAYS_CAPABILITY ) ) ) );
+        $roles = Connect_Policy::extra_roles();
+        if ( $roles ) {
+            $query['role__in'] = $roles;
+        }
+        return $query;
+    }
+
+    
+
+
+
+
+
     public static function assignable_users() {
-        $users = (array) \get_users( array(
-            'capability' => self::min_capability(),
-            'number'     => self::USERS_LIMIT,
-            'orderby'    => 'display_name',
-            'order'      => 'ASC',
+        $users = (array) \get_users( self::assignable_users_query() + array(
+            'number'  => self::USERS_LIMIT,
+            'orderby' => 'display_name',
+            'order'   => 'ASC',
         ) );
         $out = array();
         foreach ( $users as $user ) {
-            if ( ! is_object( $user ) || empty( $user->ID ) ) {
+            
+            
+            
+            
+            if ( ! is_object( $user ) || empty( $user->ID ) || ! Connect_Policy::user_can_connect( $user, Connect_Policy::CHANNEL_ADMIN_KEY ) ) {
                 continue;
             }
             $out[] = array(

@@ -41,6 +41,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+
+
+
 class Check_Discovery {
 
     
@@ -59,14 +62,20 @@ class Check_Discovery {
             foreach ( self::mirror_urls() as $name => $url ) {
                 $mirrors[ $name ] = self::probe( $url );
             }
+            $slashed = array();
             foreach ( self::root_urls() as $name => $url ) {
                 $roots[ $name ] = self::probe( $url );
+                
+                
+                if ( self::is_trailing_slash_redirect( $roots[ $name ], $url ) ) {
+                    $slashed[ $name ] = self::probe( $url . '/' );
+                }
             }
         } catch ( \Throwable $e ) {
             return array( self::unknown( __( 'The discovery test could not run on this site.', 'easy-mcp-ai' ) ) );
         }
 
-        $result   = self::evaluate( $mirrors, $roots );
+        $result   = self::evaluate( $mirrors, $roots, $slashed );
         $mcp_path = null;
         if ( true === self::root_blocked_verdict( $result ) ) {
             try {
@@ -136,6 +145,18 @@ class Check_Discovery {
 
         if ( ! $armed || $plain || ! is_bool( $mcp_path ) ) {
             return $result;
+        }
+
+        if ( ! empty( $evidence['trailing_slash'] ) ) {
+            $evidence['workaround'] = $mcp_path ? 'mcp_path' : 'root';
+            return Diagnostic_Result::warn(
+                'a10',
+                Diagnostic_Result::TIER_WARNING,
+                $result->label(),
+                __( 'Your server redirects the sign-in addresses at your domain root to the same address with a slash added. This site answers there, so a client that follows the redirect connects, and this plugin points AI clients at copies that need no redirect. A client that only looks at the domain root and does not follow redirects can still fail.', 'easy-mcp-ai' ),
+                self::slash_fix(),
+                $evidence
+            );
         }
 
         if ( $mcp_path ) {
@@ -427,7 +448,9 @@ class Check_Discovery {
 
 
 
-    public static function evaluate( array $mirrors, array $roots ) {
+
+
+    public static function evaluate( array $mirrors, array $roots, array $slashed = array() ) {
         $label = self::label();
 
         $blocked  = array();
@@ -548,6 +571,29 @@ class Check_Discovery {
         
         if ( ! empty( $blocked ) ) {
             $evidence['reason'] = 'blocked';
+            
+            
+            
+            
+            
+            $slash_only = true;
+            foreach ( $blocked as $name ) {
+                if ( ! self::slash_form_is_current( $slashed[ $name ] ?? null, $mirrors[ $name ] ?? null ) ) {
+                    $slash_only = false;
+                    break;
+                }
+            }
+            if ( $slash_only ) {
+                $evidence['trailing_slash'] = array_values( $blocked );
+                return Diagnostic_Result::fail(
+                    'a10',
+                    Diagnostic_Result::TIER_BLOCKER,
+                    $label,
+                    self::slash_detail() . $partial,
+                    self::slash_fix(),
+                    $evidence
+                );
+            }
             return Diagnostic_Result::fail(
                 'a10',
                 Diagnostic_Result::TIER_BLOCKER,
@@ -643,6 +689,67 @@ class Check_Discovery {
 
 
 
+
+
+
+    public static function is_trailing_slash_redirect( ?array $result, string $url ): bool {
+        if ( null === $result ) {
+            return false;
+        }
+        if ( (int) $result['status'] < 300 || (int) $result['status'] >= 400 || empty( $result['location'] ) ) {
+            return false;
+        }
+        $target = \wp_parse_url( $url . '/' );
+        $to     = \wp_parse_url( (string) $result['location'] );
+        if ( ! is_array( $target ) || ! is_array( $to ) || ! isset( $to['path'] ) || isset( $to['query'] ) || isset( $to['fragment'] ) ) {
+            return false;
+        }
+        if ( isset( $to['host'] ) ) {
+            foreach ( array( 'scheme', 'host', 'port' ) as $part ) {
+                if ( strtolower( (string) ( $target[ $part ] ?? '' ) ) !== strtolower( (string) ( $to[ $part ] ?? '' ) ) ) {
+                    return false;
+                }
+            }
+        }
+        return isset( $target['path'] ) && $target['path'] === $to['path'];
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function slash_form_is_current( ?array $slashed, ?array $mirror ): bool {
+        if ( ! self::looks_like_our_document( $slashed ) || ! self::is_our_document( $mirror ) ) {
+            return false;
+        }
+        $a = json_decode( (string) $slashed['body'], true );
+        $b = json_decode( (string) $mirror['body'], true );
+        self::ksort_recursive( $a );
+        self::ksort_recursive( $b );
+        return $a === $b;
+    }
+
+    
+    private static function slash_detail(): string {
+        return __( 'Before an AI client can sign in, it has to read two small documents from this site\'s address. Your server redirects those addresses to the same address with a slash added. This site answers there, so a client that follows the redirect connects, but a client that does not follow redirects cannot begin.', 'easy-mcp-ai' );
+    }
+
+    
+    private static function slash_fix(): string {
+        return __( 'Exclude /.well-known/ from the rule that adds a trailing slash to addresses. The rule is in your server configuration, in .htaccess, or in a redirect or SEO plugin; your host can tell you which. Nothing else is needed.', 'easy-mcp-ai' );
+    }
+
+    
+
+
+
+
+
     public static function blocked_detail( array $blocked, array $roots = array() ) {
         
         
@@ -683,8 +790,7 @@ class Check_Discovery {
 
 
 
-
-    private static function probe( $url ) {
+    private static function probe( $url ): ?array {
         if ( ! function_exists( 'wp_remote_get' ) ) {
             return null;
         }
@@ -713,9 +819,12 @@ class Check_Discovery {
         }
 
         return array(
-            'status' => (int) \wp_remote_retrieve_response_code( $response ),
-            'type'   => (string) \wp_remote_retrieve_header( $response, 'content-type' ),
-            'body'   => (string) \wp_remote_retrieve_body( $response ),
+            'status'   => (int) \wp_remote_retrieve_response_code( $response ),
+            'type'     => (string) \wp_remote_retrieve_header( $response, 'content-type' ),
+            'body'     => (string) \wp_remote_retrieve_body( $response ),
+            
+            
+            'location' => (string) \wp_remote_retrieve_header( $response, 'location' ),
         );
     }
 

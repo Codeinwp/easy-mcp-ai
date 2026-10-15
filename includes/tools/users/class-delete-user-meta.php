@@ -16,7 +16,7 @@ class Delete_User_Meta extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Deletes user meta. Required: `user_id`, `key`. Optional: `value` (deletes only matching rows). Returns { deleted: bool, user_id, key, value_provided: bool }. Users can delete their own meta; deleting another user\'s meta requires the `edit_user` capability for that user. Auth-sensitive keys blocked. `_`-prefixed keys require admin + per-key allowlist.';
+        return 'Deletes user meta. Required: `user_id`, `key`. Optional: `value` (deletes only matching rows). Returns { deleted: bool, user_id, key, value_provided: bool }. Users can delete their own meta; deleting another user\'s meta requires the `edit_user` capability for that user. Auth-sensitive keys blocked, and so is a key with a character outside printable ASCII (an accented letter, a full-width form): the database compares keys ignoring accents and width, so it could reach a protected key. `_`-prefixed keys require admin + per-key allowlist.';
     }
 
     public function get_category() {
@@ -70,6 +70,9 @@ class Delete_User_Meta extends Base_Tool {
         $key = sanitize_text_field( (string) $arguments['key'] );
         if ( '' === $key ) {
             throw new \InvalidArgumentException( 'Key cannot be empty.' );
+        }
+        if ( self::is_outside_printable_ascii( $key ) ) {
+            throw new \RuntimeException( self::outside_printable_ascii_refusal( $key, 'deleted' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( self::is_auth_protected( $key ) ) {
             throw new \RuntimeException( 'Auth-sensitive meta keys cannot be deleted via this tool.' );

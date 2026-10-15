@@ -18,6 +18,12 @@ require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-keys.php';
 
 class OAuth_Token_Manager {
 
+    
+    const ROTATION_SETTLE_MS = 1000;
+
+    
+    const ROTATION_POLL_MS = 100;
+
     const TOKEN_PREFIX          = 'wpmcp_oat_';
     const DEFAULT_ACCESS_TTL   = 3600;
     const DEFAULT_REFRESH_TTL  = 2592000; 
@@ -210,7 +216,7 @@ class OAuth_Token_Manager {
                 return false;
             }
             $chain_id = ! empty( $row['refresh_parent_id'] ) ? (int) $row['refresh_parent_id'] : (int) $row['id'];
-            if ( $this->chain_has_live_successor( $chain_id ) ) {
+            if ( $this->successor_settles( $chain_id ) ) {
                 
                 
                 
@@ -258,7 +264,7 @@ class OAuth_Token_Manager {
             
             
             
-            if ( $this->chain_has_live_successor( $parent_id ) ) {
+            if ( $this->successor_settles( $parent_id ) ) {
                 
                 
                 $this->log_refresh_event( 'race_refused', $parent_id, $client_id );
@@ -358,6 +364,36 @@ class OAuth_Token_Manager {
         $chain_id = ! empty( $row['refresh_parent_id'] ) ? (int) $row['refresh_parent_id'] : (int) $row['id'];
         $this->revoke_chain( $chain_id );
         return true;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function successor_settles( int $chain_id ): bool {
+        if ( $this->chain_has_live_successor( $chain_id ) ) {
+            return true;
+        }
+        for ( $waited = 0; $waited < self::ROTATION_SETTLE_MS; $waited += self::ROTATION_POLL_MS ) {
+            usleep( self::ROTATION_POLL_MS * 1000 );
+            if ( $this->chain_has_live_successor( $chain_id ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     

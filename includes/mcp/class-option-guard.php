@@ -86,6 +86,8 @@ final class Option_Guard {
 
 
 
+
+
     public static function while_suspended( callable $write ) {
         ++self::$suspended;
         try {

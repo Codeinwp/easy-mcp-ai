@@ -14,7 +14,7 @@ class Get_Product extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Gets a single WooCommerce product by ID. Required: `id`. Returns the full WooCommerce REST API v3 product object — key fields: id, name, slug, permalink, type (simple/variable/grouped/external), status, featured, description, short_description, sku, price, regular_price, sale_price, on_sale, manage_stock, stock_quantity, stock_status (instock/outofstock/onbackorder), weight, dimensions (object with length/width/height), categories (array of {id,name,slug}), tags, images (array), attributes (array), variations (array of IDs — fetch each with wp_wc_get_product_variation), meta_data. SEO head markup (yoast_head*, aioseo_head*, aioseo_breadcrumb*) is omitted. Requires WooCommerce active.';
+        return 'Gets a single WooCommerce product by ID. Required: `id`. Returns the full WooCommerce REST API v3 product object — key fields: id, name, slug, permalink, type (simple/variable/grouped/external), status, featured, description, short_description, sku, price, regular_price, sale_price, on_sale, manage_stock, stock_quantity, stock_status (instock/outofstock/onbackorder), weight, dimensions (object with length/width/height), categories (array of {id,name,slug}), tags, images (featured image first, if any, then the gallery), attributes (array), variations (array of IDs — fetch each with wp_wc_get_product_variation), meta_data. SEO head markup (yoast_head*, aioseo_head*, aioseo_breadcrumb*) is omitted. Requires WooCommerce active.';
     }
 
     public function get_category() {

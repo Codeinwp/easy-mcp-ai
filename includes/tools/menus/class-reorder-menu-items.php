@@ -9,6 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+require_once __DIR__ . '/class-list-menu-items.php';
+require_once __DIR__ . '/trait-menu-item-refusal.php';
+
+
+
 
 
 
@@ -23,15 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Reorder_Menu_Items extends Base_Tool {
 
-    
-    const PER_PAGE = 100;
-
-    
-
-
-
-
-    const MAX_PAGES = 100;
+    use Menu_Item_Refusal;
 
     
     const IDS_IN_MESSAGE = 8;
@@ -112,7 +109,7 @@ class Reorder_Menu_Items extends Base_Tool {
         $entries = $this->parse_entries( $arguments['items'] );
 
         $this->assert_menu_exists( $menu_id );
-        $current = $this->load_items( $menu_id );
+        $current = List_Menu_Items::every_item( $menu_id );
 
         
         
@@ -140,7 +137,7 @@ class Reorder_Menu_Items extends Base_Tool {
         return array(
             'menu_id' => $menu_id,
             'changed' => count( $applied ),
-            'items'   => $this->shape_items( $this->load_items( $menu_id ) ),
+            'items'   => $this->shape_items( List_Menu_Items::every_item( $menu_id ) ),
         );
     }
 
@@ -214,99 +211,10 @@ class Reorder_Menu_Items extends Base_Tool {
 
 
 
-
-
-
     private static function throw_if_no_route( $error ) {
         if ( 'rest_no_route' === $error->get_error_code() ) {
             throw new \RuntimeException( 'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.' );
         }
-    }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private function load_items( $menu_id ) {
-        $items = array();
-        $page  = 1;
-        do {
-            $result = $this->fetch_page( $menu_id, $page );
-            foreach ( $result['items'] as $item ) {
-                if ( is_array( $item ) && isset( $item['id'] ) ) {
-                    $items[ (int) $item['id'] ] = $item;
-                }
-            }
-            $more = $result['more'];
-            ++$page;
-        } while ( $more && $page <= self::MAX_PAGES );
-
-        if ( $more ) {
-            throw new \RuntimeException( sprintf( 'Menu %d has more than %d items; refusing to reorder a menu that could not be read in full.', $menu_id, self::PER_PAGE * self::MAX_PAGES ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        }
-
-        uasort(
-            $items,
-            static function ( $a, $b ) {
-                $order = (int) $a['menu_order'] - (int) $b['menu_order'];
-                return 0 !== $order ? $order : (int) $a['id'] - (int) $b['id'];
-            }
-        );
-        return $items;
-    }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private function fetch_page( $menu_id, $page ) {
-        $request = new \WP_REST_Request( 'GET', '/wp/v2/menu-items' );
-        $request->set_param( 'menus', $menu_id );
-        $request->set_param( 'per_page', self::PER_PAGE );
-        $request->set_param( 'page', $page );
-        $request->set_param( 'status', array( 'publish', 'draft' ) );
-        $request->set_param( 'orderby', 'id' );
-        $request->set_param( 'order', 'asc' );
-        $request->set_param( 'context', 'edit' );
-
-        $response = rest_do_request( $request );
-        if ( $response->is_error() ) {
-            $error = $response->as_error();
-            self::throw_if_no_route( $error );
-            throw new \RuntimeException( self::rest_error_message( $error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        }
-
-        $batch       = (array) $response->get_data();
-        $headers     = $response->get_headers();
-        $total_pages = isset( $headers['X-WP-TotalPages'] ) ? (int) $headers['X-WP-TotalPages'] : null;
-
-        return array(
-            'items' => $batch,
-            'more'  => null !== $total_pages ? $page < $total_pages : count( $batch ) >= self::PER_PAGE,
-        );
     }
 
     
@@ -381,7 +289,7 @@ class Reorder_Menu_Items extends Base_Tool {
             $listed[ $entry['id'] ] = $entry['parent'];
         }
         if ( $duplicates ) {
-            $this->refuse( 'items lists the same id more than once: %s. List each menu item exactly once.', array_values( $duplicates ) );
+            $this->refuse( 'items lists the same id more than once: %s.', array_values( $duplicates ), 'List each menu item exactly once.' );
         }
         return $listed;
     }
@@ -414,13 +322,13 @@ class Reorder_Menu_Items extends Base_Tool {
         }
 
         if ( $foreign ) {
-            $this->refuse( 'these ids are not items of menu ' . $menu_id . ': %s. Use menu_item ids from wp_list_menu_items for this menu.', $foreign );
+            $this->refuse( 'these ids are not items of menu ' . $menu_id . ': %s.', $foreign, 'Use menu_item ids from wp_list_menu_items for this menu.' );
         }
         if ( $self ) {
             $this->refuse( 'an item cannot be its own parent: %s.', $self );
         }
         if ( $bad_parent ) {
-            $this->refuse( 'these parents are not items of menu ' . $menu_id . ': %s. A parent must be an item of the same menu, or 0 for top level.', array_values( array_unique( $bad_parent ) ) );
+            $this->refuse( 'these parents are not items of menu ' . $menu_id . ': %s.', array_values( array_unique( $bad_parent ) ), 'A parent must be an item of the same menu, or 0 for top level.' );
         }
     }
 
@@ -440,7 +348,7 @@ class Reorder_Menu_Items extends Base_Tool {
         foreach ( $missing as $id ) {
             $labels[] = ( isset( $current[ $id ]['status'] ) && 'draft' === $current[ $id ]['status'] ) ? $id . ' (draft)' : (string) $id;
         }
-        $this->refuse( sprintf( 'strict mode, %d item(s) of menu %d not listed: %%s. List every item, or pass strict=false.', count( $missing ), $menu_id ), $labels );
+        $this->refuse( sprintf( 'strict mode, %d item(s) of menu %d not listed: %%s.', count( $missing ), $menu_id ), $labels, 'List every item of the menu, or pass strict=false to move only the listed ones.' );
     }
 
     
@@ -623,7 +531,7 @@ class Reorder_Menu_Items extends Base_Tool {
         foreach ( $writes as $row ) {
             if ( ! current_user_can( 'edit_post', $row['id'] ) ) {
                 $denied[] = $row['id'];
-            } elseif ( $this->is_unsaveable( $current[ $row['id'] ] ) ) {
+            } elseif ( List_Menu_Items::unsaveable( $current[ $row['id'] ] ) ) {
                 $unsaveable[] = $row['id'];
             }
         }
@@ -632,29 +540,8 @@ class Reorder_Menu_Items extends Base_Tool {
             $this->refuse( 'you are not allowed to edit menu item(s) %s.', $denied );
         }
         if ( $unsaveable ) {
-            $this->refuse( 'WordPress will not re-save menu item(s) %s: a custom link with an empty title or URL, or an archive link to a post type that is no longer registered. Fix them with wp_update_menu_item first.', $unsaveable );
+            $this->refuse( 'WordPress will not re-save menu item(s) %s as stored.', $unsaveable, 'A custom link with an empty title or URL, or an archive link to a post type that is no longer registered, cannot be re-saved. Fix them with wp_update_menu_item first.' );
         }
-    }
-
-    
-
-
-
-
-
-
-
-
-
-    private function is_unsaveable( array $item ) {
-        $type = isset( $item['type'] ) ? (string) $item['type'] : '';
-        if ( 'custom' === $type ) {
-            return '' === $this->item_title( $item, 'raw' ) || empty( $item['url'] );
-        }
-        if ( 'post_type_archive' === $type ) {
-            return ! post_type_exists( isset( $item['object'] ) ? (string) $item['object'] : '' );
-        }
-        return false;
     }
 
     
@@ -708,7 +595,7 @@ class Reorder_Menu_Items extends Base_Tool {
         );
 
         try {
-            $report['items'] = $this->shape_items( $this->load_items( $menu_id ) );
+            $report['items'] = $this->shape_items( List_Menu_Items::every_item( $menu_id ) );
         } catch ( \RuntimeException $e ) {
             
             unset( $e );
@@ -739,21 +626,5 @@ class Reorder_Menu_Items extends Base_Tool {
             );
         }
         return $out;
-    }
-
-    
-
-
-
-
-
-
-    private function refuse( $format, array $ids ) {
-        $shown = array_slice( $ids, 0, self::IDS_IN_MESSAGE );
-        $list  = implode( ', ', $shown );
-        if ( count( $ids ) > count( $shown ) ) {
-            $list .= sprintf( ' (+%d more)', count( $ids ) - count( $shown ) );
-        }
-        throw new \InvalidArgumentException( 'Refused, nothing was changed: ' . sprintf( $format, $list ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 }

@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Scope_Map {
 
+    
+
+
+
+
+
     const SCOPE_MAP = array(
         
         
@@ -18,7 +24,7 @@ class Scope_Map {
         'mcp:cpt:read'           => array( 'wp_list_cpt_items', 'wp_get_cpt_item' ),
         'mcp:cpt:write'          => array( 'wp_create_cpt_item', 'wp_update_cpt_item', 'wp_delete_cpt_item' ),
         'mcp:media:read'         => array( 'wp_get_media', 'wp_list_media', 'wp_count_media' ),
-        'mcp:media:write'        => array( 'wp_upload_media', 'wp_update_media', 'wp_delete_media', 'wp_upload_media_from_url' ),
+        'mcp:media:write'        => array( 'wp_upload_media', 'wp_update_media', 'wp_delete_media', 'wp_upload_media_from_url', 'wp_edit_media_image', 'wp_regenerate_media_sizes' ),
         'mcp:taxonomies:read'    => array( 'wp_get_category', 'wp_list_categories', 'wp_get_tag', 'wp_list_tags', 'wp_get_taxonomies', 'wp_count_terms', 'wp_get_term', 'wp_list_terms' ),
         'mcp:taxonomies:write'   => array( 'wp_create_category', 'wp_update_category', 'wp_delete_category', 'wp_create_tag', 'wp_update_tag', 'wp_delete_tag', 'wp_create_term', 'wp_update_term', 'wp_delete_term' ),
         'mcp:term_meta:read'     => array( 'wp_get_term_meta' ),
@@ -62,15 +68,29 @@ class Scope_Map {
         'mcp:plugins:write'      => array( 'wp_activate_plugin', 'wp_deactivate_plugin', 'wp_update_plugin' ),
         
         
+        
+        
+        
+        
+        
+        'mcp:plugin_files:write' => array( 'wp_install_plugin', 'wp_delete_plugin', 'wp_uninstall_plugin' ),
+        
+        
         'mcp:themes:read'        => array( 'wp_list_themes', 'wp_get_active_theme' ),
         'mcp:themes:write'       => array( 'wp_switch_theme', 'wp_update_theme' ),
+        'mcp:theme_files:write'  => array( 'wp_install_theme', 'wp_delete_theme' ),
         'mcp:settings:read'      => array( 'wp_get_site_settings' ),
         'mcp:settings:write'     => array( 'wp_update_site_settings' ),
-        'mcp:woocommerce:read'   => array( 'wp_wc_get_product', 'wp_wc_list_products', 'wp_wc_get_order', 'wp_wc_list_orders', 'wp_wc_get_customer', 'wp_wc_list_customers', 'wp_wc_list_coupons', 'wp_wc_get_coupon', 'wp_wc_list_order_notes', 'wp_wc_list_order_refunds', 'wp_wc_list_payment_gateways', 'wp_wc_list_shipping_methods', 'wp_wc_list_shipping_zones', 'wp_wc_list_tax_rates', 'wp_wc_list_webhooks', 'wp_wc_list_product_categories', 'wp_wc_list_product_variations', 'wp_wc_get_product_variation', 'wp_wc_list_product_attributes', 'wp_wc_report_sales', 'wp_wc_report_orders', 'wp_wc_report_products', 'wp_wc_report_customers', 'wp_wc_report_top_sellers' ),
+        'mcp:woocommerce:read'   => array( 'wp_wc_get_product', 'wp_wc_list_products', 'wp_wc_get_order', 'wp_wc_list_orders', 'wp_wc_get_customer', 'wp_wc_list_customers', 'wp_wc_list_coupons', 'wp_wc_get_coupon', 'wp_wc_list_order_notes', 'wp_wc_list_order_refunds', 'wp_wc_list_payment_gateways', 'wp_wc_list_shipping_methods', 'wp_wc_list_shipping_zones', 'wp_wc_list_tax_rates', 'wp_wc_list_webhooks', 'wp_wc_list_product_categories', 'wp_wc_list_product_variations', 'wp_wc_get_product_variation', 'wp_wc_list_product_attributes', 'wp_wc_report_sales', 'wp_wc_report_orders', 'wp_wc_report_products', 'wp_wc_report_customers', 'wp_wc_report_top_sellers', 'wp_wc_list_logs', 'wp_wc_get_log' ),
         'mcp:woocommerce:write'  => array( 'wp_wc_create_product', 'wp_wc_update_product', 'wp_wc_delete_product', 'wp_wc_create_order', 'wp_wc_update_order', 'wp_wc_create_order_note', 'wp_wc_create_customer', 'wp_wc_update_customer', 'wp_wc_delete_customer', 'wp_wc_create_coupon', 'wp_wc_update_coupon', 'wp_wc_delete_coupon', 'wp_wc_create_product_variation', 'wp_wc_update_product_variation', 'wp_wc_delete_product_variation', 'wp_wc_batch_update_products', 'wp_wc_batch_update_orders', 'wp_wc_batch_update_variations', 'wp_wc_create_product_attribute', 'wp_wc_set_product_attributes' ),
         'mcp:wc_webhooks:write'  => array( 'wp_wc_create_webhook', 'wp_wc_update_webhook', 'wp_wc_delete_webhook' ),
         'mcp:acf:read'           => array( 'wp_acf_get_fields', 'wp_acf_get_term_fields', 'wp_acf_get_user_fields', 'wp_acf_list_field_groups' ),
         'mcp:acf:write'          => array( 'wp_acf_update_fields', 'wp_acf_update_user_fields' ),
+        
+        
+        
+        
+        'mcp:acf_posts:write'    => array( 'wp_acf_update_fields' ),
         'mcp:buddypress:read'    => array( 'wp_bp_list_activity', 'wp_bp_list_groups', 'wp_bp_get_group', 'wp_bp_list_group_members', 'wp_bp_list_members', 'wp_bp_get_member', 'wp_bp_list_message_threads', 'wp_bp_get_message_thread' ),
         'mcp:buddypress:write'   => array( 'wp_bp_create_activity', 'wp_bp_delete_activity' ),
         'mcp:events:read'        => array( 'wp_tec_list_events', 'wp_tec_get_event', 'wp_tec_list_venues', 'wp_tec_get_venue', 'wp_tec_list_organizers' ),
@@ -120,6 +140,20 @@ class Scope_Map {
         
         'mcp:site_health:read'   => array( 'wp_get_site_health', 'wp_list_cron_events', 'wp_get_error_log', 'wp_get_easy_mcp_diagnostics' ),
         'mcp:site_health:write'  => array( 'wp_run_cron_event' ),
+        
+        'mcp:cache:write'        => array( 'wp_clear_cache' ),
+        
+        
+        
+        
+        
+        'mcp:core_update:write'  => array( 'wp_update_core' ),
+        
+        
+        
+        
+        
+        'mcp:cli:write'          => array( 'wp_cli_run' ),
         'mcp:semrush:read'       => array(
             'wp_semrush_domain_overview',
             'wp_semrush_domain_organic_keywords',
@@ -197,6 +231,7 @@ class Scope_Map {
         'woocommerce' => 'WooCommerce',
         'wc_webhooks' => 'WooCommerce',
         'acf'         => 'Advanced Custom Fields',
+        'acf_posts'   => 'Advanced Custom Fields',
         'buddypress'  => 'BuddyPress',
         'events'      => 'The Events Calendar',
         'redirection' => 'Redirection',
@@ -224,6 +259,7 @@ class Scope_Map {
         'woocommerce' => array( 'WooCommerce' ),
         'wc_webhooks' => array( 'WooCommerce' ),
         'acf'         => array( 'ACF' ),
+        'acf_posts'   => array( 'ACF' ),
         'buddypress'  => array( 'BuddyPress' ),
         'events'      => array( 'Tribe__Events__Main' ),
         'redirection' => array( 'Red_Item' ),
@@ -640,12 +676,21 @@ class Scope_Map {
         $scopes[] = 'mcp:rest:read';
 
         
+        
+        $scopes[] = 'mcp:cache:write';
+
+        
         foreach ( array_keys( self::PLUGIN_CATEGORIES ) as $cat ) {
             if ( ! isset( self::SCOPE_MAP[ "mcp:{$cat}:read" ] ) ) {
                 continue;
             }
             $scopes[] = "mcp:{$cat}:read";
         }
+
+        
+        
+        
+        $scopes[] = 'mcp:acf_posts:write';
 
         return implode( ' ', $scopes );
     }
@@ -690,10 +735,16 @@ class Scope_Map {
 
 
 
-    public static function get_categories(): array {
-        $categories = array();
-        $seen       = array();
 
+    private const DEFAULT_OFF_CATEGORIES = array( 'settings', 'plugins', 'themes', 'appearance', 'widgets', 'wc_webhooks', 'user_create', 'user_update', 'user_delete', 'history', 'audit', 'site_health', 'core_update', 'plugin_files', 'theme_files', 'cli', 'rest_delete' );
+
+    
+
+
+
+
+
+    public static function get_categories(): array {
         
         
         
@@ -708,6 +759,9 @@ class Scope_Map {
             require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
         }
 
+        $labels     = self::category_labels();
+        $categories = array();
+        $seen       = array();
         foreach ( array_keys( self::SCOPE_MAP ) as $leaf ) {
             $parts = explode( ':', $leaf );
             $slug  = $parts[1];
@@ -716,127 +770,179 @@ class Scope_Map {
                 continue;
             }
             $seen[ $slug ] = true;
+            $categories[]  = self::scope_category( $slug, $labels );
+        }
 
-            $labels = array(
-                'posts'       => __( 'Posts & Pages', 'easy-mcp-ai' ),
-                'cpt'         => __( 'Custom Post Types', 'easy-mcp-ai' ),
-                'media'       => __( 'Media', 'easy-mcp-ai' ),
-                'taxonomies'  => __( 'Taxonomies', 'easy-mcp-ai' ),
-                'comments'    => __( 'Comments', 'easy-mcp-ai' ),
-                'users'       => __( 'Users', 'easy-mcp-ai' ),
-                'menus'       => __( 'Menus', 'easy-mcp-ai' ),
-                'blocks'      => __( 'Blocks & Themes', 'easy-mcp-ai' ),
-                'plugins'     => __( 'Plugins', 'easy-mcp-ai' ),
-                'themes'      => __( 'Themes', 'easy-mcp-ai' ),
-                'settings'    => __( 'Settings', 'easy-mcp-ai' ),
-                'woocommerce' => 'WooCommerce',
-                'acf'         => __( 'Advanced Custom Fields', 'easy-mcp-ai' ),
-                'buddypress'  => 'BuddyPress',
-                'events'      => __( 'The Events Calendar', 'easy-mcp-ai' ),
-                'redirection' => 'Redirection',
-                'yoast'       => __( 'Yoast SEO', 'easy-mcp-ai' ),
-                'aioseo'      => __( 'All in One SEO', 'easy-mcp-ai' ),
-                'rankmath'    => __( 'Rank Math SEO', 'easy-mcp-ai' ),
-                'gsc'         => __( 'Google Search Console', 'easy-mcp-ai' ),
-                'ga'          => __( 'Google Analytics', 'easy-mcp-ai' ),
-                'dfs'         => __( 'DataforSEO', 'easy-mcp-ai' ),
-                'semrush'     => __( 'Semrush', 'easy-mcp-ai' ),
-                'ahrefs'      => __( 'Ahrefs (DR)', 'easy-mcp-ai' ),
-                'seranking'   => __( 'SE Ranking', 'easy-mcp-ai' ),
-                'seopress'    => __( 'SEOPress', 'easy-mcp-ai' ),
-                'slimseo'     => __( 'Slim SEO', 'easy-mcp-ai' ),
-                'tsf'         => __( 'The SEO Framework', 'easy-mcp-ai' ),
-                'term_meta'   => __( 'Term Meta', 'easy-mcp-ai' ),
-                'user_meta'   => __( 'User Meta', 'easy-mcp-ai' ),
-                'appearance'  => __( 'Site Appearance (templates, global styles, theme mods & CSS)', 'easy-mcp-ai' ),
-                'widgets'     => __( 'Widgets & Sidebars', 'easy-mcp-ai' ),
-                'wc_webhooks' => 'WooCommerce Webhooks',
-                'user_create' => __( 'Users — Create', 'easy-mcp-ai' ),
-                'user_update' => __( 'Users — Update', 'easy-mcp-ai' ),
-                'user_delete' => __( 'Users — Delete', 'easy-mcp-ai' ),
-                'history'     => __( 'Change History (audit log of MCP edits)', 'easy-mcp-ai' ),
-                'audit'       => __( 'Audit Log (every MCP call, all users — admin only)', 'easy-mcp-ai' ),
-                'site_health' => __( 'Site Health, Cron & Error Log', 'easy-mcp-ai' ),
-                'rest'        => __( 'REST routes of plugins and core (the route checks your permissions)', 'easy-mcp-ai' ),
-                'rest_delete' => __( 'REST routes — Delete', 'easy-mcp-ai' ),
-            );
+        return array_merge( $categories, self::ability_categories() );
+    }
 
-            $is_core        = in_array( $slug, self::CORE_CATEGORIES, true );
-            $is_plugin      = isset( self::PLUGIN_CATEGORIES[ $slug ] );
-            $plugin_required = $is_plugin ? self::PLUGIN_CATEGORIES[ $slug ] : null;
+    
 
+
+
+
+
+    private static function category_labels(): array {
+        return array(
+            'posts'       => __( 'Posts & Pages', 'easy-mcp-ai' ),
+            'cpt'         => __( 'Custom Post Types', 'easy-mcp-ai' ),
+            'media'       => __( 'Media', 'easy-mcp-ai' ),
+            'taxonomies'  => __( 'Taxonomies', 'easy-mcp-ai' ),
+            'comments'    => __( 'Comments', 'easy-mcp-ai' ),
+            'users'       => __( 'Users', 'easy-mcp-ai' ),
+            'menus'       => __( 'Menus', 'easy-mcp-ai' ),
+            'blocks'      => __( 'Blocks & Themes', 'easy-mcp-ai' ),
+            'plugins'     => __( 'Plugins', 'easy-mcp-ai' ),
+            'themes'      => __( 'Themes', 'easy-mcp-ai' ),
+            'settings'    => __( 'Settings', 'easy-mcp-ai' ),
+            'woocommerce' => 'WooCommerce',
+            'acf'         => __( 'Advanced Custom Fields', 'easy-mcp-ai' ),
+            'acf_posts'   => __( 'Advanced Custom Fields — Post & Page Fields', 'easy-mcp-ai' ),
+            'buddypress'  => 'BuddyPress',
+            'events'      => __( 'The Events Calendar', 'easy-mcp-ai' ),
+            'redirection' => 'Redirection',
+            'yoast'       => __( 'Yoast SEO', 'easy-mcp-ai' ),
+            'aioseo'      => __( 'All in One SEO', 'easy-mcp-ai' ),
+            'rankmath'    => __( 'Rank Math SEO', 'easy-mcp-ai' ),
+            'gsc'         => __( 'Google Search Console', 'easy-mcp-ai' ),
+            'ga'          => __( 'Google Analytics', 'easy-mcp-ai' ),
+            'dfs'         => __( 'DataforSEO', 'easy-mcp-ai' ),
+            'semrush'     => __( 'Semrush', 'easy-mcp-ai' ),
+            'ahrefs'      => __( 'Ahrefs (DR)', 'easy-mcp-ai' ),
+            'seranking'   => __( 'SE Ranking', 'easy-mcp-ai' ),
+            'seopress'    => __( 'SEOPress', 'easy-mcp-ai' ),
+            'slimseo'     => __( 'Slim SEO', 'easy-mcp-ai' ),
+            'tsf'         => __( 'The SEO Framework', 'easy-mcp-ai' ),
+            'term_meta'   => __( 'Term Meta', 'easy-mcp-ai' ),
+            'user_meta'   => __( 'User Meta', 'easy-mcp-ai' ),
+            'appearance'  => __( 'Site Appearance (templates, global styles, theme mods & CSS)', 'easy-mcp-ai' ),
+            'widgets'     => __( 'Widgets & Sidebars', 'easy-mcp-ai' ),
+            'wc_webhooks' => 'WooCommerce Webhooks',
+            'user_create' => __( 'Users — Create', 'easy-mcp-ai' ),
+            'user_update' => __( 'Users — Update', 'easy-mcp-ai' ),
+            'user_delete' => __( 'Users — Delete', 'easy-mcp-ai' ),
+            'history'     => __( 'Change History (audit log of MCP edits)', 'easy-mcp-ai' ),
+            'audit'       => __( 'Audit Log (every MCP call, all users — admin only)', 'easy-mcp-ai' ),
+            'site_health' => __( 'Site Health, Cron & Error Log', 'easy-mcp-ai' ),
+            'core_update' => __( 'WordPress core update (replaces WordPress itself with a newer release from wordpress.org)', 'easy-mcp-ai' ),
+            'plugin_files' => __( 'Plugin installs and deletions (adds plugins from wordpress.org, or removes plugin code)', 'easy-mcp-ai' ),
+            'theme_files' => __( 'Theme installs and deletions (adds themes from wordpress.org, or removes theme code)', 'easy-mcp-ai' ),
+            'cli'         => __( 'WP-CLI commands (commands no other tool performs, such as options, roles and sites, need only this permission, limited by your WordPress role)', 'easy-mcp-ai' ),
+            'rest'        => __( 'REST routes of plugins and core (the route checks your permissions)', 'easy-mcp-ai' ),
+            'rest_delete' => __( 'REST routes — Delete', 'easy-mcp-ai' ),
+            'cache'       => __( 'Clear caches (page, asset and CDN caches, through each cache plugin)', 'easy-mcp-ai' ),
+        );
+    }
+
+    
+
+
+
+
+
+
+    private static function scope_category( string $slug, array $labels ): array {
+        $plugin_required = isset( self::PLUGIN_CATEGORIES[ $slug ] ) ? self::PLUGIN_CATEGORIES[ $slug ] : null;
+
+        list( $default_read, $default_write ) = self::category_defaults( $slug );
+
+        $read_scope  = isset( self::SCOPE_MAP[ "mcp:{$slug}:read" ] ) ? "mcp:{$slug}:read" : '';
+        $write_scope = isset( self::SCOPE_MAP[ "mcp:{$slug}:write" ] ) ? "mcp:{$slug}:write" : '';
+
+        return array(
+            'slug'            => $slug,
+            'label'           => isset( $labels[ $slug ] ) ? $labels[ $slug ] : ucfirst( $slug ),
+            'read_scope'      => $read_scope,
+            'write_scope'     => $write_scope,
+            'write_only'      => '' === $read_scope && '' !== $write_scope,
+            'default_read'    => $default_read,
+            'default_write'   => $default_write,
+            'plugin_required' => $plugin_required,
+            'is_ability'      => false,
+        );
+    }
+
+    
+
+
+
+
+
+    private static function category_defaults( string $slug ): array {
+        if ( in_array( $slug, self::DEFAULT_OFF_CATEGORIES, true ) ) {
+            return array( false, false );
+        }
+        if ( 'users' === $slug ) {
+            return array( true, false );
+        }
+        if ( 'cache' === $slug || 'acf_posts' === $slug ) {
             
-            if ( 'settings' === $slug || 'plugins' === $slug || 'themes' === $slug || 'appearance' === $slug || 'widgets' === $slug || 'wc_webhooks' === $slug || 'user_create' === $slug || 'user_update' === $slug || 'user_delete' === $slug || 'history' === $slug || 'audit' === $slug || 'site_health' === $slug || 'rest_delete' === $slug ) {
-                $default_read  = false;
-                $default_write = false;
-            } elseif ( 'users' === $slug ) {
-                $default_read  = true;
-                $default_write = false;
-            } elseif ( $is_core ) {
-                $default_read  = true;
-                $default_write = true;
-            } else {
-                
-                $default_read  = true;
-                $default_write = false;
-            }
+            return array( false, true );
+        }
+        if ( in_array( $slug, self::CORE_CATEGORIES, true ) ) {
+            return array( true, true );
+        }
+        
+        return array( true, false );
+    }
 
-            $read_scope  = isset( self::SCOPE_MAP[ "mcp:{$slug}:read" ] ) ? "mcp:{$slug}:read" : '';
-            $write_scope = isset( self::SCOPE_MAP[ "mcp:{$slug}:write" ] ) ? "mcp:{$slug}:write" : '';
+    
 
+
+
+
+    private static function ability_categories(): array {
+        $abilities = self::get_cached_abilities();
+        if ( empty( $abilities ) ) {
+            return array();
+        }
+        $categories = array();
+        foreach ( self::ability_prefixes( (array) $abilities ) as $norm_prefix => $display_label ) {
             $categories[] = array(
-                'slug'            => $slug,
-                'label'           => isset( $labels[ $slug ] ) ? $labels[ $slug ] : ucfirst( $slug ),
-                'read_scope'      => $read_scope,
-                'write_scope'     => $write_scope,
-                'write_only'      => '' === $read_scope && '' !== $write_scope,
-                'default_read'    => $default_read,
-                'default_write'   => $default_write,
-                'plugin_required' => $plugin_required,
-                'is_ability'      => false,
+                'slug'            => "abilities_{$norm_prefix}",
+                /* translators: %s: ability prefix (e.g. "Core", "Wpforms") */
+                'label'           => sprintf( __( 'Abilities — %s', 'easy-mcp-ai' ), $display_label ),
+                'read_scope'      => "mcp:abilities:{$norm_prefix}",
+                'write_scope'     => '',     
+                'default_read'    => false,  
+                'default_write'   => false,
+                'plugin_required' => null,   
+                'is_ability'      => true,
             );
         }
-
-        
-        $abilities = self::get_cached_abilities();
-        if ( ! empty( $abilities ) ) {
-            $seen_prefixes = array();
-            foreach ( (array) $abilities as $ability ) {
-                $name = is_object( $ability ) && method_exists( $ability, 'get_name' )
-                    ? $ability->get_name()
-                    : (string) ( is_string( $ability ) ? $ability : '' );
-                if ( '' === $name ) {
-                    continue;
-                }
-                $parts = explode( '/', $name, 2 );
-                if ( count( $parts ) > 1 ) {
-                    $norm_prefix   = Dynamic_Tool_Registrar::normalize_identifier( $parts[0] );
-                    $display_label = ucfirst( $parts[0] );
-                } else {
-                    $norm_prefix   = 'core';
-                    $display_label = __( 'Core', 'easy-mcp-ai' );
-                }
-                if ( '' === $norm_prefix || isset( $seen_prefixes[ $norm_prefix ] ) ) {
-                    continue;
-                }
-                $seen_prefixes[ $norm_prefix ] = $display_label;
-            }
-
-            foreach ( $seen_prefixes as $norm_prefix => $display_label ) {
-                $categories[] = array(
-                    'slug'            => "abilities_{$norm_prefix}",
-                    /* translators: %s: ability prefix (e.g. "Core", "Wpforms") */
-                    'label'           => sprintf( __( 'Abilities — %s', 'easy-mcp-ai' ), $display_label ),
-                    'read_scope'      => "mcp:abilities:{$norm_prefix}",
-                    'write_scope'     => '',     
-                    'default_read'    => false,  
-                    'default_write'   => false,
-                    'plugin_required' => null,   
-                    'is_ability'      => true,
-                );
-            }
-        }
-
         return $categories;
+    }
+
+    
+
+
+
+
+
+
+
+    private static function ability_prefixes( array $abilities ): array {
+        $seen_prefixes = array();
+        foreach ( $abilities as $ability ) {
+            $name = is_object( $ability ) && method_exists( $ability, 'get_name' )
+                ? $ability->get_name()
+                : (string) ( is_string( $ability ) ? $ability : '' );
+            if ( '' === $name ) {
+                continue;
+            }
+            $parts = explode( '/', $name, 2 );
+            if ( count( $parts ) > 1 ) {
+                $norm_prefix   = Dynamic_Tool_Registrar::normalize_identifier( $parts[0] );
+                $display_label = ucfirst( $parts[0] );
+            } else {
+                $norm_prefix   = 'core';
+                $display_label = __( 'Core', 'easy-mcp-ai' );
+            }
+            if ( '' === $norm_prefix || isset( $seen_prefixes[ $norm_prefix ] ) ) {
+                continue;
+            }
+            $seen_prefixes[ $norm_prefix ] = $display_label;
+        }
+        return $seen_prefixes;
     }
 }

@@ -7,14 +7,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once __DIR__ . '/trait-product-images.php';
+
 class Update_Product extends Base_Tool {
+
+    use Product_Images;
 
     public function get_name() {
         return 'wp_wc_update_product';
     }
 
     public function get_description() {
-        return 'Updates an existing WooCommerce product (PATCH semantics). Required: `id`. Optional: `name`, `status` (draft/publish/pending/private), `regular_price` (string, e.g. "29.99"), `sale_price` (string — set to "" to remove a sale), `description`, `short_description`, `sku`, `manage_stock` (boolean), `stock_quantity` (integer), `stock_status` (instock/outofstock/onbackorder), `categories` (array of { id } — replaces existing), `tags` (array of { id }), `images` (array of { src }), `featured` (boolean), `catalog_visibility` (visible/catalog/search/hidden), `tax_status` (taxable/shipping/none), `tax_class`, `date_on_sale_from`, `date_on_sale_to`, `backorders` (no/notify/yes), `sold_individually` (boolean), `weight`, `dimensions` (object with length/width/height), `attributes`, `upsell_ids` (array of product IDs), `cross_sell_ids` (array of product IDs). Returns a summary of the updated product: `id`, `name`, `status`, `permalink`. To unpublish/hide without deleting set status="draft". Requires WooCommerce active.';
+        return 'Updates an existing WooCommerce product (PATCH semantics). Required: `id`. Optional: `name`, `status` (draft/publish/pending/private), `regular_price` (string, e.g. "29.99"), `sale_price` (string — set to "" to remove a sale), `description`, `short_description`, `sku`, `manage_stock` (boolean), `stock_quantity` (integer), `stock_status` (instock/outofstock/onbackorder), `categories` (array of { id }), `tags` (array of { id }), `images` (see below), `featured` (boolean), `catalog_visibility` (visible/catalog/search/hidden), `tax_status` (taxable/shipping/none), `tax_class`, `date_on_sale_from`, `date_on_sale_to`, `backorders` (no/notify/yes), `sold_individually` (boolean), `weight`, `dimensions` (object with length/width/height), `attributes`, `upsell_ids` (array of product IDs), `cross_sell_ids` (array of product IDs). `categories`, `tags`, `attributes`, `upsell_ids` and `cross_sell_ids` replace the stored list; `[]` empties it (categories fall back to the store default category). Images: the first is the featured image, the rest the gallery in order; the list replaces both and `[]` removes all. Prefer { id } (media library) over { src }, which is downloaded again as a new media item. To change the gallery, send the whole list read from wp_wc_get_product (if the product has no featured image, that list is the gallery alone and its first image becomes featured). Returns `id`, `name`, `status`, `permalink`, plus `images` as saved when sent. To unpublish/hide without deleting set status="draft". Requires WooCommerce active.';
     }
 
     public function get_category() {
@@ -106,13 +110,8 @@ class Update_Product extends Base_Tool {
                 ),
                 'images'            => array(
                     'type'        => 'array',
-                    'description' => 'Array of image objects with src.',
-                    'items'       => array(
-                        'type'       => 'object',
-                        'properties' => array(
-                            'src' => array( 'type' => 'string' ),
-                        ),
-                    ),
+                    'description' => 'First = featured image, rest = gallery, in order. Replaces both; [] removes all.',
+                    'items'       => $this->image_item_schema(),
                 ),
                 'featured'           => array(
                     'type'        => 'boolean',
@@ -221,14 +220,14 @@ class Update_Product extends Base_Tool {
         if ( isset( $arguments['status'] ) ) {
             $params['status'] = sanitize_text_field( $arguments['status'] );
         }
-        if ( ! empty( $arguments['categories'] ) ) {
+        if ( isset( $arguments['categories'] ) ) {
             $params['categories'] = $this->parse_json_param( $arguments['categories'], 'categories' );
         }
-        if ( ! empty( $arguments['tags'] ) ) {
+        if ( isset( $arguments['tags'] ) ) {
             $params['tags'] = $this->parse_json_param( $arguments['tags'], 'tags' );
         }
-        if ( ! empty( $arguments['images'] ) ) {
-            $params['images'] = $this->parse_json_param( $arguments['images'], 'images' );
+        if ( isset( $arguments['images'] ) ) {
+            $params['images'] = $this->product_images_param( $arguments['images'] );
         }
         if ( isset( $arguments['featured'] ) ) {
             $params['featured'] = (bool) $arguments['featured'];
@@ -260,25 +259,29 @@ class Update_Product extends Base_Tool {
         if ( ! empty( $arguments['dimensions'] ) ) {
             $params['dimensions'] = array_map( 'sanitize_text_field', $this->parse_json_param( $arguments['dimensions'], 'dimensions' ) );
         }
-        if ( ! empty( $arguments['attributes'] ) ) {
+        if ( isset( $arguments['attributes'] ) ) {
             $params['attributes'] = $this->parse_json_param( $arguments['attributes'], 'attributes' );
         }
-        if ( ! empty( $arguments['upsell_ids'] ) ) {
+        if ( isset( $arguments['upsell_ids'] ) ) {
             $upsell_ids = $this->parse_json_param( $arguments['upsell_ids'], 'upsell_ids' );
             $params['upsell_ids'] = array_map( 'absint', $upsell_ids );
         }
-        if ( ! empty( $arguments['cross_sell_ids'] ) ) {
+        if ( isset( $arguments['cross_sell_ids'] ) ) {
             $cross_sell_ids = $this->parse_json_param( $arguments['cross_sell_ids'], 'cross_sell_ids' );
             $params['cross_sell_ids'] = array_map( 'absint', $cross_sell_ids );
         }
 
         $data = $this->rest_request( 'PUT', '/wc/v3/products/' . $id, $params );
 
-        return array(
+        $reply = array(
             'id'        => $data['id'],
             'name'      => $data['name'],
             'status'    => $data['status'],
             'permalink' => $data['permalink'],
         );
+        if ( isset( $params['images'] ) ) {
+            $reply['images'] = $this->images_reply( $data['images'] ?? array() );
+        }
+        return $reply;
     }
 }

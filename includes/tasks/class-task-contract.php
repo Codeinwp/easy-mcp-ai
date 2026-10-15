@@ -28,6 +28,9 @@ class Task_Contract {
     const STATES = array( 'working', 'completed', 'failed', 'cancelled' );
 
     
+    const MESSAGE_MAX_BYTES = 500;
+
+    
 
 
 
@@ -140,8 +143,42 @@ class Task_Contract {
         return array(
             'current' => $number( isset( $progress['current'] ) ? $progress['current'] : 0 ),
             'total'   => $number( isset( $progress['total'] ) ? $progress['total'] : 0 ),
-            'message' => isset( $progress['message'] ) && is_string( $progress['message'] ) ? substr( $progress['message'], 0, 500 ) : '',
+            'message' => isset( $progress['message'] ) && is_string( $progress['message'] ) ? self::stored_message( $progress['message'] ) : '',
         );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static function stored_message( $text ): string {
+        $text = (string) $text;
+        if ( ! function_exists( 'mb_strcut' ) || ! function_exists( 'mb_scrub' ) ) {
+            return self::valid_prefix( substr( $text, 0, self::MESSAGE_MAX_BYTES ) );
+        }
+        return mb_strcut( mb_scrub( $text, 'UTF-8' ), 0, self::MESSAGE_MAX_BYTES, 'UTF-8' );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function valid_prefix( string $text ): string {
+        while ( '' !== $text && 1 !== preg_match( '//u', $text ) ) {
+            $text = substr( $text, 0, -1 );
+        }
+        return $text;
     }
 
     

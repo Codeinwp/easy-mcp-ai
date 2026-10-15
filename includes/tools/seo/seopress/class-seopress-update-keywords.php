@@ -79,6 +79,9 @@ class Seopress_Update_Keywords extends Base_Tool {
 		$body = array( '_seopress_analysis_target_kw' => $keywords );
 
 		$this->rest_request( 'PUT', '/seopress/v1/posts/' . $post_id . '/target-keywords', $body );
+		
+		
+		$this->clear_page_cache( array( $post_id ) );
 
 		return array(
 			'post_id' => $post_id,

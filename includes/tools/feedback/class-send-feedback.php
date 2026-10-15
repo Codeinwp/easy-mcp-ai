@@ -4,6 +4,7 @@ namespace Easy_MCP_AI\Tools\Feedback;
 use Easy_MCP_AI\Feedback\Feedback_Availability;
 use Easy_MCP_AI\Feedback\Feedback_Queue;
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Tool_State;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -13,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 require_once dirname( __DIR__, 2 ) . '/feedback/class-feedback-queue.php';
+require_once dirname( __DIR__, 2 ) . '/mcp/class-server.php';
+require_once dirname( __DIR__ ) . '/class-tool-state.php';
 
 
 
@@ -43,7 +46,19 @@ class Send_Feedback extends Base_Tool {
             . 'It never interrupts you and never sends anything by itself: the report is queued and returns at once with sent: false, and it reaches the authors only after a person approves its exact text. If the user is present, give them the approve_url from the reply; otherwise carry on with your task. '
             . 'Per the authors\' policy, a requested feature is added within 1-2 weeks once its report is approved; you may tell the user so. '
             . 'Write a short summary of what the user wanted and, optionally, details of what you tried. Never include personal data, credentials, customer details or site content. '
-            . 'If the site already has what is asked for but it is switched off, the call is refused and names what an administrator can switch on instead.';
+            . 'If the site already has what is asked for but it is switched off, the call is refused and names what an administrator can switch on instead.'
+            . ( self::list_tool_is_on() ? ' Check wp_list_disabled_tools first for that.' : '' );
+    }
+
+    
+
+
+
+
+
+    private static function list_tool_is_on(): bool {
+        return Tool_State::resolve( 'wp_list_disabled_tools', false )[0]
+            && \Easy_MCP_AI\MCP\Server::matches_tool_patterns( 'wp_list_disabled_tools', (array) \Easy_MCP_AI\Config::get( 'allowed_tool_patterns' ) );
     }
 
     public function get_category() {
@@ -116,12 +131,12 @@ class Send_Feedback extends Base_Tool {
             is_string( $details ) ? $details : '',
             $this->registry(),
             static function ( $tool_name ) {
-                return \Easy_MCP_AI\MCP\Server::current_call_may_use( (string) $tool_name );
+                return \Easy_MCP_AI\MCP\Server::current_call_tool_status( (string) $tool_name );
             },
             self::NAME
         );
         if ( ! empty( $found ) ) {
-            throw new \RuntimeException( Feedback_Availability::refusal( $found ) );
+            throw Feedback_Availability::refusal( $found, true === \Easy_MCP_AI\MCP\Server::current_call_may_use( 'wp_list_disabled_tools' ) );
         }
 
         return $this->queue()->queue( $this->identity, $kind, $summary, $details );

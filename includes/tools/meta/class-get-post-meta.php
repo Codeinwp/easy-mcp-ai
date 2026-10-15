@@ -44,7 +44,7 @@ class Get_Post_Meta extends Base_Tool {
                 ),
                 'post_type' => array(
                     'type'        => 'string',
-                    'description' => 'The REST base for the post type (e.g. posts, pages). Default: posts.',
+                    'description' => 'The REST base for the post type (e.g. posts, pages). Default: posts. A post_type slug is also accepted.',
                     'default'     => 'posts',
                 ),
                 'key'       => array(
@@ -61,10 +61,10 @@ class Get_Post_Meta extends Base_Tool {
 
         $post_id   = $this->parse_required_id( $arguments['post_id'], 'post_id' );
         $post_type = ! empty( $arguments['post_type'] )
-            ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' )
+            ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' )
             : 'posts';
 
-        $data = $this->rest_request( 'GET', '/wp/v2/' . $post_type . '/' . $post_id, array( 'context' => 'edit' ) );
+        $data = $this->rest_request( 'GET', self::post_type_route( $post_type, $post_id, 'GET' ), array( 'context' => 'edit' ) );
 
         
         $meta = isset( $data['meta'] ) ? $data['meta'] : array();

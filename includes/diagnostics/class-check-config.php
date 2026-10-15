@@ -28,9 +28,13 @@
 
 namespace Easy_MCP_AI\Diagnostics;
 
+use Easy_MCP_AI\Auth\Connect_Policy;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
 
 class Check_Config {
 
@@ -48,7 +52,7 @@ class Check_Config {
             self::deployment_configuration(),
             self::evaluate_dcr( self::option_bool( 'easy_mcp_ai_oauth_dcr_enabled', true ) ),
             self::evaluate_client_cap( self::count_active_clients(), (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_max_clients', 5000 ) ),
-            self::evaluate_min_capability( self::resolved_min_capability() ),
+            self::evaluate_min_capability( self::resolved_min_capability(), self::connect_roles() ),
             self::evaluate_rate_limit( (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 ) ),
             self::evaluate_force_draft( self::option_bool( 'easy_mcp_ai_force_draft_on_create', false ) ),
             self::evaluate_token_expiry( self::collect_token_expiries() ),
@@ -254,30 +258,49 @@ class Check_Config {
 
 
     public static function resolved_min_capability() {
-        if ( class_exists( '\Easy_MCP_AI\OAuth\Authorization_Endpoint' ) ) {
-            return (string) \Easy_MCP_AI\OAuth\Authorization_Endpoint::resolved_min_capability();
-        }
-
-        $stored = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_min_capability', 'publish_posts' );
-        if ( ! is_string( $stored ) || ! in_array( $stored, array( 'publish_posts', 'edit_others_posts', 'manage_options' ), true ) ) {
-            $stored = 'publish_posts';
-        }
-
-        return (string) \apply_filters( 'easy_mcp_ai_oauth_min_capability', $stored );
+        return Connect_Policy::floor_capability();
     }
 
     
-    public static function evaluate_min_capability( $cap ) {
+
+
+
+
+
+    public static function connect_roles() {
+        return Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_OAUTH ) ? array() : Connect_Policy::extra_roles();
+    }
+
+    
+
+
+
+
+
+
+    public static function evaluate_min_capability( $cap, array $roles = array() ) {
+        $detail = sprintf(
+            /* translators: %s: WordPress capability name. */
+            __( 'Set to %s. Users below this cannot complete the OAuth consent screen.', 'easy-mcp-ai' ),
+            (string) $cap
+        );
+        if ( $roles ) {
+            $detail = sprintf(
+                /* translators: 1: WordPress capability name, 2: comma-separated role slugs. */
+                __( 'Set to %1$s, and these roles are also allowed: %2$s. Other users cannot complete the OAuth consent screen.', 'easy-mcp-ai' ),
+                (string) $cap,
+                implode( ', ', $roles )
+            );
+        }
         return Diagnostic_Result::pass(
             'f3',
             Diagnostic_Result::TIER_INFO,
             __( 'Minimum capability to authorize an AI client', 'easy-mcp-ai' ),
-            sprintf(
-                /* translators: %s: WordPress capability name. */
-                __( 'Set to %s. Users below this cannot complete the OAuth consent screen.', 'easy-mcp-ai' ),
-                (string) $cap
-            ),
-            array( 'oauth_min_capability' => (string) $cap )
+            $detail,
+            array(
+                'oauth_min_capability' => (string) $cap,
+                'connect_roles'        => array_values( $roles ),
+            )
         );
     }
 

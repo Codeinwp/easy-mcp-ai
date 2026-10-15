@@ -18,6 +18,8 @@ class Deactivator {
         \wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_tasks' );
         \wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_approvals' );
         
+        \wp_clear_scheduled_hook( 'easy_mcp_ai_skills_sync' );
+        
         
         require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config.php';
         require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tasks/class-task-scheduler.php';

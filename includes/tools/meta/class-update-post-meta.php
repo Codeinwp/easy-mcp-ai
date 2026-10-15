@@ -81,12 +81,23 @@ class Update_Post_Meta extends Base_Tool {
                 ),
                 'post_type' => array(
                     'type'        => 'string',
-                    'description' => 'The REST base for the post type (e.g. posts, pages). Default: posts.',
+                    'description' => 'The REST base for the post type (e.g. posts, pages). Default: posts. A post_type slug is also accepted.',
                     'default'     => 'posts',
                 ),
             ),
             'required'   => array( 'post_id', 'meta' ),
         );
+    }
+
+    
+
+
+
+
+
+
+    public function precheck( array $arguments ): void {
+        $this->precheck_post_type_route( $arguments, 'post_type', 'posts', 'post_id', 'POST', 'GET' );
     }
 
     public function execute( array $arguments ) {
@@ -96,7 +107,7 @@ class Update_Post_Meta extends Base_Tool {
 
         $post_id   = $this->parse_required_id( $arguments['post_id'], 'post_id' );
         $post_type = ! empty( $arguments['post_type'] )
-            ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' )
+            ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' )
             : 'posts';
 
         
@@ -104,7 +115,8 @@ class Update_Post_Meta extends Base_Tool {
         
         
         
-        $request = new \WP_REST_Request( 'POST', '/wp/v2/' . $post_type . '/' . $post_id );
+        $route   = self::post_type_route( $post_type, $post_id, 'POST', 'GET' );
+        $request = new \WP_REST_Request( 'POST', $route );
         $request->set_header( 'content-type', 'application/json' );
         $request->set_body( wp_json_encode( array( 'meta' => $meta ) ) );
         $response = rest_do_request( $request );
@@ -113,7 +125,7 @@ class Update_Post_Meta extends Base_Tool {
         }
 
         
-        $read_data = $this->rest_request( 'GET', '/wp/v2/' . $post_type . '/' . $post_id, array(
+        $read_data = $this->rest_request( 'GET', $route, array(
             'context' => 'edit',
         ) );
 

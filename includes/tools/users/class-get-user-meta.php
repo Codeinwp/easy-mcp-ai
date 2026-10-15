@@ -16,7 +16,7 @@ class Get_User_Meta extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Reads user meta for a given user. Required: `user_id`. Optional: `key` (single key — omit to fetch all meta), `single` (boolean, default true — when true returns a single value; when false returns an array of values for the key). Returns { user_id, key (if filtered), value (or meta object) }. Users can read their own meta without edit_users. Auth-sensitive keys (session_tokens, _password_reset_key, _application_passwords, etc.) are blocked for all callers including administrators.';
+        return 'Reads user meta for a given user. Required: `user_id`. Optional: `key` (single key — omit to fetch all meta), `single` (boolean, default true — when true returns a single value; when false returns an array of values for the key). Returns { user_id, key, value } for one key, or { user_id, meta, withheld_keys } for all meta, where `withheld_keys` (sorted) names every key the policy left out of `meta`, so an omission is never silent. Users can read their own meta without edit_users. Auth-sensitive keys (session_tokens, _password_reset_key, _application_passwords, etc.) and the role keys ({prefix}capabilities, {prefix}user_level) are blocked for all callers including administrators; in the all-meta read, `_`-prefixed keys are also withheld from callers without manage_options unless the `easy_mcp_ai_user_meta_readable_protected_keys` filter lists them.';
     }
 
     public function get_category() {
@@ -71,32 +71,83 @@ class Get_User_Meta extends Base_Tool {
         $key    = isset( $arguments['key'] ) ? sanitize_text_field( (string) $arguments['key'] ) : '';
         $single = isset( $arguments['single'] ) ? (bool) $arguments['single'] : true;
         if ( '' !== $key ) {
-            if ( self::is_auth_protected( $key ) ) {
-                throw new \RuntimeException( 'Auth-sensitive meta keys are not readable via this tool.' );
-            }
-            if ( self::is_privilege_key( $key ) ) {
-                throw new \RuntimeException( 'Privilege meta keys (wp_capabilities, wp_user_level) are not readable via this tool.' );
-            }
-            if ( self::is_blocked_by_filter( $key ) ) {
-                throw new \RuntimeException( 'This meta key cannot be read via MCP.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            }
+            self::refuse_unreadable_key( $key );
             $value = get_user_meta( $user_id, $key, $single );
             return array( 'user_id' => $user_id, 'key' => $key, 'value' => $value );
         }
-        $all = get_user_meta( $user_id );
+        return self::all_meta( $user_id );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function refuse_unreadable_key( string $key ): void {
+        if ( self::is_auth_protected( $key ) ) {
+            throw new \RuntimeException( 'Auth-sensitive meta keys are not readable via this tool.' );
+        }
+        if ( self::is_privilege_key( $key ) ) {
+            throw new \RuntimeException( 'Privilege meta keys (wp_capabilities, wp_user_level) are not readable via this tool.' );
+        }
+        if ( self::is_blocked_by_filter( $key ) ) {
+            throw new \RuntimeException( 'This meta key cannot be read via MCP.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+    }
+
+    
+
+
+
+
+
+
+    private static function all_meta( int $user_id ): array {
+        $all      = get_user_meta( $user_id );
+        $withheld = array();
         foreach ( $all as $k => $_ ) {
-            if ( self::is_auth_protected( $k ) || self::is_privilege_key( $k ) || self::is_blocked_by_filter( $k ) ) {
+            if ( ! self::is_key_readable( (string) $k ) ) {
                 unset( $all[ $k ] );
+                $withheld[] = (string) $k;
             }
         }
-        if ( ! current_user_can( 'manage_options' ) ) {
+        sort( $withheld, SORT_STRING );
+        return array(
+            'user_id'       => $user_id,
+            'meta'          => $all,
+            'withheld_keys' => $withheld,
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static function is_key_readable( string $key ): bool {
+        if ( '' === $key || self::is_auth_protected( $key ) || self::is_privilege_key( $key ) || self::is_blocked_by_filter( $key ) ) {
+            return false;
+        }
+        if ( '_' === $key[0] && ! current_user_can( 'manage_options' ) ) {
             $readable_protected = apply_filters( 'easy_mcp_ai_user_meta_readable_protected_keys', array( 'wp_user-settings', 'wp_user-settings-time' ) );
-            foreach ( $all as $k => $_ ) {
-                if ( '_' === ( $k[0] ?? '' ) && ! in_array( $k, $readable_protected, true ) ) {
-                    unset( $all[ $k ] );
-                }
-            }
+            return in_array( $key, (array) $readable_protected, true );
         }
-        return array( 'user_id' => $user_id, 'meta' => $all );
+        return true;
     }
 }

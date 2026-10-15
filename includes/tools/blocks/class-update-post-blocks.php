@@ -52,7 +52,7 @@ class Update_Post_Blocks extends Base_Tool {
                 ),
                 'post_type' => array(
                     'type'        => 'string',
-                    'description' => 'REST base of the post type (default "posts"; e.g. "pages", "products").',
+                    'description' => 'REST base of the post type (default "posts"; e.g. "pages", "product"). A post_type slug is also accepted.',
                     'default'     => 'posts',
                 ),
                 'ops'       => array(
@@ -106,14 +106,45 @@ class Update_Post_Blocks extends Base_Tool {
         );
     }
 
+    
+
+
+
+
+
+
+    public function precheck( array $arguments ): void {
+        $this->precheck_post_type_route( $arguments, 'post_type', 'posts', 'post_id', ...self::sent_methods( $arguments ) );
+    }
+
+    
+
+
+
+
+
+    private static function is_dry_run( array $arguments ): bool {
+        return ! empty( $arguments['dry_run'] ) && rest_sanitize_boolean( $arguments['dry_run'] );
+    }
+
+    
+
+
+
+
+
+    private static function sent_methods( array $arguments ): array {
+        return self::is_dry_run( $arguments ) ? array( 'GET' ) : array( 'GET', 'POST' );
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'post_id', 'ops' ) );
 
         $post_id   = $this->parse_required_id( $arguments['post_id'], 'post_id' );
         $post_type = ! empty( $arguments['post_type'] )
-            ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' )
+            ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' )
             : 'posts';
-        $dry_run   = ! empty( $arguments['dry_run'] ) && rest_sanitize_boolean( $arguments['dry_run'] );
+        $dry_run   = self::is_dry_run( $arguments );
 
         $ops = $this->parse_json_param( $arguments['ops'], 'ops' );
         if ( array() === $ops || array_keys( $ops ) !== range( 0, count( $ops ) - 1 ) ) {
@@ -121,7 +152,8 @@ class Update_Post_Blocks extends Base_Tool {
         }
 
         
-        $data = $this->rest_request( 'GET', '/wp/v2/' . $post_type . '/' . $post_id, array( 'context' => 'edit' ) );
+        $route = self::post_type_route( $post_type, $post_id, ...self::sent_methods( $arguments ) );
+        $data  = $this->rest_request( 'GET', $route, array( 'context' => 'edit' ) );
         if ( ! isset( $data['content']['raw'] ) ) {
             throw new \RuntimeException( 'The post content could not be read in edit context.' );
         }
@@ -163,7 +195,7 @@ class Update_Post_Blocks extends Base_Tool {
         
         
         
-        $saved = $this->rest_request( 'POST', '/wp/v2/' . $post_type . '/' . $post_id, array( 'content' => $content ), 'id,modified' );
+        $saved = $this->rest_request( 'POST', $route, array( 'content' => $content ), 'id,modified' );
 
         $result['saved']    = true;
         $result['modified'] = isset( $saved['modified'] ) ? $saved['modified'] : '';

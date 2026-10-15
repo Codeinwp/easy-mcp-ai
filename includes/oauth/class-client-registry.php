@@ -559,6 +559,58 @@ class Client_Registry {
 
 
 
+
+
+
+
+
+
+
+
+
+    public static function redirect_uri_is_registered( string $requested, array $registered ): bool {
+        if ( in_array( $requested, $registered, true ) ) {
+            return true;
+        }
+        $portless = self::without_loopback_port( $requested );
+        if ( null === $portless ) {
+            return false;
+        }
+        foreach ( $registered as $uri ) {
+            if ( is_string( $uri ) && self::without_loopback_port( $uri ) === $portless ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function without_loopback_port( string $uri ): ?string {
+        
+        
+        if ( ! preg_match( '#^http://(localhost|127\.0\.0\.1|\[::1\])(?::(\d*))?(?=[/?\#]|$)#', $uri, $match ) || ( isset( $match[2] ) && (int) $match[2] > 65535 ) ) {
+            return null;
+        }
+        return 'http://' . $match[1] . substr( $uri, strlen( $match[0] ) );
+    }
+
+    
+
+
+
+
+
+
+
     public static function dcr_error( $error, $description, $status = 400 ) {
         $response = new \WP_REST_Response(
             array(

@@ -78,6 +78,17 @@ class Blocker_Copy {
                 );
                 break;
             case 'a10':
+                if ( ! empty( $evidence['trailing_slash'] ) ) {
+                    
+                    
+                    $copy = array(
+                        __( 'Your server adds a trailing slash to /.well-known/', 'easy-mcp-ai' ),
+                        __( 'your server adds a trailing slash to /.well-known/', 'easy-mcp-ai' ),
+                        __( 'The two sign-in documents at your domain root are redirected to a trailing slash, so a client that does not follow redirects can’t sign in.', 'easy-mcp-ai' ),
+                        $r->fix(),
+                    );
+                    break;
+                }
                 $copy = isset( $evidence['reason'] ) && 'stale' === $evidence['reason']
                     ? array(
                         __( 'Your saved sign-in documents are out of date', 'easy-mcp-ai' ),

@@ -35,20 +35,39 @@ class Update_Fields extends Base_Tool {
             'type'       => 'object',
             'properties' => array(
                 'post_id'   => array( 'type' => 'integer', 'description' => 'The ID of the post, page, or CPT item to update ACF fields on.' ),
-                'post_type' => array( 'type' => 'string',  'description' => 'REST base of the post type (e.g. "posts", "pages"). Defaults to "posts".', 'default' => 'posts' ),
+                'post_type' => array( 'type' => 'string',  'description' => 'REST base of the post type (e.g. "posts", "pages"). Defaults to "posts". A post_type slug is also accepted.', 'default' => 'posts' ),
                 'fields'    => array( 'type' => 'object',  'description' => 'Key-value pairs of ACF field names and their new values. Use field names (e.g. my_field_name); field keys (e.g. field_abc123) also work.' ),
             ),
             'required' => array( 'post_id', 'fields' ),
         );
     }
 
+    
+
+
+
+
+
+
+
+
+    public function precheck( array $arguments ): void {
+        try {
+            $post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
+        } catch ( \InvalidArgumentException $e ) {
+            return;
+        }
+        $this->acf_post_route( ! empty( $arguments['post_type'] ) ? $this->acf_post_base( $arguments['post_type'] ) : 'posts', $post_id, 'update' );
+    }
+
     public function execute( array $arguments ) {
         $this->require_acf();
         $this->validate_required( $arguments, array( 'post_id', 'fields' ) );
         $post_id   = $this->parse_required_id( $arguments['post_id'], 'post_id' );
-        $post_type = ! empty( $arguments['post_type'] ) ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' ) : 'posts';
+        $post_type = ! empty( $arguments['post_type'] ) ? $this->acf_post_base( $arguments['post_type'] ) : 'posts';
+        $route     = $this->acf_post_route( $post_type, $post_id, 'update' );
         $fields    = $this->parse_json_param( $arguments['fields'], 'fields' );
         return array( 'post_id' => $post_id, 'post_type' => $post_type )
-            + $this->acf_write( 'post', $post_id, '/wp/v2/' . $post_type . '/' . $post_id, $fields );
+            + $this->acf_write( 'post', $post_id, $route, $fields );
     }
 }

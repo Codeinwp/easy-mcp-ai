@@ -9,6 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+require_once __DIR__ . '/class-list-terms.php';
+
+
+
 
 
 
@@ -21,7 +25,7 @@ class Create_Term extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Creates a new term in any taxonomy exposed in the REST API (show_in_rest); WooCommerce attribute taxonomies (pa_*) are not. Required: `name`, `taxonomy` (e.g. category, post_tag, product_cat). Optional: `slug` (auto-derived from name if omitted), `description`, `parent` (for hierarchical taxonomies; 0 = top-level). Returns { id, name, slug, description, parent, count, taxonomy }. Capability resolved dynamically via the taxonomy\'s cap->edit_terms (e.g. manage_categories for category, manage_product_terms for product_cat).';
+        return 'Creates a new term in any taxonomy exposed in the REST API (show_in_rest); WooCommerce attribute taxonomies (pa_*) are not. Required: `name`, `taxonomy` (e.g. category, post_tag, product_cat). Optional: `slug` (auto-derived from name if omitted), `description`, `parent` (for hierarchical taxonomies; 0 = top-level). Returns { id, name, slug, description, parent, count, taxonomy }. Capability resolved dynamically via the taxonomy\'s cap->edit_terms (e.g. manage_categories for category, manage_product_terms for product_cat). Writes through the taxonomy\'s own REST route, so a taxonomy registered under a custom `rest_namespace` works too.';
     }
 
     public function get_category() {
@@ -95,6 +99,33 @@ class Create_Term extends Base_Tool {
         $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
         $rest_base = $this->validate_rest_route_segment( $rest_base, 'rest_base' );
 
+        $params = $this->term_params( $arguments );
+
+        
+        
+        $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
+
+        $data = $this->rest_request( 'POST', '/' . $namespace . '/' . $rest_base, $params );
+
+        return array(
+            'id'          => (int) ( $data['id'] ?? 0 ),
+            'name'        => (string) ( $data['name'] ?? '' ),
+            'slug'        => (string) ( $data['slug'] ?? '' ),
+            'description' => (string) ( $data['description'] ?? '' ),
+            'parent'      => (int) ( $data['parent'] ?? 0 ),
+            'count'       => (int) ( $data['count'] ?? 0 ),
+            'taxonomy'    => $taxonomy,
+        );
+    }
+
+    
+
+
+
+
+
+
+    private function term_params( array $arguments ): array {
         $params = array(
             'name' => sanitize_text_field( (string) $arguments['name'] ),
         );
@@ -107,17 +138,6 @@ class Create_Term extends Base_Tool {
         if ( isset( $arguments['parent'] ) ) {
             $params['parent'] = absint( $arguments['parent'] );
         }
-
-        $data = $this->rest_request( 'POST', '/wp/v2/' . $rest_base, $params );
-
-        return array(
-            'id'          => (int) ( $data['id'] ?? 0 ),
-            'name'        => (string) ( $data['name'] ?? '' ),
-            'slug'        => (string) ( $data['slug'] ?? '' ),
-            'description' => (string) ( $data['description'] ?? '' ),
-            'parent'      => (int) ( $data['parent'] ?? 0 ),
-            'count'       => (int) ( $data['count'] ?? 0 ),
-            'taxonomy'    => $taxonomy,
-        );
+        return $params;
     }
 }

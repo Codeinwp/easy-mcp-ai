@@ -5,6 +5,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once __DIR__ . '/../cache/class-cache-noise.php';
+
 class Change_Recorder {
 
     
@@ -159,10 +161,13 @@ class Change_Recorder {
 
 
 
+
+
+
     private static $option_churn_denylist = array(
         '_transient_', '_site_transient_', 'cron', '_wp_session_',
         'action_scheduler_', 'easy_mcp_ai_change_log_', 'easy_mcp_ai_audit_',
-        'easy_mcp_ai_sr_', 'easy_mcp_ai_last_tool_call',
+        'easy_mcp_ai_sr_', 'easy_mcp_ai_last_tool_call', 'easy_mcp_ai_cache_',
     );
 
     
@@ -240,7 +245,7 @@ class Change_Recorder {
         if ( 'allowlist' === \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_option_mode', 'all_except_denylist' ) ) {
             return false;
         }
-        $deny = (array) \apply_filters( 'easy_mcp_ai_change_log_option_denylist', self::$option_churn_denylist );
+        $deny = (array) \apply_filters( 'easy_mcp_ai_change_log_option_denylist', array_merge( self::$option_churn_denylist, \Easy_MCP_AI\Cache\Cache_Noise::OPTIONS ) );
         foreach ( $deny as $entry ) {
             $entry = (string) $entry;
             if ( '' === $entry ) {

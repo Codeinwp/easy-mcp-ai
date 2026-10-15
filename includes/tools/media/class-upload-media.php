@@ -63,6 +63,27 @@ class Upload_Media extends Base_Tool {
         );
     }
 
+    
+
+
+
+
+
+
+    private static function renamed_image( string $filename, string $bytes ): string {
+        $probe = tempnam( function_exists( 'get_temp_dir' ) ? get_temp_dir() : sys_get_temp_dir(), 'emai' );
+        if ( false === $probe ) {
+            return $filename;
+        }
+        $renamed = null;
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+        if ( false !== file_put_contents( $probe, $bytes ) ) {
+            $renamed = self::image_filename_from_bytes( $filename, $probe );
+        }
+        \wp_delete_file( $probe );
+        return null !== $renamed ? $renamed : $filename;
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'filename', 'content_base64' ) );
 
@@ -108,6 +129,13 @@ class Upload_Media extends Base_Tool {
 
         $filetype = wp_check_filetype( $filename );
 
+        if ( empty( $filetype['type'] ) ) {
+            
+            
+            
+            $filename = self::renamed_image( $filename, $decoded );
+            $filetype = wp_check_filetype( $filename );
+        }
         if ( empty( $filetype['type'] ) ) {
             throw new \InvalidArgumentException( 'File type is not allowed.' );
         }

@@ -142,9 +142,13 @@ class Feedback_Queue {
         $text = preg_replace( '/[\x00-\x09\x0B-\x1F\x7F]/u', ' ', $text );
         $text = \Easy_MCP_AI\Text_Redactor::redact( (string) $text );
         $text = preg_replace( '/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[email]', (string) $text );
-        $host = class_exists( '\\Easy_MCP_AI\\Site_Host' ) ? \Easy_MCP_AI\Site_Host::current() : '';
-        if ( '' !== $host ) {
-            $text = preg_replace( '/(?<![A-Za-z0-9.\-])(?:www\.)*' . preg_quote( $host, '/' ) . '(?![A-Za-z0-9\-])/i', '[site]', (string) $text );
+        
+        
+        $hosts = class_exists( '\\Easy_MCP_AI\\Site_Host' ) ? array( \Easy_MCP_AI\Site_Host::current(), \Easy_MCP_AI\Site_Host::request_host() ) : array();
+        foreach ( array_unique( array_filter( $hosts ) ) as $host ) {
+            
+            
+            $text = preg_replace( '/(?<![A-Za-z0-9.\-])(?:www\.)*' . preg_quote( $host, '/' ) . '(?![A-Za-z0-9\-]|\.[A-Za-z0-9])/i', '[site]', (string) $text );
         }
         if ( $single_line ) {
             $text = preg_replace( '/\s+/u', ' ', (string) $text );
@@ -462,7 +466,7 @@ class Feedback_Queue {
             $links[] = Approval_Gate::approve_url( $row['approval_id'] );
         }
         return sprintf(
-            '%d feedback report(s) you queued earlier are waiting for a person to approve them before they are sent to the plugin\'s authors: %s. If the user is present, mention them; nothing is sent without approval.',
+            '%d feedback report(s) you queued earlier are waiting for a person\'s approval before they reach the plugin\'s authors: %s. Mention them if the user is present.',
             count( $rows ),
             implode( ', ', $links )
         );

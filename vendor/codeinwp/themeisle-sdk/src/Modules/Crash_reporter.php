@@ -187,10 +187,19 @@ class Crash_Reporter extends Abstract_Module {
 	}
 
 	/**
-	 * Global handler for uncaught exceptions. Captures the crash and chains to
-	 * the previously registered handler, if any.
+	 * Global handler for uncaught exceptions. Captures the crash, then hands
+	 * the exception on: to the previously registered handler when there is
+	 * one, otherwise back to PHP.
+	 *
+	 * A handler that returns makes PHP end the request as if nothing failed:
+	 * no fatal error is raised or logged and error_get_last() stays empty, so
+	 * WordPress never shows its "critical error" page, never enters recovery
+	 * mode and does not roll back a broken automatic update. Rethrowing keeps
+	 * the request failing exactly as it would without this handler.
 	 *
 	 * @param \Throwable $throwable Uncaught exception.
+	 *
+	 * @throws \Throwable The same exception, when no earlier handler exists.
 	 */
 	public static function handle_exception( $throwable ) {
 		try {
@@ -204,17 +213,26 @@ class Crash_Reporter extends Abstract_Module {
 
 		if ( null !== self::$previous_exception_handler && is_callable( self::$previous_exception_handler ) ) {
 			call_user_func( self::$previous_exception_handler, $throwable );
+
+			return;
 		}
+
+		throw $throwable;
 	}
 
 	/**
 	 * Shutdown handler. Records supported fatal errors originating from a
 	 * registered product directory. Never outputs and never exits.
+	 *
+	 * @param array{type: int, message: string, file: string, line: int}|null $error Error to examine. Defaults to
+	 *                                                                             error_get_last(); tests pass a synthetic one.
 	 */
-	public static function handle_shutdown() {
+	public static function handle_shutdown( $error = null ) {
 		self::$reserved_memory = null;
 
-		$error = error_get_last();
+		if ( null === $error ) {
+			$error = error_get_last();
+		}
 		if ( empty( $error ) || ! isset( $error['type'] ) || ! in_array( (int) $error['type'], self::$fatal_types, true ) ) {
 			return;
 		}

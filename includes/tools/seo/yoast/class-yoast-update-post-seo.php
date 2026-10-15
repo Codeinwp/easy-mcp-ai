@@ -252,6 +252,12 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			$updated[] = 'primary_term';
 		}
 
+		
+		
+		if ( array() !== $updated ) {
+			$this->clear_page_cache( array( $post_id ) );
+		}
+
 		return array(
 			'post_id'        => $post_id,
 			'updated_fields' => $updated,

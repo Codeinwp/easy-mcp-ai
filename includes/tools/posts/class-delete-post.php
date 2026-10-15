@@ -14,7 +14,7 @@ class Delete_Post extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Deletes a WordPress post by ID. Required: `post_id`. Optional: `force` (default false) — false moves the post to trash (recoverable via `wp_update_post` setting status="publish"/"draft"); true permanently deletes the post and its meta/revisions (irreversible). Returns { deleted, id, title }. Prefer false (trash) unless permanent deletion is explicitly requested.';
+        return 'Deletes a WordPress post by ID. Required: `post_id`. Optional: `force` (default false) — false moves the post to trash (recoverable via `wp_update_post` setting status="publish"/"draft"); true permanently deletes the post and its meta/revisions (irreversible). Returns { deleted, id, title }. Prefer false (trash) unless permanent deletion is explicitly requested. For CPT items use `wp_delete_cpt_item` instead.';
     }
 
     public function get_category() {
@@ -68,12 +68,19 @@ class Delete_Post extends Base_Tool {
         );
     }
 
+    
+    public function precheck( array $arguments ): void {
+        $this->precheck_other_type( $arguments, 'post_id', 'post', 'delete' );
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'post_id' ) );
 
         $post_id = $this->parse_required_id( $arguments['post_id'], 'post_id' );
-        $force   = isset( $arguments['force'] ) && (bool) $arguments['force'];
-        $params  = array();
+        $this->refuse_other_type( $post_id, 'post', 'delete' );
+
+        $force  = isset( $arguments['force'] ) && (bool) $arguments['force'];
+        $params = array();
 
         if ( isset( $arguments['force'] ) ) {
             $params['force'] = $force;

@@ -113,7 +113,7 @@ class Check_Observability {
             $label,
             sprintf(
                 /* translators: 1: number of rejected requests, 2: number of hours in the window. */
-                __( '%1$d request(s) were refused in the last %2$d hours because the token was missing, expired or not recognised. This counts failed authentication only. Requests refused for insufficient permission are recorded separately, under Easy MCP AI → Activity → Audit log, and are not counted here; requests refused for exceeding the rate limit are not recorded at all.', 'easy-mcp-ai' ),
+                __( '%1$d sign-in refusal(s) were recorded in the last %2$d hours: a token that was missing, expired or not recognised; a real credential refused by a site rule (issued for another site address, sent from an address outside the IP whitelist, or an API key sent outside the Authorization header on a header-only site); or a failed step of an OAuth authorization or device sign-in, including too many device-code attempts. This counts sign-in refusals only. Tool calls refused after sign-in for insufficient permission are recorded separately, under Easy MCP AI → Activity → Audit log, and are not counted here; MCP requests refused for exceeding the rate limit are not recorded at all.', 'easy-mcp-ai' ),
                 (int) $count,
                 self::FAILURE_WINDOW_HOURS
             ),

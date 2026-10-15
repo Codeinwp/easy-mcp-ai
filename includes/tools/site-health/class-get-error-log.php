@@ -25,6 +25,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+
+
+
+
 class Get_Error_Log extends Base_Tool {
 
     const SOURCE_INI     = 'error_log ini';
@@ -97,6 +101,10 @@ class Get_Error_Log extends Base_Tool {
             ),
         );
     }
+
+    
+
+
 
     public function execute( array $arguments ) {
         Site_Health_Guard::require_network_admin_on_multisite( 'read the PHP error log' );
@@ -209,7 +217,19 @@ class Get_Error_Log extends Base_Tool {
 
 
 
-    public static function tail( string $path, int $want, string $grep = '' ): array {
+
+
+
+
+
+
+
+
+
+
+
+
+    public static function tail( string $path, int $want, string $grep = '', ?callable $keep = null, ?callable $redact = null, float $seconds = 0.0 ): array {
         $fh = @fopen( $path, 'rb' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_fopen
         if ( false === $fh ) {
             return array( 'lines' => array(), 'truncated' => false, 'scanned_bytes' => 0 );
@@ -217,17 +237,7 @@ class Get_Error_Log extends Base_Tool {
 
         fseek( $fh, 0, SEEK_END );
         $pos = (int) ftell( $fh );
-        $s   = array(
-            'want'      => (int) $want,
-            'grep'      => (string) $grep,
-            'out'       => array(), 
-            'bytes'     => 0,
-            'cut'       => false,
-            'done'      => false,
-            'carry'     => '',      
-            'oversized' => false,   
-            'first'     => true,    
-        );
+        $s       = self::new_state( $want, $grep, $keep, $redact, $seconds );
         $scanned = 0;
 
         while ( $pos > 0 && ! $s['done'] ) {
@@ -247,6 +257,57 @@ class Get_Error_Log extends Base_Tool {
         fclose( $fh ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
         return array( 'lines' => array_reverse( $s['out'] ), 'truncated' => $s['cut'], 'scanned_bytes' => $scanned );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public static function collect( iterable $lines, int $want, string $grep = '', ?callable $redact = null, float $seconds = 0.0 ): array {
+        $s = self::new_state( $want, $grep, null, $redact, $seconds );
+        foreach ( $lines as $line ) {
+            self::take_line( (string) $line, false, $s );
+            if ( $s['done'] ) {
+                break;
+            }
+        }
+        return array( 'lines' => array_reverse( $s['out'] ), 'truncated' => $s['cut'] );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function new_state( int $want, string $grep, ?callable $keep, ?callable $redact, float $seconds ): array {
+        return array(
+            'want'      => $want,
+            'grep'      => $grep,
+            'keep'      => $keep,
+            'redact'    => $redact,
+            'deadline'  => $seconds > 0 ? microtime( true ) + $seconds : 0.0,
+            'out'       => array(), 
+            'pending'   => array(), 
+            'bytes'     => 0,
+            'cut'       => false,
+            'done'      => false,
+            'carry'     => '',      
+            'oversized' => false,   
+            'first'     => true,    
+        );
     }
 
     
@@ -291,6 +352,11 @@ class Get_Error_Log extends Base_Tool {
 
 
     private static function take_line( string $line, bool $oversized, array &$s ): void {
+        if ( $s['deadline'] > 0 && microtime( true ) > $s['deadline'] ) {
+            $s['cut']  = true; 
+            $s['done'] = true;
+            return;
+        }
         $line = rtrim( $line, "\r" );
         if ( $oversized || strlen( $line ) > self::MAX_LINE_BYTES ) {
             $line = substr( $line, 0, self::MAX_LINE_BYTES ) . ' […line truncated]';
@@ -303,7 +369,42 @@ class Get_Error_Log extends Base_Tool {
             
             $line = \wp_check_invalid_utf8( $line, true );
         }
-        $line = Text_Redactor::redact( $line );
+        $line = null === $s['redact'] ? Text_Redactor::redact( $line ) : (string) ( $s['redact'] )( $line );
+        if ( null === $s['keep'] ) {
+            self::keep( $line, $s );
+            return;
+        }
+        $verdict = ( $s['keep'] )( $line );
+        if ( null === $verdict ) {
+            
+            
+            if ( ( '' === $s['grep'] || false !== stripos( $line, $s['grep'] ) ) && count( $s['pending'] ) < $s['want'] ) {
+                $s['pending'][] = $line;
+            }
+            return;
+        }
+        $pending      = $s['pending'];
+        $s['pending'] = array();
+        if ( ! $verdict ) {
+            return;
+        }
+        foreach ( $pending as $continuation ) {
+            self::keep( $continuation, $s );
+            if ( $s['done'] ) {
+                return;
+            }
+        }
+        self::keep( $line, $s );
+    }
+
+    
+
+
+
+
+
+
+    private static function keep( string $line, array &$s ): void {
         if ( '' !== $s['grep'] && false === stripos( $line, $s['grep'] ) ) {
             return;
         }
@@ -347,7 +448,8 @@ class Get_Error_Log extends Base_Tool {
 
 
 
-    private static function fit_response( array $result ): array {
+
+    public static function fit_response( array $result ): array {
         $json = \wp_json_encode( $result, self::RESPONSE_JSON_FLAGS );
         while ( false !== $json && strlen( $json ) > self::RESPONSE_LIMIT && ! empty( $result['lines'] ) ) {
             $over = strlen( $json ) - self::RESPONSE_LIMIT;

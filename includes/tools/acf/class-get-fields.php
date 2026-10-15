@@ -35,7 +35,7 @@ class Get_Fields extends Base_Tool {
             'type'       => 'object',
             'properties' => array(
                 'post_id'   => array( 'type' => 'integer', 'description' => 'The ID of the post, page, or custom post type item to retrieve ACF fields from.' ),
-                'post_type' => array( 'type' => 'string',  'description' => 'REST base of the post type (e.g. "posts", "pages", or a CPT slug). Defaults to "posts".', 'default' => 'posts' ),
+                'post_type' => array( 'type' => 'string',  'description' => 'REST base of the post type (e.g. "posts", "pages"). Defaults to "posts". A post_type slug is also accepted.', 'default' => 'posts' ),
             ),
             'required' => array( 'post_id' ),
         );
@@ -44,8 +44,8 @@ class Get_Fields extends Base_Tool {
     public function execute( array $arguments ) {
         $this->require_acf();
         $post_id   = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
-        $post_type = ! empty( $arguments['post_type'] ) ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' ) : 'posts';
+        $post_type = ! empty( $arguments['post_type'] ) ? $this->acf_post_base( $arguments['post_type'] ) : 'posts';
         return array( 'post_id' => $post_id, 'post_type' => $post_type )
-            + $this->acf_read( 'post', $post_id, '/wp/v2/' . $post_type . '/' . $post_id );
+            + $this->acf_read( 'post', $post_id, $this->acf_post_route( $post_type, $post_id, 'get' ) );
     }
 }

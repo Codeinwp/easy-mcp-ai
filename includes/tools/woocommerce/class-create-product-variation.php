@@ -7,14 +7,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/trait-product-images.php';
+
 class Create_Product_Variation extends Base_Tool {
+
+	use Product_Images;
 
 	public function get_name() {
 		return 'wp_wc_create_product_variation';
 	}
 
 	public function get_description() {
-		return 'Creates a variation for a WooCommerce variable product. Required: product_id, attributes (array of {name, option}). Optional: regular_price, sale_price, sku, stock_quantity, manage_stock, stock_status, weight, description, status, virtual, downloadable, image ({src}). If **Easy MCP AI → Settings → Force draft on create** is enabled, status is silently overridden to `draft` regardless of the value supplied — outside the declared publish/private enum.';
+		return 'Creates a variation for a WooCommerce variable product. Required: product_id, attributes (array of {name, option}). Optional: regular_price, sale_price, sku, stock_quantity, manage_stock, stock_status, weight, description, status, virtual, downloadable, image ({id} or {src}, as for product images), gallery_image_ids (WooCommerce 11.1+: media library image IDs in order; the main image is left out). Returns the variation summary, plus image / gallery_image_ids as saved, each when sent. If **Easy MCP AI → Settings → Force draft on create** is enabled, status is silently overridden to `draft` regardless of the value supplied — outside the declared publish/private enum.';
 	}
 
 	public function get_category() {
@@ -100,9 +104,14 @@ class Create_Product_Variation extends Base_Tool {
 					'type'        => 'boolean',
 					'description' => 'Whether the variation is downloadable.',
 				),
-				'image'          => array(
-					'type'        => 'object',
-					'description' => 'Variation image. Object with "src" key.',
+				'image'          => array_merge(
+					$this->image_item_schema(),
+					array( 'description' => 'Main variation image.' )
+				),
+				'gallery_image_ids' => array(
+					'type'        => 'array',
+					'description' => 'WooCommerce 11.1+: media library image IDs, in order.',
+					'items'       => array( 'type' => 'integer' ),
 				),
 			),
 			'required'   => array( 'product_id', 'attributes' ),
@@ -159,7 +168,11 @@ class Create_Product_Variation extends Base_Tool {
 			$params['downloadable'] = (bool) $arguments['downloadable'];
 		}
 		if ( isset( $arguments['image'] ) ) {
-			$params['image'] = $this->parse_json_param( $arguments['image'], 'image' );
+			$params['image'] = $this->image_param( $arguments['image'], 'image' );
+		}
+		if ( isset( $arguments['gallery_image_ids'] ) ) {
+			$params['gallery_image_ids'] = $this->variation_gallery_param( $arguments['gallery_image_ids'] );
+			$this->require_variation_gallery_support( $product_id );
 		}
 
 		
@@ -168,7 +181,7 @@ class Create_Product_Variation extends Base_Tool {
 
 		$data = $this->rest_request( 'POST', '/wc/v3/products/' . $product_id . '/variations', $params );
 
-		return array(
+		return $this->with_variation_images( $params, $data, array(
 			'id'             => $data['id'],
 			'product_id'     => $product_id,
 			'sku'            => $data['sku'] ?? '',
@@ -178,6 +191,6 @@ class Create_Product_Variation extends Base_Tool {
 			'stock_status'   => $data['stock_status'],
 			'stock_quantity' => $data['stock_quantity'] ?? null,
 			'attributes'     => $data['attributes'] ?? array(),
-		);
+		) );
 	}
 }

@@ -1,13 +1,15 @@
 <?php
 namespace Easy_MCP_AI\Admin;
 
+use Easy_MCP_AI\Auth\Connect_Policy;
 use Easy_MCP_AI\Auth\Token_Manager;
 use Easy_MCP_AI\Config;
 use Easy_MCP_AI\MCP\Server;
-use Easy_MCP_AI\OAuth\Authorization_Endpoint;
 use Easy_MCP_AI\Tools\Tool_Registry;
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
 
 
 class Self_Service_Keys {
@@ -34,7 +36,7 @@ class Self_Service_Keys {
 
     
     public static function enabled() {
-        return Config::get( 'self_service_keys' ) && \get_current_user_id() && \current_user_can( Authorization_Endpoint::resolved_min_capability() );
+        return Config::get( 'self_service_keys' ) && \get_current_user_id() && Connect_Policy::current_user_can_connect( Connect_Policy::CHANNEL_SELF_KEY );
     }
 
     public static function limit( $key ) {
@@ -78,11 +80,23 @@ class Self_Service_Keys {
 
 
 
+    const NEVER_OFFERED = array( 'wp_cli_run' );
 
-    private function offered_tools() {
+    
+
+
+
+
+
+
+
+
+
+    private function offered_tools(): array {
         require_once dirname( __DIR__ ) . '/auth/class-permission-guard.php';
-        return array_values( array_filter( Server::available_tools( $this->registry, true ), static function ( $definition ) {
+        return array_values( array_filter( Server::available_tools( $this->registry, true ), static function ( array $definition ): bool {
             return ! isset( $definition['_meta'][ \Easy_MCP_AI\Tools\Privileged_Tool::META_KEY ] )
+                && ! in_array( $definition['name'], self::NEVER_OFFERED, true )
                 && ! in_array( $definition['name'], \Easy_MCP_AI\Auth\Permission_Guard::EVERY_CREDENTIAL, true );
         } ) );
     }

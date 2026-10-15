@@ -51,7 +51,9 @@ class Get_Post extends Base_Tool {
         $this->validate_required( $arguments, array( 'post_id' ) );
 
         $post_id = $this->parse_required_id( $arguments['post_id'], 'post_id' );
-        $data    = $this->rest_request( 'GET', '/wp/v2/posts/' . $post_id, array( 'context' => 'edit' ) );
+        $this->refuse_other_type( $post_id, 'post', 'get' );
+
+        $data = $this->rest_request( 'GET', '/wp/v2/posts/' . $post_id, array( 'context' => 'edit' ) );
 
         return array(
             'id'             => $data['id'],

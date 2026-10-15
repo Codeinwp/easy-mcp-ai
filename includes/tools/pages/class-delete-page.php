@@ -14,7 +14,7 @@ class Delete_Page extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Deletes a WordPress page by ID. Required: `page_id`. Optional: `force` (default false) — false moves to trash (recoverable); true permanently deletes the page and its meta/revisions (irreversible). Child pages are NOT deleted when a parent is deleted. On a permanent delete (force=true), children are re-parented to the deleted page\'s own parent (not necessarily top-level). When the page is merely trashed (the default, force=false), children are left untouched. Returns { deleted, id, title }.';
+        return 'Deletes a WordPress page by ID. Required: `page_id`. Optional: `force` (default false) — false moves to trash (recoverable); true permanently deletes the page and its meta/revisions (irreversible). Child pages are NOT deleted when a parent is deleted. On a permanent delete (force=true), children are re-parented to the deleted page\'s own parent (not necessarily top-level). When the page is merely trashed (the default, force=false), children are left untouched. Returns { deleted, id, title }. For CPT items use `wp_delete_cpt_item` instead.';
     }
 
     public function get_category() {
@@ -68,12 +68,19 @@ class Delete_Page extends Base_Tool {
         );
     }
 
+    
+    public function precheck( array $arguments ): void {
+        $this->precheck_other_type( $arguments, 'page_id', 'page', 'delete' );
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'page_id' ) );
 
         $page_id = $this->parse_required_id( $arguments['page_id'], 'page_id' );
-        $force   = isset( $arguments['force'] ) && (bool) $arguments['force'];
-        $params  = array();
+        $this->refuse_other_type( $page_id, 'page', 'delete' );
+
+        $force  = isset( $arguments['force'] ) && (bool) $arguments['force'];
+        $params = array();
 
         if ( isset( $arguments['force'] ) ) {
             $params['force'] = $force;

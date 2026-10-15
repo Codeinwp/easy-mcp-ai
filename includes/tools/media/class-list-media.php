@@ -2,19 +2,31 @@
 namespace Easy_MCP_AI\Tools\Media;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\CPT\List_CPT_Items;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+
+if ( ! class_exists( List_CPT_Items::class, false ) ) {
+    require_once dirname( __DIR__ ) . '/cpt/class-list-cpt-items.php';
+}
+
 class List_Media extends Base_Tool {
+
+    
+    const ORDERBY = array( 'date', 'id', 'title', 'slug', 'modified', 'author', 'parent', 'include' );
+
+    
+    const STATUSES = array( 'inherit', 'private', 'trash' );
 
     public function get_name() {
         return 'wp_list_media';
     }
 
     public function get_description() {
-        return 'Lists WordPress media library items. Optional filters: `search`, `media_type` (filter by type: image/video/audio/application), `mime_type` (e.g. "image/jpeg", "image/png", "application/pdf"), `author` (uploader user ID), `author_exclude` (array of user IDs to exclude), `after` / `before` (ISO 8601 date-time range on upload date), `taxonomy_filters` (object: taxonomy slug → array of term IDs, e.g. {"mlo-category": [12]} to list a media folder; only taxonomies registered on attachments and exposed in the REST API are accepted — discover them with `wp_get_taxonomies`, their terms with `wp_list_terms`), `taxonomy_exclude` (same shape, excludes items in those terms), `taxonomy_relation` (AND/OR across taxonomies, default AND), `per_page` (max 100, default 10), `page`, `orderby` (date/id/title/modified — default date), `order` (asc/desc). Returns { media: [{ id, title, alt_text, mime_type, media_type, source_url, date, terms: { "<taxonomy slug>": [term IDs] } }], total, total_pages, page, per_page }. `terms` is empty when no attachment taxonomy is exposed in the REST API.';
+        return 'Lists media library items (`per_page` 10 by default, 100 at most; `page` or `offset`). Filters: `search`, `media_type` (image/video/audio/application), `mime_type` (one exact type, e.g. "image/png"), `author`, `author_exclude`, `parent` (the post an item is attached to; 0 = unattached only) or `parent_exclude` (0 = leave unattached items out), `include` or `exclude` (item IDs), `after` / `before` (upload date, ISO 8601), `status` (inherit by default; private, trash, a comma-separated list, or any = inherit and private), and `taxonomy_filters` / `taxonomy_exclude` (taxonomy slug → term IDs, e.g. {"mlo-category": [12]} for a media folder; attachment taxonomies shown in the REST API only — find them with `wp_get_taxonomies`, their terms with `wp_list_terms`), joined by `taxonomy_relation` (AND by default, or OR). Sort with `orderby` (date by default; id, title, slug, modified, author, parent, include) and `order` (desc by default); items that tie are ordered by ID, so pages never repeat or skip one. `context` edit lists only items you can edit and allows `raw_columns` (each item also carries `raw`, every stored column). Returns { media: [{ id, title, alt_text, mime_type, media_type, source_url, date, parent, terms }], total, total_pages, page, per_page }: `parent` is 0 when unattached, `terms` maps each taxonomy slug to its term IDs. Unattached is not unused: an unattached item can still be a featured image or appear in post content, and an attached one can be unused.';
     }
 
     public function get_category() {
@@ -72,6 +84,16 @@ class List_Media extends Base_Tool {
                     'items'       => array( 'type' => 'integer' ),
                     'description' => 'Array of author user IDs to EXCLUDE from results.',
                 ),
+                'parent'     => array(
+                    'type'        => 'integer',
+                    'description' => 'Only items attached to this post ID. 0 lists unattached items only. Not with parent_exclude.',
+                    'minimum'     => 0,
+                ),
+                'parent_exclude' => array(
+                    'type'        => 'array',
+                    'items'       => array( 'type' => 'integer' ),
+                    'description' => 'Leave out items attached to these post IDs (0 leaves out unattached items). Not with parent, which WordPress lets override it.',
+                ),
                 'after'      => array(
                     'type'        => 'string',
                     'description' => 'Only media uploaded on or after this ISO 8601 date-time (e.g. "2026-01-01T00:00:00").',
@@ -96,8 +118,8 @@ class List_Media extends Base_Tool {
                 ),
                 'orderby'    => array(
                     'type'        => 'string',
-                    'description' => 'Field to order results by.',
-                    'enum'        => array( 'date', 'id', 'title', 'modified' ),
+                    'description' => 'Field to order results by. include keeps the order of `include`.',
+                    'enum'        => self::ORDERBY,
                     'default'     => 'date',
                 ),
                 'order'      => array(
@@ -106,7 +128,17 @@ class List_Media extends Base_Tool {
                     'enum'        => array( 'asc', 'desc' ),
                     'default'     => 'desc',
                 ),
-            ),
+                'status'     => array(
+                    'type'        => 'string',
+                    'description' => 'inherit (default: every ordinary media item), private, trash (only with MEDIA_TRASH), a comma-separated list of those, or any (inherit and private, as WP_Query reads any for attachments). A status other than inherit needs edit_posts.',
+                ),
+                'context'    => array(
+                    'type'        => 'string',
+                    'description' => 'view (default): items you can read. edit: only items you can edit (needs edit_posts).',
+                    'enum'        => array( 'view', 'edit' ),
+                    'default'     => 'view',
+                ),
+            ) + array_intersect_key( List_CPT_Items::shared_filter_schema( false ), array_flip( array( 'include', 'exclude', 'offset', 'raw_columns' ) ) ),
         );
     }
 
@@ -134,6 +166,24 @@ class List_Media extends Base_Tool {
 
         if ( ! empty( $arguments['author_exclude'] ) ) {
             $params['author_exclude'] = array_map( 'absint', $this->parse_json_param( $arguments['author_exclude'], 'author_exclude' ) );
+        }
+
+        
+        
+        $params = array_merge( $params, List_CPT_Items::collection_params( $arguments, array( 'include', 'exclude', 'offset', 'parent', 'parent_exclude' ) ) );
+        if ( isset( $params['offset'] ) && $params['page'] > 1 ) {
+            throw new \InvalidArgumentException( 'Send either offset or page, not both: WP_Query ignores page when offset is set.' );
+        }
+
+        $statuses = self::statuses( $arguments );
+        if ( null !== $statuses ) {
+            $params['status'] = $statuses;
+        }
+
+        $raw     = List_CPT_Items::raw_columns( $arguments );
+        $context = List_CPT_Items::resolve_context( $arguments, 'view', $raw );
+        if ( 'edit' === $context ) {
+            $params['context'] = 'edit';
         }
 
         if ( ! empty( $arguments['after'] ) ) {
@@ -183,7 +233,8 @@ class List_Media extends Base_Tool {
             $request->set_param( $key, $value );
         }
 
-        $response = rest_do_request( $request );
+        
+        $response = List_CPT_Items::dispatch( $request, 'attachment', array() );
 
         if ( $response->is_error() ) {
             $error = $response->as_error();
@@ -201,7 +252,12 @@ class List_Media extends Base_Tool {
 
         $result = array();
         foreach ( $media as $item ) {
-            $result[] = array(
+            
+            
+            if ( ! List_CPT_Items::may_list_in_context( $context, $item['id'] ) ) {
+                continue;
+            }
+            $row = array(
                 'id'         => $item['id'],
                 'title'      => wp_strip_all_tags( $item['title']['rendered'] ),
                 'mime_type'  => $item['mime_type'],
@@ -209,13 +265,50 @@ class List_Media extends Base_Tool {
                 'alt_text'   => $item['alt_text'] ?? '',
                 'date'       => $item['date'],
                 'media_type' => $item['media_type'],
+                
+                'parent'     => isset( $item['post'] ) ? (int) $item['post'] : 0,
                 'terms'      => $this->item_taxonomy_terms( $item, $taxonomies ),
             );
+            if ( $raw ) {
+                $row['raw'] = List_CPT_Items::raw_row( $item['id'] );
+            }
+            $result[] = $row;
         }
 
         return array_merge(
             array( 'media' => $result ),
             $this->pagination_meta( $response, $params['page'], $params['per_page'], count( $media ) )
         );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function statuses( array $arguments ): ?array {
+        if ( ! isset( $arguments['status'] ) || '' === $arguments['status'] ) {
+            return null;
+        }
+        if ( ! is_string( $arguments['status'] ) ) {
+            throw new \InvalidArgumentException( 'status must be a string: inherit, private, trash, a comma-separated list of those, or any.' );
+        }
+        $statuses = array();
+        foreach ( array_filter( array_map( 'trim', explode( ',', $arguments['status'] ) ), 'strlen' ) as $status ) {
+            if ( 'any' === $status ) {
+                $statuses[] = 'inherit';
+                $statuses[] = 'private';
+            } elseif ( in_array( $status, self::STATUSES, true ) ) {
+                $statuses[] = $status;
+            } else {
+                throw new \InvalidArgumentException( sprintf( 'Invalid status: %s. Media items take inherit, private, trash, or any.', $status ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+        }
+        return $statuses ? array_values( array_unique( $statuses ) ) : null;
     }
 }

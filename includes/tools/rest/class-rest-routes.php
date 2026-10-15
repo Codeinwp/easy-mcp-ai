@@ -27,6 +27,17 @@ class Rest_Routes extends Rest_Route_Tool {
         'wp_rest_delete' => array( 'DELETE' ),
     );
 
+    
+
+
+
+
+
+    const LIFECYCLE_ROUTES = array(
+        '/wp/v2/plugins' => array( 'wp_install_plugin', 'wp_delete_plugin', 'wp_uninstall_plugin' ),
+        '/wp/v2/themes'  => array( 'wp_install_theme', 'wp_delete_theme' ),
+    );
+
     public function get_name() {
         return 'wp_rest_routes';
     }
@@ -94,7 +105,9 @@ class Rest_Routes extends Rest_Route_Tool {
                     $usable[] = $entry['namespace'];
                 }
             }
-            return array( 'search' => trim( $arguments['search'] ) ) + Route_Catalogue::search( $server, $arguments['search'], $usable );
+            $result = array( 'search' => trim( $arguments['search'] ) ) + Route_Catalogue::search( $server, $arguments['search'], $usable );
+            $note   = self::switched_off_note( $result['matches'] );
+            return '' === $note ? $result : $result + array( 'note' => $note );
         }
         if ( isset( $arguments['namespace'] ) && is_string( $arguments['namespace'] ) && '' !== trim( $arguments['namespace'] ) ) {
             return $this->describe_namespace( $server, $arguments['namespace'] );
@@ -177,6 +190,52 @@ class Rest_Routes extends Rest_Route_Tool {
             return $refusal;
         }
         return 'This key cannot use wp_rest_read, wp_rest_write or wp_rest_delete here: each is switched off on the site or outside this key\'s tools.';
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private static function switched_off_note( array $matches ): string {
+        if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_tool_status' ) ) {
+            return '';
+        }
+        $tools = array();
+        foreach ( $matches as $match ) {
+            $route = isset( $match['route'] ) ? (string) $match['route'] : '';
+            foreach ( self::LIFECYCLE_ROUTES as $base => $names ) {
+                if ( $route === $base || 0 === strpos( $route, $base . '/' ) ) {
+                    $tools = array_merge( $tools, $names );
+                }
+            }
+        }
+        $off    = array();
+        $locked = array();
+        foreach ( array_unique( $tools ) as $name ) {
+            $status = \Easy_MCP_AI\MCP\Server::current_call_tool_status( $name );
+            if ( null !== $status && 'off' === $status['status'] ) {
+                $off[] = $name;
+            } elseif ( null !== $status && 'off_locked' === $status['status'] ) {
+                $locked[] = $name;
+            }
+        }
+        if ( array() === $off && array() === $locked ) {
+            return '';
+        }
+        $named = array_merge( $off, $locked );
+        return sprintf(
+            'This site installs and deletes plugins and themes with its own tools, and %s %s switched off: %s.',
+            count( $named ) > 1 ? 'these' : 'this one',
+            count( $named ) > 1 ? 'are' : 'is',
+            \Easy_MCP_AI\MCP\Tool_Status::names( $named )
+        ) . ' Tell the user which tool to switch on, by its name, and that ' . \Easy_MCP_AI\MCP\Tool_Status::who_switches_on( $off, $locked, \Easy_MCP_AI\MCP\Tool_Status::switch_path( $named[0], true ) ) . '.';
     }
 
     

@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-keys.php';
+require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-connect-policy.php';
 
 
 
@@ -115,20 +116,8 @@ class Authorization_Endpoint {
 
 
 
-
-
-
-
-
-
-
-
     public static function resolved_min_capability() {
-        $stored = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_min_capability', 'publish_posts' );
-        if ( ! is_string( $stored ) || ! in_array( $stored, array( 'publish_posts', 'edit_others_posts', 'manage_options' ), true ) ) {
-            $stored = 'publish_posts';
-        }
-        return apply_filters( 'easy_mcp_ai_oauth_min_capability', $stored );
+        return \Easy_MCP_AI\Auth\Connect_Policy::floor_capability();
     }
 
     
@@ -180,11 +169,7 @@ class Authorization_Endpoint {
         
         
         
-        
-        
-        
-        $min_cap = self::resolved_min_capability();
-        if ( ! current_user_can( $min_cap ) ) {
+        if ( ! \Easy_MCP_AI\Auth\Connect_Policy::current_user_can_connect( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_OAUTH ) ) {
             return $this->redirect_with_error(
                 $params,
                 'access_denied',
@@ -295,8 +280,7 @@ class Authorization_Endpoint {
         }
 
         
-        $min_cap = self::resolved_min_capability();
-        if ( ! current_user_can( $min_cap ) ) {
+        if ( ! \Easy_MCP_AI\Auth\Connect_Policy::current_user_can_connect( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_OAUTH ) ) {
             $this->log_authorize_failure( 'insufficient_capability', $this->extract_params( $request ) );
             return new \WP_Error(
                 'access_denied',
@@ -770,8 +754,9 @@ class Authorization_Endpoint {
         }
 
         
+        
         $registered_uris = json_decode( $client->redirect_uris, true );
-        if ( ! is_array( $registered_uris ) || ! in_array( $params['redirect_uri'], $registered_uris, true ) ) {
+        if ( ! is_array( $registered_uris ) || ! Client_Registry::redirect_uri_is_registered( $params['redirect_uri'], $registered_uris ) ) {
             
             return new \WP_Error(
                 'invalid_redirect_uri',

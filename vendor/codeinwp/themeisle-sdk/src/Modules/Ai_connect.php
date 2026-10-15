@@ -739,7 +739,8 @@ class Ai_Connect extends Abstract_Module {
 	/**
 	 * One-click deep links. They mirror Easy MCP's own
 	 * Admin_Page::build_connect_url() so they can be offered before it runs.
-	 * ChatGPT cannot be pre-filled: the user pastes the URL. Cursor's link wants
+	 * ChatGPT has no link to its form: its link opens the Plugins page, where
+	 * the user adds the server and pastes the URL. Cursor's link wants
 	 * its `config` as Base64 JSON; the script appends it (window.btoa), because
 	 * PHP's Base64 function is refused by the WordPress.org plugin check in
 	 * every product that bundles the SDK, whatever the reason for the call.
@@ -755,7 +756,7 @@ class Ai_Connect extends Abstract_Module {
 
 		return array(
 			'claude'  => 'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=' . rawurlencode( $name ) . '&connectorUrl=' . rawurlencode( $endpoint ),
-			'chatgpt' => 'https://chatgpt.com/plugins#settings/Connectors?create-connector=true&redirectAfter=%2Fplugins',
+			'chatgpt' => 'https://chatgpt.com/plugins',
 			'cursor'  => 'cursor://anysphere.cursor-deeplink/mcp/install?name=' . rawurlencode( $name ),
 		);
 	}

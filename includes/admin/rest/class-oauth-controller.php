@@ -343,18 +343,22 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
 
-    
 
-
-
-    public static function shape_client( array $row, $issued_elsewhere = false ) {
+    public static function shape_client( array $row, bool $issued_elsewhere = false ): array {
         self::load_client_registry();
         $method = Client_Registry::effective_auth_method( $row );
         $uris   = json_decode( (string) ( $row['redirect_uris'] ?? '' ), true );
         if ( ! is_array( $uris ) ) {
             $uris = '' === trim( (string) ( $row['redirect_uris'] ?? '' ) ) ? array() : array( (string) $row['redirect_uris'] );
         }
-        $grants = array_values( array_filter( array_map( 'trim', explode( ' ', (string) ( $row['grant_types'] ?? '' ) ) ) ) );
+        
+        
+        
+        $grants = json_decode( (string) ( $row['grant_types'] ?? '' ), true );
+        if ( ! is_array( $grants ) ) {
+            $grants = explode( ' ', (string) ( $row['grant_types'] ?? '' ) );
+        }
+        $grants = array_values( array_filter( array_map( 'trim', array_filter( $grants, 'is_string' ) ) ) );
 
         return array(
             'id'           => (int) ( $row['id'] ?? 0 ),

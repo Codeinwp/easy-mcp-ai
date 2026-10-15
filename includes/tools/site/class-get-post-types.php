@@ -14,7 +14,7 @@ class Get_Post_Types extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists all registered WordPress post types that have REST API access enabled. Returns { post_types: [{ slug, name, description, rest_base, hierarchical }] }. IMPORTANT: `rest_base` (not `slug`) is the value required by all CPT tools (`wp_list_cpt_items`, `wp_get_cpt_item`, etc.). Call this first to discover available post types before using any CPT tool.';
+        return 'Lists all registered WordPress post types that have REST API access enabled. Returns { post_types: [{ slug, name, description, rest_base, hierarchical }] }. The CPT tools (`wp_list_cpt_items`, `wp_get_cpt_item`, etc.) and every tool with a `post_type` argument accept either a type\'s `rest_base` or its `slug`. Use this to find which post types exist.';
     }
 
     public function get_category() {

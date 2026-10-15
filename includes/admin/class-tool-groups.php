@@ -32,6 +32,10 @@ class Tool_Groups {
     }
 
     
+
+
+
+
     const CORE_CATEGORY_LABELS = array(
         'posts'     => 'Posts',
         'pages'     => 'Pages',
@@ -55,8 +59,13 @@ class Tool_Groups {
         'history'   => 'Change History',
         'audit'     => 'Audit Log',
         'site_health' => 'Site Health, Cron & Error Log',
+        'skills'    => 'Skills',
+        
+        'cli'       => 'WP-CLI commands',
         
         'rest'      => 'REST Routes (plugins and core)',
+        
+        'cache'     => 'Cache',
         'general'   => 'General',
     );
 

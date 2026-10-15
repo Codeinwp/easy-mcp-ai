@@ -9,12 +9,35 @@ class Resource_Registry {
 
     private $resources = array();
 
+    
+    private $providers = array();
+
+    
+    private $provided = null;
+
     public function register( Base_Resource $resource ) {
         $this->resources[ $resource->get_uri() ] = $resource;
     }
 
+    
+
+
+
+
+
+
+
+    public function add_provider( callable $provider ): void {
+        $this->providers[] = $provider;
+        $this->provided    = null;
+    }
+
     public function get_resource( $uri ) {
-        return isset( $this->resources[ $uri ] ) ? $this->resources[ $uri ] : null;
+        if ( isset( $this->resources[ $uri ] ) ) {
+            return $this->resources[ $uri ];
+        }
+        $provided = $this->provided();
+        return isset( $provided[ $uri ] ) ? $provided[ $uri ] : null;
     }
 
     public function get_all_definitions() {
@@ -22,7 +45,32 @@ class Resource_Registry {
         foreach ( $this->resources as $resource ) {
             $definitions[] = $resource->get_definition();
         }
+        foreach ( $this->provided() as $uri => $resource ) {
+            if ( ! isset( $this->resources[ $uri ] ) ) {
+                $definitions[] = $resource->get_definition();
+            }
+        }
         return $definitions;
+    }
+
+    
+    private function provided(): array {
+        if ( null !== $this->provided ) {
+            return $this->provided;
+        }
+        $this->provided = array();
+        foreach ( $this->providers as $provider ) {
+            try {
+                foreach ( (array) call_user_func( $provider ) as $resource ) {
+                    if ( $resource instanceof Base_Resource ) {
+                        $this->provided[ $resource->get_uri() ] = $resource;
+                    }
+                }
+            } catch ( \Throwable $e ) {
+                continue;
+            }
+        }
+        return $this->provided;
     }
 
     public function auto_discover() {

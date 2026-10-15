@@ -393,12 +393,22 @@ class Approval_Gate {
     }
 
     
-    private function replay_of( array $row ) {
+
+
+
+
+
+
+
+    private function replay_of( array $row ): ?array {
         if ( '' === (string) $row['result'] || $this->timestamp( $row['consumed_at'] ) < $this->time() - self::REPLAY_SECONDS ) {
             return null;
         }
         $result = json_decode( (string) $row['result'], true );
-        return is_array( $result ) ? array( 'kind' => 'replay', 'row' => $row, 'result' => $result ) : null;
+        if ( ! is_array( $result ) || ! empty( $result['isError'] ) ) {
+            return null;
+        }
+        return array( 'kind' => 'replay', 'row' => $row, 'result' => $result );
     }
 
     private function evaluate_retry( $tool, array $arguments, array $identity, array $params, $hash, $client_caps, $client_protocol = null ) {

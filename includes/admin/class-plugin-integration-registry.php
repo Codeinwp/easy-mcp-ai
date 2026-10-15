@@ -71,6 +71,8 @@ class Plugin_Integration_Registry {
                     array( 'name' => 'wp_wc_list_shipping_methods',   'description' => 'List shipping methods configured in a shipping zone.',                                        'type' => 'read',  'api' => 'plugin_rest' ),
                     array( 'name' => 'wp_wc_list_tax_rates',          'description' => 'List all tax rates with country, state, and tax class.',                                      'type' => 'read',  'api' => 'plugin_rest' ),
                     array( 'name' => 'wp_wc_list_payment_gateways',   'description' => 'List all payment gateways and their enabled/disabled status.',                               'type' => 'read',  'api' => 'plugin_rest' ),
+                    array( 'name' => 'wp_wc_list_logs',               'description' => 'List WooCommerce\'s own logs (Status › Logs): fatal errors, gateway and webhook logs.',      'type' => 'read',  'api' => 'php' ),
+                    array( 'name' => 'wp_wc_get_log',                 'description' => 'Read the newest lines of one WooCommerce log, filtered by day, level or text, secrets redacted.', 'type' => 'read',  'api' => 'php' ),
                 ),
             ),
             array(

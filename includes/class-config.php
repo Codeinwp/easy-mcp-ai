@@ -51,6 +51,12 @@ class Config {
         'approval_never',
         
         'oauth_root_fallback',
+        
+        'connect_roles',
+        
+        'skills_sync',
+        
+        'api_key_header_only',
     );
 
     
@@ -78,7 +84,14 @@ class Config {
             
             
             'api_key_site_host' => array( '', 'host' ),
+            
+            
+            
+            
+            'api_key_header_only' => array( false, 'hardening' ),
             'oauth_min_capability' => array( 'publish_posts', 'capability' ),
+            
+            'connect_roles' => array( array(), 'array' ),
             'external_data_min_capability' => array( 'manage_options', 'capability' ),
             'trusted_proxies' => array( array(), 'proxies' ),
             'client_ip_header' => array( 'X-Forwarded-For', 'header' ),
@@ -124,6 +137,11 @@ class Config {
             
             
             'paused' => array( false, 'paused' ),
+            
+            
+            
+            
+            'skills_sync' => array( true, 'opt_out' ),
         );
     }
 
@@ -225,13 +243,26 @@ class Config {
                     return false;
                 }
                 break;
+            case 'opt_out':
+                if ( in_array( $raw, array( true, 1, '1', 'true' ), true ) ) {
+                    return true;
+                }
+                if ( in_array( $raw, array( null, false, 0, '0', '', 'false' ), true ) ) {
+                    return false;
+                }
+                
+                
+                $valid = false;
+                return false;
             case 'paused':
+            case 'hardening':
                 if ( in_array( $raw, array( null, false, 0, '0', '', 'false' ), true ) ) {
                     return false;
                 }
                 if ( in_array( $raw, array( true, 1, '1', 'true' ), true ) ) {
                     return true;
                 }
+                
                 
                 
                 $valid = false;
@@ -404,7 +435,7 @@ class Config {
             
             $stored = self::stored( $suffix, \get_option( 'easy_mcp_ai_' . $suffix, $spec[0] ) );
             
-            if ( 'boolean' === $spec[1] ) {
+            if ( 'boolean' === $spec[1] || 'opt_out' === $spec[1] ) {
                 $stored = (bool) $stored;
             }
             $lines[] = 'define( ' . var_export( self::constant_name( $suffix ), true ) . ', '

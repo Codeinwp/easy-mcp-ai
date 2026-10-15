@@ -9,12 +9,54 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Menu_Item extends Base_Tool {
 
+    
+
+
+
+
+
+    const UPDATE_FIELDS = array(
+        'title'       => array( 'title', 'text' ),
+        'url'         => array( 'url', 'url' ),
+        'position'    => array( 'menu_order', 'int' ),
+        'parent'      => array( 'parent', 'int' ),
+        'menu_id'     => array( 'menus', 'int' ),
+        'target'      => array( 'target', 'target' ),
+        'classes'     => array( 'classes', 'classes' ),
+        'description' => array( 'description', 'text' ),
+        'attr_title'  => array( 'attr_title', 'text' ),
+        'object_type' => array( 'type', 'text' ),
+        'object'      => array( 'object', 'text' ),
+        'object_id'   => array( 'object_id', 'int' ),
+    );
+
+    
+
+
+
+
+
+    const RESULT_DEFAULTS = array(
+        'url'         => '',
+        'status'      => '',
+        'parent'      => 0,
+        'menu_order'  => 0,
+        'target'      => '',
+        'classes'     => array(),
+        'description' => '',
+        'type'        => '',
+        'object'      => '',
+        'object_id'   => 0,
+        'menus'       => null,
+        'attr_title'  => '',
+    );
+
     public function get_name() {
         return 'wp_update_menu_item';
     }
 
     public function get_description() {
-        return 'Updates an existing menu item. Required: `item_id` (the menu_item id — get it from `wp_list_menu_items`; NOT the linked post/term id). Only fields you provide are changed. Common updates: `title`, `parent` (move under a different parent — 0 = top-level), `position` (re-position; sibling order is by menu_order ascending), `url` (for custom URL items), `target` ("_blank" / "_self"), `classes` (array of CSS class strings), `description`, `menu_id` (move to a different menu). To re-link an item to a different post/term, set `object_type` (post_type/taxonomy/post_type_archive/custom) + `object` (e.g. page/category) + `object_id` together. Returns { id, title, url, status, parent, menu_order, target, classes, description, type, object, object_id, menus } — note the returned `target` (and any later read via `wp_list_menu_items`) reports "" rather than "_self" for same-tab items, since that is WordPress core\'s own internal representation.';
+        return 'Updates a menu item; only the fields you send change. Required: `item_id`, the menu item\'s own ID from `wp_list_menu_items` (not the linked post or term ID). `position` sets only this item\'s menu_order and moves no other item, so it can share a place with one; to move items, use `wp_reorder_menu_items`. To re-link the item, send `object_type`, `object` and `object_id` together. Returns the saved item { id, title, url, status, parent, menu_order, target, classes, description, type, object, object_id, menus, attr_title } and `changed`: false when nothing differed (WordPress still re-saves it, so its modified date moves). A same-tab `target` reads back as "", not "_self".';
     }
 
     public function get_category() {
@@ -48,15 +90,15 @@ class Update_Menu_Item extends Base_Tool {
                 ),
                 'url'      => array(
                     'type'        => 'string',
-                    'description' => 'New URL for the menu item.',
+                    'description' => 'New URL of a custom link. Other item types link to their object\'s own URL, so a URL sent for one is not shown.',
                 ),
                 'position' => array(
                     'type'        => 'integer',
-                    'description' => 'New position (menu order) for the item.',
+                    'description' => 'New position (menu order) for this item only; siblings are ordered by menu order ascending. No other item moves, so it can share the position with the item already there; to move an item among the others, use wp_reorder_menu_items.',
                 ),
                 'parent'   => array(
                     'type'        => 'integer',
-                    'description' => 'New parent menu item ID.',
+                    'description' => 'New parent menu item ID; 0 for the top level.',
                 ),
                 'menu_id'  => array(
                     'type'        => 'integer',
@@ -75,6 +117,10 @@ class Update_Menu_Item extends Base_Tool {
                 'description' => array(
                     'type'        => 'string',
                     'description' => 'Description text for the menu item (shown by some themes).',
+                ),
+                'attr_title'  => array(
+                    'type'        => 'string',
+                    'description' => 'New title attribute of the link (the tooltip some browsers show on hover). "" clears it.',
                 ),
                 'object_type' => array(
                     'type'        => 'string',
@@ -98,78 +144,133 @@ class Update_Menu_Item extends Base_Tool {
         $this->validate_title_length( isset( $arguments['title'] ) ? $arguments['title'] : null );
 
         $item_id = $this->parse_required_id( $arguments['item_id'], 'item_id' );
-        $request = new \WP_REST_Request( 'POST', '/wp/v2/menu-items/' . $item_id );
 
-        if ( isset( $arguments['title'] ) ) {
-            $request->set_param( 'title', sanitize_text_field( $arguments['title'] ) );
-        }
-        if ( isset( $arguments['url'] ) ) {
-            $request->set_param( 'url', esc_url_raw( $arguments['url'] ) );
-        }
-        if ( isset( $arguments['position'] ) ) {
-            $request->set_param( 'menu_order', absint( $arguments['position'] ) );
-        }
-        if ( isset( $arguments['parent'] ) ) {
-            $request->set_param( 'parent', absint( $arguments['parent'] ) );
-        }
-        if ( isset( $arguments['menu_id'] ) ) {
-            $request->set_param( 'menus', absint( $arguments['menu_id'] ) );
-        }
-        if ( isset( $arguments['target'] ) ) {
-            $target = sanitize_text_field( $arguments['target'] );
-            
-            
-            
-            if ( '_self' === $target ) {
-                $target = '';
+        
+        
+        
+        
+        
+        
+        $before = $this->read_item( $item_id );
+
+        $request = new \WP_REST_Request( 'POST', '/wp/v2/menu-items/' . $item_id );
+        foreach ( self::UPDATE_FIELDS as $argument => list( $param, $kind ) ) {
+            if ( isset( $arguments[ $argument ] ) ) {
+                $request->set_param( $param, self::param_value( $kind, $arguments[ $argument ] ) );
             }
-            $request->set_param( 'target', $target );
-        }
-        if ( isset( $arguments['classes'] ) ) {
-            $classes = is_array( $arguments['classes'] ) ? $arguments['classes'] : array( $arguments['classes'] );
-            $request->set_param( 'classes', array_map( 'sanitize_html_class', $classes ) );
-        }
-        if ( isset( $arguments['description'] ) ) {
-            $request->set_param( 'description', sanitize_text_field( $arguments['description'] ) );
-        }
-        if ( isset( $arguments['object_type'] ) ) {
-            $request->set_param( 'type', sanitize_text_field( $arguments['object_type'] ) );
-        }
-        if ( isset( $arguments['object'] ) ) {
-            $request->set_param( 'object', sanitize_text_field( $arguments['object'] ) );
-        }
-        if ( isset( $arguments['object_id'] ) ) {
-            $request->set_param( 'object_id', absint( $arguments['object_id'] ) );
         }
 
         $response = rest_do_request( $request );
 
         if ( $response->is_error() ) {
-            $wp_error = $response->as_error();
-            if ( 'rest_no_route' === $wp_error->get_error_code() ) {
-                throw new \RuntimeException(
-                    'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.'
-                );
-            }
-            throw new \RuntimeException( $wp_error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            self::throw_rest_error( $response );
         }
 
         $data = $response->get_data();
+        return self::item_result( is_array( $data ) ? $data : array(), $before );
+    }
 
-        return array(
-            'id'          => $data['id'],
-            'title'       => $data['title']['raw'] ?? wp_strip_all_tags( $data['title']['rendered'] ?? '' ),
-            'url'         => $data['url'] ?? '',
-            'status'      => $data['status'] ?? '',
-            'parent'      => $data['parent'] ?? 0,
-            'menu_order'  => $data['menu_order'] ?? 0,
-            'target'      => $data['target'] ?? '',
-            'classes'     => $data['classes'] ?? array(),
-            'description' => $data['description'] ?? '',
-            'type'        => $data['type'] ?? '',
-            'object'      => $data['object'] ?? '',
-            'object_id'   => $data['object_id'] ?? 0,
-            'menus'       => $data['menus'] ?? null,
+    
+
+
+
+
+
+
+
+    private static function item_result( array $data, array $before ): array {
+        $result = array(
+            'id'    => $data['id'],
+            'title' => $data['title']['raw'] ?? wp_strip_all_tags( $data['title']['rendered'] ?? '' ),
         );
+        foreach ( self::RESULT_DEFAULTS as $field => $default ) {
+            $result[ $field ] = $data[ $field ] ?? $default;
+        }
+        $result['changed'] = self::comparable( $before ) !== self::comparable( $data );
+        return $result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    private static function param_value( string $kind, $value ) {
+        switch ( $kind ) {
+            case 'url':
+                return esc_url_raw( $value );
+            case 'int':
+                return absint( $value );
+            case 'target':
+                $target = sanitize_text_field( $value );
+                return '_self' === $target ? '' : $target;
+            case 'classes':
+                return array_map( 'sanitize_html_class', is_array( $value ) ? $value : array( $value ) );
+            default:
+                return sanitize_text_field( $value );
+        }
+    }
+
+    
+
+
+
+
+
+
+    private function read_item( int $item_id ): array {
+        $request = new \WP_REST_Request( 'GET', '/wp/v2/menu-items/' . $item_id );
+        $request->set_param( 'context', 'edit' );
+        $response = rest_do_request( $request );
+        if ( $response->is_error() ) {
+            self::throw_rest_error( $response );
+        }
+        $data = $response->get_data();
+        return is_array( $data ) ? $data : array();
+    }
+
+    
+
+
+
+
+
+
+
+    private static function throw_rest_error( \WP_REST_Response $response ): void {
+        $wp_error = $response->as_error();
+        if ( 'rest_no_route' === $wp_error->get_error_code() ) {
+            throw new \RuntimeException(
+                'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.'
+            );
+        }
+        throw new \RuntimeException( $wp_error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
+    
+
+
+
+
+
+
+
+    private static function comparable( array $data ): array {
+        $title = $data['title'] ?? '';
+        if ( is_array( $title ) ) {
+            $title = $title['raw'] ?? ( $title['rendered'] ?? '' );
+        }
+        $out = array( 'title' => (string) $title );
+        foreach ( array( 'url', 'status', 'parent', 'menu_order', 'target', 'classes', 'description', 'attr_title', 'type', 'object', 'object_id', 'menus', 'xfn' ) as $key ) {
+            $out[ $key ] = $data[ $key ] ?? null;
+        }
+        return $out;
     }
 }

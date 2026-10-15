@@ -5,6 +5,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
+
 
 
 
@@ -393,8 +395,7 @@ class Device_Verification {
 
 
     private function enforce_min_capability( $log_reason ) {
-        $min_cap = Authorization_Endpoint::resolved_min_capability();
-        if ( current_user_can( $min_cap ) ) {
+        if ( \Easy_MCP_AI\Auth\Connect_Policy::current_user_can_connect( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_DEVICE ) ) {
             return null;
         }
         $this->log_event( 'auth_failure', $log_reason );

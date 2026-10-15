@@ -48,7 +48,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 				),
 				'post_type' => array(
 					'type'        => 'string',
-					'description' => 'The REST API base for the post type (e.g. posts, pages).',
+					'description' => 'The REST API base for the post type (e.g. posts, pages). A post_type slug is also accepted.',
 					'default'     => 'posts',
 				),
 				'fields'    => array(
@@ -99,6 +99,17 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 		);
 	}
 
+	
+
+
+
+
+
+
+	public function precheck( array $arguments ): void {
+		$this->precheck_post_type_route( $arguments, 'post_type', 'posts', 'post_id', 'POST' );
+	}
+
 	public function execute( array $arguments ) {
 		if ( ! function_exists( 'aioseo' ) ) {
 			throw new \RuntimeException( 'All in One SEO (AIOSEO) is not active on this site. Please install and activate AIOSEO to use this tool.' );
@@ -147,7 +158,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
 		}
-		$post_type = ! empty( $arguments['post_type'] ) ? $this->validate_rest_route_segment( $arguments['post_type'], 'post_type' ) : 'posts';
+		$post_type = ! empty( $arguments['post_type'] ) ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' ) : 'posts';
 		$fields    = $this->parse_json_param( $arguments['fields'], 'fields' );
 
 		
@@ -164,7 +175,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 			}
 		}
 
-		$data = $this->rest_request( 'POST', '/wp/v2/' . $post_type . '/' . $post_id, array( 'aioseo_meta_data' => $fields ) );
+		$data = $this->rest_request( 'POST', self::post_type_route( $post_type, $post_id, 'POST' ), array( 'aioseo_meta_data' => $fields ) );
 
 		return array(
 			'post_id'          => $post_id,
