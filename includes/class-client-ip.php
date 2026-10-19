@@ -26,8 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
-require_once __DIR__ . '/class-config.php';
-
 class Client_IP {
 
     

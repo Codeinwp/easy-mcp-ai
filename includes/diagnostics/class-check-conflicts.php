@@ -1407,15 +1407,7 @@ class Check_Conflicts {
 
 
 
-
-
     private static function rest_auth_override_active() {
-        if ( ! class_exists( '\Easy_MCP_AI\MCP\Rest_Auth_Override' ) ) {
-            $file = dirname( __DIR__ ) . '/mcp/class-rest-auth-override.php';
-            if ( is_readable( $file ) ) {
-                require_once $file;
-            }
-        }
         if ( ! class_exists( '\Easy_MCP_AI\MCP\Rest_Auth_Override' ) ) {
             return false;
         }

@@ -751,7 +751,7 @@ class Approval_Gate {
 
     private static function canonical( $value ) {
         if ( is_array( $value ) ) {
-            $is_list = array_keys( $value ) === range( 0, count( $value ) - 1 );
+            $is_list = self::is_list( $value );
             if ( ! $is_list ) {
                 ksort( $value, SORT_STRING );
             }
@@ -772,8 +772,41 @@ class Approval_Gate {
 
 
 
+
+    private static function is_list( array $value ): bool {
+        return array_keys( $value ) === range( 0, count( $value ) - 1 );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function sort_keys( array $value ): array {
+        if ( ! self::is_list( $value ) ) {
+            ksort( $value, SORT_STRING );
+        }
+        foreach ( $value as $key => $item ) {
+            if ( is_array( $item ) ) {
+                $value[ $key ] = self::sort_keys( $item );
+            }
+        }
+        return $value;
+    }
+
+    
+
+
+
+
+
     public function preview( $tool, array $arguments ) {
-        $text = '';
+        $arguments = self::sort_keys( $arguments );
+        $text      = '';
         try {
             if ( method_exists( $tool, 'describe' ) ) {
                 $text = (string) $tool->describe( $arguments );

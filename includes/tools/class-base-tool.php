@@ -564,9 +564,6 @@ abstract class Base_Tool {
 
     protected function resolve_post_type_rest_base( $value, string $label ): string {
         $value = $this->validate_rest_route_segment( $value, $label );
-        if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
-            require_once __DIR__ . '/class-post-type-rest-base.php';
-        }
         $base = Post_Type_Rest_Base::resolve( $value );
         Post_Type_Rest_Base::require_served_type( $base );
         return $base;
@@ -588,9 +585,6 @@ abstract class Base_Tool {
 
     protected static function post_type_route( string $base, ?int $id, string ...$methods ): string {
         $route = '/wp/v2/' . $base . ( null === $id ? '' : '/' . $id );
-        if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
-            require_once __DIR__ . '/class-post-type-rest-base.php';
-        }
         foreach ( $methods as $method ) {
             Post_Type_Rest_Base::require_own_route( $method, $base, $route );
         }
@@ -662,9 +656,6 @@ abstract class Base_Tool {
         }
         if ( 'revision' === $post->post_type && ! current_user_can( 'edit_post', (int) $post->post_parent ) ) {
             return;
-        }
-        if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-            require_once __DIR__ . '/class-post-type-tool-hint.php';
         }
         throw new \InvalidArgumentException( Post_Type_Tool_Hint::other_type( $post, $expected_type, $verb, $this->get_name() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
@@ -1576,9 +1567,6 @@ abstract class Base_Tool {
     private static function acf_field_hint( array $keys ): string {
         if ( ! function_exists( 'acf_get_field' ) ) {
             return '';
-        }
-        if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-            require_once __DIR__ . '/class-post-type-tool-hint.php';
         }
         if ( ! Post_Type_Tool_Hint::may_use( 'wp_acf_update_fields' ) ) {
             return '';

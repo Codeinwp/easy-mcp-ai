@@ -25,10 +25,11 @@ class Site_Info_Resource extends Base_Resource {
         return array(
             'name'         => get_bloginfo( 'name' ),
             'description'  => get_bloginfo( 'description' ),
+            
+            
+            
             'url'          => home_url(),
-            'admin_url'    => admin_url(),
             'wp_version'   => $wp_version,
-            'php_version'  => phpversion(),
             'timezone'     => wp_timezone_string(),
             'language'     => get_locale(),
             'charset'      => get_bloginfo( 'charset' ),

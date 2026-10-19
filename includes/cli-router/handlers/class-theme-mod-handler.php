@@ -162,9 +162,6 @@ class Theme_Mod_Handler extends Command_Handler {
         if ( Read_Value::flag( $inv->assoc, 'all' ) || ! $args ) {
             return false;
         }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Appearance\\Customizer_Settings' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/tools/appearance/class-customizer-settings.php';
-        }
         foreach ( $args as $mod ) {
             if ( '' === trim( $mod ) || false !== strpbrk( $mod, '[]' ) || null !== \Easy_MCP_AI\Tools\Appearance\Customizer_Settings::denied_reason( $mod ) ) {
                 return false;

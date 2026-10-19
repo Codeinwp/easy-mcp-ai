@@ -83,7 +83,6 @@ class Approve_Operation extends Base_Tool {
         if ( ! is_array( $this->identity ) ) {
             throw new \RuntimeException( 'No request identity.' );
         }
-        \Easy_MCP_AI\MCP\Server::load_approval_classes();
         $gate    = new \Easy_MCP_AI\Approvals\Approval_Gate( new \Easy_MCP_AI\Approvals\Wpdb_Approval_Store() );
         $outcome = $gate->decide_from_card( (string) $arguments['id'], (string) $arguments['secret'], $this->identity, $this->approves() );
         if ( ! $outcome['ok'] ) {

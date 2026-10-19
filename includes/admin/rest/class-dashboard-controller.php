@@ -593,9 +593,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         if ( ! $this->tool_registry || ! method_exists( $this->tool_registry, 'get_tools_by_category' ) ) {
             return 0;
         }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
-        }
         return self::count_active_tools(
             (array) $this->tool_registry->get_tools_by_category(),
             \Easy_MCP_AI\Tools\Tool_State::off_names( $this->tool_registry ),

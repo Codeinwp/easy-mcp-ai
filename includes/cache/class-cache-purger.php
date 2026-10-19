@@ -12,9 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-cache-registry.php';
-require_once __DIR__ . '/class-unmanaged-layers.php';
-
 
 
 

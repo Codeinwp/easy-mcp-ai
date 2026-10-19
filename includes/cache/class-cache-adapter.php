@@ -11,10 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-layer-result.php';
-require_once __DIR__ . '/class-purge-request.php';
-require_once __DIR__ . '/class-vendor-calls.php';
-
 
 
 

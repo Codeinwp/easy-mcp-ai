@@ -11,9 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/skills/class-skills.php';
-require_once dirname( __DIR__, 2 ) . '/mcp/class-tool-status.php';
-
 
 
 

@@ -159,7 +159,6 @@ class OAuth_Admin {
         if ( ! \current_user_can( 'manage_options' ) ) {
             return false;
         }
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
 
         $valid_scopes = \Easy_MCP_AI\OAuth\Scope_Map::get_all_scopes();
 

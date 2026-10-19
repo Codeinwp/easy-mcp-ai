@@ -672,9 +672,6 @@ class List_Users extends Base_Tool {
         if ( ! preg_match( '/^[\x21-\x7E]+\z/', $key ) ) {
             throw new \InvalidArgumentException( 'Invalid meta_key: use the key in plain printable ASCII with no spaces, as WordPress stores it.' );
         }
-        if ( ! class_exists( Get_User_Meta::class ) ) {
-            require_once __DIR__ . '/class-get-user-meta.php';
-        }
         if ( ! Get_User_Meta::is_key_readable( $key ) ) {
             throw new \RuntimeException( sprintf( 'meta_key "%s" is a key wp_get_user_meta withholds from you, so it cannot be used as a filter either.', $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }

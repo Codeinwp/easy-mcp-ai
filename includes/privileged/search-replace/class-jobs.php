@@ -31,16 +31,6 @@ final class Jobs {
 
     const RETENTION_DAYS = 1;
 
-    
-    public static function load(): void {
-        $dir = __DIR__ . '/';
-        require_once $dir . 'interface-database.php';
-        require_once $dir . 'class-wpdb-database.php';
-        require_once $dir . 'class-job-store.php';
-        require_once $dir . 'class-replacer.php';
-        require_once $dir . 'class-runner.php';
-    }
-
     public static function runner(): Runner {
         return new Runner(
             new Wpdb_Database(),
@@ -182,18 +172,12 @@ final class Jobs {
         
         if ( ! empty( $job['site_address'] ) ) {
             try {
-                if ( ! class_exists( '\\Easy_MCP_AI\\Diagnostics\\Diagnostics' ) ) {
-                    require_once dirname( __DIR__, 2 ) . '/diagnostics/class-diagnostics.php';
-                }
                 \Easy_MCP_AI\Diagnostics\Diagnostics::invalidate();
             } catch ( \Throwable $e ) {
                 unset( $e ); 
             }
         }
         try {
-            if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Log_Repository' ) ) {
-                require_once dirname( __DIR__, 2 ) . '/history/class-change-log-repository.php';
-            }
             $identity = (array) $job['identity'];
             $summary  = self::runner()->summary( $job );
             unset( $summary['next'], $summary['samples'] );

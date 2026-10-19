@@ -27,12 +27,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-skill-trust.php';
-require_once __DIR__ . '/class-release-verifier.php';
-require_once __DIR__ . '/class-skill-set.php';
-require_once __DIR__ . '/class-local-skills.php';
-require_once __DIR__ . '/class-skill-sync.php';
-
 
 
 

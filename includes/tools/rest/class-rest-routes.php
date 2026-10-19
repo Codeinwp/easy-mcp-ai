@@ -10,9 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/../class-rest-route-tool.php';
-require_once __DIR__ . '/../../rest-routes/class-route-catalogue.php';
-
 
 
 

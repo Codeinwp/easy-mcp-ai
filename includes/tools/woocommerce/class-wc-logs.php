@@ -5,9 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/class-text-redactor.php';
-require_once dirname( __DIR__ ) . '/site-health/class-site-health-guard.php';
-
 use Easy_MCP_AI\Text_Redactor;
 use Easy_MCP_AI\Tools\Site_Health\Site_Health_Guard;
 

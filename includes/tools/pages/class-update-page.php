@@ -8,11 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-if ( ! class_exists( Create_CPT_Item::class, false ) ) {
-    require_once dirname( __DIR__ ) . '/cpt/class-create-cpt-item.php';
-}
-
 class Update_Page extends Base_Tool {
 
     public function get_name() {

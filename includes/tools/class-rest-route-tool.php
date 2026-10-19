@@ -16,12 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-base-tool.php';
-require_once __DIR__ . '/../mcp/class-detailed-tool-error.php';
-require_once __DIR__ . '/../rest-routes/class-namespace-state.php';
-require_once __DIR__ . '/../rest-routes/class-route-gate.php';
-require_once __DIR__ . '/../rest-routes/class-dedicated-tools.php';
-
 
 
 

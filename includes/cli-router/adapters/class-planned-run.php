@@ -91,15 +91,21 @@ trait Planned_Run {
 
 
 
-    private static function planning_read( string $tool, array $source, array $arguments ): array {
+    private static function planning_read( string $tool, string $source, array $arguments ): array {
         $object = self::planning_tool( $tool, $source );
         if ( ! method_exists( $object, 'execute' ) ) {
             return self::planning_error( $tool . ' is not available.' );
         }
+        
+        
+        
+        \Easy_MCP_AI\MCP\Tool_Call_Stack::enter( $tool );
         try {
             $result = $object->execute( $arguments );
         } catch ( \Throwable $e ) {
             return self::planning_error( $e->getMessage() );
+        } finally {
+            \Easy_MCP_AI\MCP\Tool_Call_Stack::leave();
         }
         $text = function_exists( 'wp_json_encode' ) ? \wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) : json_encode( $result, JSON_UNESCAPED_SLASHES ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- fallback outside WordPress.
         return self::planning_text( (string) $text );
@@ -111,7 +117,7 @@ trait Planned_Run {
 
 
 
-    private static function planning_tool( string $tool, array $source ): object {
+    private static function planning_tool( string $tool, string $source ): object {
         $object = null;
         if ( class_exists( '\\Easy_MCP_AI\\Plugin', false ) && method_exists( '\\Easy_MCP_AI\\Plugin', 'instance' ) ) {
             $registry = \Easy_MCP_AI\Plugin::instance()->get_tool_registry();
@@ -120,14 +126,7 @@ trait Planned_Run {
         if ( is_object( $object ) ) {
             return $object;
         }
-        list( $class, $file ) = $source;
-        if ( ! class_exists( $class, false ) ) {
-            if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Base_Tool', false ) ) {
-                require_once dirname( __DIR__, 2 ) . '/tools/class-base-tool.php';
-            }
-            require_once dirname( __DIR__, 2 ) . '/tools/' . $file;
-        }
-        return new $class();
+        return new $source();
     }
 
     

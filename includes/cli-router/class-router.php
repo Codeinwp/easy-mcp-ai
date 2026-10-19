@@ -198,9 +198,6 @@ final class Router {
 
 
     private static function plan_pauses( array $plan ): bool {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) && class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) ) {
-            \Easy_MCP_AI\MCP\Server::load_approval_classes();
-        }
         foreach ( $plan as $call ) {
             $tool = self::tool( (string) $call['tool'] );
             
@@ -714,9 +711,6 @@ final class Router {
         }
         if ( ! is_string( $url ) || '' === $url ) {
             return;
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Site_Host' ) ) {
-            require_once dirname( __DIR__ ) . '/class-site-host.php';
         }
         $home = (string) \home_url();
         if ( ! self::url_names_this_site( $url, $home ) ) {
@@ -1678,9 +1672,6 @@ final class Router {
 
     
     private static function printed_note( string $printed ): string {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) ) {
-            require_once dirname( __DIR__ ) . '/class-text-redactor.php';
-        }
         $excerpt = Envelope::cut( $printed, self::PRINTED_NOTE_BYTES );
         return sprintf(
             'WordPress or another plugin printed %d bytes during this command, outside WP-CLI\'s output (it is not in output or stderr): %s%s',
@@ -1770,9 +1761,6 @@ final class Router {
 
 
     private static function tool_error( ?string $message, bool $from_output, Context $ctx, int $exit, array $envelope ): \Easy_MCP_AI\MCP\Detailed_Tool_Error {
-        if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Detailed_Tool_Error' ) ) {
-            require_once dirname( __DIR__ ) . '/mcp/class-detailed-tool-error.php';
-        }
         $stdout = $ctx->out->stdout();
         $rest   = $ctx->out->stderr();
         if ( $from_output ) {

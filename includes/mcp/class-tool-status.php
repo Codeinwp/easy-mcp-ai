@@ -14,10 +14,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/class-config.php';
-require_once dirname( __DIR__ ) . '/tools/class-tool-state.php';
-require_once dirname( __DIR__ ) . '/admin/class-settings-validator.php';
-
 
 
 

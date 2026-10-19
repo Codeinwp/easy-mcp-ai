@@ -2,7 +2,6 @@
 namespace Easy_MCP_AI\Tools\Cli;
 
 use Easy_MCP_AI\Tools\Base_Tool;
-use Easy_MCP_AI\Cli_Router\Loader;
 use Easy_MCP_AI\Cli_Router\Router;
 use Easy_MCP_AI\Cli_Router\Context;
 use Easy_MCP_AI\Cli_Router\Output;
@@ -60,7 +59,7 @@ class Cli_Run extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Runs one WP-CLI command (official WP-CLI 2.12.0 syntax, as typed after `wp`) in-process as your WordPress user: no shell, no wp binary. Example: `post list --post_type=page --format=json`. Run `help`, `help <command>` or `cli has-command "<command>"` to see what you can run. A command that an existing tool performs runs through that tool, so that tool must be switched on and granted to you; writes may pause for approval when the site requires it. Refused by name: eval, eval-file, shell and other developer commands, db query/export/import/reset, config, arguments that read a file on the server, and commands added by other plugins. Values with spaces must be quoted; shell syntax (pipes, redirects, $variables, globs) is refused. Options it never writes, each with what does the job instead: siteurl, home (`search-replace`); active_plugins, recently_activated (`plugin activate`, `plugin deactivate`); template, stylesheet (`theme activate`); {prefix}user_roles (`role create`, `cap add`, `cap remove`); default_role, users_can_register, admin_email (Settings › General in wp-admin); cron (`cron event schedule`, `cron event delete`); rewrite_rules (`rewrite flush`); permalink_structure (`rewrite structure`); db_version, initial_db_version (`core update-db`); uninstall_plugins (`plugin uninstall`); auto_update_plugins (`plugin auto-updates enable`); auto_update_themes (`theme auto-updates enable`); site_admins (`super-admin add`); active_sitewide_plugins (`plugin activate --network`). Site transients it never writes (the update offers, in any storage form): _site_transient_update_core (`core update`); _site_transient_update_plugins (`plugin update`); _site_transient_update_themes (`theme update`). It never prints the salts, never reads or writes the options, transients or user meta of the plugin that serves this connection, and never runs, schedules or removes its cron events or grants or removes its capabilities. Returns { output, stderr, exit_code, changed, warnings, calls, pending_approval, history, redacted, notes }: `output` and `stderr` are exactly what WP-CLI prints, and `changed` says whether anything was written.';
+        return 'Runs one WP-CLI command (WP-CLI 2.12.0 syntax, as typed after `wp`) in-process as your WordPress user: no shell, no wp binary. Example: `post list --post_type=page --format=json`. Run `help`, `help <command>` or `cli has-command "<command>"` to see what you can run. A command that an existing tool performs runs through that tool, so that tool must be switched on and granted to you; writes may pause for approval when the site requires it. Refused by name: eval, eval-file, shell and other developer commands, db query/export/import/reset, config, arguments that read a file on the server, and commands added by other plugins. Shell syntax (pipes, redirects, $variables, globs) is refused. Options it never writes, each with what does the job instead: siteurl, home (`search-replace`); active_plugins, recently_activated (`plugin activate`, `plugin deactivate`); template, stylesheet (`theme activate`); {prefix}user_roles (`role create`, `cap add`, `cap remove`); default_role, users_can_register, admin_email (Settings › General in wp-admin); cron (`cron event schedule`, `cron event delete`); rewrite_rules (`rewrite flush`); permalink_structure (`rewrite structure`); db_version, initial_db_version (`core update-db`); uninstall_plugins (`plugin uninstall`); auto_update_plugins (`plugin auto-updates enable`); auto_update_themes (`theme auto-updates enable`); site_admins (`super-admin add`); active_sitewide_plugins (`plugin activate --network`). Site transients it never writes (the update offers, in any storage form): _site_transient_update_core (`core update`); _site_transient_update_plugins (`plugin update`); _site_transient_update_themes (`theme update`). It never prints the salts, and never touches the options, transients, user meta, cron events or capabilities of the plugin serving this connection. Returns { output, stderr, exit_code, changed, warnings, calls, pending_approval, history, redacted, notes }: `output` and `stderr` are exactly what WP-CLI prints, and `changed` says whether anything was written.';
     }
 
     public function get_category() {
@@ -179,7 +178,6 @@ class Cli_Run extends Base_Tool {
 
     public function redact_for_record( array $arguments ) {
         if ( isset( $arguments['command'] ) && is_string( $arguments['command'] ) ) {
-            self::load();
             $arguments['command'] = Redactor::mask_command( $arguments['command'] )[0];
         }
         return $arguments;
@@ -193,7 +191,6 @@ class Cli_Run extends Base_Tool {
 
 
     public function execute( array $arguments ) {
-        self::load();
         
         
         
@@ -213,15 +210,6 @@ class Cli_Run extends Base_Tool {
 
 
     private static function classify( array $arguments ): \Easy_MCP_AI\Cli_Router\Classification {
-        self::load();
         return Router::classify( isset( $arguments['command'] ) && is_string( $arguments['command'] ) ? $arguments['command'] : '' );
-    }
-
-    
-    private static function load(): void {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Cli_Router\\Loader', false ) ) {
-            require_once dirname( __DIR__, 2 ) . '/cli-router/class-loader.php';
-        }
-        Loader::register();
     }
 }

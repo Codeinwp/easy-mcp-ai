@@ -14,11 +14,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
-require_once dirname( __DIR__ ) . '/meta/class-meta-field-provider.php';
-require_once dirname( __DIR__ ) . '/meta/class-meta-exposure.php';
-
-
-
 
 
 

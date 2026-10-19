@@ -107,9 +107,6 @@ class Admin_Page {
 
 
     public static function write_auth_rule() {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-diagnostic-result.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-htaccess-auth-rule.php';
-
         if ( ! self::may_write_htaccess() ) {
             return 'auth_rule_refused';
         }
@@ -166,9 +163,6 @@ class Admin_Page {
 
 
     public static function write_plain_routes(): string {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-diagnostic-result.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-htaccess-plain-routes.php';
-
         if ( ! self::may_write_htaccess() ) {
             return 'plain_routes_refused';
         }

@@ -23,12 +23,6 @@ class Tool_Groups {
 
     public function __construct( $tool_registry ) {
         $this->tool_registry = $tool_registry;
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\External_Data_Admin' ) ) {
-            require_once __DIR__ . '/class-external-data-admin.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Plugin_Integration_Registry' ) ) {
-            require_once __DIR__ . '/class-plugin-integration-registry.php';
-        }
     }
 
     
@@ -118,9 +112,6 @@ class Tool_Groups {
         $ability_defs   = array();
         $disabled_tools   = (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() );
         $allowed_patterns = (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() );
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
-        }
         $off_tools = \Easy_MCP_AI\Tools\Tool_State::off_names( $this->tool_registry );
 
         
@@ -443,9 +434,6 @@ class Tool_Groups {
 
 
     public static function resolve_ability_tool_def( $ability_name, array $enabled_abilities, array $ability_def_by_name ) {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Dynamic_Tool_Registrar' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
-        }
         $is_enabled = in_array( $ability_name, $enabled_abilities, true );
         $tool_name  = \Easy_MCP_AI\Tools\Dynamic_Tool_Registrar::build_tool_name( $ability_name );
         $tool_def   = isset( $ability_def_by_name[ $tool_name ] ) ? $ability_def_by_name[ $tool_name ] : null;

@@ -391,23 +391,10 @@ class Scope_Map {
         
         
         
-        self::load_privileged();
         $scopes = array_merge( $scopes, Privileged_Groups::enabled_scopes() );
 
         return array_values( array_unique( $scopes ) );
     }
-
-    
-
-
-
-
-    private static function load_privileged() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
-            require_once dirname( __DIR__ ) . '/privileged/class-privileged-groups.php';
-        }
-    }
-
 
     
 
@@ -474,10 +461,6 @@ class Scope_Map {
         $abilities = self::get_cached_abilities();
         if ( empty( $abilities ) ) {
             return array();
-        }
-
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Dynamic_Tool_Registrar' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
         }
 
         $prefixes = array();
@@ -563,7 +546,6 @@ class Scope_Map {
         
         
         
-        self::load_privileged();
         $privileged_tools = Privileged_Groups::tools_for_scopes( $scope_parts );
 
         foreach ( $scope_parts as $part ) {
@@ -745,20 +727,6 @@ class Scope_Map {
 
 
     public static function get_categories(): array {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Dynamic_Tool_Registrar' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
-        }
-
         $labels     = self::category_labels();
         $categories = array();
         $seen       = array();

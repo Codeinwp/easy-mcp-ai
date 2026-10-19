@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-require_once __DIR__ . '/class-list-menu-items.php';
-require_once __DIR__ . '/trait-menu-item-refusal.php';
-
 class Delete_Menu_Item extends Base_Tool {
 
     use Menu_Item_Refusal;

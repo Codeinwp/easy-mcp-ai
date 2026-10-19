@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-customizer-settings.php';
-require_once __DIR__ . '/class-customizer-changeset.php';
-
 class Update_Theme_Mod extends Base_Tool {
 
     public function get_name() {

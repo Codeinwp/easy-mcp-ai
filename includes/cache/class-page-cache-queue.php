@@ -97,8 +97,6 @@ final class Page_Cache_Queue {
         self::$post_ids = array();
         self::$urls     = array();
 
-        require_once __DIR__ . '/class-cache-purger.php';
-        require_once __DIR__ . '/class-post-urls.php';
         $deadline = Cache_Purger::deadline( self::TIME_BUDGET );
         if ( array() !== $post_ids ) {
             self::clear_posts( $post_ids, $deadline );
@@ -155,7 +153,6 @@ final class Page_Cache_Queue {
 
 
     private static function clear_urls( array $urls, float $deadline ): void {
-        require_once __DIR__ . '/class-url-guard.php';
         try {
             $rows = array();
             foreach ( $urls as $url ) {

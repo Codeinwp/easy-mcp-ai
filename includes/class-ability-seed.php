@@ -5,8 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-ability-input-policy.php';
-
 
 
 

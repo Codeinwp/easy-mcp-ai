@@ -915,9 +915,6 @@ class Cron_Handler extends Command_Handler {
 
 
     private static function redact_args( array $events, Context $ctx ): array {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/class-text-redactor.php';
-        }
         foreach ( $events as $key => $event ) {
             $masked = \Easy_MCP_AI\Text_Redactor::redact_value( $event->args );
             if ( $masked !== $event->args ) {
@@ -973,9 +970,6 @@ class Cron_Handler extends Command_Handler {
 
     
     private static function args_preview( array $args ): string {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/class-text-redactor.php';
-        }
         $text = (string) json_encode( \Easy_MCP_AI\Text_Redactor::redact_value( $args ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR );
         return strlen( $text ) > 200 ? \Easy_MCP_AI\Cli_Router\Envelope::cut( $text, 197 ) . '...' : $text;
     }

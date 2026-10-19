@@ -6,9 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-keys.php';
-
-
 
 
 

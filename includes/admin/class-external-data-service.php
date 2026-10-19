@@ -58,12 +58,6 @@ class External_Data_Service {
 
 
     public function __construct( $gateway = null, $definitions = null ) {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\External_Data_Admin' ) ) {
-            require_once __DIR__ . '/class-external-data-admin.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\External_Data_Gateway' ) ) {
-            require_once __DIR__ . '/class-external-data-gateway.php';
-        }
         $this->gateway     = $gateway ? $gateway : new External_Data_Gateway();
         $this->definitions = $definitions ? $definitions : array( $this, 'load_definitions' );
     }
@@ -249,25 +243,13 @@ class External_Data_Service {
         if ( ! is_dir( $dir ) ) {
             return array();
         }
-        foreach ( array(
-            'includes/dfs/class-dataforseo-client.php',
-            'includes/semrush/class-semrush-client.php',
-            'includes/semrush/class-semrush-validators.php',
-            'includes/seranking/class-seranking-client.php',
-            'includes/seranking/class-seranking-validators.php',
-        ) as $dependency ) {
-            if ( file_exists( EASY_MCP_AI_PLUGIN_DIR . $dependency ) ) {
-                require_once EASY_MCP_AI_PLUGIN_DIR . $dependency;
-            }
-        }
-        foreach ( (array) glob( $dir . 'class-*.php' ) as $file ) {
-            require_once $file;
-        }
         if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_Registry' ) ) {
             return array();
         }
+        
+        
         $registry = new Tool_Registry();
-        $registry->auto_discover( true );
+        $registry->auto_discover( true, array( $key ) );
         $rows = array();
         foreach ( (array) ( $registry->get_tools_by_category()[ $key ] ?? array() ) as $definition ) {
             $tool = $registry->get_tool( $definition['name'] );

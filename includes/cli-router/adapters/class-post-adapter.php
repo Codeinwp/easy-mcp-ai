@@ -17,11 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
-    require_once dirname( __DIR__, 2 ) . '/tools/class-post-type-rest-base.php';
-}
-
-
 
 
 

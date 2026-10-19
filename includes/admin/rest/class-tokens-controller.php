@@ -31,8 +31,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/auth/class-connect-policy.php';
-
 class Tokens_Controller extends Admin_Rest_Controller {
 
     
@@ -151,7 +149,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
     public static function catalogue( array $by_category ) {
         
         
-        require_once dirname( __DIR__, 2 ) . '/auth/class-permission-guard.php';
         $categories = array();
         foreach ( $by_category as $key => $defs ) {
             $tools = array();
@@ -451,7 +448,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
 
 
     private function resolve_expiry( $request, $stored = null ) {
-        self::load_admin_page();
         $preset = $request->get_param( 'expiresPreset' );
         $custom = $request->get_param( 'expiresAt' );
         $result = \Easy_MCP_AI\Admin\Admin_Page::resolve_submitted_expiry(
@@ -681,11 +677,5 @@ class Tokens_Controller extends Admin_Rest_Controller {
     private static function display_name( $user_id ) {
         $user = $user_id ? \get_userdata( $user_id ) : false;
         return $user && ! empty( $user->display_name ) ? (string) $user->display_name : \__( 'Unknown', 'easy-mcp-ai' );
-    }
-
-    private static function load_admin_page() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Admin_Page' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-admin-page.php';
-        }
     }
 }

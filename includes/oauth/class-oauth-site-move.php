@@ -40,8 +40,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-token-endpoint.php';
-
 class OAuth_Site_Move {
 
     

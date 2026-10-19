@@ -9,8 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/trait-package-guard.php';
-
 
 
 

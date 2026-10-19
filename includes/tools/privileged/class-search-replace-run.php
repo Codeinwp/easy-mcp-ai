@@ -12,10 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-require_once dirname( __DIR__, 2 ) . '/privileged/search-replace/class-jobs.php';
-Jobs::load();
-
-
 
 
 
@@ -67,7 +63,7 @@ class Search_Replace_Run extends Privileged_Tool {
     }
 
     public function get_description() {
-        return 'Search and replace a string across the database, like `wp search-replace`: serialized PHP data is unserialized, replaced and serialized again so stored lengths stay right, and the JSON-escaped form (`https:\/\/`) is replaced too. Case-sensitive. Dry run by default (`dry_run` true): nothing is written and the result shows cells and occurrences per table and column. Call again with `dry_run` false and the same arguments to apply. Default scope: every table with this site\'s prefix; `tables` (wildcards allowed), `all_tables`, `network` (multisite, super admin) and `skip_tables` change it. Never touched: the plugin\'s own tables and options, the `user_pass` column, `guid` unless `include_guid`. `siteurl` and `home` are written last. A run longer than about 20 seconds continues in the background: the result has `status` "running" and a `job_id`; call again with only `{"job_id": "…"}` every 30 seconds or so to read progress (that call needs no approval). There is no undo: `reversible` in the finished result says whether running the opposite replacement would restore the data exactly. Objects of classes other than stdClass are left untouched and listed under skipped.partial; `recurse_objects` false leaves stdClass objects untouched too. `regex` true treats `old` as a PCRE pattern (`regex_flags`, `regex_delimiter`, `regex_limit` as in WP-CLI; `new` may use $1 backreferences): every row in scope is read, which is much slower, no JSON-escaped form is searched, a cell where the pattern fails is left unchanged under skipped.regex_error, and `reversible` is false. `log` true adds `log`, the old and new text around each change per cell (`before_context` / `after_context` characters, default 40), capped with the rest counted in `log_more`; `verbose` true adds `checked`, every table.column searched (the rest counted in `checked_more`). Not handled: URL-encoded values (http%3A%2F%2F) and text that block-attribute JSON stores escaped (&, <, >, ", --).';
+        return 'Search and replace a string across the database, like `wp search-replace`: serialized PHP data is unserialized, replaced and serialized again so stored lengths stay right, and the JSON-escaped form (`https:\/\/`) is replaced too. Case-sensitive. Dry run by default (`dry_run` true): nothing is written and the result shows cells and occurrences per table and column. Call again with `dry_run` false and the same arguments to apply. Default scope: every table with this site\'s prefix; `tables` (wildcards allowed), `all_tables`, `network` (multisite, super admin) and `skip_tables` change it. Never touched: the plugin\'s own tables and options, the `user_pass` column, `guid` unless `include_guid`. `siteurl` and `home` are written last. A run longer than about 20 seconds continues in the background: the result has `status` "running" and a `job_id`; call again with only `{"job_id": "…"}` every 30 seconds or so to read progress (that call needs no approval). There is no undo: `reversible` in the finished result says whether running the opposite replacement would restore the data exactly. Objects of classes other than stdClass are left untouched and listed under skipped.partial; `recurse_objects` false leaves stdClass objects untouched too. `regex` true treats `old` as a PCRE pattern: much slower, no JSON-escaped form is searched, and `reversible` is false. `log` and `verbose` add each change in context and the columns searched. Not handled: URL-encoded values (http%3A%2F%2F) and text that block-attribute JSON stores escaped (&, <, >, ", --).';
     }
 
     public function get_input_schema() {

@@ -95,8 +95,17 @@ class Check_Schema {
     }
 
     
+
+
+
+
+    private static function oauth_layer_used(): bool {
+        return class_exists( '\Easy_MCP_AI\OAuth\OAuth_Schema', false );
+    }
+
+    
     private static function index_abstention_reason() {
-        if ( ! class_exists( '\Easy_MCP_AI\OAuth\OAuth_Schema' ) ) {
+        if ( ! self::oauth_layer_used() ) {
             return self::REASON_OAUTH_UNAVAILABLE;
         }
         return self::REASON_NO_DATABASE;
@@ -427,7 +436,7 @@ class Check_Schema {
 
 
     private static function missing_indexes() {
-        if ( null === self::wpdb() || ! class_exists( '\Easy_MCP_AI\OAuth\OAuth_Schema' ) ) {
+        if ( null === self::wpdb() || ! self::oauth_layer_used() ) {
             return null;
         }
 
@@ -486,7 +495,7 @@ class Check_Schema {
 
         $versions = array();
 
-        if ( class_exists( '\Easy_MCP_AI\OAuth\OAuth_Schema' ) ) {
+        if ( self::oauth_layer_used() ) {
             $versions['easy_mcp_ai_oauth_db_version'] = array(
                 'stored' => (string) \get_option( 'easy_mcp_ai_oauth_db_version', '' ),
                 'code'   => (string) \Easy_MCP_AI\OAuth\OAuth_Schema::DB_VERSION,

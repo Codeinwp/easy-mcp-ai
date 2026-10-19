@@ -13,13 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
-require_once dirname( __DIR__, 2 ) . '/feedback/class-feedback-queue.php';
-require_once dirname( __DIR__, 2 ) . '/mcp/class-server.php';
-require_once dirname( __DIR__ ) . '/class-tool-state.php';
-
-
-
-
 
 
 
@@ -117,8 +110,6 @@ class Send_Feedback extends Base_Tool {
         if ( ! is_array( $this->identity ) ) {
             throw new \RuntimeException( 'No request identity, so the report was not queued.' );
         }
-        Feedback_Queue::load();
-        require_once dirname( __DIR__, 2 ) . '/feedback/class-feedback-availability.php';
 
         $kind    = $arguments['kind'];
         $summary = $arguments['summary'];

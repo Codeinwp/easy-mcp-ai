@@ -36,11 +36,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/class-config.php';
-require_once __DIR__ . '/class-skill-trust.php';
-require_once __DIR__ . '/class-release-verifier.php';
-require_once __DIR__ . '/class-local-skills.php';
-
 final class Skill_Sync {
 
     const HOOK = 'easy_mcp_ai_skills_sync';

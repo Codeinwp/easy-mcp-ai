@@ -9,8 +9,6 @@ use Easy_MCP_AI\Tools\Tool_Registry;
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
-
 
 class Self_Service_Keys {
     private $manager;
@@ -93,7 +91,6 @@ class Self_Service_Keys {
 
 
     private function offered_tools(): array {
-        require_once dirname( __DIR__ ) . '/auth/class-permission-guard.php';
         return array_values( array_filter( Server::available_tools( $this->registry, true ), static function ( array $definition ): bool {
             return ! isset( $definition['_meta'][ \Easy_MCP_AI\Tools\Privileged_Tool::META_KEY ] )
                 && ! in_array( $definition['name'], self::NEVER_OFFERED, true )

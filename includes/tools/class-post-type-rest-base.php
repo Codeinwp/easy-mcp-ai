@@ -162,9 +162,6 @@ final class Post_Type_Rest_Base {
     public static function require_served_type( string $base ): array {
         $served = self::served_type( $base );
         if ( null === $served ) {
-            if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-                require_once __DIR__ . '/class-post-type-tool-hint.php';
-            }
             throw new \InvalidArgumentException( Post_Type_Tool_Hint::not_a_post_type( $base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $served;
@@ -198,15 +195,9 @@ final class Post_Type_Rest_Base {
         if ( ! is_object( $server ) ) {
             return;
         }
-        if ( ! class_exists( Route_Gate::class, false ) ) {
-            require_once dirname( __DIR__ ) . '/rest-routes/class-route-gate.php';
-        }
         try {
             $handler = Route_Gate::resolve( $server, $method, $path )['handler'];
         } catch ( \RuntimeException $e ) {
-            if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-                require_once __DIR__ . '/class-post-type-tool-hint.php';
-            }
             throw new \InvalidArgumentException( Post_Type_Tool_Hint::no_route( $base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         $served     = self::require_served_type( $base );
@@ -216,9 +207,6 @@ final class Post_Type_Rest_Base {
         }
         $answers = isset( $handler['callback'] ) && is_array( $handler['callback'] ) && isset( $handler['callback'][0] ) ? $handler['callback'][0] : null;
         if ( ! is_object( $answers ) || ! is_a( $answers, get_class( $controller ) ) ) {
-            if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-                require_once __DIR__ . '/class-post-type-tool-hint.php';
-            }
             throw new \InvalidArgumentException( Post_Type_Tool_Hint::other_controller( $path ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }

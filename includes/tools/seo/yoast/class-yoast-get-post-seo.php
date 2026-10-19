@@ -12,11 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
 
-
-if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
-	require_once dirname( __DIR__, 2 ) . '/class-post-type-rest-base.php';
-}
-
 class Yoast_Get_Post_Seo extends Base_Tool {
 
 	

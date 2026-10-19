@@ -5,12 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-keys.php';
-
-
-require_once __DIR__ . '/../class-site-host.php';
-
 class Token_Manager {
 
     const TOKEN_PREFIX = 'wpmcp_';

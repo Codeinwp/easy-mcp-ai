@@ -14,12 +14,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/class-privileged-tool.php';
-require_once dirname( __DIR__, 2 ) . '/privileged/files-read/class-read-action.php';
-require_once dirname( __DIR__, 2 ) . '/privileged/files-read/class-list-action.php';
-require_once dirname( __DIR__, 2 ) . '/privileged/files-read/class-search-action.php';
-require_once dirname( __DIR__, 2 ) . '/privileged/files-read/class-outline-action.php';
-
 
 
 

@@ -19,7 +19,25 @@ class App_Page {
     const SLUG_PREFIX = 'easy-mcp-ai';
     const HANDLE      = 'easy-mcp-ai-app';
     const ROOT_ID     = 'easy-mcp-ai-app';
-    const MENU_POSITION = 80;
+
+    
+
+
+
+    const MENU_POSITION = 59.5;
+
+    
+    const GENERIC_MENU_ICON = 'dashicons-rest-api';
+
+    
+
+
+
+
+
+
+
+    const MENU_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="#a7aaad" d="M21.64 22.79L35.39 64.03L43.45 42.54A7 7 0 0 1 56.55 42.54L64.61 64.03L78.36 22.79A7 7 0 0 1 91.64 27.21L71.64 87.21A7 7 0 0 1 58.45 87.46L50 64.94L41.55 87.46A7 7 0 0 1 28.36 87.21L8.36 27.21A7 7 0 0 1 21.64 22.79Z"/></svg>';
 
     
     private $hooks = array();
@@ -34,7 +52,6 @@ class App_Page {
     const SETUP_BODY_CLASS = 'easy-mcp-ai-setup';
 
     public function __construct() {
-        require_once __DIR__ . '/class-setup-state.php';
         
         \add_action( 'admin_menu', array( $this, 'register_menus' ), 9 );
         \add_action( 'admin_head', array( $this, 'hide_menu_entries' ) );
@@ -253,7 +270,7 @@ class App_Page {
             'manage_options',
             self::SLUG_PREFIX,
             array( $this, 'render_app' ),
-            'dashicons-rest-api',
+            self::menu_icon(),
             self::MENU_POSITION
         );
         foreach ( self::pages() as $key => $page ) {
@@ -285,6 +302,18 @@ class App_Page {
             array_search( 'activity', array_keys( self::pages() ), true ) + 1
         );
         $this->hooks = array_values( array_unique( array_filter( $this->hooks ) ) );
+    }
+
+    
+
+
+
+
+    public static function menu_icon(): string {
+        if ( \Easy_MCP_AI\Config::is_white_labelled() ) {
+            return self::GENERIC_MENU_ICON;
+        }
+        return 'data:image/svg+xml;base64,' . base64_encode( self::MENU_ICON_SVG ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- core's svg-painter.js reads only a base64 data URI.
     }
 
     
@@ -483,9 +512,6 @@ class App_Page {
 
 
     public static function bootstrap() {
-        require_once __DIR__ . '/class-site-kind.php';
-        require_once __DIR__ . '/rest/class-admin-rest-controller.php';
-
         $user = \wp_get_current_user();
 
         return array(

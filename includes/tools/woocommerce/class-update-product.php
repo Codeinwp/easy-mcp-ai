@@ -7,8 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/trait-product-images.php';
-
 class Update_Product extends Base_Tool {
 
     use Product_Images;

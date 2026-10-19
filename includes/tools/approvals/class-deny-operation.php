@@ -9,12 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
-require_once __DIR__ . '/class-approve-operation.php';
-
-
-
-
-
 class Deny_Operation extends Approve_Operation {
 
     public function get_name() {

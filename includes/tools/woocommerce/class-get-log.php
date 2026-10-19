@@ -8,10 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/class-text-redactor.php';
-require_once dirname( __DIR__ ) . '/site-health/class-get-error-log.php';
-require_once __DIR__ . '/class-wc-logs.php';
-
 
 
 

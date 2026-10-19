@@ -15,11 +15,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-if ( ! trait_exists( '\\Easy_MCP_AI\\Tools\\Taxonomy\\Term_Meta_Auth_Guard', false ) ) {
-    require_once dirname( __DIR__, 2 ) . '/tools/taxonomy/trait-term-meta-auth-guard.php';
-}
-
-
 
 
 
@@ -120,7 +115,7 @@ final class Term_Meta_Adapter extends Meta_Command {
             $inv,
             'patch',
             self::TOOLS['patch'],
-            array( 'wp_get_term_meta' => array( '\\Easy_MCP_AI\\Tools\\Taxonomy\\Get_Term_Meta', 'taxonomy/class-get-term-meta.php' ) )
+            array( 'wp_get_term_meta' => '\\Easy_MCP_AI\\Tools\\Taxonomy\\Get_Term_Meta' )
         );
     }
 

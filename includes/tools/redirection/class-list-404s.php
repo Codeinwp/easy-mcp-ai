@@ -7,8 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/trait-redirection-rest.php';
-
 class List_404s extends Base_Tool {
 
     use Redirection_Rest;

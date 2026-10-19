@@ -23,8 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-skill-set.php';
-
 final class Skill_Instructions {
 
     const MAX_LENGTH = 2000;

@@ -5,10 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-
 class Token_Auth {
     private $token_manager;
 

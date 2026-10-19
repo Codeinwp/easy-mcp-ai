@@ -15,8 +15,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/class-learnpress-abilities.php';
-
 
 
 

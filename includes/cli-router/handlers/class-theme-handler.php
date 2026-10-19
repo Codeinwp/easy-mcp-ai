@@ -1061,9 +1061,6 @@ class Theme_Handler extends Command_Handler {
 
 
     public static function live_customizer_owned( array $names ): array {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Appearance\\Customizer_Settings' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/tools/appearance/class-customizer-settings.php';
-        }
         $candidates = array();
         foreach ( $names as $name ) {
             $name = (string) $name;

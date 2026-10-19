@@ -499,6 +499,20 @@ body.emcp-page {
 	text-align: center;
 }
 
+.emcp-table--columns th {
+	vertical-align: top;
+}
+
+/* A column heading over its tick-all box, which sits in line with the
+   boxes below it. */
+.emcp-table__column {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+}
+
 .emcp-table .emcp-none {
 	color: var(--emcp-ink-400);
 }

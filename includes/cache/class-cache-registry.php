@@ -11,10 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/../class-class-map-loader.php';
-require_once __DIR__ . '/class-cache-adapter.php';
-require_once __DIR__ . '/class-cache-noise.php';
-
 
 
 
@@ -86,7 +82,7 @@ final class Cache_Registry {
 
     public static function all(): array {
         if ( null === self::$adapters ) {
-            $loaded = \Easy_MCP_AI\Class_Map_Loader::load( self::ADAPTERS, 'includes/cache/adapters', Cache_Adapter::class );
+            $loaded = \Easy_MCP_AI\Class_Map_Loader::load( self::ADAPTERS, Cache_Adapter::class );
             uasort(
                 $loaded,
                 static function ( Cache_Adapter $a, Cache_Adapter $b ): int {

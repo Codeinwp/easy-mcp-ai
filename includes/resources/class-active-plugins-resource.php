@@ -19,6 +19,11 @@ class Active_Plugins_Resource extends Base_Resource {
         return 'List of all active WordPress plugins with name, version, and description.';
     }
 
+    
+    public function get_required_tool(): string {
+        return 'wp_list_plugins';
+    }
+
     public function read() {
         if ( ! current_user_can( 'activate_plugins' ) ) {
             return array( 'plugins' => array() );

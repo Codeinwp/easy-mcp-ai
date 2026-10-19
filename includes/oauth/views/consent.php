@@ -37,7 +37,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo esc_attr( get_locale() ); ?>">
@@ -189,12 +188,34 @@ require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
             <div class="emcp-stack">
             <p class="emcp-text emcp-text--small emcp-text--muted"><?php echo esc_html__( 'These boxes apply when Custom is selected.', 'easy-mcp-ai' ); ?></p>
 
-            <table id="scope-table" class="emcp-table">
+            <?php
+            
+
+
+
+
+            ?>
+            <div class="emcp-btn-row" data-bulk-row hidden>
+                <button type="button" class="emcp-btn emcp-btn--secondary emcp-btn--sm" data-bulk="all"><?php echo esc_html__( 'Select all', 'easy-mcp-ai' ); ?></button>
+                <button type="button" class="emcp-btn emcp-btn--secondary emcp-btn--sm" data-bulk="none"><?php echo esc_html__( 'Clear', 'easy-mcp-ai' ); ?></button>
+            </div>
+
+            <table id="scope-table" class="emcp-table emcp-table--columns">
                 <thead>
                     <tr>
                         <th><?php echo esc_html__( 'Category', 'easy-mcp-ai' ); ?></th>
-                        <th class="emcp-table__toggle"><?php echo esc_html__( 'Read', 'easy-mcp-ai' ); ?></th>
-                        <th class="emcp-table__toggle"><?php echo esc_html__( 'Write', 'easy-mcp-ai' ); ?></th>
+                        <th class="emcp-table__toggle">
+                            <label class="emcp-table__column">
+                                <?php echo esc_html__( 'Read', 'easy-mcp-ai' ); ?>
+                                <input type="checkbox" class="emcp-checkbox" data-column="read" aria-label="<?php echo esc_attr__( 'Tick every Read box', 'easy-mcp-ai' ); ?>" hidden>
+                            </label>
+                        </th>
+                        <th class="emcp-table__toggle">
+                            <label class="emcp-table__column">
+                                <?php echo esc_html__( 'Write', 'easy-mcp-ai' ); ?>
+                                <input type="checkbox" class="emcp-checkbox" data-column="write" aria-label="<?php echo esc_attr__( 'Tick every Write box', 'easy-mcp-ai' ); ?>" hidden>
+                            </label>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -218,7 +239,7 @@ require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
                             ?>
                         <td class="emcp-table__toggle">
                             <?php if ( '' !== $box_scope ) : ?>
-                                <input type="checkbox" name="scopes[]" value="<?php echo esc_attr( $box_scope ); ?>" class="scope-checkbox emcp-checkbox"
+                                <input type="checkbox" name="scopes[]" value="<?php echo esc_attr( $box_scope ); ?>" class="scope-checkbox emcp-checkbox" data-kind="<?php echo esc_attr( $kind ); ?>"
                                     <?php checked( $ceiling_all || in_array( $box_scope, $checked_scopes, true ) ); ?>
                                     <?php disabled( ! $ceiling_all && ! in_array( $box_scope, $ceiling, true ) ); ?>>
                             <?php else : ?>
@@ -289,6 +310,41 @@ require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
     var details = document.getElementById('customize');
     var custom = form.querySelector('input[name="access_level"][value="custom"]');
     var boxes = form.querySelectorAll('.scope-checkbox');
+    var columns = form.querySelectorAll('[data-column]');
+    var bulkRow = form.querySelector('[data-bulk-row]');
+
+    // The boxes this request lets the user change: one column ('read' or
+    // 'write'), the category boxes of both ('category'), or those plus the
+    // privileged rows ('every'). Select all and the column boxes never tick
+    // a privileged row (GitHub #94); Clear unticks it.
+    function usable(which) {
+        var out = [];
+        for (var i = 0; i < boxes.length; i++) {
+            var kind = boxes[i].getAttribute('data-kind'); // null on a privileged row
+            if (boxes[i].disabled) continue;
+            if (which === 'every' || (which === 'category' ? kind !== null : kind === which)) out.push(boxes[i]);
+        }
+        return out;
+    }
+
+    // A column box is ticked when every box under it is, mixed when some are.
+    function syncColumns() {
+        for (var i = 0; i < columns.length; i++) {
+            var list = usable(columns[i].getAttribute('data-column'));
+            var on = 0;
+            for (var j = 0; j < list.length; j++) if (list[j].checked) on++;
+            columns[i].disabled = list.length === 0;
+            columns[i].checked = list.length > 0 && on === list.length;
+            columns[i].indeterminate = on > 0 && on < list.length;
+        }
+    }
+
+    // A bulk change is a Custom choice, like ticking a single box.
+    function setBoxes(list, on) {
+        for (var i = 0; i < list.length; i++) list[i].checked = on;
+        if (custom) custom.checked = true;
+        syncColumns();
+    }
 
     form.addEventListener('change', function(e) {
         var t = e.target;
@@ -297,10 +353,23 @@ require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
             for (var i = 0; i < boxes.length; i++) {
                 if (!boxes[i].disabled) boxes[i].checked = t.value === 'full' || levels[t.value].indexOf(boxes[i].value) !== -1;
             }
-        } else if (t.classList.contains('scope-checkbox') && custom) {
-            custom.checked = true;
+            syncColumns();
+        } else if (t.hasAttribute('data-column')) {
+            setBoxes(usable(t.getAttribute('data-column')), t.checked);
+        } else if (t.classList.contains('scope-checkbox')) {
+            if (custom) custom.checked = true;
+            syncColumns();
         }
     });
+
+    form.addEventListener('click', function(e) {
+        var action = e.target.getAttribute && e.target.getAttribute('data-bulk');
+        if (action) setBoxes(usable(action === 'all' ? 'category' : 'every'), action === 'all');
+    });
+
+    if (bulkRow) bulkRow.hidden = false;
+    for (var c = 0; c < columns.length; c++) columns[c].hidden = false;
+    syncColumns();
 })();
 </script>
 

@@ -118,7 +118,6 @@ final class Redactor {
 
 
     public static function mask_command( string $command ): array {
-        self::load_dependencies();
         try {
             $words = Shell_Lexer::split( $command );
         } catch ( Cli_Parse_Error $e ) {
@@ -497,15 +496,5 @@ final class Redactor {
             return $word;
         }
         return "'" . str_replace( "'", "'\\''", $word ) . "'";
-    }
-
-    
-    private static function load_dependencies(): void {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) ) {
-            require_once dirname( __DIR__ ) . '/class-text-redactor.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) && is_readable( dirname( __DIR__ ) . '/history/class-change-redactor.php' ) ) {
-            require_once dirname( __DIR__ ) . '/history/class-change-redactor.php';
-        }
     }
 }

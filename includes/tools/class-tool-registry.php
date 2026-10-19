@@ -94,9 +94,6 @@ class Tool_Registry {
 
 
     private static function admit_privileged( Privileged_Tool $tool ) {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
-            require_once dirname( __DIR__ ) . '/privileged/class-privileged-groups.php';
-        }
         return \Easy_MCP_AI\Privileged\Privileged_Groups::admit_tool( $tool->get_name(), $tool->get_privileged_group() );
     }
 
@@ -168,7 +165,13 @@ class Tool_Registry {
 
 
 
-    public function auto_discover( bool $quiet = false ): void {
+
+
+
+
+
+
+    public function auto_discover( bool $quiet = false, ?array $dirs = null ): void {
         $tool_classes = array(
             'Easy_MCP_AI\\Tools\\Posts\\List_Posts',
             'Easy_MCP_AI\\Tools\\Posts\\Get_Post',
@@ -549,15 +552,20 @@ class Tool_Registry {
 
         );
 
+        $dirs = null === $dirs ? Tool_Directories::enabled() : $dirs;
         foreach ( $tool_classes as $class ) {
             if ( self::is_withheld( $class ) ) {
                 continue;
             }
-            if ( ! class_exists( $class ) ) {
+            $dir = Tool_Directories::of( $class );
+            if ( null === $dir ) {
                 if ( ! $quiet && ! self::is_plugin_class( $class ) ) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log( 'Easy MCP AI: Tool class not found, skipping: ' . $class );
                 }
+                continue;
+            }
+            if ( ! in_array( $dir, $dirs, true ) ) {
                 continue;
             }
             $this->lazy_classes[] = $class;

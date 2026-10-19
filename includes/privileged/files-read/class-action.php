@@ -5,13 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/class-text-redactor.php';
-require_once __DIR__ . '/class-refusal.php';
-require_once __DIR__ . '/class-resolver.php';
-require_once __DIR__ . '/class-text-file.php';
-require_once __DIR__ . '/class-searcher.php';
-require_once __DIR__ . '/class-outliner.php';
-
 
 
 

@@ -11,8 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/../class-class-map-loader.php';
-
 
 
 
@@ -54,7 +52,7 @@ final class Compat_Registry {
 
     public static function all_shims() {
         if ( null === self::$shims ) {
-            self::$shims = \Easy_MCP_AI\Class_Map_Loader::load( self::SHIMS, 'includes/compat/shims', Compat_Shim::class );
+            self::$shims = \Easy_MCP_AI\Class_Map_Loader::load( self::SHIMS, Compat_Shim::class );
         }
         return self::$shims;
     }

@@ -60,11 +60,13 @@ class Check_Tool_Visibility {
 
     public static function run( $registry = null ) {
         $registry = self::registry( $registry );
-        return self::run_with_definitions(
+        $results  = self::run_with_definitions(
             self::tool_definitions( $registry ),
             self::off_names( $registry ),
             (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() )
         );
+        $results[] = self::evaluate_override_names( self::override_names( $registry ) );
+        return $results;
     }
 
     
@@ -78,9 +80,6 @@ class Check_Tool_Visibility {
     private static function off_names( $registry ) {
         if ( null === $registry ) {
             return (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() );
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
         }
         return \Easy_MCP_AI\Tools\Tool_State::off_names( $registry );
     }
@@ -241,9 +240,6 @@ class Check_Tool_Visibility {
 
         
         
-        if ( ! class_exists( '\\Easy_MCP_AI\\Auth\\Permission_Guard' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-permission-guard.php';
-        }
         $surviving = array_values( array_filter( $names, static function ( $name ) use ( $allowed ) {
             return \Easy_MCP_AI\Auth\Permission_Guard::allowlist_permits( $allowed, $name );
         } ) );
@@ -451,6 +447,98 @@ class Check_Tool_Visibility {
         }
 
         return Diagnostic_Result::pass( 'd3', Diagnostic_Result::TIER_WARNING, $label, '', array( 'dead_patterns' => array() ) );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static function evaluate_override_names( $status ): Diagnostic_Result {
+        $label = __( 'Every tool EASY_MCP_AI_TOOLS names exists', 'easy-mcp-ai' );
+
+        if ( null === $status ) {
+            return Diagnostic_Result::unknown( 'd8', Diagnostic_Result::TIER_WARNING, $label, __( 'Could not read the list of tools this plugin ships.', 'easy-mcp-ai' ) );
+        }
+        if ( '' === $status['source'] ) {
+            return Diagnostic_Result::pass( 'd8', Diagnostic_Result::TIER_WARNING, $label, __( 'EASY_MCP_AI_TOOLS is not set.', 'easy-mcp-ai' ), $status );
+        }
+        if ( 0 === $status['named'] ) {
+            return Diagnostic_Result::pass( 'd8', Diagnostic_Result::TIER_WARNING, $label, __( 'EASY_MCP_AI_TOOLS names no tool.', 'easy-mcp-ai' ), $status );
+        }
+
+        $where = 'environment' === $status['source']
+            ? __( 'the EASY_MCP_AI_TOOLS environment variable', 'easy-mcp-ai' )
+            : __( 'the EASY_MCP_AI_TOOLS constant in wp-config.php', 'easy-mcp-ai' );
+
+        $abilities = '';
+        if ( ! empty( $status['abilities'] ) ) {
+            $abilities = sprintf(
+                /* translators: %s: comma-separated ability tool names. */
+                __( 'These ability tools are not registered on this site now: %s. That is expected while the plugin that provides the ability is inactive; if it is active, the name is misspelled.', 'easy-mcp-ai' ),
+                implode( ', ', $status['abilities'] )
+            );
+        }
+
+        if ( ! empty( $status['unknown'] ) ) {
+            $detail = sprintf(
+                /* translators: 1: where EASY_MCP_AI_TOOLS is set, 2: comma-separated tool names. */
+                __( 'These names in %1$s match no tool: %2$s. A name that matches no tool switches nothing, so the tool you meant is on or off exactly as if the entry were not there.', 'easy-mcp-ai' ),
+                $where,
+                implode( ', ', $status['unknown'] )
+            );
+            return Diagnostic_Result::warn(
+                'd8',
+                Diagnostic_Result::TIER_WARNING,
+                $label,
+                '' === $abilities ? $detail : $detail . ' ' . $abilities,
+                sprintf(
+                    /* translators: %s: where EASY_MCP_AI_TOOLS is set. */
+                    __( 'Correct the names in %s. Tool names are exact and lower case, for example wp_delete_post.', 'easy-mcp-ai' ),
+                    $where
+                ),
+                $status
+            );
+        }
+
+        if ( '' !== $abilities ) {
+            return Diagnostic_Result::warn(
+                'd8',
+                Diagnostic_Result::TIER_INFO,
+                $label,
+                $abilities,
+                sprintf(
+                    /* translators: %s: where EASY_MCP_AI_TOOLS is set. */
+                    __( 'If the plugin is active, correct the name in %s: an ability tool is named wp_ability_ followed by the ability, as the Tools screen lists it.', 'easy-mcp-ai' ),
+                    $where
+                ),
+                $status
+            );
+        }
+
+        return Diagnostic_Result::pass(
+            'd8',
+            Diagnostic_Result::TIER_WARNING,
+            $label,
+            sprintf(
+                /* translators: %d: number of tool names EASY_MCP_AI_TOOLS lists. */
+                _n( 'The %d name it lists is a tool.', 'All %d names it lists are tools.', $status['named'], 'easy-mcp-ai' ),
+                $status['named']
+            ),
+            $status
+        );
     }
 
     
@@ -942,6 +1030,92 @@ class Check_Tool_Visibility {
         return $dead;
     }
 
+    
+
+
+
+
+
+
+
+    private static function override_names( $registry ) {
+        return self::classify_override_names(
+            \Easy_MCP_AI\Tools\Tool_State::override_source(),
+            array_keys( \Easy_MCP_AI\Tools\Tool_State::overrides() ),
+            static function () use ( $registry ) {
+                return self::known_tool_names( $registry );
+            }
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static function classify_override_names( $source, array $named, callable $known ) {
+        $named  = array_map( 'strval', $named );
+        $status = array(
+            'source'    => (string) $source,
+            'named'     => count( $named ),
+            'unknown'   => array(),
+            'abilities' => array(),
+        );
+        if ( empty( $named ) ) {
+            return $status;
+        }
+
+        $known = $known();
+        if ( empty( $known ) ) {
+            return null;
+        }
+        foreach ( $named as $name ) {
+            if ( ! isset( $known[ $name ] ) ) {
+                $status[ 0 === strpos( $name, 'wp_ability_' ) ? 'abilities' : 'unknown' ][] = $name;
+            }
+        }
+        sort( $status['unknown'] );
+        sort( $status['abilities'] );
+        return $status;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private static function known_tool_names( $registry ) {
+        $catalogue = new \Easy_MCP_AI\Tools\Tool_Registry();
+        $catalogue->auto_discover( true, \Easy_MCP_AI\Tools\Tool_Directories::all() );
+        $names = (array) $catalogue->get_all_tool_names();
+        if ( empty( $names ) ) {
+            return array();
+        }
+        $names[] = \Easy_MCP_AI\Tools\Feedback\Send_Feedback::NAME;
+        if ( null !== $registry && method_exists( $registry, 'get_all_tool_names' ) ) {
+            $names = array_merge( $names, (array) $registry->get_all_tool_names() );
+        }
+        if ( function_exists( 'wp_get_abilities' ) ) {
+            $abilities = \wp_get_abilities();
+            foreach ( is_array( $abilities ) ? array_keys( $abilities ) : array() as $slug ) {
+                $names[] = \Easy_MCP_AI\Tools\Dynamic_Tool_Registrar::build_tool_name( (string) $slug );
+            }
+        }
+        return array_fill_keys( array_map( 'strval', $names ), true );
+    }
+
     private static function fully_disabled_categories( array $defs, array $disabled ) {
         if ( empty( $disabled ) || empty( $defs ) ) {
             return array();
@@ -997,13 +1171,6 @@ class Check_Tool_Visibility {
         
         
         
-        
-        if ( ! class_exists( '\Easy_MCP_AI\OAuth\Scope_Map' ) ) {
-            $file = defined( 'EASY_MCP_AI_PLUGIN_DIR' ) ? EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php' : '';
-            if ( '' !== $file && is_readable( $file ) ) {
-                require_once $file;
-            }
-        }
         if ( ! class_exists( '\Easy_MCP_AI\OAuth\Scope_Map' ) ) {
             return null;
         }

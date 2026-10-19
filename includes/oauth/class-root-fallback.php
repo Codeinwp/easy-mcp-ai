@@ -360,7 +360,6 @@ class Root_Fallback {
         if ( '' === $client_id || strlen( $client_id ) > 191 ) {
             return false;
         }
-        require_once __DIR__ . '/class-client-registry.php';
         return null !== ( new Client_Registry() )->get_client( $client_id );
     }
 }

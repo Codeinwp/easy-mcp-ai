@@ -1326,9 +1326,6 @@ final class Term_Adapter extends Command_Handler {
 
 
     private static function would_pause( string $tool, array $arguments ): bool {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) && class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) && method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'load_approval_classes' ) ) {
-            \Easy_MCP_AI\MCP\Server::load_approval_classes();
-        }
         if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) || ! \Easy_MCP_AI\Approvals\Approval_Gate::enabled() ) {
             return false;
         }

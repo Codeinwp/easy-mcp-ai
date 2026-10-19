@@ -5,12 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config-admin.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-activator.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-deactivator.php';
-
 class Plugin {
 
     
@@ -128,8 +122,6 @@ class Plugin {
         
         
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-groups.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-admin.php';
             Privileged\Privileged_Admin::register_cli();
         }
         
@@ -145,70 +137,7 @@ class Plugin {
         }
     }
 
-    
-
-
-    private function load_mcp_includes() {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-error-codes.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-detailed-tool-error.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-json-rpc.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-session.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-gemini-safe-schema.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-transport.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-rest-auth-override.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-option-guard.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-server.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-manager.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-auth-header.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-auth.php';
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-groups.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-permission-guard.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-base-tool.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-privileged-tool.php';
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-rest-route-tool.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-registry.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-abstract-google-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/gsc/class-gsc-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/ga/class-ga-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/dfs/class-dataforseo-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/semrush/class-semrush-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/semrush/class-semrush-validators.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/seranking/class-seranking-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/seranking/class-seranking-validators.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/ahrefs/class-ahrefs-client.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/resources/class-base-resource.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/resources/class-resource-registry.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-log-schema.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-redactor.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-context.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-log-repository.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-audit-log-repository.php';
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-text-redactor.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-recorder.php';
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-live-state.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-rebuild-planner.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-db-interceptor.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-external-intent.php';
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/meta/class-meta-field-provider.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/meta/class-meta-exposure.php';
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/compat/class-compat-shim.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/compat/class-compat-registry.php';
-    }
-
     public function init_admin() {
-        $this->load_mcp_includes();
         $this->token_manager = new Auth\Token_Manager();
         $this->tool_registry = new Tools\Tool_Registry();
         
@@ -218,17 +147,11 @@ class Plugin {
         
         
         
-        
         if ( $this->is_plugin_admin_screen() ) {
             $this->register_tools();
         }
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-admin-page.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-app-page.php';
         new Admin\App_Page();
 
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-self-service-keys.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-authorization-endpoint.php';
         new Admin\Self_Service_Keys( $this->token_manager, $this->tool_registry );
         $this->register_diagnostics();
     }
@@ -249,22 +172,11 @@ class Plugin {
 
 
     private function register_diagnostics() {
-        $dir = EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/';
-
         
         
         
         
         
-        
-        
-        
-        
-        require_once $dir . 'class-diagnostic-result.php';
-        require_once $dir . 'class-diagnostics.php';
-        require_once $dir . 'class-check-notices.php';
-        require_once $dir . 'class-diagnostics-site-health.php';
-
         
         
         
@@ -356,23 +268,6 @@ class Plugin {
         
         
         
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
-        
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-token-endpoint.php';
-        
-        
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-client-registry.php';
-        
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-device-authorization.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-discovery.php';
         $discovery = new OAuth\Discovery();
         $rest_req  = new \WP_REST_Request( 'GET' );
         if ( 'protected-resource' === $document['document'] ) {
@@ -694,13 +589,11 @@ class Plugin {
         
         
         
-        
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public routing check; the page verifies its own nonce on POST.
         if ( ! isset( $_GET['easy_mcp_ai_approve'] ) && ! isset( $_POST['easy_mcp_ai_approve'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
             return;
         }
         ob_start();
-        self::load_approvals();
         \Easy_MCP_AI\Approvals\Approval_Schema::maybe_upgrade();
         Activator::maybe_upgrade_core_tables();
         $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
@@ -740,7 +633,6 @@ class Plugin {
         if ( ! isset( $_GET['easy_mcp_ai_preview'] ) || \is_admin() ) {
             return;
         }
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/preview/class-preview-link.php';
         Preview\Preview_Link::register_front_end();
     }
 
@@ -750,20 +642,10 @@ class Plugin {
 
 
     public static function maybe_autoload_customizer(): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/appearance/class-customizer-autoload.php';
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only routing check; nothing is acted on.
         if ( Tools\Appearance\Customizer_Autoload::is_mcp_post( $_SERVER, $_GET ) ) {
             Tools\Appearance\Customizer_Autoload::register();
         }
-    }
-
-    
-    public static function load_approvals() {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-error-codes.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-json-rpc.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/mcp/class-server.php';
-        MCP\Server::load_approval_classes();
     }
 
     
@@ -775,7 +657,6 @@ class Plugin {
             return;
         }
         try {
-            self::load_approvals();
             $store = new \Easy_MCP_AI\Approvals\Wpdb_Approval_Store();
             $now   = gmdate( 'Y-m-d H:i:s' );
             $store->expire_pending( $now );
@@ -858,7 +739,6 @@ class Plugin {
             return 'resource';
         }
         if ( 'none' === $requested ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-root-fallback.php';
             return OAuth\Root_Fallback::is_armed() ? 'none' : 'site';
         }
         return 'site';
@@ -917,7 +797,6 @@ class Plugin {
         if ( '' === (string) $value || ( function_exists( 'is_multisite' ) && \is_multisite() && ! \is_main_site() ) ) {
             return;
         }
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-htaccess-plain-routes.php';
         Diagnostics\Htaccess_Plain_Routes::remove( Diagnostics\Htaccess_Auth_Rule::htaccess_path() );
     }
 
@@ -933,7 +812,6 @@ class Plugin {
         if ( ! preg_match( '#/(authorize|register|token)/?(?:\?|$)#', $uri ) ) {
             return;
         }
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-root-fallback.php';
         OAuth\Root_Fallback::dispatch( $wp );
     }
 
@@ -965,22 +843,6 @@ class Plugin {
         
         
         ob_start();
-
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-schema.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-consent-screen.php';
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-client-registry.php';
-        
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-token-endpoint.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-authorization-endpoint.php';
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-device-authorization.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-device-verification.php';
 
         $method  = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
         $request = new \WP_REST_Request( $method );
@@ -1042,7 +904,6 @@ class Plugin {
             $message = \esc_html( $response->get_error_message() );
             $title   = \esc_html__( 'Authorization Error', 'easy-mcp-ai' );
 
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
             $site = \esc_html( Console_Styles::site_label() );
 
             // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- every interpolated value is escaped above; the stylesheet is plugin-owned (Console_Styles::inline()).
@@ -1113,9 +974,6 @@ class Plugin {
 
     public function register_rest_routes() {
         
-        $this->load_mcp_includes();
-
-        
         
         \Easy_MCP_AI\History\Change_Log_Schema::maybe_upgrade();
         
@@ -1125,11 +983,9 @@ class Plugin {
         Activator::maybe_upgrade_core_tables();
         
         
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tasks/class-task-schema.php';
         \Easy_MCP_AI\Tasks\Task_Schema::maybe_upgrade();
         
         
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/approvals/class-approval-schema.php';
         \Easy_MCP_AI\Approvals\Approval_Schema::maybe_upgrade();
 
 
@@ -1189,22 +1045,6 @@ class Plugin {
 
         
         if ( \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-schema.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-discovery.php';
-            
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-client-registry.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-token-manager.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-token-validator.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-authorization-endpoint.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-token-endpoint.php';
-            
-            
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-device-authorization.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-consent-screen.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-routes.php';
-
             
             
             
@@ -1226,138 +1066,14 @@ class Plugin {
 
         
         
-        
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/rest/class-admin-routes.php';
         ( new Admin\Rest\Admin_Routes( $this->tool_registry ) )->register();
     }
 
     private function register_tools(): void {
-        $tool_dirs = array(
-            'posts', 'pages', 'media', 'taxonomy', 'comments',
-            'users', 'site', 'menus', 'plugins', 'themes',
-            'revisions', 'meta', 'search', 'blocks', 'cpt', 'templates', 'styles',
-            'appearance', 'widgets', 'history', 'audit', 'site-health', 'approvals',
-            'feedback',
-            
-            'cache',
-            
-            'skills',
-            
-            'rest',
-            
-            'privileged',
-            
-            
-            'cli',
-        );
         
-        self::load_search_replace();
-        $tool_dirs = array_merge( $tool_dirs, self::external_data_tool_dirs() );
-
         
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/users/trait-user-meta-auth-guard.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/taxonomy/trait-term-meta-auth-guard.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/blocks/trait-block-tree.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/acf/trait-acf-rest-tool.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/comments/trait-comment-moderation.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/menus/trait-menu-slug.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/widgets/trait-widget-rest.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/plugins/trait-lifecycle-guard.php';
-
-        foreach ( $tool_dirs as $dir ) {
-            self::require_tool_dir( $dir );
-        }
-        
-        foreach ( self::integration_tool_dirs() as $plugin_dir ) {
-            self::require_tool_dir( $plugin_dir );
-        }
-
         $this->tool_registry->auto_discover();
         $this->register_ability_tools();
-    }
-
-    
-
-
-
-
-
-    private static function external_data_tool_dirs(): array {
-        $tool_dirs = array();
-        
-        
-        
-        
-        if ( \get_option( 'easy_mcp_ai_ahrefs_enabled', false ) ) {
-            $tool_dirs[] = 'ahrefs';
-        }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\GSC\GSC_Client::OPTION_JSON, '' ) ) ) {
-            $tool_dirs[] = 'gsc';
-        }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\GA\GA_Client::OPTION_JSON, '' ) ) ) {
-            $tool_dirs[] = 'ga';
-        }
-        
-        $dfs_login    = \get_option( \Easy_MCP_AI\DFS\DataforSEO_Client::OPTION_LOGIN, '' );
-        $dfs_api_pwd  = \get_option( \Easy_MCP_AI\DFS\DataforSEO_Client::OPTION_API_PASSWORD, '' );
-        if ( ! empty( $dfs_login ) && ! empty( $dfs_api_pwd ) ) {
-            $tool_dirs[] = 'dfs';
-        }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\Semrush\Semrush_Client::OPTION_API_KEY, '' ) ) ) {
-            $tool_dirs[] = 'semrush';
-        }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\SeRanking\SeRanking_Client::OPTION_API_KEY, '' ) ) ) {
-            $tool_dirs[] = 'seranking';
-        }
-        return $tool_dirs;
-    }
-
-    
-
-
-
-
-    private static function integration_tool_dirs(): array {
-        $group_dir_map = array(
-            'woocommerce'         => 'woocommerce',
-            'acf'                 => 'acf',
-            'the-events-calendar' => 'events-calendar',
-            'redirection'         => 'redirection',
-            'buddypress'          => 'buddypress',
-            'yoast-seo'           => 'seo/yoast',
-            'rank-math'           => 'seo/rank-math',
-            'aioseo'              => 'seo/aioseo',
-            'seopress'            => 'seo/seopress',
-            'slim-seo'            => 'seo/slim-seo',
-            'the-seo-framework'   => 'seo/the-seo-framework',
-        );
-        $dirs_to_load = array();
-        foreach ( (array) \get_option( 'easy_mcp_ai_enabled_plugin_groups', array() ) as $group_slug ) {
-            if ( isset( $group_dir_map[ $group_slug ] ) ) {
-                $dirs_to_load[ $group_dir_map[ $group_slug ] ] = true;
-            }
-        }
-        return array_keys( $dirs_to_load );
-    }
-
-    
-
-
-
-
-
-    private static function require_tool_dir( string $dir ): void {
-        $files = glob( EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/' . $dir . '/class-*.php' );
-        if ( $files ) {
-            foreach ( $files as $file ) {
-                require_once $file;
-            }
-        }
     }
 
     
@@ -1391,24 +1107,15 @@ class Plugin {
     }
 
     private function register_resources() {
-        $files = glob( EASY_MCP_AI_PLUGIN_DIR . 'includes/resources/class-*-resource.php' );
-        if ( $files ) {
-            foreach ( $files as $file ) {
-                require_once $file;
-            }
-        }
         $this->resource_registry->auto_discover();
         
         
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/skills/class-skills.php';
         \Easy_MCP_AI\Skills\Skills::use_registry( $this->tool_registry );
         $this->resource_registry->add_provider( array( __CLASS__, 'skill_resources' ) );
     }
 
     
     public static function skill_resources(): array {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/skills/class-skills.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/skills/class-skill-resource.php';
         $out = array();
         foreach ( \Easy_MCP_AI\Skills\Skills::served()->skills() as $skill ) {
             foreach ( $skill['files'] as $file ) {
@@ -1420,7 +1127,6 @@ class Plugin {
 
     
     public static function run_skills_sync(): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/skills/class-skills.php';
         \Easy_MCP_AI\Skills\Skill_Sync::run();
     }
 
@@ -1478,7 +1184,6 @@ class Plugin {
         
         
         
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-site-move.php';
         OAuth\OAuth_Site_Move::sweep();
 
         $i = 0;
@@ -1718,11 +1423,7 @@ class Plugin {
         
 
         if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Log_Repository' ) ) {
-            $f = EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-log-repository.php';
-            if ( ! file_exists( $f ) ) {
-                return;
-            }
-            require_once $f;
+            return;
         }
         $repo = new \Easy_MCP_AI\History\Change_Log_Repository();
 
@@ -1803,7 +1504,6 @@ class Plugin {
         if ( ! \get_option( 'easy_mcp_ai_abilities_seed_pending' ) ) {
             return;
         }
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-ability-seed.php';
         Ability_Seed::maybe_run();
     }
 
@@ -1821,7 +1521,6 @@ class Plugin {
             \delete_option( 'rewrite_rules' );
             
             if ( \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
-                require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-schema.php';
                 self::seed_own_settings( array( OAuth\OAuth_Schema::class, 'create_tables' ) );
             }
         } finally {
@@ -1883,7 +1582,6 @@ class Plugin {
 
 
     public static function register_learnpress_category(): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/compat/class-learnpress-abilities.php';
         Compat\Learnpress_Abilities::register_category();
     }
 
@@ -1892,7 +1590,6 @@ class Plugin {
 
 
     public static function register_learnpress_abilities(): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/compat/class-learnpress-abilities.php';
         Compat\Learnpress_Abilities::register_abilities();
         Compat\Learnpress_Abilities::enable_pending();
     }
@@ -1904,7 +1601,6 @@ class Plugin {
 
 
     public static function learnpress_group_updated( $old_value, $value ): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/compat/class-learnpress-abilities.php';
         Compat\Learnpress_Abilities::group_changed( $old_value, $value );
     }
 
@@ -1915,7 +1611,6 @@ class Plugin {
 
 
     public static function learnpress_group_added( $option, $value ): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/compat/class-learnpress-abilities.php';
         Compat\Learnpress_Abilities::group_changed( array(), $value );
     }
 
@@ -1932,9 +1627,6 @@ class Plugin {
     public static function map_privileged_meta_cap( $caps, $cap, $user_id ) {
         if ( ! is_string( $cap ) || 0 !== strpos( $cap, 'easy_mcp_ai_' ) ) {
             return $caps;
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-groups.php';
         }
         return \Easy_MCP_AI\Privileged\Privileged_Groups::map_meta_cap( $caps, $cap, (int) $user_id );
     }
@@ -2031,9 +1723,6 @@ class Plugin {
         
         
         if ( self::is_api_key_basic_path( $request_uri ) ) {
-            if ( ! class_exists( '\\Easy_MCP_AI\\Auth_Header' ) ) {
-                require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-auth-header.php';
-            }
             $pw = isset( $_SERVER['PHP_AUTH_PW'] ) && is_string( $_SERVER['PHP_AUTH_PW'] ) ? $_SERVER['PHP_AUTH_PW'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Shape test only; the value is neither stored nor output.
             
             
@@ -2146,9 +1835,7 @@ class Plugin {
         if ( ! \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
             return;
         }
-        $oauth_schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-schema.php';
-        if ( file_exists( $oauth_schema_file ) ) {
-            require_once $oauth_schema_file;
+        if ( class_exists( OAuth\OAuth_Schema::class ) ) {
             OAuth\OAuth_Schema::maybe_upgrade();
         }
     }
@@ -2194,14 +1881,6 @@ class Plugin {
     }
 
     
-    public static function load_search_replace(): void {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-groups.php';
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/search-replace/class-jobs.php';
-        \Easy_MCP_AI\Privileged\Search_Replace\Jobs::load();
-    }
-
-    
 
 
 
@@ -2219,7 +1898,6 @@ class Plugin {
             return;
         }
         try {
-            self::load_search_replace();
             $work();
         } catch ( \Throwable $e ) {
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {

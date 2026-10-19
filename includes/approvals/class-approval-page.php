@@ -110,8 +110,6 @@ class Approval_Page {
 
     private function feedback_queue(): \Easy_MCP_AI\Feedback\Feedback_Queue {
         if ( null === $this->feedback_queue ) {
-            require_once dirname( __DIR__ ) . '/feedback/class-feedback-queue.php';
-            \Easy_MCP_AI\Feedback\Feedback_Queue::load();
             $this->feedback_queue = new \Easy_MCP_AI\Feedback\Feedback_Queue( $this->gate->get_store(), array( $this->gate, 'now' ) );
         }
         return $this->feedback_queue;
@@ -130,9 +128,6 @@ class Approval_Page {
 
 
     private function handle_feedback( string $method, array $row, array $post ): array {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Feedback\\Feedback_Queue' ) ) {
-            require_once dirname( __DIR__ ) . '/feedback/class-feedback-queue.php';
-        }
         if ( ! \Easy_MCP_AI\Feedback\Feedback_Queue::may_decide( $row ) ) {
             return $this->feedback_result( 403, __( 'Not your report', 'easy-mcp-ai' ), __( 'This report was written for a different WordPress account. Log in as the user whose AI assistant wrote it, or as an administrator.', 'easy-mcp-ai' ), 'error' );
         }
@@ -260,9 +255,6 @@ class Approval_Page {
 
 
     private function console_page( int $status, string $title, string $inner ): array {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Console_Styles' ) ) {
-            require_once dirname( __DIR__ ) . '/class-console-styles.php';
-        }
         $html  = '<!DOCTYPE html><html lang="' . \esc_attr( \get_locale() ) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">';
         $html .= '<title>' . \esc_html( $title ) . ' &mdash; ' . \esc_html( \Easy_MCP_AI\Console_Styles::site_label() ) . '</title>';
         $html .= \Easy_MCP_AI\Console_Styles::inline();
@@ -368,10 +360,6 @@ class Approval_Page {
             return '';
         }
         try {
-            $file = dirname( __DIR__ ) . '/oauth/class-client-registry.php';
-            if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\Client_Registry' ) && is_readable( $file ) ) {
-                require_once $file;
-            }
             if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\Client_Registry' ) ) {
                 return '';
             }
@@ -388,10 +376,6 @@ class Approval_Page {
             return '';
         }
         try {
-            $file = dirname( __DIR__ ) . '/auth/class-token-manager.php';
-            if ( ! class_exists( '\\Easy_MCP_AI\\Auth\\Token_Manager' ) && is_readable( $file ) ) {
-                require_once $file;
-            }
             if ( ! class_exists( '\\Easy_MCP_AI\\Auth\\Token_Manager' ) ) {
                 return '';
             }

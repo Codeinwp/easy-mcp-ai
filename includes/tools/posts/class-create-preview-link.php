@@ -8,8 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/preview/class-preview-link.php';
-
 
 
 

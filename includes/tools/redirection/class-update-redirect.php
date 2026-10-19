@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/trait-redirection-rest.php';
-require_once __DIR__ . '/class-create-redirect.php';
-
 class Update_Redirect extends Base_Tool {
 
     use Redirection_Rest;

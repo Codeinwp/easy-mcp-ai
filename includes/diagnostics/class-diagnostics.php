@@ -71,63 +71,6 @@ class Diagnostics {
     private static $results = null;
 
     
-    private static $checks_loaded = false;
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-    const CHECK_CLASS_FILES = array(
-        'class-check-transport.php',
-        'class-check-schema.php',
-        'class-check-tool-visibility.php',
-        'class-check-conflicts.php',
-        'class-check-config.php',
-        'class-check-environment.php',
-        'class-check-session.php',
-        'class-check-observability.php',
-        'class-check-multisite.php',
-        'class-check-header-probe.php',
-        'class-check-edge-block.php',
-        'class-check-discovery.php',
-    );
-
-    
-
-
-
-
-
-
-
-
-    public static function load_check_classes() {
-        if ( self::$checks_loaded ) {
-            return;
-        }
-        self::$checks_loaded = true;
-
-        
-        
-        
-        foreach ( self::CHECK_CLASS_FILES as $file ) {
-            $path = __DIR__ . '/' . $file;
-            if ( is_readable( $path ) ) {
-                require_once $path;
-            }
-        }
-    }
-
-    
 
 
 
@@ -228,17 +171,6 @@ class Diagnostics {
 
 
     public static function run( $deep = false, $groups = null ) {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        self::load_check_classes();
-
         $results  = array();
         $previous = self::stored_report();
         $now      = time();
@@ -575,11 +507,6 @@ class Diagnostics {
 
         
         
-        $gate = __DIR__ . '/class-check-multisite.php';
-        if ( is_readable( $gate ) ) {
-            require_once $gate;
-        }
-
         $have_gate = class_exists( __NAMESPACE__ . '\\Check_Multisite' );
         $may_read  = $have_gate ? Check_Multisite::may_read_network() : false;
 

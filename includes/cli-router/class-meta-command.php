@@ -183,7 +183,6 @@ abstract class Meta_Command extends Command_Handler {
 
 
     protected function key_is_secret( string $key ): bool {
-        self::load_redactors();
         if ( class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) && preg_match( \Easy_MCP_AI\Text_Redactor::SENSITIVE_KEY_PATTERN, $key ) ) {
             return true;
         }
@@ -1167,7 +1166,6 @@ abstract class Meta_Command extends Command_Handler {
         }
         $value = $this->mask_secret_keys( $value, 0 );
         $text  = is_string( $value ) ? "'" . $value . "'" : (string) json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR );
-        self::load_redactors();
         if ( class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) ) {
             $text = \Easy_MCP_AI\Text_Redactor::redact( $text );
         }
@@ -1249,15 +1247,5 @@ abstract class Meta_Command extends Command_Handler {
             'site'    => 'Network',
         );
         return isset( $labels[ $meta_type ] ) ? $labels[ $meta_type ] : ucfirst( $meta_type );
-    }
-
-    
-    private static function load_redactors(): void {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) && is_readable( dirname( __DIR__ ) . '/class-text-redactor.php' ) ) {
-            require_once dirname( __DIR__ ) . '/class-text-redactor.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) && is_readable( dirname( __DIR__ ) . '/history/class-change-redactor.php' ) ) {
-            require_once dirname( __DIR__ ) . '/history/class-change-redactor.php';
-        }
     }
 }

@@ -17,8 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/diagnostics/class-blocker-copy.php';
-
 
 
 

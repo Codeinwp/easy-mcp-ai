@@ -16,8 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/../../rest-routes/class-route-gate.php';
-
 class Activity_Controller extends Admin_Rest_Controller {
 
     const PER_PAGE_DEFAULT = 25;

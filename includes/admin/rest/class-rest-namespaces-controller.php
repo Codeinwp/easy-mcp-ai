@@ -17,10 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-admin-rest-controller.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/rest-routes/class-namespace-state.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/rest-routes/class-route-catalogue.php';
-
 
 
 

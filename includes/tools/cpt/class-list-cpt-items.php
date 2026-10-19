@@ -9,11 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-    require_once dirname( __DIR__ ) . '/class-post-type-tool-hint.php';
-}
-
 class List_CPT_Items extends Base_Tool {
 
     
@@ -65,7 +60,7 @@ class List_CPT_Items extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists items of any custom post type (CPT) registered with `show_in_rest=true`. Required: `rest_base` (e.g. "product", "events", "movies"), or the post_type slug, which is also accepted. `wp_get_post_types` lists every post type with its slug and rest_base. Optional: `per_page` (default 10, max 100), `page`, `offset` (skip N items; replaces `page`), `search`, `status` (default publish), `include` or `exclude` (item IDs; not both), `slug` (list of slugs), `author` or `author_exclude` (types that support authors; not both), `parent` or `parent_exclude` (hierarchical types; not both), `after` / `before` (ISO 8601 publish-date range), `has_password` (true/false), `date_query` / `tax_query` / `meta_query` (WP_Query clause lists, at most 10 clauses, 3 levels; tax_query only on taxonomies registered for the type and shown in the REST API; meta_query only on meta keys registered with show_in_rest for the type, needs edit_posts, never on plugin-integration SEO keys, and with a status other than publish also the type\'s edit_others_posts (private: read_private_posts; any: both)), `orderby` (date/id/title/slug/modified/author/parent/include/menu_order — menu_order only for types with page-attributes — or comment_count/rand/meta_value/meta_value_num; meta_value needs a meta_query; default date), `order` (asc/desc — default desc), `context` (edit by default: only items you can edit; view: items you can read, for callers without edit access), `raw_columns` (boolean, edit context only: each item also carries `raw`, every database column as stored — raw post_title, post_name, post_date, comment_count and the rest). Returns { items: [{ id, title, status, date, modified, link, slug, raw (only with raw_columns) }], total, total_pages, page, per_page, rest_base }. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces edit-level access on the underlying REST request (some CPTs require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error on specific CPTs even though the tool itself is visible.';
+        return 'Lists items of any custom post type (CPT) registered with `show_in_rest=true`. Required: `rest_base` (e.g. "product", "events", "movies"), or the post_type slug, which is also accepted. `wp_get_post_types` lists every post type with its slug and rest_base. Optional, each detailed on its property: `per_page` (default 10, max 100), `page` or `offset`, `search`, `status` (default publish), `include` or `exclude` (not both), `slug`, `author` or `author_exclude` (not both), `parent` or `parent_exclude` (not both), `after` / `before`, `has_password`, `date_query` / `tax_query` / `meta_query` (WP_Query clause lists; meta_query needs edit_posts and only keys registered with show_in_rest for the type), `orderby` (default date), `order` (default desc), `context` (edit by default: only items you can edit; view: items you can read, for callers without edit access), `raw_columns` (edit context only: each item also carries `raw`, every database column as stored). Returns { items: [{ id, title, status, date, modified, link, slug, raw (only with raw_columns) }], total, total_pages, page, per_page, rest_base }. The tool is listed for every caller, but WordPress enforces each type\'s own edit capability on the request (edit_posts, or a custom one like WooCommerce\'s edit_products), so a caller may get a permission error on a specific CPT.';
     }
 
     public function get_category() {
@@ -388,7 +383,7 @@ class List_CPT_Items extends Base_Tool {
             'meta_query'     => array(
                 'type'        => 'array',
                 'items'       => array( 'type' => 'object' ),
-                'description' => 'WP_Query meta clauses (at most 10, nested 3 levels), joined with AND, e.g. [{"key": "price", "value": 10, "compare": ">", "type": "NUMERIC"}]. Clause keys: key (required; a meta key registered with show_in_rest for this post type, the keys wp_get_post_meta shows; plugin-integration SEO keys are refused), value, compare, type. Needs the edit_posts capability. For OR, put clauses in one item with "relation": "OR".',
+                'description' => 'WP_Query meta clauses (at most 10, nested 3 levels), joined with AND, e.g. [{"key": "price", "value": 10, "compare": ">", "type": "NUMERIC"}]. Clause keys: key (required; a meta key registered with show_in_rest for this post type, the keys wp_get_post_meta shows; plugin-integration SEO keys are refused), value, compare, type. Needs the edit_posts capability, and with a status other than publish also the type\'s edit_others_posts (private: read_private_posts; any: both). For OR, put clauses in one item with "relation": "OR".',
             ),
             'raw_columns'    => array(
                 'type'        => 'boolean',
@@ -894,8 +889,8 @@ class List_CPT_Items extends Base_Tool {
 
     public static function filterable_meta_keys( string $post_type ): array {
         $exposure = '\\Easy_MCP_AI\\Meta\\Meta_Exposure';
-        self::load_meta_exposure( $exposure );
-        if ( ! function_exists( 'get_registered_meta_keys' ) || ! class_exists( $exposure, false ) ) {
+        
+        if ( ! function_exists( 'get_registered_meta_keys' ) || ! class_exists( $exposure ) ) {
             return array();
         }
         $keys = array();
@@ -911,25 +906,6 @@ class List_CPT_Items extends Base_Tool {
             }
         }
         return array_keys( $keys );
-    }
-
-    
-
-
-
-
-
-
-
-    private static function load_meta_exposure( string $exposure ): void {
-        if ( class_exists( $exposure, false ) ) {
-            return;
-        }
-        $dir = dirname( __DIR__, 2 ) . '/meta/';
-        if ( is_readable( $dir . 'class-meta-field-provider.php' ) && is_readable( $dir . 'class-meta-exposure.php' ) ) {
-            require_once $dir . 'class-meta-field-provider.php';
-            require_once $dir . 'class-meta-exposure.php';
-        }
     }
 
     

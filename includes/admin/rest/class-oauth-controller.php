@@ -172,7 +172,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         }
 
         if ( ! empty( $touched ) ) {
-            self::load_oauth_admin();
             OAuth_Admin::save_settings( $next['accessTokenTtl'], $next['refreshTokenTtl'], $next['dcrEnabled'] );
         }
         return $this->ok( self::settings_payload() );
@@ -279,9 +278,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         $truncated = count( $rows ) > self::ROWS_LIMIT;
         $rows      = array_slice( $rows, 0, self::ROWS_LIMIT );
 
-        
-        
-        self::load_site_move();
         $flagged = OAuth_Site_Move::flagged_clients( $this->site_move_rows() );
         $out     = array();
         foreach ( $rows as $row ) {
@@ -307,7 +303,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         if ( '' === $client_id || ! $this->client_exists( $client_id ) ) {
             return $this->fail( 'easy_mcp_ai_client_not_found', \__( 'Client not found.', 'easy-mcp-ai' ), 404 );
         }
-        self::load_oauth_admin();
         OAuth_Admin::revoke_client( $client_id );
         return $this->ok( array( 'deleted' => true, 'clientId' => $client_id ) );
     }
@@ -323,7 +318,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         if ( '' === $client_id || ! $this->client_exists( $client_id ) ) {
             return $this->fail( 'easy_mcp_ai_client_not_found', \__( 'Client not found.', 'easy-mcp-ai' ), 404 );
         }
-        self::load_client_registry();
         $secret = ( new Client_Registry() )->rotate_secret( $client_id );
         if ( null === $secret ) {
             return $this->fail(
@@ -345,7 +339,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     public static function shape_client( array $row, bool $issued_elsewhere = false ): array {
-        self::load_client_registry();
         $method = Client_Registry::effective_auth_method( $row );
         $uris   = json_decode( (string) ( $row['redirect_uris'] ?? '' ), true );
         if ( ! is_array( $uris ) ) {
@@ -387,7 +380,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         $rows  = array_slice( $rows, 0, self::ROWS_LIMIT );
 
         $names   = $this->user_names( array_column( $rows, 'wp_user_id' ) );
-        self::load_site_move();
         $flagged = OAuth_Site_Move::flagged_grants( $this->site_move_rows() );
         $out     = array();
         foreach ( $rows as $row ) {
@@ -413,7 +405,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         if ( \is_wp_error( $row ) ) {
             return $row;
         }
-        self::load_oauth_admin();
         OAuth_Admin::revoke_grant( (int) $row['consent_id'] );
         return $this->ok( array( 'deleted' => true, 'id' => (int) $row['consent_id'] ) );
     }
@@ -436,7 +427,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         if ( ! is_array( $raw ) ) {
             return $this->fail( 'easy_mcp_ai_invalid_param', \__( 'scopes must be a list of scope names.', 'easy-mcp-ai' ), 400, array( 'field' => 'scopes' ) );
         }
-        self::load_scope_map();
         $valid  = Scope_Map::get_all_scopes();
         $scopes = array();
         foreach ( $raw as $scope ) {
@@ -465,7 +455,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
             );
         }
 
-        self::load_oauth_admin();
         OAuth_Admin::save_scope( (int) $row['consent_id'], $scopes );
 
         $fresh = $this->find_grant( $request );
@@ -510,7 +499,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     public static function is_narrower_or_equal( array $current, array $requested ) {
-        self::load_scope_map();
         $current   = Scope_Map::apply_legacy_scope_upgrades( array_values( $current ) );
         $requested = Scope_Map::apply_legacy_scope_upgrades( array_values( $requested ) );
         
@@ -546,7 +534,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     public function shape_grant( array $row, array $names = array(), $issued_elsewhere = false ) {
-        self::load_scope_map();
         $scope   = (string) ( $row['scope'] ?? '' );
         $parts   = self::scope_parts( $scope );
         
@@ -643,7 +630,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     public static function categories() {
-        self::load_scope_map();
         $out = array();
         foreach ( (array) Scope_Map::get_categories() as $cat ) {
             $out[] = array(
@@ -791,7 +777,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     public function revoke_site_move( $request ) {
-        self::load_site_move();
         $result = OAuth_Site_Move::revoke_mismatching();
         if ( \is_wp_error( $result ) ) {
             return $this->fail(
@@ -818,7 +803,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     public function dismiss_site_move( $request ) {
-        self::load_site_move();
         OAuth_Site_Move::record_current();
         return $this->ok( array( 'dismissed' => true, 'siteMove' => null ) );
     }
@@ -833,7 +817,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
     private function site_move_payload() {
-        self::load_site_move();
         if ( ! OAuth_Site_Move::ensure_recorded() || ! OAuth_Site_Move::moved() ) {
             return null;
         }
@@ -856,38 +839,8 @@ class OAuth_Controller extends Admin_Rest_Controller {
     
     private function site_move_rows() {
         if ( false === $this->site_move_rows ) {
-            self::load_site_move();
             $this->site_move_rows = OAuth_Site_Move::active_rows();
         }
         return $this->site_move_rows;
-    }
-
-    private static function load_site_move() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\OAuth_Site_Move' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-site-move.php';
-        }
-    }
-
-    private static function load_oauth_admin() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\OAuth_Admin' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-oauth-admin.php';
-        }
-    }
-
-    private static function load_scope_map() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\Scope_Map' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
-        }
-        
-        
-        if ( ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-groups.php';
-        }
-    }
-
-    private static function load_client_registry() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\Client_Registry' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-client-registry.php';
-        }
     }
 }

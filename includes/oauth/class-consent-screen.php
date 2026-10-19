@@ -81,9 +81,6 @@ class Consent_Screen {
         
         
         
-        if ( ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
-            require_once dirname( __DIR__ ) . '/privileged/class-privileged-groups.php';
-        }
         $privileged_rows = array();
         foreach ( \Easy_MCP_AI\Privileged\Privileged_Groups::enabled_groups() as $group ) {
             $privileged_rows[] = array(

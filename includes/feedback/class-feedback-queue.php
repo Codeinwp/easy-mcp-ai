@@ -66,29 +66,7 @@ class Feedback_Queue {
     }
 
     
-    public static function load(): void {
-        
-        
-        
-        $root = dirname( __DIR__ ) . '/';
-        require_once $root . 'auth/class-token-keys.php';
-        require_once $root . 'approvals/interface-approval-store.php';
-        require_once $root . 'approvals/class-approval-schema.php';
-        require_once $root . 'approvals/class-wpdb-approval-store.php';
-        require_once $root . 'approvals/class-approval-gate.php';
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) ) {
-            require_once $root . 'class-text-redactor.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Site_Host' ) ) {
-            require_once $root . 'class-site-host.php';
-        }
-        require_once __DIR__ . '/interface-feedback-report-store.php';
-        require_once __DIR__ . '/class-wpdb-feedback-store.php';
-    }
-
-    
     public static function create(): self {
-        self::load();
         return new self( new Wpdb_Feedback_Store() );
     }
 

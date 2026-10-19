@@ -9,11 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
-require_once __DIR__ . '/class-list-menu-items.php';
-require_once __DIR__ . '/trait-menu-item-refusal.php';
-
-
-
 
 
 

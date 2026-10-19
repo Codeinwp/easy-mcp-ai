@@ -34,8 +34,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
-
 class Check_Config {
 
     
@@ -72,7 +70,6 @@ class Check_Config {
 
 
     private static function privileged_state() {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/privileged/class-privileged-groups.php';
         return array( 'enabled' => \Easy_MCP_AI\Privileged\Privileged_Groups::enabled_groups() );
     }
 
@@ -100,7 +97,6 @@ class Check_Config {
 
     
     private static function token_key_state() {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-keys.php';
         return array(
             'source'  => \Easy_MCP_AI\Auth\Token_Keys::source(),
             'current' => \Easy_MCP_AI\Auth\Token_Keys::current_id(),

@@ -5,8 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-ability-input-policy.php';
-
 
 
 
@@ -179,7 +177,6 @@ class Dynamic_Tool_Registrar {
             
             
             if ( method_exists( $ability, 'get_meta_item' ) ) {
-                require_once dirname( __DIR__ ) . '/tasks/class-task-contract.php';
                 $task_contract = \Easy_MCP_AI\Tasks\Task_Contract::normalize( $ability->get_meta_item( 'task' ), $raw_input_schema );
                 if ( null !== $task_contract && ! $input_needs_wrap ) {
                     $tool_config['task'] = $task_contract;

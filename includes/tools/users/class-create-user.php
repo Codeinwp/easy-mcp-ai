@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-if ( ! class_exists( __NAMESPACE__ . '\\Update_User' ) ) {
-    require_once __DIR__ . '/class-update-user.php';
-}
-
 class Create_User extends Base_Tool {
 
     public function get_name() {

@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,35 +227,14 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.2.0 =
-- Added WP-CLI command runner with plugin, theme and core tools ([docs](https://docs.easymcpai.com/run-wp-cli-commands-with-ai)).
-- Added managed skills served to AI clients over MCP.
-- Added a cache clearing tool for posts, URLs, or whole site.
-- Added WooCommerce log tools to list and read store logs.
-- Added instructions telling agents when to report problems.
-- Added gallery image management to WooCommerce product tools.
-- Added wp_list_disabled_tools showing switched-off tools and where to enable them.
-- Added a header-only option that refuses API keys sent in URLs ([docs](https://docs.easymcpai.com/creating-and-managing-api-tokens#keep-api-keys-out-of-urls)).
-- Added media tools to crop, resize and rebuild image thumbnails.
-- Added a extra roles compatibility which can connect with AI clients
-- Fixed clearing product lists with an empty list sent through MCP.
-- Fixed new menu items landing in the wrong menu position.
-- Fixed write access updating ACF post and page fields
-- Fixed cached pages staying old after SEO and term edits.
-- Fixed post type tools to accept slugs and name the correct tool.
-- Fixed updating a custom post type item silently dropping custom fields.
-- Fixed saved custom fields wrongly reported as dropped.
-- Fixed saved custom fields misreported when plugins hide response data.
-- Fixed deleting many posts and media with one command
-- Fixed the ChatGPT button opening the Plugins page with updated setup steps
-- Fixed the AI connect button opening ChatGPTs Plugins page directly
-- Fixed feedback hints telling editors to switch on tools they cannot use.
-- Fixed the Force Draft setting description to state its coverage.
-- Fixed the admin OAuth client list showing grant types as one item
-- Fixed OAuth sign-in failing on some server setups and AI clients.
-- Fixed API key and Activity log issues on some sites.
-- Fixed several edge cases in media uploads, tasks, terms and approvals.
-- Fixed post tools accepting names that are not post types
+= 2.2.1 =
+- Fixed four tool descriptions exceeding Claude Codes length limit.
+- Fixed the admin menu product logo.
+- Added a warning that names unrecognized tool settings.
+- Added Select all and Clear controls to OAuth permission screens.
+- Added a helper and hooks that show active AI tool calls ([docs](https://docs.easymcpai.com/detect-ai-tool-calls-in-your-code))
+- Fixed narrow API keys reading plugins, drafts and scheduled posts
+- Fixed approved retries failing when clients reordered argument keys
 
 [See changelog for all versions](https://easymcpai.com/changelog).
 

@@ -9,10 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
-require_once __DIR__ . '/class-list-terms.php';
-
-
-
 
 
 

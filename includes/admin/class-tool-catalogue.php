@@ -28,30 +28,6 @@ class Tool_Catalogue {
 
     public function __construct( $tool_registry ) {
         $this->tool_registry = $tool_registry;
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\External_Data_Admin' ) ) {
-            require_once __DIR__ . '/class-external-data-admin.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Plugin_Integration_Registry' ) ) {
-            require_once __DIR__ . '/class-plugin-integration-registry.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Plugin_Integrations_Page' ) ) {
-            require_once __DIR__ . '/class-plugin-integrations-page.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Abilities_Page' ) ) {
-            require_once __DIR__ . '/class-abilities-page.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Tool_Groups' ) ) {
-            require_once __DIR__ . '/class-tool-groups.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Dynamic_Tool_Registrar' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-dynamic-tool-registrar.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\External_Data_Service' ) ) {
-            require_once __DIR__ . '/class-external-data-service.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
-        }
     }
 
     
@@ -728,9 +704,6 @@ class Tool_Catalogue {
 
 
     public static function store_choices( array $names, array $off, array $defaults ) {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\External_Data_Admin' ) ) {
-            require_once __DIR__ . '/class-external-data-admin.php';
-        }
         $global  = (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() );
         $current = \Easy_MCP_AI\Tools\Tool_State::stored_enabled_list();
         list( $disabled, $enabled ) = \Easy_MCP_AI\Tools\Tool_State::apply_choices( $names, $off, $defaults, $global, $current );

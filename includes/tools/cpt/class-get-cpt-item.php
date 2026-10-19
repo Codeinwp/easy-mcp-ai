@@ -8,11 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-if ( ! class_exists( Post_Type_Tool_Hint::class, false ) ) {
-    require_once dirname( __DIR__ ) . '/class-post-type-tool-hint.php';
-}
-
 class Get_CPT_Item extends Base_Tool {
 
     public function get_name() {

@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-require_once __DIR__ . '/class-create-post.php';
-
 class Update_Post extends Base_Tool {
 
     

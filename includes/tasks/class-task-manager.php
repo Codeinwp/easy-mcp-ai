@@ -497,6 +497,16 @@ class Task_Manager {
     }
 
     
+
+
+
+
+
+    private static function oauth_enabled(): bool {
+        return (bool) \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) );
+    }
+
+    
     private function background_grant( array $row ) {
         if ( (int) $row['wp_user_id'] <= 0 || ! \get_userdata( (int) $row['wp_user_id'] ) ) {
             return null;
@@ -505,7 +515,7 @@ class Task_Manager {
             $token = $this->oauth_token_row( (int) $row['token_id'] );
             if ( ! is_array( $token ) || ! (int) $token['is_active'] || strtotime( $token['expires_at'] . ' UTC' ) < $this->now()
                 || (int) $token['wp_user_id'] !== (int) $row['wp_user_id'] || (string) $token['client_id'] !== (string) $row['oauth_client_id']
-                || ! class_exists( '\\Easy_MCP_AI\\OAuth\\Scope_Map' ) ) {
+                || ! self::oauth_enabled() ) {
                 return null;
             }
             
@@ -534,11 +544,7 @@ class Task_Manager {
 
     protected function oauth_audience_matches( $resource ) {
         if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\Token_Endpoint' ) ) {
-            $file = dirname( __DIR__ ) . '/oauth/class-token-endpoint.php';
-            if ( ! is_readable( $file ) ) {
-                return false;
-            }
-            require_once $file;
+            return false;
         }
         $canonical = \rest_url( 'easy-mcp-ai/v1/mcp' );
         return \Easy_MCP_AI\OAuth\Token_Endpoint::resource_matches( '' !== $resource ? $resource : $canonical, $canonical );
@@ -706,9 +712,6 @@ class Task_Manager {
             $fields[] = isset( $row[ $key ] ) ? (string) $row[ $key ] : '';
         }
         $fields[] = hash( 'sha256', isset( $row['arguments'] ) ? (string) $row['arguments'] : '' );
-        if ( ! class_exists( '\\Easy_MCP_AI\\Auth\\Token_Keys' ) ) {
-            require_once dirname( __DIR__ ) . '/auth/class-token-keys.php';
-        }
         return hash_hmac( 'sha256', 'easy-mcp-ai-task|' . implode( '|', $fields ), (string) \Easy_MCP_AI\Auth\Token_Keys::signing_key() );
     }
 

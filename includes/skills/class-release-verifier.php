@@ -26,8 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-skill-trust.php';
-
 final class Release_Verifier {
 
     

@@ -90,7 +90,6 @@ class Check_Discovery {
         }
         self::record( $result, $mcp_path );
         if ( defined( 'EASY_MCP_AI_PLUGIN_DIR' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-root-fallback.php';
             $result = self::with_workaround(
                 $result,
                 \Easy_MCP_AI\OAuth\Root_Fallback::mode(),
@@ -273,7 +272,6 @@ class Check_Discovery {
         if ( null === $blocked || ! defined( 'EASY_MCP_AI_PLUGIN_DIR' ) ) {
             return;
         }
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-root-fallback.php';
         \Easy_MCP_AI\OAuth\Root_Fallback::record_root_discovery( $blocked, $mcp_path );
     }
 

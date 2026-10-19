@@ -19,6 +19,11 @@ class Draft_Posts_Resource extends Base_Resource {
         return 'Up to 50 most recently modified draft posts with title, date, and author.';
     }
 
+    
+    public function get_required_tool(): string {
+        return 'wp_list_posts';
+    }
+
     public function read() {
         $args = array(
             'post_type'      => 'post',

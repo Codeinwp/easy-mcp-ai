@@ -10,10 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/mcp/class-detailed-tool-error.php';
-require_once dirname( __DIR__ ) . '/mcp/class-tool-status.php';
-require_once dirname( __DIR__ ) . '/tools/class-switched-off-inventory.php';
-
 
 
 

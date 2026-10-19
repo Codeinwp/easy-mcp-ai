@@ -177,7 +177,6 @@ class Activator {
 
 
     private static function mark_setup_complete() {
-        require_once __DIR__ . '/admin/class-setup-state.php';
         Admin\Setup_State::mark_complete();
     }
 
@@ -353,7 +352,6 @@ class Activator {
         if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) || ! method_exists( $wpdb, 'prepare' ) ) {
             return true; 
         }
-        require_once __DIR__ . '/class-site-host.php'; 
         $host_hash = \Easy_MCP_AI\Site_Host::current_hash();
         if ( '' === $host_hash ) {
             return false; 
@@ -372,14 +370,10 @@ class Activator {
         
         
         
-        $move_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-site-move.php';
-        if ( file_exists( $move_file ) ) {
-            require_once $move_file;
+        if ( class_exists( OAuth\OAuth_Site_Move::class ) ) {
             OAuth\OAuth_Site_Move::ensure_recorded();
         }
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-schema.php';
-        if ( file_exists( $schema_file ) ) {
-            require_once $schema_file;
+        if ( class_exists( \Easy_MCP_AI\OAuth\OAuth_Schema::class ) ) {
             \Easy_MCP_AI\OAuth\OAuth_Schema::create_tables();
         }
     }
@@ -389,9 +383,7 @@ class Activator {
 
 
     private static function maybe_upgrade_oauth_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-schema.php';
-        if ( file_exists( $schema_file ) ) {
-            require_once $schema_file;
+        if ( class_exists( \Easy_MCP_AI\OAuth\OAuth_Schema::class ) ) {
             \Easy_MCP_AI\OAuth\OAuth_Schema::maybe_upgrade();
         }
     }
@@ -401,11 +393,9 @@ class Activator {
 
 
     private static function create_change_log_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-log-schema.php';
-        if ( ! file_exists( $schema_file ) ) {
+        if ( ! class_exists( \Easy_MCP_AI\History\Change_Log_Schema::class ) ) {
             return;
         }
-        require_once $schema_file;
 
         
         
@@ -456,47 +446,37 @@ class Activator {
 
 
     private static function create_tasks_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/tasks/class-task-schema.php';
-        if ( ! file_exists( $schema_file ) ) {
+        if ( ! class_exists( \Easy_MCP_AI\Tasks\Task_Schema::class ) ) {
             return;
         }
-        require_once $schema_file;
         \Easy_MCP_AI\Tasks\Task_Schema::create_tables();
     }
 
     private static function maybe_upgrade_tasks_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/tasks/class-task-schema.php';
-        if ( ! file_exists( $schema_file ) ) {
+        if ( ! class_exists( \Easy_MCP_AI\Tasks\Task_Schema::class ) ) {
             return;
         }
-        require_once $schema_file;
         \Easy_MCP_AI\Tasks\Task_Schema::maybe_upgrade();
     }
 
     private static function create_approvals_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/approvals/class-approval-schema.php';
-        if ( ! file_exists( $schema_file ) ) {
+        if ( ! class_exists( \Easy_MCP_AI\Approvals\Approval_Schema::class ) ) {
             return;
         }
-        require_once $schema_file;
         \Easy_MCP_AI\Approvals\Approval_Schema::create_tables();
     }
 
     private static function maybe_upgrade_approvals_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/approvals/class-approval-schema.php';
-        if ( ! file_exists( $schema_file ) ) {
+        if ( ! class_exists( \Easy_MCP_AI\Approvals\Approval_Schema::class ) ) {
             return;
         }
-        require_once $schema_file;
         \Easy_MCP_AI\Approvals\Approval_Schema::maybe_upgrade();
     }
 
     private static function maybe_upgrade_change_log_tables() {
-        $schema_file = EASY_MCP_AI_PLUGIN_DIR . 'includes/history/class-change-log-schema.php';
-        if ( ! file_exists( $schema_file ) ) {
+        if ( ! class_exists( \Easy_MCP_AI\History\Change_Log_Schema::class ) ) {
             return;
         }
-        require_once $schema_file;
         \Easy_MCP_AI\History\Change_Log_Schema::maybe_upgrade();
         self::ensure_view_all_history_cap();
     }
@@ -562,7 +542,6 @@ class Activator {
             }
         }
         if ( $fresh_abilities ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-ability-seed.php';
             Ability_Seed::mark_pending();
         }
     }

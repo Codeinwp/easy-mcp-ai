@@ -6,10 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-token-keys.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/auth/class-connect-policy.php';
-
-
 
 
 
@@ -882,7 +878,6 @@ class Authorization_Endpoint {
         $message = esc_html( $error->get_error_message() );
         $title   = esc_html__( 'Authorization Error', 'easy-mcp-ai' );
 
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
         $site = esc_html( \Easy_MCP_AI\Console_Styles::site_label() );
 
         $html  = '<!DOCTYPE html>' . "\n";

@@ -35,13 +35,7 @@ class Transport {
 
 
 
-
     public function header_probe_permitted( $request ) {
-        $file = EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-check-header-probe.php';
-        if ( ! class_exists( '\Easy_MCP_AI\Diagnostics\Check_Header_Probe' ) && is_readable( $file ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/class-diagnostic-result.php';
-            require_once $file;
-        }
         if ( ! class_exists( '\Easy_MCP_AI\Diagnostics\Check_Header_Probe' ) ) {
             return false;
         }
@@ -256,9 +250,6 @@ class Transport {
         if ( ! $api_keys ) {
             return null;
         }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Config' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-config.php';
-        }
         if ( true !== \Easy_MCP_AI\Config::get( 'api_key_header_only' ) ) {
             return null;
         }
@@ -363,9 +354,6 @@ class Transport {
 
 
     private function inject_basic_api_key( \WP_REST_Request $request ) {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Auth_Header' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-auth-header.php';
-        }
         $header = $request->get_header( 'authorization' );
         if ( $header ) {
             if ( 0 !== stripos( $header, 'Basic ' ) ) {
@@ -389,7 +377,22 @@ class Transport {
         }
     }
 
+    
+
+
+
+
+
+
+
+    private static function mark_mcp_request(): void {
+        if ( ! defined( 'EASY_MCP_AI_MCP_REQUEST' ) ) {
+            define( 'EASY_MCP_AI_MCP_REQUEST', true );
+        }
+    }
+
     public function handle_post( \WP_REST_Request $request ) {
+        self::mark_mcp_request();
         
         
         $this->server->set_request_client_caps( null );
@@ -1057,6 +1060,7 @@ class Transport {
     }
 
     public function handle_get( \WP_REST_Request $request ) {
+        self::mark_mcp_request();
         $url_key_refusal = $this->refuse_url_key( $request );
         if ( $url_key_refusal ) {
             return $url_key_refusal;
@@ -1096,6 +1100,7 @@ class Transport {
     }
 
     public function handle_delete( \WP_REST_Request $request ) {
+        self::mark_mcp_request();
         $url_key_refusal = $this->refuse_url_key( $request );
         if ( $url_key_refusal ) {
             return $url_key_refusal;
@@ -1186,6 +1191,7 @@ class Transport {
     }
 
     public function handle_options( \WP_REST_Request $request ) {
+        self::mark_mcp_request();
         $response = new \WP_REST_Response( null, 204 );
         $this->add_cors_headers( $response );
         return $response;
@@ -1578,11 +1584,6 @@ class Transport {
         if ( ! file_exists( $file ) ) {
             return false;
         }
-        if ( ! class_exists( OAuth_Token_Validator::class ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-token-manager.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-oauth-token-validator.php';
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
-        }
         return true;
     }
 
@@ -1743,7 +1744,6 @@ class Transport {
 
 
     public static function resource_metadata_url(): string {
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-root-fallback.php';
         if ( \Easy_MCP_AI\OAuth\Root_Fallback::is_armed() ) {
             if ( \Easy_MCP_AI\OAuth\Root_Fallback::mcp_path_discovery_reachable() ) {
                 return \rest_url( self::NAMESPACE_V1 . '/mcp/.well-known/oauth-protected-resource' );

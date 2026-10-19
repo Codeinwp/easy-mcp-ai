@@ -45,8 +45,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/class-config.php';
-
 final class Connect_Policy {
 
     const CHANNEL_OAUTH     = 'oauth';

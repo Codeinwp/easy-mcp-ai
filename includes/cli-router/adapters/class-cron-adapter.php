@@ -294,9 +294,6 @@ class Cron_Adapter extends Command_Handler {
             'network_refusal',
             array(),
             static function () {
-                if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Site_Health\\Site_Health_Guard' ) ) {
-                    require_once dirname( __DIR__, 2 ) . '/tools/site-health/class-site-health-guard.php';
-                }
                 try {
                     \Easy_MCP_AI\Tools\Site_Health\Site_Health_Guard::require_network_admin_on_multisite( 'run cron events' );
                 } catch ( \RuntimeException $e ) {

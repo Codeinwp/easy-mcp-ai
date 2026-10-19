@@ -220,7 +220,6 @@ final class Fetchers {
         if ( null !== $status ) {
             
             
-            require_once dirname( __DIR__ ) . '/mcp/class-tool-status.php';
             $predicate = \Easy_MCP_AI\MCP\Tool_Status::predicate( $status );
             if ( '' !== $predicate ) {
                 return sprintf( self::TOOL_OUT_OF_REACH, $command, $tool, $predicate );

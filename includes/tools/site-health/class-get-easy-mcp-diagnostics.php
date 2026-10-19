@@ -75,8 +75,6 @@ class Get_Easy_Mcp_Diagnostics extends Base_Tool {
     public function execute( array $arguments ) {
         $rerun = Site_Health_Guard::flag( $arguments, 'rerun', false );
 
-        $this->load_diagnostics();
-
         if ( $rerun ) {
             
             
@@ -120,21 +118,6 @@ class Get_Easy_Mcp_Diagnostics extends Base_Tool {
             $out['note'] = 'No diagnostics report has been generated yet. Call again with rerun=true, or open the Easy MCP AI dashboard in wp-admin.';
         }
         return $out;
-    }
-
-    
-
-
-
-
-    protected function load_diagnostics() {
-        $dir = EASY_MCP_AI_PLUGIN_DIR . 'includes/diagnostics/';
-        require_once $dir . 'class-diagnostic-result.php';
-        require_once $dir . 'class-diagnostics.php';
-        
-        require_once $dir . 'class-check-notices.php';
-        
-        require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-admin-page.php';
     }
 
     

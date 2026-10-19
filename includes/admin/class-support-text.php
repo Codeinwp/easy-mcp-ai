@@ -194,14 +194,10 @@ class Support_Text {
         
         $set_tool_overrides   = 'Not set';
         if ( defined( 'EASY_MCP_AI_TOOLS' ) || false !== getenv( 'EASY_MCP_AI_TOOLS' ) ) {
-            if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-                require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
-            }
             $set_tool_overrides = count( \Easy_MCP_AI\Tools\Tool_State::overrides() ) . ' (' . \Easy_MCP_AI\Tools\Tool_State::override_source()
                 . ( \Easy_MCP_AI\Tools\Tool_State::is_strict() ? ', strict' : '' ) . ')';
         }
         $set_allowed_patterns = count( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() ) );
-        require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
         $set_oauth_cap        = \Easy_MCP_AI\Auth\Connect_Policy::stored_floor();
         
         $set_connect_roles    = \Easy_MCP_AI\Auth\Connect_Policy::is_filtered_for( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_OAUTH )
@@ -242,9 +238,6 @@ class Support_Text {
         }
 
         $srv_remote = isset( $_SERVER['REMOTE_ADDR'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-        if ( ! class_exists( '\Easy_MCP_AI\Client_IP' ) && defined( 'EASY_MCP_AI_PLUGIN_DIR' ) && file_exists( EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-        }
         $srv_remote_desc = class_exists( '\Easy_MCP_AI\Client_IP' ) ? \Easy_MCP_AI\Client_IP::describe( $srv_remote ) : $srv_remote;
 
         $srv_ext_list = array();

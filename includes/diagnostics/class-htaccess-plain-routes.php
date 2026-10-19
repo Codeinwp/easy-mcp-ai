@@ -42,8 +42,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-htaccess-auth-rule.php';
-
 class Htaccess_Plain_Routes {
 
     

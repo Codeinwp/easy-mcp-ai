@@ -144,19 +144,12 @@ final class Privileged_Groups {
         return null;
     }
 
-    private static function load_tool_state(): void {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-            require_once dirname( __DIR__ ) . '/tools/class-tool-state.php';
-        }
-    }
-
     
 
 
 
 
     public static function switch_source(): string {
-        self::load_tool_state();
         return \Easy_MCP_AI\Tools\Tool_State::override_source();
     }
 
@@ -169,7 +162,6 @@ final class Privileged_Groups {
 
 
     public static function switched_on_names(): array {
-        self::load_tool_state();
         $names = array_merge( array_keys( \Easy_MCP_AI\Tools\Tool_State::overrides() ), \Easy_MCP_AI\Tools\Tool_State::enabled_list() );
         $out   = array();
         foreach ( array_unique( array_map( 'strval', $names ) ) as $name ) {
@@ -611,7 +603,6 @@ final class Privileged_Groups {
                 'tools'      => $tools,
             );
         }
-        self::load_tool_state();
         return array(
             'source' => self::switch_source(),
             

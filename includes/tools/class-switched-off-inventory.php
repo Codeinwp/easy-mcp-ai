@@ -17,13 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/mcp/class-tool-status.php';
-require_once dirname( __DIR__ ) . '/admin/class-plugin-integration-registry.php';
-require_once dirname( __DIR__ ) . '/oauth/class-scope-map.php';
-require_once __DIR__ . '/class-base-tool.php';
-require_once __DIR__ . '/class-tool-state.php';
-require_once __DIR__ . '/class-dynamic-tool-registrar.php';
-
 
 
 
@@ -225,7 +218,6 @@ final class Switched_Off_Inventory {
         if ( null === $registry || ! method_exists( $registry, 'get_all_tool_names' ) || ! method_exists( $registry, 'get_tool' ) ) {
             return array();
         }
-        require_once dirname( __DIR__ ) . '/mcp/class-server.php';
         $patterns = (array) Config::get( 'allowed_tool_patterns' );
         $entries  = array();
         foreach ( (array) $registry->get_all_tool_names() as $name ) {

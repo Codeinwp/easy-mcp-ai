@@ -5,8 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__ ) . '/auth/class-connect-policy.php';
-
 
 
 

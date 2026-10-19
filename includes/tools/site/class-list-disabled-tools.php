@@ -112,11 +112,6 @@ class List_Disabled_Tools extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
-        require_once dirname( __DIR__, 2 ) . '/tools/class-switched-off-inventory.php';
-        require_once dirname( __DIR__, 2 ) . '/feedback/class-feedback-availability.php';
-
         $entries = Switched_Off_Inventory::all( $this->registry() );
         $query   = isset( $arguments['query'] ) && is_string( $arguments['query'] ) ? trim( mb_substr( $arguments['query'], 0, self::QUERY_MAX ) ) : '';
         $group   = isset( $arguments['group'] ) && is_string( $arguments['group'] ) ? trim( $arguments['group'] ) : '';

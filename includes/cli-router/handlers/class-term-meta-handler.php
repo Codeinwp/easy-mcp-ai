@@ -11,11 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-if ( ! trait_exists( '\\Easy_MCP_AI\\Tools\\Taxonomy\\Term_Meta_Auth_Guard', false ) ) {
-    require_once dirname( __DIR__, 2 ) . '/tools/taxonomy/trait-term-meta-auth-guard.php';
-}
-
-
 
 
 

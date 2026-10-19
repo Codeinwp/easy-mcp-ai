@@ -155,7 +155,6 @@ class Access_Presets {
         if ( null !== $this->lists ) {
             return $this->lists;
         }
-        self::load_scope_map();
         $lists = array(
             self::READ  => self::normalize( \Easy_MCP_AI\OAuth\Scope_Map::resolve_allowed_tools( implode( ' ', \Easy_MCP_AI\OAuth\Scope_Map::get_read_scopes() ) ) ),
             self::WRITE => self::normalize( \Easy_MCP_AI\OAuth\Scope_Map::resolve_allowed_tools( \Easy_MCP_AI\OAuth\Scope_Map::get_default_scope() ) ),
@@ -218,11 +217,5 @@ class Access_Presets {
             }
         }
         return $this->tool_registry;
-    }
-
-    private static function load_scope_map() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\OAuth\\Scope_Map' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/oauth/class-scope-map.php';
-        }
     }
 }

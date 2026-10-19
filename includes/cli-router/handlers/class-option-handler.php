@@ -686,12 +686,6 @@ class Option_Handler extends Command_Handler {
 
 
     public static function key_is_secret( string $key ): bool {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) && is_readable( dirname( __DIR__, 2 ) . '/class-text-redactor.php' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/class-text-redactor.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) && is_readable( dirname( __DIR__, 2 ) . '/history/class-change-redactor.php' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/history/class-change-redactor.php';
-        }
         if ( class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) && preg_match( \Easy_MCP_AI\Text_Redactor::SENSITIVE_KEY_PATTERN, $key ) ) {
             return true;
         }
@@ -924,9 +918,6 @@ class Option_Handler extends Command_Handler {
 
     
     protected function option_is_recordable( string $name ): bool {
-        if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Recorder' ) && is_readable( dirname( __DIR__, 2 ) . '/history/class-change-recorder.php' ) ) {
-            require_once dirname( __DIR__, 2 ) . '/history/class-change-recorder.php';
-        }
         if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Recorder' ) ) {
             return true;
         }

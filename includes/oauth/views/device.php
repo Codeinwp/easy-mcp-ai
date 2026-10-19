@@ -22,8 +22,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-console-styles.php';
-
 $easy_mcp_ai_stage = isset( $stage ) ? (string) $stage : 'enter';
 ?>
 <!DOCTYPE html>

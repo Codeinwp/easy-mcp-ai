@@ -24,9 +24,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/class-skill-trust.php';
-require_once __DIR__ . '/class-skill-set.php';
-
 
 
 

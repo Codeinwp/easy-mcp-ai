@@ -113,7 +113,7 @@ final class Post_Meta_Adapter extends Meta_Command {
             $inv,
             'patch',
             array( 'wp_get_post_full', 'wp_update_post_meta' ),
-            array( 'wp_get_post_full' => array( '\\Easy_MCP_AI\\Tools\\Posts\\Get_Post_Full', 'posts/class-get-post-full.php' ) )
+            array( 'wp_get_post_full' => '\\Easy_MCP_AI\\Tools\\Posts\\Get_Post_Full' )
         );
     }
 

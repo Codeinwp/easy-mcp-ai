@@ -27,8 +27,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/auth/class-connect-policy.php';
-
 class Settings_Controller extends Admin_Rest_Controller {
 
     const SECTIONS = array( 'access', 'logging', 'usage', 'advanced', 'capture' );
@@ -87,11 +85,6 @@ class Settings_Controller extends Admin_Rest_Controller {
 
     public function __construct( $tool_registry = null ) {
         $this->tool_registry = $tool_registry;
-        require_once dirname( __DIR__ ) . '/class-settings-validator.php';
-        require_once dirname( __DIR__ ) . '/class-history-settings-page.php';
-        
-        require_once dirname( __DIR__ ) . '/class-admin-page.php';
-        require_once dirname( __DIR__ ) . '/class-external-data-admin.php';
     }
 
     public function register_routes() {
@@ -167,7 +160,6 @@ class Settings_Controller extends Admin_Rest_Controller {
 
 
     public function payload() {
-        self::load_tool_state();
         $patterns = (array) Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() );
         $grid     = $this->grid();
         $defaults = Tool_Catalogue::defaults_of( $this->tool_registry, $grid );
@@ -270,7 +262,6 @@ class Settings_Controller extends Admin_Rest_Controller {
 
 
     private static function controlled() {
-        require_once dirname( __DIR__, 2 ) . '/class-config-admin.php';
         $invalid = \Easy_MCP_AI\Config_Admin::invalid_settings();
         $list    = array();
         foreach ( Config::controlled() as $constant => $source ) {
@@ -293,7 +284,6 @@ class Settings_Controller extends Admin_Rest_Controller {
         if ( ! $this->tool_registry instanceof \Easy_MCP_AI\Tools\Tool_Registry ) {
             return array();
         }
-        \Easy_MCP_AI\Plugin::load_approvals();
         return \Easy_MCP_AI\Approvals\Approval_Gate::default_pause_names(
             $this->tool_registry,
             \Easy_MCP_AI\MCP\Server::available_tools( $this->tool_registry )
@@ -392,7 +382,6 @@ class Settings_Controller extends Admin_Rest_Controller {
             if ( 'logger_flag' === $suffix ) {
                 \update_option( self::LOGGER_FLAG_OPTION, $value ? 'yes' : 'no' );
             } elseif ( 'disabled_tools' === $suffix ) {
-                self::load_tool_state();
                 $this->write_disabled_tools( $value );
             } elseif ( 'connect_roles' === $suffix ) {
                 
@@ -678,15 +667,5 @@ class Settings_Controller extends Admin_Rest_Controller {
         }
         sort( $default_off );
         return array_values( array_unique( array_merge( $grid, $default_off ) ) );
-    }
-
-    
-    private static function load_tool_state() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_State' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/class-tool-state.php';
-        }
-        if ( ! class_exists( '\\Easy_MCP_AI\\Admin\\Tool_Catalogue' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/admin/class-tool-catalogue.php';
-        }
     }
 }

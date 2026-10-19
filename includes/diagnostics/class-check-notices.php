@@ -104,7 +104,6 @@ class Check_Notices {
 
 
     private static function plain_routes_in_place() {
-        require_once __DIR__ . '/class-htaccess-plain-routes.php';
         return Htaccess_Plain_Routes::is_in_place();
     }
 

@@ -12,8 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/../class-class-map-loader.php';
-
 
 
 
@@ -115,7 +113,7 @@ final class Meta_Exposure {
 
     public static function all_providers() {
         if ( null === self::$providers ) {
-            self::$providers = \Easy_MCP_AI\Class_Map_Loader::load( self::PROVIDERS, 'includes/meta/providers', Meta_Field_Provider::class );
+            self::$providers = \Easy_MCP_AI\Class_Map_Loader::load( self::PROVIDERS, Meta_Field_Provider::class );
         }
         return self::$providers;
     }

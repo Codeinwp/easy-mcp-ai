@@ -5,8 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once __DIR__ . '/../cache/class-cache-noise.php';
-
 class Change_Recorder {
 
     

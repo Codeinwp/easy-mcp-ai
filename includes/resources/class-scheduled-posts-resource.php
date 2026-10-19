@@ -19,6 +19,11 @@ class Scheduled_Posts_Resource extends Base_Resource {
         return 'All posts scheduled for future publication, ordered by publish date ascending.';
     }
 
+    
+    public function get_required_tool(): string {
+        return 'wp_list_posts';
+    }
+
     public function read() {
         $args = array(
             'post_type'      => 'post',

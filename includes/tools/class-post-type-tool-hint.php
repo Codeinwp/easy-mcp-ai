@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-if ( ! class_exists( Post_Type_Rest_Base::class, false ) ) {
-    require_once __DIR__ . '/class-post-type-rest-base.php';
-}
-
 
 
 
@@ -202,9 +198,6 @@ final class Post_Type_Tool_Hint {
         $server = \function_exists( 'rest_get_server' ) ? \rest_get_server() : null;
         if ( empty( $object->show_in_rest ) || ! is_object( $server ) ) {
             return false;
-        }
-        if ( ! class_exists( Route_Gate::class, false ) ) {
-            require_once dirname( __DIR__ ) . '/rest-routes/class-route-gate.php';
         }
         
         $base = ! empty( $object->rest_base ) ? (string) $object->rest_base : (string) $parent->post_type;

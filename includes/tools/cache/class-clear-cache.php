@@ -13,10 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-require_once dirname( __DIR__, 2 ) . '/cache/class-cache-purger.php';
-require_once dirname( __DIR__, 2 ) . '/cache/class-post-urls.php';
-require_once dirname( __DIR__, 2 ) . '/cache/class-url-guard.php';
-
 
 
 

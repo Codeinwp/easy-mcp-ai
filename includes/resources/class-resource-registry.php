@@ -40,13 +40,19 @@ class Resource_Registry {
         return isset( $provided[ $uri ] ) ? $provided[ $uri ] : null;
     }
 
-    public function get_all_definitions() {
+    
+
+
+
+    public function get_all_definitions( ?callable $include = null ): array {
         $definitions = array();
         foreach ( $this->resources as $resource ) {
-            $definitions[] = $resource->get_definition();
+            if ( null === $include || $include( $resource ) ) {
+                $definitions[] = $resource->get_definition();
+            }
         }
         foreach ( $this->provided() as $uri => $resource ) {
-            if ( ! isset( $this->resources[ $uri ] ) ) {
+            if ( ! isset( $this->resources[ $uri ] ) && ( null === $include || $include( $resource ) ) ) {
                 $definitions[] = $resource->get_definition();
             }
         }

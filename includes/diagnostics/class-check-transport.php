@@ -591,11 +591,7 @@ class Check_Transport {
 
 
 
-
     public static function has_active_auth_rule( $htaccess ) {
-        if ( ! class_exists( '\Easy_MCP_AI\Diagnostics\Htaccess_Auth_Rule' ) ) {
-            require_once __DIR__ . '/class-htaccess-auth-rule.php';
-        }
         return Htaccess_Auth_Rule::has_effective_rule( $htaccess );
     }
 
@@ -879,17 +875,11 @@ class Check_Transport {
 
     
     private static function trusted_proxies_configured() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Client_IP' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-        }
         return count( \Easy_MCP_AI\Client_IP::trusted_proxies() ) > 0;
     }
 
     
     private static function resolved_client_ip() {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Client_IP' ) ) {
-            require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-client-ip.php';
-        }
         return (string) \Easy_MCP_AI\Client_IP::get();
     }
 

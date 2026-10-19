@@ -3,7 +3,7 @@
  * Plugin Name: Easy MCP AI - Connector for Claude, ChatGPT & SEO Data
  * Plugin URI:  https://easymcpai.com
  * Description: Connect Claude, ChatGPT & any AI to WordPress. Manage your entire site by chat — content, media, GA4, Search Console, SEO & more. 243 tools. Free.
- * Version:     2.2.0
+ * Version:     2.2.1
  * Author:      EasyMCPAI
  * Author URI:  https://easymcpai.com/
  * License:     GPL-2.0-or-later
@@ -19,6 +19,17 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+
+
+
+
+
+require_once __DIR__ . '/includes/class-autoloader.php';
+Easy_MCP_AI\Autoloader::register();
+
+
+require_once __DIR__ . '/includes/functions.php';
 
 
 
@@ -227,7 +238,6 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
         $GLOBALS['easy_mcp_ai_server_had_auth_header'] = ! empty( $_SERVER['HTTP_AUTHORIZATION'] );
 
         if ( empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
-            require_once __DIR__ . '/includes/class-auth-header.php';
             $easy_mcp_ai_hdrs = Easy_MCP_AI\Auth_Header::request_headers();
             if ( null !== $easy_mcp_ai_hdrs ) {
                 $easy_mcp_ai_bearer = Easy_MCP_AI\Auth_Header::recover_bearer( $easy_mcp_ai_hdrs );
@@ -260,14 +270,11 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
     unset( $easy_mcp_ai_req, $easy_mcp_ai_own );
 }
 
-define( 'EASY_MCP_AI_VERSION', '2.2.0' );
+define( 'EASY_MCP_AI_VERSION', '2.2.1' );
 define( 'EASY_MCP_AI_PLUGIN_FILE', __FILE__ );
 define( 'EASY_MCP_AI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'EASY_MCP_AI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'EASY_MCP_AI_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-plugin.php';
-require_once EASY_MCP_AI_PLUGIN_DIR . 'includes/class-themeisle-sdk.php';
 
 
 

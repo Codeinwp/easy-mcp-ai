@@ -306,7 +306,6 @@ class Config {
                 }
                 break;
             case 'header':
-                require_once __DIR__ . '/class-client-ip.php';
                 if ( is_string( $raw ) ) {
                     foreach ( array_keys( Client_IP::HEADERS ) as $header ) {
                         if ( 0 === strcasecmp( trim( $raw ), $header ) ) {
@@ -321,7 +320,6 @@ class Config {
                 }
                 break;
             case 'host':
-                require_once __DIR__ . '/class-site-host.php';
                 if ( is_string( $raw ) ) {
                     if ( '' === trim( $raw ) ) {
                         return ''; 
@@ -333,7 +331,6 @@ class Config {
                 }
                 break;
             case 'proxies':
-                require_once __DIR__ . '/class-client-ip.php';
                 if ( is_string( $raw ) || is_array( $raw ) ) {
                     $entries = is_array( $raw ) ? $raw : preg_split( '/[\s,]+/', preg_replace( '/#[^\r\n]*/', '', $raw ) );
                     foreach ( $entries as $entry ) {
@@ -362,7 +359,6 @@ class Config {
                         }
                         $value = trim( $value );
                         if ( 'ip_list' === $spec[1] ) {
-                            require_once __DIR__ . '/class-client-ip.php';
                             $value = trim( explode( '#', $value, 2 )[0] );
                             if ( '' !== $value && ! Client_IP::is_ip_or_cidr( $value ) ) {
                                 $valid = false;
