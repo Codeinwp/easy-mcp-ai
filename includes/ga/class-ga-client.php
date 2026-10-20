@@ -13,6 +13,12 @@ class GA_Client extends Abstract_Google_Client {
     const OPTION_PROPERTY_ID = 'easy_mcp_ai_ga_default_property_id';
     const TRANSIENT_TOKEN    = 'easy_mcp_ai_ga_token';
     const SCOPE              = 'https://www.googleapis.com/auth/analytics.readonly';
+    
+
+
+
+
+    const SCOPE_EDIT         = 'https://www.googleapis.com/auth/analytics.edit';
     const HKDF_INFO          = 'easy_mcp_ai_ga_creds_v1';
 
     protected static function product_name(): string {
@@ -27,7 +33,9 @@ class GA_Client extends Abstract_Google_Client {
 
 
 
-    public static function request( string $method, string $url, ?array $body = null, bool $admin_context = false ): array {
+
+
+    public static function request( string $method, string $url, ?array $body = null, bool $admin_context = false, bool $edit = false ): array {
         $scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
         $host   = \wp_parse_url( $url, PHP_URL_HOST );
         $allowed_hosts = array(
@@ -39,7 +47,7 @@ class GA_Client extends Abstract_Google_Client {
             throw new \RuntimeException( 'GA client: refusing to attach bearer token to non-Google host.' );
         }
 
-        $token = self::get_access_token();
+        $token = self::get_access_token( $edit ? self::SCOPE_EDIT : '' );
 
         $args = array(
             'method'              => strtoupper( $method ),
@@ -68,6 +76,9 @@ class GA_Client extends Abstract_Google_Client {
         $raw     = \wp_remote_retrieve_body( $response );
         $decoded = json_decode( $raw, true );
 
+        if ( $edit && $code >= 400 ) {
+            self::throw_edit_error( $code, $decoded );
+        }
         if ( 403 === $code ) {
             if ( $admin_context ) {
                 $creds = self::get_credentials();
@@ -97,12 +108,86 @@ class GA_Client extends Abstract_Google_Client {
         return is_array( $decoded ) ? $decoded : array();
     }
 
+    
+
+
+
+
+
+
+
+
+    private static function throw_edit_error( int $code, $decoded ): void {
+        $detail = is_array( $decoded ) && isset( $decoded['error']['message'] ) && is_string( $decoded['error']['message'] )
+            ? $decoded['error']['message']
+            : "HTTP {$code}";
+        if ( 401 === $code || 403 === $code ) {
+            throw new \RuntimeException(
+                "Google Analytics refused the change: {$detail} Changing a property needs the service account to hold the Editor role on it (GA4 → Admin → Property access management); Viewer is enough only for reading." // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
+        if ( 404 === $code ) {
+            throw new \RuntimeException(
+                "Google Analytics found nothing to change: {$detail} Check the property ID and, for a key event, that it still exists." // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
+        if ( 429 === $code ) {
+            throw new \RuntimeException(
+                'Google Analytics Admin API quota exceeded. Nothing was changed; retry later.'
+            );
+        }
+        throw new \RuntimeException( "Google Analytics refused the change: {$detail}" ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
     public static function get( string $url, bool $admin_context = false ): array {
         return self::request( 'GET', $url, null, $admin_context );
     }
 
     public static function post( string $url, array $body, bool $admin_context = false ): array {
         return self::request( 'POST', $url, $body, $admin_context );
+    }
+
+    
+
+
+
+
+
+
+    public static function edit( string $method, string $url, ?array $body = null ): array {
+        return self::request( $method, $url, $body, false, true );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static function key_events( string $property ): array {
+        $events = array();
+        $token  = '';
+        for ( $page = 0; $page < 10; $page++ ) {
+            $url = "https://analyticsadmin.googleapis.com/v1beta/{$property}/keyEvents?pageSize=200";
+            if ( '' !== $token ) {
+                $url .= '&pageToken=' . rawurlencode( $token );
+            }
+            $data = self::edit( 'GET', $url );
+            foreach ( (array) ( $data['keyEvents'] ?? array() ) as $event ) {
+                if ( is_array( $event ) ) {
+                    $events[] = $event;
+                }
+            }
+            $token = isset( $data['nextPageToken'] ) && is_string( $data['nextPageToken'] ) ? $data['nextPageToken'] : '';
+            if ( '' === $token ) {
+                return $events;
+            }
+        }
+        throw new \RuntimeException( 'Google Analytics returned more than ten pages of key events; nothing was changed.' );
     }
 
     
@@ -118,6 +203,46 @@ class GA_Client extends Abstract_Google_Client {
             );
         }
         return self::normalize_property( (string) $id );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static function write_property( array $arguments ): string {
+        if ( ! array_key_exists( 'property_id', $arguments ) || null === $arguments['property_id'] ) {
+            
+            
+            $default = self::default_property_id();
+            if ( 1 === preg_match( '#^properties/0+\z#', $default ) ) {
+                throw new \RuntimeException( 'The default Google Analytics property is not a GA4 property; set a numeric property ID in Easy MCP AI → Tools → External data, or pass property_id. Nothing was changed.' );
+            }
+            return $default;
+        }
+        $value = $arguments['property_id'];
+        if ( is_int( $value ) ) {
+            $value = (string) $value;
+        }
+        $refusal = 'Invalid property_id; expected a numeric GA4 property ID, or omit property_id to use the default property. Nothing was changed.';
+        if ( ! is_string( $value ) ) {
+            throw new \RuntimeException( $refusal );
+        }
+        try {
+            $property = self::normalize_property( $value );
+        } catch ( \RuntimeException $e ) {
+            throw new \RuntimeException( $refusal );
+        }
+        if ( 1 === preg_match( '#^properties/0+\z#', $property ) ) {
+            throw new \RuntimeException( $refusal );
+        }
+        return $property;
     }
 
     

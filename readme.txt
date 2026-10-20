@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -83,9 +83,9 @@ Easy MCP AI works as a Yoast MCP or Rank Math MCP connector. It exposes your Yoa
 
 = Google Analytics MCP, Search Console MCP & Semrush MCP =
 
-Pull data from Google Analytics, Search Console, Semrush, SE Ranking, DataForSEO and Ahrefs into chat. The 54 tools below use your own provider accounts and API keys.
+Pull data from Google Analytics, Search Console, Semrush, SE Ranking, DataForSEO and Ahrefs into chat. The 56 tools below use your own provider accounts and API keys.
 
-* **Google Analytics 4** (11 tools): traffic, top pages, conversions, custom dimensions and realtime users
+* **Google Analytics 4** (13 tools): traffic, top pages, conversions, custom dimensions and realtime users, plus marking and unmarking key events
 * **Google Search Console** (6 tools): search queries, clicks, impressions, CTR, position, sitemaps and URL indexing
 * **Semrush** (13 tools): domain overview, organic keywords, competitors, keyword difficulty and backlinks
 * **SE Ranking** (15 tools): keyword and backlink research, competitors, top pages and AI-search visibility
@@ -227,14 +227,10 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.2.1 =
-- Fixed four tool descriptions exceeding Claude Codes length limit.
-- Fixed the admin menu product logo.
-- Added a warning that names unrecognized tool settings.
-- Added Select all and Clear controls to OAuth permission screens.
-- Added a helper and hooks that show active AI tool calls ([docs](https://docs.easymcpai.com/detect-ai-tool-calls-in-your-code))
-- Fixed narrow API keys reading plugins, drafts and scheduled posts
-- Fixed approved retries failing when clients reordered argument keys
+= 2.2.2 =
+- Added tools to create and delete GA4 key events
+- Fixed disabled-tool search finding the WP-CLI tool for auto-update requests.
+- Fixed built-in tools missing on Windows servers.
 
 [See changelog for all versions](https://easymcpai.com/changelog).
 

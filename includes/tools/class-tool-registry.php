@@ -423,6 +423,8 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\GA\\Run_Pivot_Report',
             'Easy_MCP_AI\\Tools\\GA\\Run_Realtime_Report',
             'Easy_MCP_AI\\Tools\\GA\\Check_Compatibility',
+            'Easy_MCP_AI\\Tools\\GA\\Create_Key_Event',
+            'Easy_MCP_AI\\Tools\\GA\\Delete_Key_Event',
 
             
             'Easy_MCP_AI\\Tools\\DFS\\Serp_Google_Organic_Live',

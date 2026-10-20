@@ -766,7 +766,6 @@ class Server {
 
 
 
-
     const DISABLED_TOOLS_INSTRUCTIONS = 'Switched-off tools, plugin integrations and abilities are not in your tool list: when no tool you have does a task, call wp_list_disabled_tools with a few words of it before saying it cannot be done.';
 
     

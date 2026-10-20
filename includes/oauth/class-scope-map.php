@@ -111,6 +111,10 @@ class Scope_Map {
         'mcp:tsf:write'          => array( 'wp_tsf_update_post_seo' ),
         'mcp:gsc:read'           => array( 'wp_gsc_list_sites', 'wp_gsc_get_site', 'wp_gsc_query_performance', 'wp_gsc_list_sitemaps', 'wp_gsc_get_sitemap', 'wp_gsc_inspect_url' ),
         'mcp:ga:read'            => array( 'wp_ga_list_account_summaries', 'wp_ga_get_property', 'wp_ga_list_data_streams', 'wp_ga_list_custom_dimensions', 'wp_ga_list_custom_metrics', 'wp_ga_list_conversion_events', 'wp_ga_get_metadata', 'wp_ga_run_report', 'wp_ga_run_pivot_report', 'wp_ga_run_realtime_report', 'wp_ga_check_compatibility' ),
+        
+        
+        
+        'mcp:ga:write'           => array( 'wp_ga_create_key_event', 'wp_ga_delete_key_event' ),
         'mcp:dfs:read'           => array(
             'wp_dfs_serp_google_organic_live',
             'wp_dfs_keywords_search_volume_live',

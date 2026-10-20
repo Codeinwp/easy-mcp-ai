@@ -52,10 +52,27 @@ class Cli_Run extends Base_Tool {
 
 
 
-    const COVERS = 'object cache, transients, cron, rewrite rules, roles and capabilities, database maintenance and language packs';
+    const COVERS = 'object cache, transients, cron, rewrite rules, roles and capabilities, database maintenance, language packs, and plugin and theme auto-updates';
+
+    
+
+
+
+
+
+
+
+
+
+
+    const MATCH_PHRASES = 'auto-updates, automatic updates, plugin auto-updates, theme auto-updates, automatic plugin updates, automatic theme updates';
 
     public function get_covers(): string {
         return self::COVERS;
+    }
+
+    public function get_match_phrases(): string {
+        return self::MATCH_PHRASES;
     }
 
     public function get_description() {

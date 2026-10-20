@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T10:02:08+00:00\n"
+"POT-Creation-Date: 2026-10-20T12:10:35+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: easy-mcp-ai\n"
@@ -48,7 +48,7 @@ msgstr ""
 
 #: easy-mcp-ai.php:319
 #: includes/admin/class-app-page.php:212
-#: includes/oauth/class-scope-map.php:765
+#: includes/oauth/class-scope-map.php:769
 #: assets/build/index.js:22
 #: assets/build/index.js:34
 msgid "Settings"
@@ -130,64 +130,64 @@ msgstr ""
 msgid "Loading…"
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:361
+#: includes/admin/class-external-data-service.php:369
 msgid "Credentials cannot be saved: the WordPress security salts are missing or still placeholders. Set unique SECURE_AUTH_KEY and SECURE_AUTH_SALT values in wp-config.php."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:375
+#: includes/admin/class-external-data-service.php:383
 msgid "Expected a string."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:405
-#: includes/admin/class-external-data-service.php:739
+#: includes/admin/class-external-data-service.php:413
+#: includes/admin/class-external-data-service.php:747
 #: includes/admin/class-tool-catalogue.php:586
 #: includes/admin/rest/class-external-data-controller.php:145
 msgid "Unknown provider."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:437
+#: includes/admin/class-external-data-service.php:445
 msgid "Enter a numeric GA4 property ID (for example 123456789) or the full \"properties/123456789\" form."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:438
+#: includes/admin/class-external-data-service.php:446
 msgid "Use a full URL (https://example.com/) or a domain property (sc-domain:example.com)."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:469
+#: includes/admin/class-external-data-service.php:477
 msgid "That is not valid JSON. Paste the service account key from Google Cloud Console again."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:472
+#: includes/admin/class-external-data-service.php:480
 msgid "The pasted JSON is not a service account key (its type must be \"service_account\"). Download the service account key from Google Cloud Console again."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:476
+#: includes/admin/class-external-data-service.php:484
 msgid "The service account JSON is missing one of the required fields (private_key, client_email, token_uri)."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:510
+#: includes/admin/class-external-data-service.php:518
 #: assets/build/page-tools.js:23
 msgid "Save the login and the API password together."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:529
+#: includes/admin/class-external-data-service.php:537
 msgid "DataForSEO rejected these credentials, so they were not saved."
 msgstr ""
 
 #. translators: %s: provider name
-#: includes/admin/class-external-data-service.php:577
+#: includes/admin/class-external-data-service.php:585
 #, php-format
 msgid "%s rejected this API key, so it was not saved."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:666
-#: includes/admin/class-external-data-service.php:815
+#: includes/admin/class-external-data-service.php:674
+#: includes/admin/class-external-data-service.php:823
 #: includes/admin/class-tool-catalogue.php:592
 msgid "Save credentials for this provider first."
 msgstr ""
 
 #. translators: 1: account count, 2: property count
-#: includes/admin/class-external-data-service.php:682
+#: includes/admin/class-external-data-service.php:690
 #, php-format
 msgid "Connected. Found %1$d account, %2$d properties."
 msgid_plural "Connected. Found %1$d accounts, %2$d properties."
@@ -195,7 +195,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: property count
-#: includes/admin/class-external-data-service.php:695
+#: includes/admin/class-external-data-service.php:703
 #, php-format
 msgid "Connected. Found %d property."
 msgid_plural "Connected. Found %d properties."
@@ -203,32 +203,32 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: balance in USD
-#: includes/admin/class-external-data-service.php:706
+#: includes/admin/class-external-data-service.php:714
 #, php-format
 msgid "Connected. Balance: $%s USD."
 msgstr ""
 
 #. translators: %d: API units
-#: includes/admin/class-external-data-service.php:717
+#: includes/admin/class-external-data-service.php:725
 #, php-format
 msgid "Connected. Balance: %d API units."
 msgstr ""
 
 #. translators: %d: credits
-#: includes/admin/class-external-data-service.php:728
+#: includes/admin/class-external-data-service.php:736
 #, php-format
 msgid "Connected. Balance: %d credits."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:734
+#: includes/admin/class-external-data-service.php:742
 msgid "Connected. Ahrefs accepted the key."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:795
+#: includes/admin/class-external-data-service.php:803
 msgid "This provider keeps no cache."
 msgstr ""
 
-#: includes/admin/class-external-data-service.php:812
+#: includes/admin/class-external-data-service.php:820
 msgid "This provider has no balance to refresh."
 msgstr ""
 
@@ -3946,185 +3946,185 @@ msgstr ""
 msgid "Token audience does not match this MCP server."
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:755
+#: includes/oauth/class-scope-map.php:759
 msgid "Posts & Pages"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:756
+#: includes/oauth/class-scope-map.php:760
 msgid "Custom Post Types"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:757
+#: includes/oauth/class-scope-map.php:761
 msgid "Media"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:758
+#: includes/oauth/class-scope-map.php:762
 msgid "Taxonomies"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:759
+#: includes/oauth/class-scope-map.php:763
 msgid "Comments"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:760
+#: includes/oauth/class-scope-map.php:764
 msgid "Users"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:761
+#: includes/oauth/class-scope-map.php:765
 msgid "Menus"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:762
+#: includes/oauth/class-scope-map.php:766
 msgid "Blocks & Themes"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:763
+#: includes/oauth/class-scope-map.php:767
 msgid "Plugins"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:764
+#: includes/oauth/class-scope-map.php:768
 msgid "Themes"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:767
+#: includes/oauth/class-scope-map.php:771
 msgid "Advanced Custom Fields"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:768
+#: includes/oauth/class-scope-map.php:772
 msgid "Advanced Custom Fields — Post & Page Fields"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:770
+#: includes/oauth/class-scope-map.php:774
 msgid "The Events Calendar"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:772
+#: includes/oauth/class-scope-map.php:776
 msgid "Yoast SEO"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:773
+#: includes/oauth/class-scope-map.php:777
 msgid "All in One SEO"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:774
+#: includes/oauth/class-scope-map.php:778
 msgid "Rank Math SEO"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:775
+#: includes/oauth/class-scope-map.php:779
 #: assets/build/page-tools.js:13
 msgid "Google Search Console"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:776
+#: includes/oauth/class-scope-map.php:780
 msgid "Google Analytics"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:777
+#: includes/oauth/class-scope-map.php:781
 msgid "DataforSEO"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:778
+#: includes/oauth/class-scope-map.php:782
 #: assets/build/page-tools.js:15
 msgid "Semrush"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:779
+#: includes/oauth/class-scope-map.php:783
 #: assets/build/page-tools.js:19
 msgid "Ahrefs (DR)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:780
+#: includes/oauth/class-scope-map.php:784
 #: assets/build/page-tools.js:17
 msgid "SE Ranking"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:781
+#: includes/oauth/class-scope-map.php:785
 msgid "SEOPress"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:782
+#: includes/oauth/class-scope-map.php:786
 msgid "Slim SEO"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:783
+#: includes/oauth/class-scope-map.php:787
 msgid "The SEO Framework"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:784
+#: includes/oauth/class-scope-map.php:788
 msgid "Term Meta"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:785
+#: includes/oauth/class-scope-map.php:789
 msgid "User Meta"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:786
+#: includes/oauth/class-scope-map.php:790
 msgid "Site Appearance (templates, global styles, theme mods & CSS)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:787
+#: includes/oauth/class-scope-map.php:791
 msgid "Widgets & Sidebars"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:789
+#: includes/oauth/class-scope-map.php:793
 msgid "Users — Create"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:790
+#: includes/oauth/class-scope-map.php:794
 msgid "Users — Update"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:791
+#: includes/oauth/class-scope-map.php:795
 msgid "Users — Delete"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:792
+#: includes/oauth/class-scope-map.php:796
 msgid "Change History (audit log of MCP edits)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:793
+#: includes/oauth/class-scope-map.php:797
 msgid "Audit Log (every MCP call, all users — admin only)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:794
+#: includes/oauth/class-scope-map.php:798
 msgid "Site Health, Cron & Error Log"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:795
+#: includes/oauth/class-scope-map.php:799
 msgid "WordPress core update (replaces WordPress itself with a newer release from wordpress.org)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:796
+#: includes/oauth/class-scope-map.php:800
 msgid "Plugin installs and deletions (adds plugins from wordpress.org, or removes plugin code)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:797
+#: includes/oauth/class-scope-map.php:801
 msgid "Theme installs and deletions (adds themes from wordpress.org, or removes theme code)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:798
+#: includes/oauth/class-scope-map.php:802
 msgid "WP-CLI commands (commands no other tool performs, such as options, roles and sites, need only this permission, limited by your WordPress role)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:799
+#: includes/oauth/class-scope-map.php:803
 msgid "REST routes of plugins and core (the route checks your permissions)"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:800
+#: includes/oauth/class-scope-map.php:804
 msgid "REST routes — Delete"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:801
+#: includes/oauth/class-scope-map.php:805
 msgid "Clear caches (page, asset and CDN caches, through each cache plugin)"
 msgstr ""
 
 #. translators: %s: ability prefix (e.g. "Core", "Wpforms")
-#: includes/oauth/class-scope-map.php:872
+#: includes/oauth/class-scope-map.php:876
 #, php-format
 msgid "Abilities — %s"
 msgstr ""
 
-#: includes/oauth/class-scope-map.php:907
+#: includes/oauth/class-scope-map.php:911
 #: assets/build/page-tools.js:1
 msgid "Core"
 msgstr ""
@@ -4522,7 +4522,7 @@ msgstr ""
 msgid "Visitors refill the caches from the server afterwards; no content or setting is deleted."
 msgstr ""
 
-#: includes/tools/class-base-tool.php:313
+#: includes/tools/class-base-tool.php:326
 msgid "(no title)"
 msgstr ""
 
@@ -4533,7 +4533,7 @@ msgid "Privileged operation: %1$s (group %2$s). Nothing runs until you approve i
 msgstr ""
 
 #. translators: 1: preview length, 2: the most the approval page shows
-#: includes/tools/cli/class-cli-run.php:173
+#: includes/tools/cli/class-cli-run.php:190
 #, php-format
 msgid "This command's approval preview is %1$d characters long and the approval page shows %2$d, so it was not sent for approval: a person must see every write they approve. Run it for fewer targets at a time."
 msgstr ""
@@ -8912,7 +8912,7 @@ msgid "Google Analytics 4"
 msgstr ""
 
 #: assets/build/page-tools.js:13
-msgid "GA4 reports, properties and metadata through a service account. All tools are read-only, so Viewer access is enough."
+msgid "GA4 reports, properties and metadata through a service account. Reading needs Viewer access. The two key-event tools change the property and need Editor access."
 msgstr ""
 
 #: assets/build/page-tools.js:13
@@ -8936,7 +8936,7 @@ msgid "Open the JSON file in a text editor and paste its whole contents into the
 msgstr ""
 
 #: assets/build/page-tools.js:13
-msgid "In Google Analytics 4, go to Admin → Property access management and add the service account email with Viewer access or higher."
+msgid "In Google Analytics 4, go to Admin → Property access management and add the service account email with Viewer access, or Editor access for the key-event tools."
 msgstr ""
 
 #: assets/build/page-tools.js:13

@@ -161,6 +161,19 @@ abstract class Base_Tool {
 
 
 
+
+    public function get_match_phrases(): string {
+        return '';
+    }
+
+    
+
+
+
+
+
+
+
     public function is_disabled_by_default() {
         return false;
     }
@@ -422,6 +435,15 @@ abstract class Base_Tool {
             $out[ (string) $key ] = is_scalar( $value ) ? (int) $value : 0;
         }
         return $out;
+    }
+
+    
+
+
+
+
+    protected static function text_arg( array $arguments, string $key ): string {
+        return isset( $arguments[ $key ] ) && is_string( $arguments[ $key ] ) ? trim( $arguments[ $key ] ) : '';
     }
 
     protected function validate_required( array $arguments, array $required_keys ) {

@@ -149,8 +149,23 @@ final class Tool_Directories {
 
     public static function of( string $class ): ?string {
         $file = Autoloader::file_for( $class );
-        $root = __DIR__ . '/';
-        if ( null === $file || 0 !== strpos( $file, $root ) ) {
+        return null === $file ? null : self::relative_dir( $file, __DIR__ );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static function relative_dir( string $file, string $root ): ?string {
+        $file = \wp_normalize_path( $file );
+        $root = rtrim( \wp_normalize_path( $root ), '/' ) . '/';
+        if ( 0 !== strpos( $file, $root ) ) {
             return null;
         }
         return dirname( substr( $file, strlen( $root ) ) );

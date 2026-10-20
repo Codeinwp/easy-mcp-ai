@@ -21,6 +21,7 @@ use Easy_MCP_AI\GSC\GSC_Client;
 use Easy_MCP_AI\Semrush\Semrush_Client;
 use Easy_MCP_AI\SeRanking\SeRanking_Client;
 use Easy_MCP_AI\Tools\Tool_Registry;
+use Easy_MCP_AI\Tools\Tool_State;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -205,9 +206,14 @@ class External_Data_Service {
     }
 
     
+
+
+
+
+
+
     private function items( $key ) {
-        $disabled = (array) Config::get( 'easy_mcp_ai_disabled_tools', array() );
-        $items    = array();
+        $items = array();
         foreach ( $this->definitions_for( $key ) as $definition ) {
             $name    = (string) $definition['name'];
             $items[] = array(
@@ -216,8 +222,9 @@ class External_Data_Service {
                 'access'             => ! empty( $definition['annotations']['readOnlyHint'] ) ? 'read' : 'write',
                 'requiredCapability' => (string) ( $definition['required_capability'] ?? '' ),
                 'provenance'         => 'external',
-                'enabled'            => ! in_array( $name, $disabled, true ),
+                'enabled'            => Tool_State::resolve( $name, ! empty( $definition['disabled_by_default'] ) )[0],
                 'pluginRestApi'      => false,
+                'override'           => Tool_State::override_of( $name ),
             );
         }
         return $items;
@@ -258,6 +265,7 @@ class External_Data_Service {
                 $cap = (string) \Easy_MCP_AI\MCP\Server::effective_required_capability( $key, $cap );
             }
             $definition['required_capability'] = $cap;
+            $definition['disabled_by_default'] = $tool instanceof \Easy_MCP_AI\Tools\Base_Tool && $tool->is_disabled_by_default();
             $rows[]                            = $definition;
         }
         return $rows;

@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'idhamsy/wp-mcp-server',
-        'pretty_version' => 'v2.2.1',
-        'version' => '2.2.1.0',
-        'reference' => '2aa5d8a2f4f6d4e37b0b9fe035644213791c3e16',
+        'pretty_version' => 'v2.2.2',
+        'version' => '2.2.2.0',
+        'reference' => 'bc535c902d273f7df21fd9a514bdb85e36027c36',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -20,9 +20,9 @@
             'dev_requirement' => false,
         ),
         'idhamsy/wp-mcp-server' => array(
-            'pretty_version' => 'v2.2.1',
-            'version' => '2.2.1.0',
-            'reference' => '2aa5d8a2f4f6d4e37b0b9fe035644213791c3e16',
+            'pretty_version' => 'v2.2.2',
+            'version' => '2.2.2.0',
+            'reference' => 'bc535c902d273f7df21fd9a514bdb85e36027c36',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

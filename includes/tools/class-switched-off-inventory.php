@@ -362,6 +362,10 @@ final class Switched_Off_Inventory {
         if ( '' !== $covers ) {
             $entry['covers'] = $covers;
         }
+        $match = trim( $tool->get_match_phrases() );
+        if ( '' !== $match ) {
+            $entry['match'] = $match;
+        }
         if ( ! $read_only && ! empty( $annotations['destructiveHint'] ) ) {
             $entry['destructive'] = true;
         }

@@ -214,6 +214,10 @@ class List_Disabled_Tools extends Base_Tool {
 
 
 
+
+
+
+
     private static function ranked( array $entries, string $query ): array {
         $wanted = array();
         
@@ -233,12 +237,12 @@ class List_Disabled_Tools extends Base_Tool {
         $scored = array();
         $most   = 0;
         foreach ( $entries as $index => $entry ) {
-            list( $matched, $score ) = $scores[ $index ];
+            list( $matched, $score, $covered ) = $scores[ $index ];
             if ( Switched_Off_Inventory::INTEGRATION === $entry['kind'] && $groups[ $entry['group'] ][0] > 0 ) {
-                list( $matched, $score ) = array( $groups[ $entry['group'] ][0], $groups[ $entry['group'] ][1] + 1 );
+                list( $matched, $score, $covered ) = array( $groups[ $entry['group'] ][0], $groups[ $entry['group'] ][1] + 1, 0 );
             }
             if ( $matched > 0 ) {
-                $scored[] = array( $matched, $score, $index, 'read' === $entry['access'] ? 0 : 1 );
+                $scored[] = array( $matched, $score, $index, 'read' === $entry['access'] ? 0 : 1, $covered );
                 $most     = max( $most, $matched );
             }
         }
@@ -247,7 +251,7 @@ class List_Disabled_Tools extends Base_Tool {
             return $row[0] >= $needed;
         } ) );
         usort( $scored, static function ( array $a, array $b ): int {
-            return array( $b[1], $a[3], $a[2] ) <=> array( $a[1], $b[3], $b[2] );
+            return array( $b[1], $a[4], $a[3], $a[2] ) <=> array( $a[1], $b[4], $b[3], $b[2] );
         } );
         $ranked = array();
         foreach ( $scored as $row ) {
@@ -265,20 +269,60 @@ class List_Disabled_Tools extends Base_Tool {
 
 
 
+
+
+
+
+
+
+
+
+
     private static function score( array $entry, array $wanted ): array {
-        $name    = Feedback_Availability::words( str_replace( '_', ' ', $entry['name'] ) . ' ' . ( isset( $entry['slug'] ) ? $entry['slug'] : '' ) . ' ' . ( isset( $entry['covers'] ) ? $entry['covers'] : '' ) );
+        $name    = Feedback_Availability::words( str_replace( '_', ' ', $entry['name'] ) . ' ' . ( isset( $entry['slug'] ) ? $entry['slug'] : '' ) );
+        $covers  = array();
+        $shared  = array();
+        if ( isset( $entry['covers'] ) || isset( $entry['match'] ) ) {
+            $stop    = Feedback_Availability::words( self::STOP_WORDS );
+            $phrases = array();
+            $seen    = array();
+            $all     = ( isset( $entry['covers'] ) ? $entry['covers'] : '' ) . ',' . ( isset( $entry['match'] ) ? $entry['match'] : '' );
+            foreach ( explode( ',', $all ) as $phrase ) {
+                $words     = array_values( array_unique( array_diff( Feedback_Availability::words( $phrase ), $stop ) ) );
+                $phrases[] = $words;
+                foreach ( $words as $word ) {
+                    $seen[ $word ] = isset( $seen[ $word ] ) ? $seen[ $word ] + 1 : 1;
+                }
+            }
+            foreach ( $phrases as $words ) {
+                $whole = array() !== $words && array() === array_diff( $words, $wanted );
+                foreach ( $words as $word ) {
+                    if ( $whole || 1 === $seen[ $word ] ) {
+                        $covers[] = (string) $word;
+                    }
+                    if ( $seen[ $word ] > 1 ) {
+                        $shared[] = (string) $word;
+                    }
+                }
+            }
+        }
         $label   = Feedback_Availability::words( $entry['label'] . ' ' . $entry['group_label'] );
         $summary = Feedback_Availability::words( $entry['summary'] );
         $matched = 0;
         $score   = 0;
+        $covered = 0;
         foreach ( $wanted as $word ) {
-            $weight = in_array( $word, $name, true ) ? 3 : ( in_array( $word, $label, true ) ? 2 : ( in_array( $word, $summary, true ) ? 1 : 0 ) );
+            $own    = in_array( $word, $name, true );
+            $weight = $own || in_array( $word, $covers, true ) ? 3 : ( in_array( $word, $label, true ) ? 2 : ( in_array( $word, $summary, true ) ? 1 : 0 ) );
             if ( $weight > 0 ) {
                 ++$matched;
                 $score += $weight;
             }
+            if ( ! $own && 3 === $weight && in_array( $word, $shared, true ) ) {
+                $covered += 3;
+            }
         }
-        return array( $matched, $score );
+        return array( $matched, $score, $covered );
     }
 
     

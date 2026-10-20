@@ -71,10 +71,18 @@ abstract class Abstract_Google_Client {
 
     
 
-    protected static function token_transient_key( string $client_email ): string {
+    protected static function token_transient_key( string $client_email, string $scope = '' ): string {
         
         
-        return static::TRANSIENT_TOKEN . '_' . md5( $client_email );
+        $key = static::TRANSIENT_TOKEN . '_' . md5( $client_email );
+        
+        
+        
+        
+        if ( '' !== $scope && static::SCOPE !== $scope ) {
+            $key .= '_' . md5( $scope );
+        }
+        return $key;
     }
 
     
@@ -117,9 +125,11 @@ abstract class Abstract_Google_Client {
     
 
 
-    public static function get_access_token(): string {
+
+    public static function get_access_token( string $scope = '' ): string {
+        $scope         = '' === $scope ? static::SCOPE : $scope;
         $creds         = static::get_credentials();
-        $transient_key = static::token_transient_key( $creds['client_email'] );
+        $transient_key = static::token_transient_key( $creds['client_email'], $scope );
 
         $cached = \get_transient( $transient_key );
         if ( ! empty( $cached ) ) {
@@ -139,7 +149,7 @@ abstract class Abstract_Google_Client {
         $header  = static::base64url_encode( json_encode( array( 'alg' => 'RS256', 'typ' => 'JWT' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- See comment above.
         $payload = static::base64url_encode( json_encode( array( // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- See comment above.
             'iss'   => $creds['client_email'],
-            'scope' => static::SCOPE,
+            'scope' => $scope,
             'aud'   => $creds['token_uri'],
             'exp'   => $exp,
             'iat'   => $now,
