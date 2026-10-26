@@ -19,6 +19,7 @@ wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_change_log' );
 wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_tasks' );
 wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_approvals' );
 wp_clear_scheduled_hook( 'easy_mcp_ai_skills_sync' ); 
+wp_clear_scheduled_hook( 'easy_mcp_ai_oauth_cimd_probe' ); 
 wp_unschedule_hook( 'easy_mcp_ai_task_tick' ); 
 wp_unschedule_hook( 'easy_mcp_ai_search_replace_tick' ); 
 if ( function_exists( 'as_unschedule_all_actions' ) && class_exists( 'ActionScheduler', false ) && ActionScheduler::is_initialized() ) {
@@ -64,6 +65,8 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_admin_language',
     'easy_mcp_ai_enabled_plugin_groups',    
     'easy_mcp_ai_learnpress_enable_pending', 
+    'easy_mcp_ai_elementor_enable_pending', 
+    'easy_mcp_ai_abilities_tick_lock', 
     'easy_mcp_ai_disabled_plugin_tools',   
     'easy_mcp_ai_oauth_db_version',        
     'easy_mcp_ai_oauth_access_token_ttl',  
@@ -72,6 +75,8 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_oauth_max_clients',       
     'easy_mcp_ai_oauth_client_retention',  
     'easy_mcp_ai_oauth_site_host',         
+    'easy_mcp_ai_oauth_cimd',              
+    'easy_mcp_ai_oauth_cimd_state',        
     'easy_mcp_ai_gsc_service_account_json', 
     'easy_mcp_ai_gsc_default_site_url',     
     'easy_mcp_ai_disabled_gsc_tools',       
@@ -80,6 +85,8 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_disabled_ga_tools',        
     'easy_mcp_ai_gsc_sites_cache',          
     'easy_mcp_ai_ga_properties_cache',      
+    'easy_mcp_ai_ga_properties_cache_owner', 
+    'easy_mcp_ai_gsc_sites_cache_owner',    
     'easy_mcp_ai_dfs_login',                
     'easy_mcp_ai_dfs_api_password',         
     'easy_mcp_ai_disabled_dfs_tools',       
@@ -92,6 +99,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_ahrefs_api_key',           
     'easy_mcp_ai_external_data_balances',   
     'easy_mcp_ai_cache_site_purge_at',      
+    'easy_mcp_ai_yoast_settings_lock',      
     'easy_mcp_ai_last_tool_call',           
     'easy_mcp_ai_change_log_db_version',    
     'easy_mcp_ai_tasks_db_version',         
@@ -101,6 +109,11 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_tasks_max_per_credential', 
     'easy_mcp_ai_tasks_max_concurrent_ticks', 
     'easy_mcp_ai_approvals_db_version',     
+    'easy_mcp_ai_schema_retry_core',        
+    'easy_mcp_ai_schema_retry_oauth',       
+    'easy_mcp_ai_schema_retry_change_log',  
+    'easy_mcp_ai_schema_retry_tasks',       
+    'easy_mcp_ai_schema_retry_approvals',   
     'easy_mcp_ai_skills_release',           
     'easy_mcp_ai_skills_state',             
     'easy_mcp_ai_skills_sync',              
@@ -129,6 +142,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_install',                   
     'easy-mcp-ai_version',                   
     'easy_mcp_ai_logger_flag',               
+    'easy_mcp_ai_usage_consent_asked',       
     'easy_mcp_ai_review_flag',               
     'easy_mcp_ai_translate_flag',            
     'easy_mcp_ai_welcome_upsell_flag',       
@@ -159,6 +173,7 @@ if ( is_multisite() ) {
         wp_unschedule_hook( 'easy_mcp_ai_task_tick' );
         wp_unschedule_hook( 'easy_mcp_ai_search_replace_tick' ); 
         wp_clear_scheduled_hook( 'easy_mcp_ai_skills_sync' );
+        wp_clear_scheduled_hook( 'easy_mcp_ai_oauth_cimd_probe' );
         
         $easy_mcp_ai_admin_role = get_role( 'administrator' );
         if ( $easy_mcp_ai_admin_role ) {
@@ -198,8 +213,10 @@ if ( is_multisite() ) {
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_oat_lu_%', '_transient_timeout_easy_mcp_ai_oat_lu_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_oat_srv_%', '_transient_timeout_easy_mcp_ai_oat_srv_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_auth_fail_%', '_transient_timeout_easy_mcp_ai_auth_fail_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_step_up_%', '_transient_timeout_easy_mcp_ai_step_up_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
         
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_sr_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall.
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_layout_lock_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall (wp_update_page_layout's per-post lock).
         
         
         
@@ -257,8 +274,10 @@ if ( is_multisite() ) {
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_oat_lu_%', '_transient_timeout_easy_mcp_ai_oat_lu_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_oat_srv_%', '_transient_timeout_easy_mcp_ai_oat_srv_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_auth_fail_%', '_transient_timeout_easy_mcp_ai_auth_fail_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
+    $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_step_up_%', '_transient_timeout_easy_mcp_ai_step_up_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
     
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_sr_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall.
+    $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_layout_lock_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall (wp_update_page_layout's per-post lock).
     
     
     

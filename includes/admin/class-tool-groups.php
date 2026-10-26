@@ -60,6 +60,10 @@ class Tool_Groups {
         'rest'      => 'REST Routes (plugins and core)',
         
         'cache'     => 'Cache',
+        
+        'mail'      => 'Email',
+        
+        'builders'  => 'Page Builders',
         'general'   => 'General',
     );
 
@@ -82,6 +86,8 @@ class Tool_Groups {
             'acf'             => array( 'label' => 'Advanced Custom Fields (ACF)','class' => 'ACF',                     'fn' => 'acf' ),
             'events-calendar' => array( 'label' => 'The Events Calendar',         'class' => 'Tribe__Events__Main',     'fn' => '' ),
             'redirection'     => array( 'label' => 'Redirection',                 'class' => 'Red_Item',                'fn' => '' ),
+            'sitekit'         => array( 'label' => 'Site Kit by Google',          'class' => 'Google\\Site_Kit\\Plugin', 'fn' => '' ),
+            'contact-form-7'  => array( 'label' => 'Contact Form 7',              'class' => 'WPCF7_ContactForm',       'fn' => '' ),
             'buddypress'      => array( 'label' => 'BuddyPress',                  'class' => 'BuddyPress',              'fn' => 'bp_is_active' ),
             'yoast-seo'       => array( 'label' => 'Yoast SEO',                   'class' => 'WPSEO_Options',           'fn' => '' ),
             'rank-math'       => array( 'label' => 'Rank Math SEO',               'class' => 'RankMath',                'fn' => '' ),
@@ -163,7 +169,8 @@ class Tool_Groups {
         
         $external = array();
         foreach ( $known_external as $category => $info ) {
-            $configured = ! empty( \get_option( $info['option'], '' ) );
+            
+            $configured = \Easy_MCP_AI\Provider_Credentials::is_configured( $category );
             $tools      = isset( $tools_by_category[ $category ] )
                 ? array_values( array_filter( $tools_by_category[ $category ], $is_tool_active ) )
                 : array();
@@ -369,11 +376,11 @@ class Tool_Groups {
         }
 
         
-        $ga_configured       = ! empty( \get_option( 'easy_mcp_ai_ga_service_account_json', '' ) );
-        $gsc_configured      = ! empty( \get_option( 'easy_mcp_ai_gsc_service_account_json', '' ) );
-        $dfs_configured      = ! empty( \get_option( 'easy_mcp_ai_dfs_login', '' ) ) && ! empty( \get_option( 'easy_mcp_ai_dfs_api_password', '' ) );
-        $semrush_configured  = ! empty( \get_option( 'easy_mcp_ai_semrush_api_key', '' ) );
-        $seranking_configured = ! empty( \get_option( 'easy_mcp_ai_seranking_api_key', '' ) );
+        $ga_configured       = \Easy_MCP_AI\Provider_Credentials::is_configured( 'ga' );
+        $gsc_configured      = \Easy_MCP_AI\Provider_Credentials::is_configured( 'gsc' );
+        $dfs_configured      = \Easy_MCP_AI\Provider_Credentials::is_configured( 'dfs' );
+        $semrush_configured  = \Easy_MCP_AI\Provider_Credentials::is_configured( 'semrush' );
+        $seranking_configured = \Easy_MCP_AI\Provider_Credentials::is_configured( 'seranking' );
         $disabled_ga_present  = $ga_configured  && ! empty( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_ga_tools', array() ) );
         $disabled_gsc_present = $gsc_configured && ! empty( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_gsc_tools', array() ) );
         $disabled_dfs_present = $dfs_configured && ! empty( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_dfs_tools', array() ) );
@@ -387,7 +394,7 @@ class Tool_Groups {
         $semrush_missing  = ! $semrush_configured;
         $seranking_missing = ! $seranking_configured;
         
-        $ahrefs_disabled  = '' === (string) \get_option( 'easy_mcp_ai_ahrefs_api_key', '' )
+        $ahrefs_disabled  = ! \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' )
             || ! (bool) \get_option( 'easy_mcp_ai_ahrefs_enabled', false );
 
         return array(

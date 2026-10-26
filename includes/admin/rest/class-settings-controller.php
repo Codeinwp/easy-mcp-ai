@@ -35,6 +35,9 @@ class Settings_Controller extends Admin_Rest_Controller {
     const LOGGER_FLAG_OPTION = 'easy_mcp_ai_logger_flag';
 
     
+    const ASKED_OPTION = 'easy_mcp_ai_usage_consent_asked';
+
+    
 
 
 
@@ -57,7 +60,9 @@ class Settings_Controller extends Admin_Rest_Controller {
             'changeLogRetention' => 'change_log_retention',
         ),
         'usage'    => array(
-            'shareUsageData' => 'logger_flag',
+            'shareUsageData'  => 'logger_flag',
+            
+            'dismissUsageAsk' => 'usage_consent_asked',
         ),
         'advanced' => array(
             'rateLimitPerMinute'        => 'rate_limit_per_minute',
@@ -211,7 +216,7 @@ class Settings_Controller extends Admin_Rest_Controller {
         $locked = array();
         foreach ( self::FIELDS as $fields ) {
             foreach ( $fields as $field => $suffix ) {
-                if ( 'logger_flag' !== $suffix && Config::is_locked( $suffix ) ) {
+                if ( ! self::is_sdk_field( $suffix ) && Config::is_locked( $suffix ) ) {
                     $locked[ $field ] = Config::constant_name( $suffix );
                 }
             }
@@ -368,7 +373,7 @@ class Settings_Controller extends Admin_Rest_Controller {
             if ( ! array_key_exists( $field, $body ) ) {
                 continue;
             }
-            if ( 'logger_flag' !== $suffix && Config::is_locked( $suffix ) ) {
+            if ( ! self::is_sdk_field( $suffix ) && Config::is_locked( $suffix ) ) {
                 return $this->deployed( $field, $suffix );
             }
             $value = $this->validate_field( $field, $body[ $field ] );
@@ -381,6 +386,11 @@ class Settings_Controller extends Admin_Rest_Controller {
         foreach ( $writes as $suffix => $value ) {
             if ( 'logger_flag' === $suffix ) {
                 \update_option( self::LOGGER_FLAG_OPTION, $value ? 'yes' : 'no' );
+                \update_option( self::ASKED_OPTION, 1 );
+            } elseif ( 'usage_consent_asked' === $suffix ) {
+                if ( $value ) {
+                    \update_option( self::ASKED_OPTION, 1 );
+                }
             } elseif ( 'disabled_tools' === $suffix ) {
                 $this->write_disabled_tools( $value );
             } elseif ( 'connect_roles' === $suffix ) {
@@ -393,6 +403,22 @@ class Settings_Controller extends Admin_Rest_Controller {
             }
         }
         return $this->ok( $this->payload() );
+    }
+
+    
+    private static function is_sdk_field( $suffix ) {
+        return in_array( $suffix, array( 'logger_flag', 'usage_consent_asked' ), true );
+    }
+
+    
+
+
+
+
+    public static function usage_ask(): bool {
+        return 'yes' !== \get_option( self::LOGGER_FLAG_OPTION, 'no' )
+            && ! \get_option( self::ASKED_OPTION, false )
+            && ! Config::is_white_labelled();
     }
 
     
@@ -488,6 +514,7 @@ class Settings_Controller extends Admin_Rest_Controller {
             case 'auditLogEnabled':
             case 'changeLogEnabled':
             case 'shareUsageData':
+            case 'dismissUsageAsk':
             case 'captureMeta':
             case 'captureDb':
             case 'externalIntent':

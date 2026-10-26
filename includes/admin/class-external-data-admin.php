@@ -64,6 +64,51 @@ class External_Data_Admin {
 
 
 
+
+
+
+    const CACHE_OWNER_OPTIONS = array(
+        'ga'  => 'easy_mcp_ai_ga_properties_cache_owner',
+        'gsc' => 'easy_mcp_ai_gsc_sites_cache_owner',
+    );
+
+    
+
+
+
+
+
+
+    public static function cache_is_current( string $provider ): bool {
+        $owner = isset( self::CACHE_OWNER_OPTIONS[ $provider ] ) ? \get_option( self::CACHE_OWNER_OPTIONS[ $provider ], null ) : null;
+        if ( ! is_string( $owner ) ) {
+            return ! \Easy_MCP_AI\Provider_Credentials::is_deployed( $provider );
+        }
+        return hash_equals( $owner, \Easy_MCP_AI\Provider_Credentials::fingerprint( $provider ) );
+    }
+
+    
+    private static function mark_cache_owner( string $provider ): void {
+        \update_option( self::CACHE_OWNER_OPTIONS[ $provider ], \Easy_MCP_AI\Provider_Credentials::fingerprint( $provider ), false );
+    }
+
+    
+
+
+
+
+
+    private static function may_seed_default( string $provider, string $option ): bool {
+        return ! \Easy_MCP_AI\Config::is_locked( $option )
+            && ! \Easy_MCP_AI\Provider_Credentials::is_deployed( $provider )
+            && '' === \get_option( $option, '' );
+    }
+
+    
+
+
+
+
     public static function write_gsc_sites_cache( array $data ): void {
         $sites = array();
         foreach ( $data['siteEntry'] ?? array() as $entry ) {
@@ -73,7 +118,8 @@ class External_Data_Admin {
             }
         }
         \update_option( self::OPTION_GSC_SITES_CACHE, $sites, false );
-        if ( ! empty( $sites ) && '' === \get_option( GSC_Client::OPTION_SITE_URL, '' ) ) {
+        self::mark_cache_owner( GSC_Client::PROVIDER );
+        if ( ! empty( $sites ) && self::may_seed_default( GSC_Client::PROVIDER, GSC_Client::OPTION_SITE_URL ) ) {
             \update_option( GSC_Client::OPTION_SITE_URL, $sites[0] );
         }
     }
@@ -101,7 +147,8 @@ class External_Data_Admin {
             }
         }
         \update_option( self::OPTION_GA_PROPS_CACHE, $properties, false );
-        if ( ! empty( $properties ) && '' === \get_option( GA_Client::OPTION_PROPERTY_ID, '' ) ) {
+        self::mark_cache_owner( GA_Client::PROVIDER );
+        if ( ! empty( $properties ) && self::may_seed_default( GA_Client::PROVIDER, GA_Client::OPTION_PROPERTY_ID ) ) {
             \update_option( GA_Client::OPTION_PROPERTY_ID, $properties[0]['id'] );
         }
     }

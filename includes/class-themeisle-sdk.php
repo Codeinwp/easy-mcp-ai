@@ -350,7 +350,7 @@ final class Themeisle_SDK {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- existence check on a plugin-owned table.
         $found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
 
-        return ! self::has_error( $wpdb ) && $found === $table;
+        return ! self::has_error( $wpdb ) && Schema_Guard::table_found( $found, $table );
     }
 
     

@@ -19,6 +19,7 @@ class Deactivator {
         \wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_approvals' );
         
         \wp_clear_scheduled_hook( 'easy_mcp_ai_skills_sync' );
+        \wp_clear_scheduled_hook( 'easy_mcp_ai_oauth_cimd_probe' ); 
         
         
         \Easy_MCP_AI\Tasks\Task_Scheduler::clear_all();

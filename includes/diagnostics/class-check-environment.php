@@ -311,6 +311,10 @@ class Check_Environment {
         $failed = array();
 
         foreach ( self::CREDENTIAL_OPTIONS as $provider ) {
+            $owner = \Easy_MCP_AI\Provider_Credentials::provider_of( $provider['option'] );
+            if ( null !== $owner && \Easy_MCP_AI\Provider_Credentials::is_deployed( $owner ) ) {
+                continue; 
+            }
             $stored = \get_option( $provider['option'], '' );
             if ( ! is_string( $stored ) || '' === trim( $stored ) ) {
                 continue; 

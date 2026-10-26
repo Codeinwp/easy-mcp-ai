@@ -19,8 +19,10 @@ class Scope_Map {
     const SCOPE_MAP = array(
         
         
-        'mcp:posts:read'         => array( 'wp_get_post', 'wp_list_posts', 'wp_get_page', 'wp_list_pages', 'wp_list_revisions', 'wp_get_revision', 'wp_get_post_meta', 'wp_get_post_types', 'wp_get_post_statuses', 'wp_count_posts', 'wp_get_post_full', 'wp_get_post_blocks', 'wp_create_preview_link' ),
-        'mcp:posts:write'        => array( 'wp_create_post', 'wp_update_post', 'wp_delete_post', 'wp_create_page', 'wp_update_page', 'wp_delete_page', 'wp_delete_revision', 'wp_restore_revision', 'wp_update_post_meta', 'wp_delete_post_meta', 'wp_get_post_statuses', 'wp_add_post_terms', 'wp_replace_in_post', 'wp_update_post_blocks' ),
+        
+        
+        'mcp:posts:read'         => array( 'wp_get_post', 'wp_list_posts', 'wp_get_page', 'wp_list_pages', 'wp_list_revisions', 'wp_get_revision', 'wp_get_post_meta', 'wp_get_post_types', 'wp_get_post_statuses', 'wp_count_posts', 'wp_get_post_full', 'wp_get_post_blocks', 'wp_create_preview_link', 'wp_get_page_layout', 'wp_list_layout_elements' ),
+        'mcp:posts:write'        => array( 'wp_create_post', 'wp_update_post', 'wp_delete_post', 'wp_create_page', 'wp_update_page', 'wp_delete_page', 'wp_delete_revision', 'wp_restore_revision', 'wp_update_post_meta', 'wp_delete_post_meta', 'wp_get_post_statuses', 'wp_add_post_terms', 'wp_replace_in_post', 'wp_update_post_blocks', 'wp_duplicate_post', 'wp_update_page_layout' ),
         'mcp:cpt:read'           => array( 'wp_list_cpt_items', 'wp_get_cpt_item' ),
         'mcp:cpt:write'          => array( 'wp_create_cpt_item', 'wp_update_cpt_item', 'wp_delete_cpt_item' ),
         'mcp:media:read'         => array( 'wp_get_media', 'wp_list_media', 'wp_count_media' ),
@@ -81,9 +83,11 @@ class Scope_Map {
         'mcp:theme_files:write'  => array( 'wp_install_theme', 'wp_delete_theme' ),
         'mcp:settings:read'      => array( 'wp_get_site_settings' ),
         'mcp:settings:write'     => array( 'wp_update_site_settings' ),
-        'mcp:woocommerce:read'   => array( 'wp_wc_get_product', 'wp_wc_list_products', 'wp_wc_get_order', 'wp_wc_list_orders', 'wp_wc_get_customer', 'wp_wc_list_customers', 'wp_wc_list_coupons', 'wp_wc_get_coupon', 'wp_wc_list_order_notes', 'wp_wc_list_order_refunds', 'wp_wc_list_payment_gateways', 'wp_wc_list_shipping_methods', 'wp_wc_list_shipping_zones', 'wp_wc_list_tax_rates', 'wp_wc_list_webhooks', 'wp_wc_list_product_categories', 'wp_wc_list_product_variations', 'wp_wc_get_product_variation', 'wp_wc_list_product_attributes', 'wp_wc_report_sales', 'wp_wc_report_orders', 'wp_wc_report_products', 'wp_wc_report_customers', 'wp_wc_report_top_sellers', 'wp_wc_list_logs', 'wp_wc_get_log' ),
+        'mcp:woocommerce:read'   => array( 'wp_wc_get_product', 'wp_wc_list_products', 'wp_wc_get_order', 'wp_wc_list_orders', 'wp_wc_get_customer', 'wp_wc_list_customers', 'wp_wc_list_coupons', 'wp_wc_get_coupon', 'wp_wc_list_order_notes', 'wp_wc_list_order_refunds', 'wp_wc_list_payment_gateways', 'wp_wc_list_shipping_methods', 'wp_wc_list_shipping_zones', 'wp_wc_list_tax_rates', 'wp_wc_list_webhooks', 'wp_wc_list_product_categories', 'wp_wc_list_product_variations', 'wp_wc_get_product_variation', 'wp_wc_list_product_attributes', 'wp_wc_report_sales', 'wp_wc_report_orders', 'wp_wc_report_products', 'wp_wc_report_customers', 'wp_wc_report_top_sellers', 'wp_wc_list_logs', 'wp_wc_get_log', 'wp_wc_get_store_settings', 'wp_wc_list_countries', 'wp_wc_list_shipping_classes', 'wp_wc_list_tax_classes' ),
         'mcp:woocommerce:write'  => array( 'wp_wc_create_product', 'wp_wc_update_product', 'wp_wc_delete_product', 'wp_wc_create_order', 'wp_wc_update_order', 'wp_wc_create_order_note', 'wp_wc_create_customer', 'wp_wc_update_customer', 'wp_wc_delete_customer', 'wp_wc_create_coupon', 'wp_wc_update_coupon', 'wp_wc_delete_coupon', 'wp_wc_create_product_variation', 'wp_wc_update_product_variation', 'wp_wc_delete_product_variation', 'wp_wc_batch_update_products', 'wp_wc_batch_update_orders', 'wp_wc_batch_update_variations', 'wp_wc_create_product_attribute', 'wp_wc_set_product_attributes' ),
         'mcp:wc_webhooks:write'  => array( 'wp_wc_create_webhook', 'wp_wc_update_webhook', 'wp_wc_delete_webhook' ),
+        
+        'mcp:wc_store:write'     => array( 'wp_wc_update_store_settings', 'wp_wc_create_shipping_zone', 'wp_wc_update_shipping_zone', 'wp_wc_delete_shipping_zone', 'wp_wc_add_shipping_method', 'wp_wc_update_shipping_method', 'wp_wc_delete_shipping_method', 'wp_wc_create_shipping_class', 'wp_wc_update_shipping_class', 'wp_wc_delete_shipping_class', 'wp_wc_update_payment_gateway', 'wp_wc_create_tax_rate', 'wp_wc_update_tax_rate', 'wp_wc_delete_tax_rate', 'wp_wc_create_tax_class', 'wp_wc_delete_tax_class' ),
         'mcp:acf:read'           => array( 'wp_acf_get_fields', 'wp_acf_get_term_fields', 'wp_acf_get_user_fields', 'wp_acf_list_field_groups' ),
         'mcp:acf:write'          => array( 'wp_acf_update_fields', 'wp_acf_update_user_fields' ),
         
@@ -97,12 +101,15 @@ class Scope_Map {
         'mcp:events:write'       => array( 'wp_tec_create_event', 'wp_tec_update_event', 'wp_tec_delete_event', 'wp_tec_create_venue', 'wp_tec_create_organizer' ),
         'mcp:redirection:read'   => array( 'wp_redirection_list_redirects', 'wp_redirection_get_redirect', 'wp_redirection_list_groups', 'wp_redirection_list_404s' ),
         'mcp:redirection:write'  => array( 'wp_redirection_create_redirect', 'wp_redirection_update_redirect', 'wp_redirection_delete_redirects' ),
-        'mcp:yoast:read'         => array( 'wp_yoast_get_post_seo', 'wp_yoast_get_head', 'wp_yoast_get_term_seo' ),
-        'mcp:yoast:write'        => array( 'wp_yoast_update_post_seo', 'wp_yoast_update_term_seo' ),
+        'mcp:sitekit:read'       => array( 'wp_sitekit_get_status', 'wp_sitekit_ga_run_report', 'wp_sitekit_ga_list_key_events', 'wp_sitekit_gsc_query_performance' ),
+        'mcp:cf7:read'           => array( 'wp_cf7_list_forms', 'wp_cf7_get_form' ),
+        'mcp:cf7:write'          => array( 'wp_cf7_create_form', 'wp_cf7_update_form', 'wp_cf7_delete_form' ),
+        'mcp:yoast:read'         => array( 'wp_yoast_get_post_seo', 'wp_yoast_get_head', 'wp_yoast_get_term_seo', 'wp_yoast_get_settings' ),
+        'mcp:yoast:write'        => array( 'wp_yoast_update_post_seo', 'wp_yoast_update_term_seo', 'wp_yoast_update_settings' ),
         'mcp:aioseo:read'        => array( 'wp_aioseo_get_post_seo', 'wp_aioseo_get_breadcrumb' ),
         'mcp:aioseo:write'       => array( 'wp_aioseo_update_post_seo' ),
-        'mcp:rankmath:read'      => array( 'wp_rm_get_post_seo', 'wp_rm_get_head' ),
-        'mcp:rankmath:write'     => array( 'wp_rm_update_post_seo' ),
+        'mcp:rankmath:read'      => array( 'wp_rm_get_post_seo', 'wp_rm_get_head', 'wp_rm_list_redirects', 'wp_rm_get_redirect' ),
+        'mcp:rankmath:write'     => array( 'wp_rm_update_post_seo', 'wp_rm_create_redirect', 'wp_rm_update_redirect', 'wp_rm_delete_redirects' ),
         'mcp:seopress:read'      => array( 'wp_seopress_get_post_seo', 'wp_seopress_get_content_analysis', 'wp_seopress_get_term_seo' ),
         'mcp:seopress:write'     => array( 'wp_seopress_update_post_title_desc', 'wp_seopress_update_post_robots', 'wp_seopress_update_post_social', 'wp_seopress_update_post_keywords' ),
         'mcp:slimseo:read'       => array( 'wp_slimseo_get_post_seo' ),
@@ -146,6 +153,9 @@ class Scope_Map {
         'mcp:site_health:write'  => array( 'wp_run_cron_event' ),
         
         'mcp:cache:write'        => array( 'wp_clear_cache' ),
+        
+        
+        'mcp:mail:write'         => array( 'wp_send_email' ),
         
         
         
@@ -234,11 +244,14 @@ class Scope_Map {
     const PLUGIN_CATEGORIES = array(
         'woocommerce' => 'WooCommerce',
         'wc_webhooks' => 'WooCommerce',
+        'wc_store'    => 'WooCommerce',
         'acf'         => 'Advanced Custom Fields',
         'acf_posts'   => 'Advanced Custom Fields',
         'buddypress'  => 'BuddyPress',
         'events'      => 'The Events Calendar',
         'redirection' => 'Redirection',
+        'sitekit'     => 'Site Kit by Google',
+        'cf7'         => 'Contact Form 7',
         'yoast'       => 'Yoast SEO',
         'aioseo'      => 'All in One SEO',
         'rankmath'    => 'Rank Math SEO',
@@ -262,11 +275,14 @@ class Scope_Map {
     const PLUGIN_DETECTION_CLASSES = array(
         'woocommerce' => array( 'WooCommerce' ),
         'wc_webhooks' => array( 'WooCommerce' ),
+        'wc_store'    => array( 'WooCommerce' ),
         'acf'         => array( 'ACF' ),
         'acf_posts'   => array( 'ACF' ),
         'buddypress'  => array( 'BuddyPress' ),
         'events'      => array( 'Tribe__Events__Main' ),
         'redirection' => array( 'Red_Item' ),
+        'sitekit'     => array( 'Google\\Site_Kit\\Plugin' ),
+        'cf7'         => array( 'WPCF7_ContactForm' ),
         'yoast'       => array( 'WPSEO_Options' ),
         'aioseo'      => array( 'AIOSEO\\Plugin\\AIOSEO' ),
         'rankmath'    => array( 'RankMath' ),
@@ -290,29 +306,17 @@ class Scope_Map {
 
 
     public static function is_plugin_category_active( string $slug ): bool {
-        if ( 'gsc' === $slug ) {
-            return ! empty( \get_option( 'easy_mcp_ai_gsc_service_account_json', '' ) );
-        }
-        if ( 'ga' === $slug ) {
-            return ! empty( \get_option( 'easy_mcp_ai_ga_service_account_json', '' ) );
-        }
-        if ( 'dfs' === $slug ) {
-            return ! empty( \get_option( 'easy_mcp_ai_dfs_login', '' ) )
-                && ! empty( \get_option( 'easy_mcp_ai_dfs_api_password', '' ) );
-        }
-        if ( 'semrush' === $slug ) {
-            return ! empty( \get_option( 'easy_mcp_ai_semrush_api_key', '' ) );
+        
+        if ( in_array( $slug, array( 'gsc', 'ga', 'dfs', 'semrush', 'seranking' ), true ) ) {
+            return \Easy_MCP_AI\Provider_Credentials::is_configured( $slug );
         }
         
         
         
         
         if ( 'ahrefs' === $slug ) {
-            return ! empty( \get_option( 'easy_mcp_ai_ahrefs_api_key', '' ) )
+            return \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' )
                 && (bool) \get_option( 'easy_mcp_ai_ahrefs_enabled', false );
-        }
-        if ( 'seranking' === $slug ) {
-            return ! empty( \get_option( 'easy_mcp_ai_seranking_api_key', '' ) );
         }
         
         if ( 'seopress' === $slug ) {
@@ -626,6 +630,40 @@ class Scope_Map {
 
 
 
+
+
+
+
+
+
+
+    public static function expand_category_scopes( array $scopes ): array {
+        $result = array();
+        foreach ( $scopes as $scope ) {
+            $scope  = (string) $scope;
+            $leaves = array();
+            if ( 'mcp' !== $scope && ! isset( self::SCOPE_MAP[ $scope ] ) && 0 !== strpos( $scope, 'mcp:abilities' ) && ! Privileged_Groups::is_privileged_scope( $scope ) ) {
+                foreach ( array_keys( self::SCOPE_MAP ) as $leaf ) {
+                    if ( 0 === strpos( $leaf, $scope . ':' ) ) {
+                        $leaves[] = $leaf;
+                    }
+                }
+            }
+            foreach ( array() === $leaves ? array( $scope ) : $leaves as $kept ) {
+                if ( ! in_array( $kept, $result, true ) ) {
+                    $result[] = $kept;
+                }
+            }
+        }
+        return $result;
+    }
+
+    
+
+
+
+
+
     public static function get_read_scopes(): array {
         $scopes = array();
         foreach ( array_keys( self::SCOPE_MAP ) as $scope ) {
@@ -722,7 +760,143 @@ class Scope_Map {
 
 
 
-    private const DEFAULT_OFF_CATEGORIES = array( 'settings', 'plugins', 'themes', 'appearance', 'widgets', 'wc_webhooks', 'user_create', 'user_update', 'user_delete', 'history', 'audit', 'site_health', 'core_update', 'plugin_files', 'theme_files', 'cli', 'rest_delete' );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static function scope_for_tool( string $tool_name ): ?string {
+        $scopes = self::scopes_for_tools( array( $tool_name ) );
+        return isset( $scopes[ $tool_name ] ) ? $scopes[ $tool_name ] : null;
+    }
+
+    
+
+
+
+
+
+
+    public static function scopes_for_tools( array $tool_names ): array {
+        $leaves    = self::leaf_index();
+        $abilities = null;
+        $out       = array();
+        foreach ( $tool_names as $name ) {
+            $name = (string) $name;
+            if ( Privileged_Groups::is_privileged_tool( $name ) ) {
+                $group = Privileged_Groups::group_of_tool( $name );
+                if ( null !== $group ) {
+                    $out[ $name ] = Privileged_Groups::scope_for_group( $group );
+                }
+                continue;
+            }
+            if ( isset( $leaves[ $name ] ) ) {
+                $out[ $name ] = $leaves[ $name ];
+                continue;
+            }
+            if ( in_array( $name, self::CROSS_CATEGORY_READ_TOOLS, true ) ) {
+                $out[ $name ] = 'mcp:posts:read';
+                continue;
+            }
+            if ( in_array( $name, self::CROSS_CATEGORY_WRITE_TOOLS, true ) ) {
+                $out[ $name ] = 'mcp:posts:write';
+                continue;
+            }
+            if ( 0 === strpos( $name, 'wp_ability_' ) ) {
+                if ( null === $abilities ) {
+                    $abilities = self::ability_tool_prefixes();
+                }
+                if ( isset( $abilities[ $name ] ) ) {
+                    $out[ $name ] = 'mcp:abilities:' . $abilities[ $name ];
+                }
+            }
+        }
+        return $out;
+    }
+
+    
+
+
+
+
+
+    private static function leaf_index(): array {
+        static $index = null;
+        if ( null === $index ) {
+            $index = self::index_leaves( self::SCOPE_MAP );
+        }
+        return $index;
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function index_leaves( array $map ): array {
+        $best = array();
+        foreach ( $map as $leaf => $tools ) {
+            $write = ':read' !== substr( $leaf, -5 );
+            $size  = count( $tools );
+            foreach ( $tools as $tool ) {
+                $held = isset( $best[ $tool ] ) ? $best[ $tool ] : null;
+                if ( null === $held
+                    || ( $held['write'] && ! $write )
+                    || ( $held['write'] === $write && $size < $held['size'] ) ) {
+                    $best[ $tool ] = array( 'leaf' => $leaf, 'write' => $write, 'size' => $size );
+                }
+            }
+        }
+        return array_map( static function ( $entry ) {
+            return $entry['leaf'];
+        }, $best );
+    }
+
+    
+
+
+
+
+
+    private static function ability_tool_prefixes(): array {
+        $out = array();
+        foreach ( self::get_cached_abilities() as $ability ) {
+            $name = is_object( $ability ) && method_exists( $ability, 'get_name' )
+                ? $ability->get_name()
+                : (string) ( is_string( $ability ) ? $ability : '' );
+            if ( '' === $name ) {
+                continue;
+            }
+            $parts  = explode( '/', $name, 2 );
+            $prefix = count( $parts ) > 1 ? Dynamic_Tool_Registrar::normalize_identifier( $parts[0] ) : 'core';
+            if ( '' !== $prefix ) {
+                $out[ Dynamic_Tool_Registrar::build_tool_name( $name ) ] = $prefix;
+            }
+        }
+        return $out;
+    }
+
+    
+
+
+
+
+
+    private const DEFAULT_OFF_CATEGORIES = array( 'settings', 'plugins', 'themes', 'appearance', 'widgets', 'wc_webhooks', 'wc_store', 'user_create', 'user_update', 'user_delete', 'history', 'audit', 'site_health', 'core_update', 'plugin_files', 'theme_files', 'cli', 'rest_delete', 'mail' );
 
     
 
@@ -773,6 +947,8 @@ class Scope_Map {
             'buddypress'  => 'BuddyPress',
             'events'      => __( 'The Events Calendar', 'easy-mcp-ai' ),
             'redirection' => 'Redirection',
+            'sitekit'     => 'Site Kit by Google',
+            'cf7'         => 'Contact Form 7',
             'yoast'       => __( 'Yoast SEO', 'easy-mcp-ai' ),
             'aioseo'      => __( 'All in One SEO', 'easy-mcp-ai' ),
             'rankmath'    => __( 'Rank Math SEO', 'easy-mcp-ai' ),
@@ -790,6 +966,7 @@ class Scope_Map {
             'appearance'  => __( 'Site Appearance (templates, global styles, theme mods & CSS)', 'easy-mcp-ai' ),
             'widgets'     => __( 'Widgets & Sidebars', 'easy-mcp-ai' ),
             'wc_webhooks' => 'WooCommerce Webhooks',
+            'wc_store'    => __( 'WooCommerce Store Setup (settings, currency, shipping, payment methods, tax)', 'easy-mcp-ai' ),
             'user_create' => __( 'Users — Create', 'easy-mcp-ai' ),
             'user_update' => __( 'Users — Update', 'easy-mcp-ai' ),
             'user_delete' => __( 'Users — Delete', 'easy-mcp-ai' ),
@@ -803,6 +980,7 @@ class Scope_Map {
             'rest'        => __( 'REST routes of plugins and core (the route checks your permissions)', 'easy-mcp-ai' ),
             'rest_delete' => __( 'REST routes — Delete', 'easy-mcp-ai' ),
             'cache'       => __( 'Clear caches (page, asset and CDN caches, through each cache plugin)', 'easy-mcp-ai' ),
+            'mail'        => __( 'Send email to the site\'s users (an address outside them only when a person approves that email)', 'easy-mcp-ai' ),
         );
     }
 

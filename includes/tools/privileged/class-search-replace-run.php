@@ -185,17 +185,12 @@ class Search_Replace_Run extends Privileged_Tool {
 
 
 
-    public function approval_refusal( array $arguments ) {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) ) {
+    public function approval_refusal( array $arguments ): ?string {
+        $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
+        if ( null === $length ) {
             return null;
         }
-        $max  = \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX;
-        $text = \Easy_MCP_AI\Approvals\Approval_Gate::flatten( $this->describe( $arguments ) );
-        $len  = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
-        if ( $len <= $max ) {
-            return null;
-        }
-        return sprintf( 'This search-replace is %1$d characters long to describe and the approval page shows %2$d, so it was not sent for approval: a person must see every argument they approve. Use shorter old/new strings or fewer table names.', $len, $max );
+        return sprintf( 'This search-replace is %1$d characters long to describe and the approval page shows %2$d, so it was not sent for approval: a person must see every argument they approve. Use shorter old/new strings or fewer table names.', $length, \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX );
     }
 
     

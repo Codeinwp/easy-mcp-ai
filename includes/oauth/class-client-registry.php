@@ -559,6 +559,18 @@ class Client_Registry {
 
 
 
+    public static function redirect_uri_acceptable( string $uri ): bool {
+        return true === ( new self() )->validate_redirect_uri( $uri );
+    }
+
+    
+
+
+
+
+
+
+
 
 
 
@@ -833,6 +845,31 @@ class Client_Registry {
             )
         );
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    public function find_client( $client_id ) {
+        $client_id = (string) $client_id;
+        $client    = $this->get_client( Client_Metadata::storage_id( $client_id ) );
+        if ( null === $client ) {
+            return null;
+        }
+        $document = isset( $client->metadata_url ) ? (string) $client->metadata_url : '';
+        if ( Client_Metadata::is_url( $client_id ) ? $client_id !== $document : '' !== $document ) {
+            return null;
+        }
+        return $client;
     }
 
     

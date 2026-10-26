@@ -640,6 +640,30 @@ body.emcp-page {
 	color: var(--emcp-red-700);
 }
 
+/* A permission a step-up challenge asked for (GitHub #472). */
+.emcp-flag--new {
+	background: var(--emcp-blue-100);
+	color: var(--emcp-blue-700);
+}
+
+/* In the scope table the flag sits under its box, in a taller row, so the
+   box stays in line with the boxes above and below it. */
+.emcp-table__row--new td {
+	padding-bottom: 26px;
+}
+
+.emcp-table__row--new td.emcp-table__toggle {
+	position: relative;
+}
+
+.emcp-table__toggle .emcp-flag--new {
+	position: absolute;
+	bottom: 6px;
+	left: 50%;
+	margin: 0;
+	transform: translateX(-50%);
+}
+
 /* ── disclosure ─────────────────────────────────────────────────────── */
 
 .emcp-details > summary {

@@ -30,7 +30,7 @@ class Update_Redirect extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Updates a redirect in the Redirection plugin. Only the fields you send change; every other field keeps its value. Required: `id`. Optional: `source`, `action_type`, `target`, `code`, `group_id`, `title` ("" clears it), `regex`, `ignore_case`, `ignore_trailing_slash`, `query_handling`, `position`, `enabled` (false switches the redirect off without deleting it). `target` can only be changed on redirects whose match_type is "url". Returns { updated, changed_fields, redirect }, read back from Redirection; `updated: false` means the redirect already had those values. Requires the Redirection plugin active.';
+        return 'Updates a redirect in the Redirection plugin. Only the fields you send change; every other field keeps its value. Required: `id`. Optional: `source`, `action_type`, `target`, `code`, `group_id`, `title` ("" clears it), `regex`, `ignore_case`, `ignore_trailing_slash`, `query_handling`, `position`, `enabled` (false switches the redirect off without deleting it), `allow_protected_source` (needed to switch on, or change anything but the title or position of, a redirect whose source would redirect the home page, the sign-in page or the REST API). `target` can only be changed on redirects whose match_type is "url". Returns { updated, changed_fields, redirect }, read back from Redirection; `updated: false` means the redirect already had those values. Requires the Redirection plugin active.';
     }
 
     public function get_annotations() {
@@ -106,9 +106,11 @@ class Update_Redirect extends Base_Tool {
 
         $item   = $this->require_redirect( $id );
         $before = self::normalize_redirect( $item );
+        $body   = empty( $content ) ? null : $this->merged_body( $item, $arguments );
+        $this->refuse_protected_source( $id, $item, $before, $body, $content, $arguments );
 
-        if ( ! empty( $content ) ) {
-            $this->rest_request( 'POST', self::$redirection_ns . '/redirect/' . $id, $this->merged_body( $item, $arguments ) );
+        if ( null !== $body ) {
+            $this->rest_request( 'POST', self::$redirection_ns . '/redirect/' . $id, $body );
         }
         if ( $has_enabled && rest_sanitize_boolean( $arguments['enabled'] ) !== $before['enabled'] ) {
             $this->rest_request( 'POST', self::$redirection_ns . '/bulk/redirect/' . ( rest_sanitize_boolean( $arguments['enabled'] ) ? 'enable' : 'disable' ), array( 'items' => array( $id ) ) );
@@ -139,6 +141,39 @@ class Update_Redirect extends Base_Tool {
             $result['note'] = 'Nothing changed: the redirect already had these values.';
         }
         return $result;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function refuse_protected_source( int $id, array $item, array $before, ?array $body, array $content, array $arguments ): void {
+        $on = self::sent( $arguments, 'enabled' ) ? rest_sanitize_boolean( $arguments['enabled'] ) : ! empty( $before['enabled'] );
+        if ( ! $on || ( ! empty( $before['enabled'] ) && array() === array_diff( $content, array( 'title', 'position' ) ) ) ) {
+            return;
+        }
+        $source = null !== $body ? (string) $body['url'] : self::str_of( $item, 'url' );
+        $sent   = self::sent( $arguments, 'source' );
+        $host   = $sent ? Protected_Sources::host_of( $source ) : null;
+        if ( null === $host && 'server' === $before['match_type'] ) {
+            
+            $server = self::str_of( self::array_of( $item, 'action_data' ), 'server' );
+            $host   = '' === $server ? null : ( Protected_Sources::host_of( $server ) ?? strtolower( $server ) );
+        }
+        $regex = null !== $body ? 1 === $body['regex'] : ! empty( $before['regex'] );
+        $flags = null !== $body ? self::array_of( self::array_of( $body, 'match_data' ), 'source' ) : array( 'flag_query' => $before['query_handling'] );
+        $query = isset( $flags['flag_query'] ) && is_string( $flags['flag_query'] ) ? $flags['flag_query'] : 'exact';
+        Protected_Sources::refuse( sprintf( 'Redirect %d', $id ), $arguments, $host, $sent ? self::stored_source( $source, $regex ) : $source, $regex, $query );
     }
 
     

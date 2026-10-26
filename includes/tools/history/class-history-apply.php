@@ -178,17 +178,15 @@ class History_Apply extends Base_Tool {
 
 
 
-    public function approval_refusal( array $arguments ) {
-        $max  = \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX;
-        $text = \Easy_MCP_AI\Approvals\Approval_Gate::flatten( $this->describe( $arguments ) );
-        $len  = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
-        if ( $len <= $max ) {
+    public function approval_refusal( array $arguments ): ?string {
+        $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
+        if ( null === $length ) {
             return null;
         }
         return sprintf(
             'This plan is %1$d characters long and the approval page shows %2$d, so it was not sent for approval: a person must see every write they approve. Apply fewer entries: one entry_id at a time, newest first. A single entry this long cannot be approved here; read it with wp_history_get and make its calls one at a time.',
-            $len,
-            $max
+            $length,
+            \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX
         );
     }
 

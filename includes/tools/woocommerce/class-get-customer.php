@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\WooCommerce;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Row_Extension;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -55,7 +56,10 @@ class Get_Customer extends Base_Tool {
         $this->validate_required( $arguments, array( 'id' ) );
         $id   = $this->parse_required_id( $arguments['id'], 'id' );
         $data = $this->rest_request( 'GET', '/wc/v3/customers/' . $id );
+        if ( ! is_array( $data ) ) {
+            return $data;
+        }
 
-        return $data;
+        return Row_Extension::apply( Row_Extension::WC_CUSTOMER, $data, $data, $this->get_name(), false );
     }
 }

@@ -87,6 +87,7 @@ class Batch_Update_Products extends Base_Tool {
                 throw new \InvalidArgumentException( sprintf( 'update exceeds the %d-item soft cap. Use the easy_mcp_ai_wc_batch_soft_cap filter to raise the limit.', $soft_cap ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
             $body['update'] = $arguments['update'];
+            $this->refuse_builder_owned_product_writes( (array) $body['update'] );
         }
         if ( ! empty( $arguments['delete'] ) ) {
             if ( count( $arguments['delete'] ) > $soft_cap ) {

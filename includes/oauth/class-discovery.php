@@ -263,6 +263,16 @@ class Discovery {
         
         
         
+        Client_Metadata_Support::arm();
+        if ( Client_Metadata_Support::advertised() ) {
+            $metadata['client_id_metadata_document_supported'] = true;
+        }
+
+        
+        
+        
+        
+        
         if ( $openid ) {
             $metadata['jwks_uri']                              = $rest_base . '/oauth/jwks';
             $metadata['subject_types_supported']               = array( 'public' );

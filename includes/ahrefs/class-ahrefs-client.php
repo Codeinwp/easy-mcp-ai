@@ -79,7 +79,7 @@ class Ahrefs_Client {
 
 
 	public static function has_api_key(): bool {
-		return '' !== (string) \get_option( self::OPTION_API_KEY, '' );
+		return \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' );
 	}
 
 	const ENDPOINT     = 'https://api.ahrefs.com/v3/public/domain-rating-free';
@@ -141,6 +141,10 @@ class Ahrefs_Client {
 
 
 	public function get_api_key(): string {
+		$deployed = \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_API_KEY );
+		if ( null !== $deployed ) {
+			return $deployed; 
+		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {
 			throw new \RuntimeException( 'Ahrefs API key not configured. Add one at Easy MCP AI → Tools → External data → Ahrefs. The key is free — create it in your Ahrefs account under Account settings → API keys.' );

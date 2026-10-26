@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\WooCommerce;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Row_Extension;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -14,7 +15,7 @@ class List_Customers extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists WooCommerce customers. Optional: `search` (name/email), `email` (exact email filter), `role` (WordPress role slug — default "all" which returns all roles; use "customer" to filter to WooCommerce customers only), `orderby` (id/include/name/registered_date — default registered_date; these are the only values the WooCommerce API accepts), `order` (asc/desc — default desc), `per_page` (default 10), `page`. Returns { customers: [ { id, email, first_name, last_name, username, date_created } ], page }. Order counts and lifetime spend are NOT available — the WooCommerce v3 customers API does not return them. Requires WooCommerce active.';
+        return 'Lists WooCommerce customers. Optional: `search` (name/email), `email` (exact email filter), `role` (WordPress role slug — default "all" which returns all roles; use "customer" to filter to WooCommerce customers only), `orderby` (id/include/name/registered_date — default registered_date; these are the only values the WooCommerce API accepts), `order` (asc/desc — default desc), `per_page` (default 10), `page`. Returns { customers: [ { id, email, first_name, last_name, username, date_created } ], total, total_pages, page, per_page }, where total and total_pages count every customer that matches the filters. Order counts and lifetime spend are NOT available — the WooCommerce v3 customers API does not return them. Requires WooCommerce active.';
     }
 
     public function get_category() {
@@ -101,10 +102,12 @@ class List_Customers extends Base_Tool {
             $params['email'] = sanitize_text_field( $arguments['email'] );
         }
 
-        $data = $this->rest_request( 'GET', '/wc/v3/customers', $params );
+        $response = $this->rest_response( 'GET', '/wc/v3/customers', $params );
+        $data     = $response->get_data();
 
-        $customers = array_map( function( $customer ) {
-            return array(
+        $tool      = $this->get_name();
+        $customers = array_map( function( $customer ) use ( $tool ) {
+            $row = array(
                 'id'           => $customer['id'],
                 'email'        => $customer['email'],
                 'first_name'   => $customer['first_name'],
@@ -117,11 +120,12 @@ class List_Customers extends Base_Tool {
                 
                 
             );
+            return Row_Extension::apply( Row_Extension::WC_CUSTOMER, $row, $customer, $tool, true );
         }, $data );
 
-        return array(
-            'customers' => $customers,
-            'page'      => $page,
+        return array_merge(
+            array( 'customers' => $customers ),
+            $this->pagination_meta( $response, $page, $params['per_page'], count( $data ) )
         );
     }
 }

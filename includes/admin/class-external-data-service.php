@@ -18,6 +18,7 @@ use Easy_MCP_AI\Config;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
 use Easy_MCP_AI\GA\GA_Client;
 use Easy_MCP_AI\GSC\GSC_Client;
+use Easy_MCP_AI\Provider_Credentials;
 use Easy_MCP_AI\Semrush\Semrush_Client;
 use Easy_MCP_AI\SeRanking\SeRanking_Client;
 use Easy_MCP_AI\Tools\Tool_Registry;
@@ -114,31 +115,34 @@ class External_Data_Service {
 
     public function describe( $key ) {
         $configured  = $this->is_configured( $key );
+        
+        
+        $hint        = $configured && ! Provider_Credentials::is_deployed( $key );
         $credentials = array();
         $settings    = array();
         switch ( $key ) {
             case 'ga':
                 $credentials['serviceAccountJson'] = array( 'configured' => $configured, 'masked' => $this->google_email( GA_Client::class ) );
-                $settings['propertyId']            = (string) \get_option( GA_Client::OPTION_PROPERTY_ID, '' );
-                $settings['properties']            = self::property_choices( (array) \get_option( External_Data_Admin::OPTION_GA_PROPS_CACHE, array() ) );
+                $settings['propertyId']            = (string) Config::get( GA_Client::OPTION_PROPERTY_ID, '' );
+                $settings['properties']            = External_Data_Admin::cache_is_current( 'ga' ) ? self::property_choices( (array) \get_option( External_Data_Admin::OPTION_GA_PROPS_CACHE, array() ) ) : array();
                 break;
             case 'gsc':
                 $credentials['serviceAccountJson'] = array( 'configured' => $configured, 'masked' => $this->google_email( GSC_Client::class ) );
-                $settings['siteUrl']               = (string) \get_option( GSC_Client::OPTION_SITE_URL, '' );
-                $settings['sites']                 = array_values( array_filter( array_map( 'strval', (array) \get_option( External_Data_Admin::OPTION_GSC_SITES_CACHE, array() ) ) ) );
+                $settings['siteUrl']               = (string) Config::get( GSC_Client::OPTION_SITE_URL, '' );
+                $settings['sites']                 = External_Data_Admin::cache_is_current( 'gsc' ) ? array_values( array_filter( array_map( 'strval', (array) \get_option( External_Data_Admin::OPTION_GSC_SITES_CACHE, array() ) ) ) ) : array();
                 break;
             case 'dfs':
-                $credentials['login']       = array( 'configured' => $configured, 'masked' => $configured ? self::head( self::decrypt_option( DataforSEO_Client::class, DataforSEO_Client::OPTION_LOGIN ) ) : null );
+                $credentials['login']       = array( 'configured' => $configured, 'masked' => $hint ? self::head( self::decrypt_option( DataforSEO_Client::class, DataforSEO_Client::OPTION_LOGIN ) ) : null );
                 $credentials['apiPassword'] = array( 'configured' => $configured, 'masked' => null );
                 break;
             case 'semrush':
-                $credentials['apiKey'] = array( 'configured' => $configured, 'masked' => $configured ? self::tail( self::decrypt_option( Semrush_Client::class, Semrush_Client::OPTION_API_KEY ) ) : null );
+                $credentials['apiKey'] = array( 'configured' => $configured, 'masked' => $hint ? self::tail( self::decrypt_option( Semrush_Client::class, Semrush_Client::OPTION_API_KEY ) ) : null );
                 break;
             case 'seranking':
-                $credentials['apiKey'] = array( 'configured' => $configured, 'masked' => $configured ? self::tail( self::decrypt_option( SeRanking_Client::class, SeRanking_Client::OPTION_API_KEY ) ) : null );
+                $credentials['apiKey'] = array( 'configured' => $configured, 'masked' => $hint ? self::tail( self::decrypt_option( SeRanking_Client::class, SeRanking_Client::OPTION_API_KEY ) ) : null );
                 break;
             case 'ahrefs':
-                $credentials['apiKey'] = array( 'configured' => $configured, 'masked' => $configured ? self::tail( self::decrypt_option( Ahrefs_Client::class, Ahrefs_Client::OPTION_API_KEY ) ) : null );
+                $credentials['apiKey'] = array( 'configured' => $configured, 'masked' => $hint ? self::tail( self::decrypt_option( Ahrefs_Client::class, Ahrefs_Client::OPTION_API_KEY ) ) : null );
                 break;
         }
         $disabled = $this->bucket( $key );
@@ -149,7 +153,9 @@ class External_Data_Service {
             'configured'    => $configured,
             'enabled'       => $this->is_enabled( $key, $items ),
             'credentials'   => $credentials,
+            'deployed'      => self::deployed( $key ),
             'settings'      => $settings,
+            'lockedSettings' => self::locked_settings( $key ),
             'balance'       => $this->stored_balance( $key ),
             'disabledTools' => $disabled,
             'items'         => $items,
@@ -158,22 +164,69 @@ class External_Data_Service {
 
     
     public function is_configured( $key ) {
-        switch ( $key ) {
-            case 'ga':
-                return '' !== (string) \get_option( GA_Client::OPTION_JSON, '' );
-            case 'gsc':
-                return '' !== (string) \get_option( GSC_Client::OPTION_JSON, '' );
-            case 'dfs':
-                return '' !== (string) \get_option( DataforSEO_Client::OPTION_LOGIN, '' )
-                    && '' !== (string) \get_option( DataforSEO_Client::OPTION_API_PASSWORD, '' );
-            case 'semrush':
-                return '' !== (string) \get_option( Semrush_Client::OPTION_API_KEY, '' );
-            case 'seranking':
-                return '' !== (string) \get_option( SeRanking_Client::OPTION_API_KEY, '' );
-            case 'ahrefs':
-                return '' !== (string) \get_option( Ahrefs_Client::OPTION_API_KEY, '' );
+        return Provider_Credentials::is_configured( $key );
+    }
+
+    
+
+
+
+
+
+
+    private static function deployed( string $key ): ?array {
+        if ( ! Provider_Credentials::is_deployed( $key ) ) {
+            return null;
         }
-        return false;
+        $constants = array();
+        $source    = '';
+        foreach ( Provider_Credentials::deployed_constants( $key ) as $name => $from ) {
+            $constants[] = array( 'name' => $name, 'source' => $from );
+            if ( '' === $source && '' !== $from ) {
+                $source = $from;
+            }
+        }
+        return array(
+            'source'    => $source,
+            'constants' => $constants,
+            'error'     => Config::brand( Provider_Credentials::deployed_error( $key ) ),
+        );
+    }
+
+    
+
+
+
+
+
+    private static function locked_settings( string $key ): \stdClass {
+        $fields = array(
+            'ga'  => array( 'propertyId' => GA_Client::OPTION_PROPERTY_ID ),
+            'gsc' => array( 'siteUrl' => GSC_Client::OPTION_SITE_URL ),
+        );
+        $locked = array();
+        foreach ( $fields[ $key ] ?? array() as $field => $option ) {
+            if ( Config::is_locked( $option ) ) {
+                $locked[ $field ] = array(
+                    'name'   => Config::constant_name( $option ),
+                    'source' => Config::source( $option ),
+                );
+            }
+        }
+        return (object) $locked; 
+    }
+
+    
+    private static function deployed_error( string $field, string $constant ): \WP_Error {
+        return new \WP_Error(
+            'easy_mcp_ai_config_locked',
+            sprintf(
+                /* translators: %s: constant name */
+                \__( 'This value is defined in wp-config.php or the environment as %s. Change it there.', 'easy-mcp-ai' ),
+                $constant
+            ),
+            array( 'status' => 409, 'field' => $field )
+        );
     }
 
     
@@ -273,6 +326,9 @@ class External_Data_Service {
 
     
     private function google_email( $client ) {
+        if ( Provider_Credentials::is_deployed( $client::PROVIDER ) ) {
+            return Provider_Credentials::google_email( $client::PROVIDER );
+        }
         $stored = (string) \get_option( $client::OPTION_JSON, '' );
         if ( '' === $stored ) {
             return null;
@@ -328,10 +384,22 @@ class External_Data_Service {
     }
 
     
+
+
+
+
+
+
     private function stored_balance( $key ) {
         $all = \get_option( self::OPTION_BALANCES, array() );
         $row = is_array( $all ) && isset( $all[ $key ] ) && is_array( $all[ $key ] ) ? $all[ $key ] : null;
         if ( ! $row || ! isset( $row['value'] ) || ! is_numeric( $row['value'] ) || empty( $row['unit'] ) ) {
+            return null;
+        }
+        $current = isset( $row['credential'] )
+            ? hash_equals( (string) $row['credential'], Provider_Credentials::fingerprint( $key ) )
+            : ! Provider_Credentials::is_deployed( $key );
+        if ( ! $current ) {
             return null;
         }
         return array(
@@ -344,7 +412,12 @@ class External_Data_Service {
     private function store_balance( $key, $value, $unit ) {
         $all = \get_option( self::OPTION_BALANCES, array() );
         $all = is_array( $all ) ? $all : array();
-        $all[ $key ] = array( 'value' => $value, 'unit' => $unit, 'fetchedAt' => gmdate( 'c' ) );
+        $all[ $key ] = array(
+            'value'      => $value,
+            'unit'       => $unit,
+            'fetchedAt'  => gmdate( 'c' ),
+            'credential' => Provider_Credentials::fingerprint( $key ),
+        );
         \update_option( self::OPTION_BALANCES, $all, false );
     }
 
@@ -396,6 +469,10 @@ class External_Data_Service {
 
 
     public function save( $key, array $input ) {
+        $refused = self::refuse_deployed( $key, $input );
+        if ( \is_wp_error( $refused ) ) {
+            return $refused;
+        }
         switch ( $key ) {
             case 'ga':
                 return $this->save_google( 'ga', GA_Client::class, $input );
@@ -411,6 +488,41 @@ class External_Data_Service {
                 return $this->save_key( 'ahrefs', Ahrefs_Client::class, $input );
         }
         return new \WP_Error( 'easy_mcp_ai_not_found', \__( 'Unknown provider.', 'easy-mcp-ai' ), array( 'status' => 404 ) );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function refuse_deployed( $key, array $input ) {
+        if ( Provider_Credentials::is_deployed( $key ) ) {
+            $fields = array(
+                'ga'        => array( 'serviceAccountJson' ),
+                'gsc'       => array( 'serviceAccountJson' ),
+                'dfs'       => array( 'login', 'apiPassword' ),
+                'semrush'   => array( 'apiKey' ),
+                'seranking' => array( 'apiKey' ),
+                'ahrefs'    => array( 'apiKey' ),
+            );
+            $names = array_keys( Provider_Credentials::deployed_constants( $key ) );
+            foreach ( $fields[ $key ] ?? array() as $field ) {
+                if ( isset( $input[ $field ] ) && '' !== $input[ $field ] ) {
+                    return self::deployed_error( $field, implode( ', ', $names ) );
+                }
+            }
+        }
+        foreach ( (array) self::locked_settings( $key ) as $field => $lock ) {
+            if ( array_key_exists( $field, $input ) && '' !== $input[ $field ] ) {
+                return self::deployed_error( $field, $lock['name'] );
+            }
+        }
+        return true;
     }
 
     private function save_google( $key, $client, array $input ) {
@@ -755,17 +867,24 @@ class External_Data_Service {
 
 
 
+
+
+
+
     public function remove_key( $key ) {
+        if ( Provider_Credentials::is_deployed( $key ) ) {
+            return self::deployed_error( '', implode( ', ', array_keys( Provider_Credentials::deployed_constants( $key ) ) ) );
+        }
         switch ( $key ) {
             case 'ga':
                 \delete_option( GA_Client::OPTION_JSON );
-                \delete_option( GA_Client::OPTION_PROPERTY_ID );
+                Config::delete( GA_Client::OPTION_PROPERTY_ID );
                 \delete_option( External_Data_Admin::OPTION_GA_PROPS_CACHE );
                 External_Data_Admin::purge_transients_by_prefix( 'easy_mcp_ai_ga_' );
                 break;
             case 'gsc':
                 \delete_option( GSC_Client::OPTION_JSON );
-                \delete_option( GSC_Client::OPTION_SITE_URL );
+                Config::delete( GSC_Client::OPTION_SITE_URL );
                 \delete_option( External_Data_Admin::OPTION_GSC_SITES_CACHE );
                 External_Data_Admin::purge_transients_by_prefix( 'easy_mcp_ai_gsc_' );
                 break;
@@ -789,6 +908,7 @@ class External_Data_Service {
         $this->forget_balance( $key );
         $global = (array) Config::get( 'easy_mcp_ai_disabled_tools', array() );
         Config::update( 'easy_mcp_ai_disabled_tools', array_values( array_diff( $global, $this->tool_names( $key ) ) ) );
+        return true;
     }
 
     

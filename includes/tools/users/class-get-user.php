@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\Users;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Row_Extension;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -86,7 +87,9 @@ class Get_User extends Base_Tool {
         
         
         
-        return array_merge( $result, self::user_columns( (int) $data['id'] ) );
+        $result = array_merge( $result, self::user_columns( (int) $data['id'] ) );
+
+        return Row_Extension::apply( Row_Extension::USER, $result, $data, $this->get_name(), false );
     }
 
     

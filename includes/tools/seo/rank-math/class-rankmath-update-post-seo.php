@@ -18,7 +18,7 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 	}
 
 	public function get_description() {
-		return 'Updates Rank Math SEO fields on a post by writing to the Rank Math postmeta keys. Fields: title (rank_math_title), description (rank_math_description), focus_keyword (rank_math_focus_keyword), canonical_url (rank_math_canonical_url), facebook_title, facebook_description, facebook_image, twitter_title, twitter_description, twitter_image, robots (array of index/noindex/nofollow/noarchive/noimageindex/nosnippet), advanced_robots (array), breadcrumb_title, primary_term + taxonomy, pillar_content (boolean).';
+		return 'Updates Rank Math SEO fields on a post by writing to the Rank Math postmeta keys. Fields: title (rank_math_title), description (rank_math_description), focus_keyword (rank_math_focus_keyword), canonical_url (rank_math_canonical_url), facebook_title, facebook_description, facebook_image, twitter_title, twitter_description, twitter_image, robots (array of index/noindex/nofollow/noarchive/noimageindex/nosnippet), advanced_robots (array), breadcrumb_title, primary_term + taxonomy, pillar_content (boolean). Returns { post_id, updated_fields, fields }: `fields` is the stored value of every field sent, read back after the write (robots and advanced_robots as arrays, pillar_content as a boolean), so a value re-sent unchanged, which updated_fields leaves out, is confirmed too.';
 	}
 
 	public function get_category() {
@@ -229,6 +229,52 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 		return array(
 			'post_id'        => $post_id,
 			'updated_fields' => $updated,
+			'fields'         => self::stored_fields( $post_id, $arguments, $meta_map ),
 		);
+	}
+
+	
+
+
+
+
+
+
+
+
+
+
+	private static function stored_fields( int $post_id, array $arguments, array $text_keys ): array {
+		$keys = array_merge(
+			$text_keys,
+			array(
+				'robots'           => 'rank_math_robots',
+				'advanced_robots'  => 'rank_math_advanced_robots',
+				'breadcrumb_title' => 'rank_math_breadcrumb_title',
+				'pillar_content'   => 'rank_math_pillar_content',
+			)
+		);
+		if ( isset( $arguments['primary_term'], $arguments['taxonomy'] ) ) {
+			
+			$keys['primary_term'] = 'rank_math_primary_' . trim( (string) $arguments['taxonomy'] );
+		}
+		
+		$meta_id = (int) ( wp_is_post_revision( $post_id ) ?: $post_id );
+		$fields  = array();
+		foreach ( $keys as $field => $meta_key ) {
+			if ( ! isset( $arguments[ $field ] ) ) {
+				continue;
+			}
+			$value = get_post_meta( $meta_id, $meta_key, true );
+			if ( 'pillar_content' === $field ) {
+				$value = 'on' === $value;
+			} elseif ( in_array( $field, array( 'robots', 'advanced_robots' ), true ) ) {
+				$value = is_array( $value ) ? $value : array();
+			} else {
+				$value = (string) $value;
+			}
+			$fields[ $field ] = $value;
+		}
+		return $fields;
 	}
 }

@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\Plugins;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\Tools\Lifecycle_Guard;
+use Easy_MCP_AI\Tools\Site_Health\Site_Health_Guard;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -34,7 +35,7 @@ class List_Plugins extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists installed WordPress plugins. Optional: `status` ("active" | "inactive" | "network-active" (multisite only) | "must-use" | "dropin" — omit for all), `include_mu_dropins` (boolean, default false: also list must-use and drop-in plugins, which WordPress shows only on a single site or to a network administrator with manage_network_plugins), `skip_update_check` (boolean, default true: read WordPress\'s stored update data and contact nobody; false deletes it and asks wordpress.org again first, as `wp plugin list` does — only for a user with update_plugins). Returns { plugins: [{ plugin (folder/file.php identifier), name, description, status, version, author, update ("none" | "available" | "unavailable" | "version higher than expected"), update_version, update_unavailable_reason, auto_update (boolean: in WordPress\'s auto-update list), requires (WordPress version), requires_php, recently_active }], total, warnings }. The update fields and auto_update are null for a user without the update_plugins capability (a warning names the cause) and for must-use and drop-in rows. requires and requires_php are those of the offered update when there is one, otherwise the plugin\'s own header. Requires administrator access. The `plugin` field is the identifier used by WordPress plugin functions; pass it to wp_update_plugin. ' . self::lifecycle_hint();
+        return 'Lists installed WordPress plugins. Optional: `status` ("active" | "inactive" | "network-active" (multisite only) | "must-use" | "dropin" — omit for all), `include_mu_dropins` (boolean, default false: also list must-use and drop-in plugins, which WordPress shows only on a single site or to a network administrator with manage_network_plugins), `skip_update_check` (boolean, default true: read WordPress\'s stored update data and contact nobody; false deletes it and asks wordpress.org again first, as `wp plugin list` does — only for a user with update_plugins). Returns { plugins: [{ plugin (folder/file.php identifier), name, description, status, version, author, update ("none" | "available" | "unavailable" | "version higher than expected"), update_version, update_unavailable_reason, auto_update (boolean: in WordPress\'s auto-update list), requires (WordPress version), requires_php, recently_active, modified (when the plugin\'s main file last changed, ISO 8601 UTC, or null when the file is missing or PHP cannot stat it; other files can change without it) }], total, warnings }. The update fields and auto_update are null for a user without the update_plugins capability (a warning names the cause) and for must-use and drop-in rows. requires and requires_php are those of the offered update when there is one, otherwise the plugin\'s own header. Requires administrator access. The `plugin` field is the identifier used by WordPress plugin functions; pass it to wp_update_plugin. ' . self::lifecycle_hint();
     }
 
     
@@ -99,7 +100,7 @@ class List_Plugins extends Base_Tool {
         $warnings    = array();
         $see_updates = $this->prepare_update_data( $skip_check, $warnings );
 
-        $result = $advanced_only ? array() : $this->rest_rows( $status, $see_updates );
+        $result = $advanced_only ? array() : $this->rest_rows( $status, $see_updates, $warnings );
 
         if ( $advanced_only || $include_more ) {
             $result = array_merge( $result, $this->advanced_rows( $status, $warnings ) );
@@ -160,13 +161,29 @@ class List_Plugins extends Base_Tool {
 
 
 
-    private function rest_rows( $status, bool $see_updates ): array {
+
+
+
+    private function rest_rows( $status, bool $see_updates, array &$warnings ): array {
         $plugins = self::rest_plugins( $status );
         $context = $this->update_context( $see_updates );
 
-        $result = array();
+        $result   = array();
+        $stripped = 0;
         foreach ( $plugins as $plugin ) {
+            if ( ! is_array( $plugin ) || ! isset( $plugin['plugin'] ) || ! is_string( $plugin['plugin'] ) || '' === $plugin['plugin'] ) {
+                ++$stripped;
+                continue;
+            }
             $result[] = $this->plugin_row( $plugin, $see_updates, $context );
+        }
+        if ( $stripped > 0 ) {
+            $warnings[] = sprintf(
+                1 === $stripped
+                    ? '%d installed plugin is not listed: something on this site removed its `plugin` field from the /wp/v2/plugins REST response, so it cannot be identified. A rest_prepare_plugin or rest_request_after_callbacks filter in another plugin is the usual cause.'
+                    : '%d installed plugins are not listed: something on this site removed their `plugin` field from the /wp/v2/plugins REST response, so they cannot be identified. A rest_prepare_plugin or rest_request_after_callbacks filter in another plugin is the usual cause.',
+                $stripped
+            );
         }
         return $result;
     }
@@ -230,26 +247,31 @@ class List_Plugins extends Base_Tool {
 
 
 
+
+
+
     private function plugin_row( array $plugin, bool $see_updates, array $context ): array {
         
-        $plugin_id = $plugin['plugin'];
+        $plugin_id = (string) $plugin['plugin'];
         if ( substr( $plugin_id, -4 ) !== '.php' ) {
             $plugin_id .= '.php';
         }
-        $row = array(
+        $version     = self::string_header( $plugin, 'version' );
+        $description = isset( $plugin['description'] ) ? $plugin['description'] : '';
+        $row         = array(
             'plugin'      => $plugin_id,
-            'name'        => $plugin['name'],
-            'description' => is_array( $plugin['description'] ) ? ( $plugin['description']['raw'] ?? '' ) : ( (string) $plugin['description'] ),
-            'status'      => $plugin['status'],
-            'version'     => $plugin['version'],
-            'author'      => $plugin['author'],
+            'name'        => self::string_header( $plugin, 'name' ),
+            'description' => is_array( $description ) ? ( $description['raw'] ?? '' ) : ( (string) $description ),
+            'status'      => isset( $plugin['status'] ) ? $plugin['status'] : null,
+            'version'     => $version,
+            'author'      => self::string_header( $plugin, 'author' ),
         );
 
         $header_wp  = self::string_header( $plugin, 'requires_wp' );
         $header_php = self::string_header( $plugin, 'requires_php' );
 
         $row += $see_updates
-            ? $this->update_columns( $plugin_id, (string) $plugin['version'], $context, $header_wp, $header_php )
+            ? $this->update_columns( $plugin_id, $version, $context, $header_wp, $header_php )
             : array(
                 'update'                    => null,
                 'update_version'            => null,
@@ -262,6 +284,11 @@ class List_Plugins extends Base_Tool {
         
         
         $row['recently_active'] = array_key_exists( $plugin_id, $context['recently_active'] );
+        
+        
+        
+        
+        $row['modified'] = self::modified( WP_PLUGIN_DIR, $plugin['plugin'] . '.php' ) ?? self::modified( WP_PLUGIN_DIR, $plugin_id );
 
         return $this->ordered( $row );
     }
@@ -430,9 +457,11 @@ class List_Plugins extends Base_Tool {
         }
         $found = 'must-use' === $row_status ? get_mu_plugins() : get_dropins();
         $about = 'must-use' === $row_status ? array() : _get_dropins();
-        $rows  = array();
+        
+        $root = 'must-use' === $row_status ? ( defined( 'WPMU_PLUGIN_DIR' ) ? (string) WPMU_PLUGIN_DIR : '' ) : (string) WP_CONTENT_DIR;
+        $rows = array();
         foreach ( (array) $found as $file => $data ) {
-            $rows[] = $this->advanced_row( (string) $file, (array) $data, $row_status, $about );
+            $rows[] = $this->advanced_row( (string) $file, (array) $data, $row_status, $about, $root );
         }
         return $rows;
     }
@@ -448,7 +477,8 @@ class List_Plugins extends Base_Tool {
 
 
 
-    private function advanced_row( string $file, array $data, string $status, array $about ): array {
+
+    private function advanced_row( string $file, array $data, string $status, array $about, string $root ): array {
         $description = isset( $data['Description'] ) ? (string) $data['Description'] : '';
         if ( isset( $about[ $file ][0] ) && '' !== (string) $about[ $file ][0] ) {
             
@@ -469,6 +499,7 @@ class List_Plugins extends Base_Tool {
                 'requires'                  => '',
                 'requires_php'              => '',
                 'recently_active'           => false,
+                'modified'                  => self::modified( $root, $file ),
             )
         );
     }
@@ -479,8 +510,30 @@ class List_Plugins extends Base_Tool {
 
 
 
+
+
+
+
+
+    private static function modified( string $root, string $file ): ?string {
+        
+        if ( '' === $root || 0 !== validate_file( $file ) ) {
+            return null;
+        }
+        $path = $root . '/' . $file;
+        
+        return is_file( $path ) ? Site_Health_Guard::iso_utc( filemtime( $path ) ) : null;
+    }
+
+    
+
+
+
+
+
+
     private function ordered( array $row ): array {
-        $order = array( 'plugin', 'name', 'description', 'status', 'version', 'author', 'update', 'update_version', 'update_unavailable_reason', 'auto_update', 'requires', 'requires_php', 'recently_active' );
+        $order = array( 'plugin', 'name', 'description', 'status', 'version', 'author', 'update', 'update_version', 'update_unavailable_reason', 'auto_update', 'requires', 'requires_php', 'recently_active', 'modified' );
         $out   = array();
         foreach ( $order as $key ) {
             $out[ $key ] = array_key_exists( $key, $row ) ? $row[ $key ] : null;

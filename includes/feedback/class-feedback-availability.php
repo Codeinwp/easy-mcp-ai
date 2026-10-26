@@ -67,6 +67,8 @@ class Feedback_Availability {
         'acf'                 => array( 'acf', 'advanced custom fields', 'secure custom fields' ),
         'the-events-calendar' => array( 'events calendar', 'tribe events' ),
         'redirection'         => array( 'redirection plugin', 'redirection by john godley' ),
+        'site-kit'            => array( 'site kit', 'sitekit' ),
+        'contact-form-7'      => array( 'contact form 7', 'cf7' ),
         'buddypress'          => array( 'buddypress' ),
         'yoast-seo'           => array( 'yoast' ),
         'rank-math'           => array( 'rank math', 'rankmath' ),

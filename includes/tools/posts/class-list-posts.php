@@ -32,12 +32,21 @@ class List_Posts extends Base_Tool {
     const MAX_QUERY_CLAUSES = 10;
     const MAX_QUERY_DEPTH   = 3;
 
+    
+
+
+
+
+
+
+    const REST_FIELDS = 'id,title,status,date,modified,slug,excerpt,author,categories,tags,featured_media,link';
+
     public function get_name() {
         return 'wp_list_posts';
     }
 
     public function get_description() {
-        return 'Lists WordPress posts. Optional filters: `status` (publish/draft/pending/private/future/trash — default publish; use "any" to get all statuses), `statuses` (array of statuses, instead of status), `search`, `categories` (array of category IDs), `tags` (array of tag IDs), `author` (user ID), `author_exclude` (array of user IDs to exclude), `include` / `exclude` (arrays of post IDs; exclude and sticky false cannot be combined with include, which WordPress lets override them), `slug` (array of slugs), `sticky` (boolean), `has_password` (boolean), `post_mime_type`, `comment_count` (exact number of comments), `year` / `monthnum` / `day`, `after` / `before` (ISO 8601 date-time range on publish date), `date_query`, `tax_query`, `meta_key` / `meta_value` / `meta_compare`, `meta_query` (WP_Query structures from an allowlist; meta filters only on keys this caller could read: a protected key needs the right to edit every post, and a status other than publish needs the right to read other authors\' posts in it), `per_page` (max 100, default 10), `page`, `offset`, `orderby` (date/id/title/slug/modified/author/include/parent/menu_order/comment_count/meta_value/meta_value_num/rand — default date), `order` (asc/desc), `context` (view|edit — edit lists only posts you can edit), `raw_columns` (boolean, edit context only: each post also carries `raw`, every database column as stored — raw post_title, post_content and the rest). Returns { posts: [{ id, title, status, date, modified, slug, excerpt, author, categories (array of IDs), tags (array of IDs), featured_media, link }], total, total_pages, page, per_page }. For CPT items use `wp_list_cpt_items`.';
+        return 'Lists WordPress posts. Optional filters: `status` (publish/draft/pending/private/future/trash — default publish; use "any" to get all statuses), `statuses` (array of statuses, instead of status), `search`, `categories` (array of category IDs), `tags` (array of tag IDs), `author` (user ID), `author_exclude` (array of user IDs to exclude), `include` / `exclude` (arrays of post IDs; exclude and sticky false cannot be combined with include, which WordPress lets override them), `slug` (array of slugs), `sticky` (boolean), `has_password` (boolean), `post_mime_type`, `comment_count` (exact number of comments), `year` / `monthnum` / `day`, `after` / `before` (ISO 8601 date-time range on publish date), `date_query`, `tax_query`, `meta_key` / `meta_value` / `meta_compare`, `meta_query` (WP_Query structures from an allowlist; meta filters only on keys this caller could read: a protected key needs the right to edit every post, and a status other than publish needs the right to read other authors\' posts in it), `per_page` (max 100, default 10), `page`, `offset`, `orderby` (date/id/title/slug/modified/author/include/parent/menu_order/comment_count/meta_value/meta_value_num/rand — default date), `order` (asc/desc), `context` (view|edit — edit lists only posts you can edit), `raw_columns` (boolean, edit context only: each post also carries `raw`, every database column as stored — raw post_title, post_content and the rest). Returns { posts: [{ id, title, status, date, modified, slug, excerpt, has_excerpt, author, author_name, sticky, categories (array of IDs), tags (array of IDs), featured_media, link }], total, total_pages, page, per_page }. `excerpt` falls back to the start of the content when no excerpt is stored; `has_excerpt` is true only for a stored one. For CPT items use `wp_list_cpt_items`.';
     }
 
     public function get_category() {
@@ -241,6 +250,7 @@ class List_Posts extends Base_Tool {
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
         }
+        $request->set_param( '_fields', self::REST_FIELDS );
 
         $response = $this->dispatch( $request, $query );
 
@@ -601,11 +611,14 @@ class List_Posts extends Base_Tool {
 
 
     private static function post_rows( array $posts, string $context, bool $raw_columns ): array {
-        $result = array();
+        $result       = array();
+        $author_names = self::author_names( $posts );
         foreach ( $posts as $post ) {
             if ( 'edit' === $context && ! current_user_can( 'edit_post', (int) $post['id'] ) ) {
                 continue;
             }
+            
+            $object = get_post( (int) $post['id'] );
             $item = array(
                 'id'             => $post['id'],
                 'title'          => wp_strip_all_tags( $post['title']['rendered'] ),
@@ -614,7 +627,12 @@ class List_Posts extends Base_Tool {
                 'modified'       => $post['modified'],
                 'slug'           => $post['slug'],
                 'excerpt'        => wp_strip_all_tags( $post['excerpt']['rendered'] ),
+                
+                
+                'has_excerpt'    => is_object( $object ) && '' !== trim( (string) ( $object->post_excerpt ?? '' ) ),
                 'author'         => $post['author'],
+                'author_name'    => $author_names[ (int) $post['author'] ] ?? null,
+                'sticky'         => isset( $post['sticky'] ) ? (bool) $post['sticky'] : is_sticky( (int) $post['id'] ),
                 'categories'     => $post['categories'],
                 'tags'           => $post['tags'],
                 'featured_media' => $post['featured_media'],
@@ -622,12 +640,36 @@ class List_Posts extends Base_Tool {
             );
             if ( $raw_columns ) {
                 
-                $object      = get_post( (int) $post['id'] );
                 $item['raw'] = is_object( $object ) ? get_object_vars( $object ) : null;
             }
             $result[] = $item;
         }
         return $result;
+    }
+
+    
+
+
+
+
+
+
+    private static function author_names( array $posts ): array {
+        $ids = array();
+        foreach ( $posts as $post ) {
+            if ( ! empty( $post['author'] ) ) {
+                $ids[ (int) $post['author'] ] = true;
+            }
+        }
+        $names = array();
+        if ( $ids ) {
+            foreach ( (array) get_users( array( 'include' => array_keys( $ids ), 'fields' => array( 'ID', 'display_name' ) ) ) as $user ) {
+                if ( is_object( $user ) && isset( $user->ID ) ) {
+                    $names[ (int) $user->ID ] = (string) $user->display_name;
+                }
+            }
+        }
+        return $names;
     }
 
     

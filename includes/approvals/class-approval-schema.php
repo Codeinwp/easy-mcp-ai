@@ -36,7 +36,15 @@ class Approval_Schema {
         if ( \version_compare( $installed, self::DB_VERSION, '>=' ) ) {
             return;
         }
+        if ( ! \Easy_MCP_AI\Schema_Guard::may_retry( self::OPTION_NAME, self::DB_VERSION ) ) {
+            return;
+        }
         self::create_tables();
+        \Easy_MCP_AI\Schema_Guard::settle(
+            self::OPTION_NAME,
+            self::DB_VERSION,
+            \version_compare( (string) \get_option( self::OPTION_NAME, '0' ), self::DB_VERSION, '>=' )
+        );
     }
 
     public static function table_name() {
@@ -54,32 +62,36 @@ class Approval_Schema {
         
         
         
+        
+        
+        
+        
         $sql = "CREATE TABLE {$table} (
-            id                bigint(20)   unsigned NOT NULL AUTO_INCREMENT,
-            approval_id       varchar(36)  NOT NULL,
-            auth_source       varchar(16)  NOT NULL DEFAULT 'legacy',
-            token_id          bigint(20)   unsigned NOT NULL DEFAULT 0,
-            oauth_client_id   varchar(191) DEFAULT NULL,
-            wp_user_id        bigint(20)   unsigned NOT NULL DEFAULT 0,
-            tool_name         varchar(255) NOT NULL,
-            client_protocol   varchar(16)  DEFAULT NULL,
-            client_capabilities text       DEFAULT NULL,
-            arguments         longtext     DEFAULT NULL,
-            args_hash         varchar(64)  NOT NULL,
-            preview           text         DEFAULT NULL,
-            preview_hash      varchar(64)  DEFAULT NULL,
-            status            varchar(16)  NOT NULL DEFAULT 'pending',
-            card_secret_hash  varchar(64)  DEFAULT NULL,
-            decided_by        bigint(20)   unsigned DEFAULT NULL,
-            decided_at        datetime     DEFAULT NULL,
-            decision_via      varchar(16)  DEFAULT NULL,
-            audit_id          bigint(20)   unsigned DEFAULT NULL,
-            executed_audit_id bigint(20)   unsigned DEFAULT NULL,
-            result            longtext     DEFAULT NULL,
-            signature         varchar(64)  DEFAULT NULL,
-            created_at        datetime     NOT NULL,
-            expires_at        datetime     NOT NULL,
-            consumed_at       datetime     DEFAULT NULL,
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            approval_id varchar(36) NOT NULL,
+            auth_source varchar(16) NOT NULL DEFAULT 'legacy',
+            token_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            oauth_client_id varchar(191) DEFAULT NULL,
+            wp_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            tool_name varchar(255) NOT NULL,
+            client_protocol varchar(16) DEFAULT NULL,
+            client_capabilities text DEFAULT NULL,
+            arguments longtext DEFAULT NULL,
+            args_hash varchar(64) NOT NULL,
+            preview text DEFAULT NULL,
+            preview_hash varchar(64) DEFAULT NULL,
+            status varchar(16) NOT NULL DEFAULT 'pending',
+            card_secret_hash varchar(64) DEFAULT NULL,
+            decided_by bigint(20) unsigned DEFAULT NULL,
+            decided_at datetime DEFAULT NULL,
+            decision_via varchar(16) DEFAULT NULL,
+            audit_id bigint(20) unsigned DEFAULT NULL,
+            executed_audit_id bigint(20) unsigned DEFAULT NULL,
+            result longtext DEFAULT NULL,
+            signature varchar(64) DEFAULT NULL,
+            created_at datetime NOT NULL,
+            expires_at datetime NOT NULL,
+            consumed_at datetime DEFAULT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY approval_id (approval_id),
             KEY status_expires (status, expires_at),
@@ -97,7 +109,7 @@ class Approval_Schema {
         }
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table existence check.
         $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-        if ( $exists !== $table ) {
+        if ( ! \Easy_MCP_AI\Schema_Guard::table_found( $exists, $table ) ) {
             return;
         }
         foreach ( self::REQUIRED_COLUMNS as $column ) {

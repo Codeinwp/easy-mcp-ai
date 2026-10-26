@@ -234,12 +234,12 @@ class Admin_Routes {
                 'oauth_client_count' => $oauth_clients,
                 'tool_count'         => $tools,
                 'external'           => array(
-                    'Google Search Console' => '' !== (string) \get_option( 'easy_mcp_ai_gsc_service_account_json', '' ),
-                    'Google Analytics'      => '' !== (string) \get_option( 'easy_mcp_ai_ga_service_account_json', '' ),
-                    'DataForSEO'            => '' !== (string) \get_option( 'easy_mcp_ai_dfs_login', '' ),
-                    'SEMrush'               => '' !== (string) \get_option( 'easy_mcp_ai_semrush_api_key', '' ),
+                    'Google Search Console' => \Easy_MCP_AI\Provider_Credentials::is_configured( 'gsc' ),
+                    'Google Analytics'      => \Easy_MCP_AI\Provider_Credentials::is_configured( 'ga' ),
+                    'DataForSEO'            => \Easy_MCP_AI\Provider_Credentials::is_configured( 'dfs' ),
+                    'SEMrush'               => \Easy_MCP_AI\Provider_Credentials::is_configured( 'semrush' ),
                     
-                    'Ahrefs (DR)'           => '' !== (string) \get_option( 'easy_mcp_ai_ahrefs_api_key', '' )
+                    'Ahrefs (DR)'           => \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' )
                         && (bool) \get_option( 'easy_mcp_ai_ahrefs_enabled', false ),
                 ),
             ),

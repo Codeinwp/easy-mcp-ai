@@ -60,6 +60,7 @@ trait User_Meta_Auth_Guard {
 
 
 
+
     protected static function is_outside_printable_ascii( string $key ): bool {
         return 1 === preg_match( '/[^\x20-\x7E]/', $key );
     }
@@ -73,6 +74,38 @@ trait User_Meta_Auth_Guard {
 
     protected static function outside_printable_ascii_refusal( string $key, string $verb ): string {
         return sprintf( 'Meta key "%1$s" has a character outside printable ASCII, and such keys cannot be %2$s via this tool: the database compares user meta keys ignoring accents, character width and case, so the key could reach a protected key (wp_capabilities, session_tokens) under another spelling.', $key, $verb );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected static function has_slash( string $key ): bool {
+        return false !== strpos( $key, '\\' );
+    }
+
+    
+
+
+
+
+
+
+    protected static function slash_refusal( string $key, string $verb ): string {
+        return sprintf( 'Meta key "%1$s" contains a backslash, and such keys cannot be %2$s via this tool: WordPress removes the backslash before it stores or matches the key, so the key could reach a protected key (wp_capabilities, session_tokens) under another spelling.', $key, $verb );
     }
 
     

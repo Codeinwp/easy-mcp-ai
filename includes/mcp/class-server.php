@@ -28,6 +28,13 @@ class Server {
 
 
 
+    const STEP_UP_MESSAGE = 'Token does not have permission to use this tool. It needs the OAuth scope %s: ask the user to reconnect this app to the site and approve it.';
+
+    
+
+
+
+
 
 
 
@@ -80,6 +87,7 @@ class Server {
     private $request_client_id   = null;
     
     private $request_scope       = null;
+    
     
     
     private $scope_challenge     = null;
@@ -234,17 +242,36 @@ class Server {
 
 
 
-    private function privileged_scope_challenge( $tool_name ) {
-        if ( 'oauth' !== $this->request_auth_source || ! class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) ) {
+
+
+
+    private function step_up_scope( $tool_name ) {
+        if ( 'oauth' !== $this->request_auth_source ) {
             return null;
         }
-        $group = \Easy_MCP_AI\Privileged\Privileged_Groups::group_of_tool( $tool_name );
-        $tool  = null === $group ? null : $this->tool_registry->get_tool( $tool_name );
-        if ( ! $tool || ! Tool_State::is_enabled( $tool ) || ! \current_user_can( $tool->get_required_capability() ) ) {
+        $scope = \Easy_MCP_AI\OAuth\Scope_Map::scope_for_tool( (string) $tool_name );
+        $tool  = null === $scope ? null : $this->tool_registry->get_tool( $tool_name );
+        if ( ! $tool || ! Tool_State::is_enabled( $tool ) || ! $this->tool_matches_pattern_filter( $tool_name ) ) {
             return null;
         }
+        if ( self::is_app_only_tool( $tool ) && ! $this->client_declared_apps() ) {
+            return null;
+        }
+        $cap = self::effective_required_capability( $tool->get_category(), $tool->get_required_capability() );
+        return ! $cap || \current_user_can( $cap ) ? $scope : null;
+    }
+
+    
+
+
+
+
+
+
+
+    private function scope_challenge_for( $scope ) {
         $scopes   = preg_split( '/\s+/', trim( (string) $this->request_scope ), -1, PREG_SPLIT_NO_EMPTY );
-        $scopes[] = \Easy_MCP_AI\Privileged\Privileged_Groups::scope_for_group( $group );
+        $scopes[] = $scope;
         return implode( ' ', array_values( array_unique( $scopes ) ) );
     }
 
@@ -1134,8 +1161,12 @@ class Server {
         
         
         
-        $all_tools = array_values( array_filter( $all_tools, static function ( $tool ) use ( $allowed ) {
-            return Permission_Guard::allowlist_permits( (array) $allowed, $tool['name'] );
+        
+        $step_up   = 'oauth' === $this->request_auth_source
+            ? \Easy_MCP_AI\OAuth\Scope_Map::scopes_for_tools( array_column( $all_tools, 'name' ) )
+            : array();
+        $all_tools = array_values( array_filter( $all_tools, static function ( $tool ) use ( $allowed, $step_up ) {
+            return Permission_Guard::allowlist_permits( (array) $allowed, $tool['name'] ) || isset( $step_up[ $tool['name'] ] );
         } ) );
         $all_tools = self::available_tools( $this->tool_registry, false, $all_tools );
         
@@ -1218,8 +1249,21 @@ class Server {
         if ( null !== $allowed_tools ) {
             if ( ! $this->permission_guard->can_use_tool_with_scope( $allowed_tools, $tool_name ) ) {
                 $this->log_refusal( $token_id, $tool_name, $arguments );
-                $this->scope_challenge = $this->privileged_scope_challenge( $tool_name );
-                return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, 'Token does not have permission to use this tool' );
+                $step_up = $this->step_up_scope( $tool_name );
+                if ( null === $step_up ) {
+                    return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, 'Token does not have permission to use this tool' );
+                }
+                
+                
+                
+                
+                
+                
+                
+                if ( null === self::$active_call && 'skip' !== $this->approval_mode ) {
+                    $this->scope_challenge = $this->scope_challenge_for( $step_up );
+                }
+                return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, sprintf( self::STEP_UP_MESSAGE, $step_up ) );
             }
         } elseif ( ! $this->permission_guard->can_use_tool( $token_id, $tool_name ) ) {
             $this->log_refusal( $token_id, $tool_name, $arguments );
@@ -1285,12 +1329,18 @@ class Server {
 
         
         
+        $sent_arguments   = $arguments;
+        $arguments        = self::normalize_booleans( $tool, $arguments );
+        $approval_subject = is_array( $this->approval_mode ) ? self::normalize_booleans( $tool, $this->approval_mode ) : $arguments;
+
+        
+        
         
         
         
         
         if ( 'skip' !== $this->approval_mode && method_exists( $tool, 'precheck' ) ) {
-            if ( \Easy_MCP_AI\Approvals\Approval_Gate::requires_approval( $tool, is_array( $this->approval_mode ) ? $this->approval_mode : $arguments ) ) {
+            if ( \Easy_MCP_AI\Approvals\Approval_Gate::requires_approval( $tool, $approval_subject ) ) {
                 
                 
                 $caller_before     = self::$active_call;
@@ -1306,7 +1356,7 @@ class Server {
                     self::$active_call = $caller_before;
                 }
                 if ( null !== $refused ) {
-                    $this->log_tool_call( $token_id, $tool_name, $arguments, 'error' );
+                    $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'error' );
                     return JSON_RPC::success_response( $id, $refused );
                 }
             }
@@ -1327,8 +1377,7 @@ class Server {
             
             $approval = array( 'kind' => 'run' );
         } else {
-            $subject  = is_array( $this->approval_mode ) ? $this->approval_mode : $arguments;
-            $approval = $this->evaluate_approval( $tool, $subject, $token_id, $params );
+            $approval = $this->evaluate_approval( $tool, $approval_subject, $token_id, $params );
         }
         if ( 'redeem' === $approval['kind'] ) {
             if ( $this->get_approval_gate()->claim( $approval['row'] ) ) {
@@ -1340,17 +1389,17 @@ class Server {
         }
         if ( 'refused' === $approval['kind'] ) {
             $this->last_approval = array( 'kind' => 'refused', 'approval_id' => null );
-            $this->log_tool_call( $token_id, $tool_name, $arguments, 'approval_refused' );
+            $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_refused' );
             return JSON_RPC::success_response( $id, \Easy_MCP_AI\Approvals\Approval_Gate::refusal_result( $approval['reason'], $approval['message'] ) );
         }
         if ( 'replay' === $approval['kind'] ) {
             $this->last_approval = array( 'kind' => 'replay', 'approval_id' => $approval['row']['approval_id'] );
-            $this->log_tool_call( $token_id, $tool_name, $arguments, 'approval_replayed' );
+            $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_replayed' );
             return JSON_RPC::success_response( $id, $approval['result'] );
         }
         if ( 'ask_form' === $approval['kind'] || 'ask' === $approval['kind'] ) {
             $this->last_approval = array( 'kind' => 'paused', 'approval_id' => $approval['row']['approval_id'] );
-            $paused_audit_id = $this->log_tool_call( $token_id, $tool_name, $arguments, 'approval_required' );
+            $paused_audit_id = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_required' );
             $this->note_audit_approval( $paused_audit_id, $approval['row'] );
             $this->get_approval_gate()->note_audit_id( $approval['row'], $paused_audit_id );
             if ( 'ask_form' === $approval['kind'] ) {
@@ -1365,7 +1414,8 @@ class Server {
         
         
         
-        $audit_id            = $this->log_tool_call( $token_id, $tool_name, $arguments, 'pending' );
+        
+        $audit_id            = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'pending' );
         $this->last_audit_id = $audit_id;
         
         
@@ -1433,7 +1483,7 @@ class Server {
                 
                 
                 
-                'tool_args'       => self::record_redaction( $tool, $arguments ),
+                'tool_args'       => self::record_redaction( $tool, $sent_arguments ),
                 
                 'approval_id'     => $approval_row ? $approval_row['approval_id'] : null,
                 
@@ -1684,6 +1734,12 @@ class Server {
                 if ( 'success' === $final_status && ! $composite ) {
                     if ( ! self::call_is_read_only( $tool, $arguments ) ) {
                         
+                        
+                        
+                        
+                        
+                        try {
+                            
 
 
 
@@ -1694,7 +1750,10 @@ class Server {
 
 
 
-                        \do_action( 'easy_mcp_ai_tool_mutated', $tool_name, $this->redact_for_tool( $tool_name, $arguments ), $result );
+                            \do_action( 'easy_mcp_ai_tool_mutated', $tool_name, $this->redact_for_tool( $tool_name, $arguments ), $result );
+                        } catch ( \Throwable $e ) {
+                            self::log_listener_failure( 'easy_mcp_ai_tool_mutated', $tool_name, $e );
+                        }
                     }
                 }
             } finally {
@@ -1753,10 +1812,47 @@ class Server {
 
             \do_action( 'easy_mcp_ai_after_tool_call', $tool_name, $arguments, $context );
         } catch ( \Throwable $e ) {
-            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                error_log( sprintf( 'Easy MCP AI easy_mcp_ai_after_tool_call listener failed [%s]: %s', $tool_name, $e->getMessage() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional debug logging
-            }
+            self::log_listener_failure( 'easy_mcp_ai_after_tool_call', $tool_name, $e );
         }
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function log_listener_failure( string $hook, string $tool_name, \Throwable $e ): void {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( sprintf( 'Easy MCP AI %s listener failed [%s]: %s', $hook, $tool_name, $e->getMessage() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional debug logging
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    private static function normalize_booleans( \Easy_MCP_AI\Tools\Base_Tool $tool, array $arguments ): array {
+        if ( $tool instanceof \Easy_MCP_AI\Tools\Dynamic_Tool ) {
+            return $arguments;
+        }
+        try {
+            $schema = $tool->get_input_schema();
+        } catch ( \Throwable $e ) {
+            return $arguments;
+        }
+        return is_array( $schema ) ? Boolean_Arguments::normalize( $arguments, $schema ) : $arguments;
     }
 
     

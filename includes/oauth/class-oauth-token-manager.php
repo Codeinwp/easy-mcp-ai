@@ -42,7 +42,7 @@ class OAuth_Token_Manager {
 
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
 
-        $access_ttl  = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_access_token_ttl', self::DEFAULT_ACCESS_TTL );
+        $access_ttl  = self::access_ttl( $client_id, $wp_user_id );
         $refresh_ttl = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_refresh_token_ttl', self::DEFAULT_REFRESH_TTL );
 
         
@@ -93,6 +93,43 @@ class OAuth_Token_Manager {
             'scope'         => $scope,
             'token_id'      => $token_id,
         );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private static function access_ttl( string $client_id, int $wp_user_id ): int {
+        $configured = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_access_token_ttl', self::DEFAULT_ACCESS_TTL );
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        $filtered = \apply_filters( 'easy_mcp_ai_oauth_access_token_ttl', $configured, $wp_user_id, $client_id );
+
+        $valid = false;
+        $ttl   = \Easy_MCP_AI\Config::validate( 'oauth_access_token_ttl', $filtered, $valid );
+        return $valid ? (int) $ttl : $configured;
     }
 
     

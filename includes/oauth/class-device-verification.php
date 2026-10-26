@@ -453,6 +453,8 @@ class Device_Verification {
 
 
 
+
+
     private function add_security_headers( \WP_REST_Response $response, $script_nonce = null ) {
         $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, private' );
         $response->header( 'Pragma', 'no-cache' );

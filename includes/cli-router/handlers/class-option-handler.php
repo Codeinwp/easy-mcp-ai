@@ -59,6 +59,13 @@ class Option_Handler extends Command_Handler {
 
 
 
+    const CREDENTIAL_COMPOUNDS = array( 'purchasecode', 'licensecode', 'licencecode', 'connectionstring' );
+
+    
+
+
+
+
 
     const SITE_SETTINGS = array(
         'blogname'        => 'title',
@@ -685,11 +692,43 @@ class Option_Handler extends Command_Handler {
 
 
 
+
     public static function key_is_secret( string $key ): bool {
         if ( class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) && preg_match( \Easy_MCP_AI\Text_Redactor::SENSITIVE_KEY_PATTERN, $key ) ) {
             return true;
         }
-        return class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) && \Easy_MCP_AI\History\Change_Redactor::option_name_is_sensitive( $key );
+        if ( class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) && \Easy_MCP_AI\History\Change_Redactor::option_name_is_sensitive( $key ) ) {
+            return true;
+        }
+        return self::names_credential( $key );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static function names_credential( string $key ): bool {
+        $flat = (string) preg_replace( '/[^a-z0-9]+/', '', strtolower( $key ) );
+        if ( 'key' === substr( $flat, -3 ) ) {
+            return true;
+        }
+        foreach ( self::CREDENTIAL_COMPOUNDS as $compound ) {
+            if ( false !== strpos( $flat, $compound ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     

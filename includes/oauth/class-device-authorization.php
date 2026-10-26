@@ -186,7 +186,7 @@ class Device_Authorization {
 
         
         
-        $client = ( new Client_Registry() )->get_client( $client_id );
+        $client = ( new Client_Registry() )->find_client( $client_id );
         if ( null === $client ) {
             return self::device_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }

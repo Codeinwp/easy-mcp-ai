@@ -28,7 +28,15 @@ class Change_Log_Schema {
         if ( \version_compare( $installed, self::DB_VERSION, '>=' ) ) {
             return;
         }
+        if ( ! \Easy_MCP_AI\Schema_Guard::may_retry( self::OPTION_NAME, self::DB_VERSION ) ) {
+            return;
+        }
         self::create_tables();
+        \Easy_MCP_AI\Schema_Guard::settle(
+            self::OPTION_NAME,
+            self::DB_VERSION,
+            \version_compare( (string) \get_option( self::OPTION_NAME, '0' ), self::DB_VERSION, '>=' )
+        );
 
         
         
@@ -71,26 +79,30 @@ class Change_Log_Schema {
         
         
         
+        
+        
+        
+        
         $sql = "CREATE TABLE {$table} (
-            id              bigint(20)   unsigned NOT NULL AUTO_INCREMENT,
-            audit_id        bigint(20)   unsigned DEFAULT NULL,
-            auth_source     varchar(16)  NOT NULL DEFAULT 'legacy',
-            token_id        bigint(20)   unsigned NOT NULL DEFAULT 0,
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            audit_id bigint(20) unsigned DEFAULT NULL,
+            auth_source varchar(16) NOT NULL DEFAULT 'legacy',
+            token_id bigint(20) unsigned NOT NULL DEFAULT 0,
             oauth_client_id varchar(191) DEFAULT NULL,
-            wp_user_id      bigint(20)   unsigned NOT NULL DEFAULT 0,
-            tool_name       varchar(255) NOT NULL,
-            action          varchar(16)  NOT NULL,
-            object_type     varchar(64)  NOT NULL,
-            object_id       varchar(191) NOT NULL,
-            object_subtype  varchar(64)  DEFAULT NULL,
-            before_value    longtext     DEFAULT NULL,
-            after_value     longtext     DEFAULT NULL,
-            changed_fields  text         DEFAULT NULL,
-            revision_id     bigint(20)   unsigned DEFAULT NULL,
-            truncated       tinyint(1)   NOT NULL DEFAULT 0,
-            capture_mode    varchar(16)  DEFAULT NULL,
-            ip_address      varchar(45)  DEFAULT NULL,
-            created_at      datetime     NOT NULL,
+            wp_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            tool_name varchar(255) NOT NULL,
+            action varchar(16) NOT NULL,
+            object_type varchar(64) NOT NULL,
+            object_id varchar(191) NOT NULL,
+            object_subtype varchar(64) DEFAULT NULL,
+            before_value longtext DEFAULT NULL,
+            after_value longtext DEFAULT NULL,
+            changed_fields text DEFAULT NULL,
+            revision_id bigint(20) unsigned DEFAULT NULL,
+            truncated tinyint(1) NOT NULL DEFAULT 0,
+            capture_mode varchar(16) DEFAULT NULL,
+            ip_address varchar(45) DEFAULT NULL,
+            created_at datetime NOT NULL,
             PRIMARY KEY (id),
             KEY object_lookup (object_type, object_id(100), created_at),
             KEY tool_name (tool_name(150), created_at),
@@ -113,7 +125,7 @@ class Change_Log_Schema {
         
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table existence check.
         $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-        if ( $exists !== $table ) {
+        if ( ! \Easy_MCP_AI\Schema_Guard::table_found( $exists, $table ) ) {
             return;
         }
         \update_option( self::OPTION_NAME, self::DB_VERSION );

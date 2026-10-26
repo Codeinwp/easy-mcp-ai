@@ -60,6 +60,9 @@ class Plugin {
         \add_action( 'init', array( $this, 'handle_well_known' ), 0 );
         
         
+        \add_filter( 'rest_pre_serve_request', array( Cache\Page_Cache_Opt_Out::class, 'on_rest_pre_serve_request' ), 1, 4 );
+        
+        
         
         
         
@@ -94,6 +97,10 @@ class Plugin {
         
         
         \add_action( 'easy_mcp_ai_skills_sync', array( __CLASS__, 'run_skills_sync' ) );
+        
+        
+        
+        \add_action( OAuth\Client_Metadata_Support::HOOK, array( __CLASS__, 'run_oauth_cimd_probe' ) );
         \add_action( 'easy_mcp_ai_task_tick', array( $this, 'run_task_tick' ), 10, 1 );
         
         \add_action( 'easy_mcp_ai_search_replace_tick', array( __CLASS__, 'run_search_replace_tick' ), 10, 1 );
@@ -119,6 +126,12 @@ class Plugin {
         
         \add_action( 'update_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'learnpress_group_updated' ), 10, 2 );
         \add_action( 'add_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'learnpress_group_added' ), 10, 2 );
+        
+        
+        
+        \add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_elementor_abilities' ), 1000 );
+        \add_action( 'update_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'elementor_group_updated' ), 10, 2 );
+        \add_action( 'add_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'elementor_group_added' ), 10, 2 );
         
         
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -253,6 +266,10 @@ class Plugin {
         if ( null === $document ) {
             return;
         }
+
+        
+        
+        Cache\Page_Cache_Opt_Out::apply_to_direct_response();
 
         
         
@@ -593,6 +610,9 @@ class Plugin {
         if ( ! isset( $_GET['easy_mcp_ai_approve'] ) && ! isset( $_POST['easy_mcp_ai_approve'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
             return;
         }
+        
+        
+        Cache\Page_Cache_Opt_Out::apply_to_direct_response();
         ob_start();
         \Easy_MCP_AI\Approvals\Approval_Schema::maybe_upgrade();
         Activator::maybe_upgrade_core_tables();
@@ -829,6 +849,12 @@ class Plugin {
 
 
     private function handle_oauth_authorize( string $flow = 'authorize', string $iss_mode = 'site' ) {
+        
+        
+        
+        
+        Cache\Page_Cache_Opt_Out::apply_to_direct_response();
+
         
         
         
@@ -1128,6 +1154,11 @@ class Plugin {
     
     public static function run_skills_sync(): void {
         \Easy_MCP_AI\Skills\Skill_Sync::run();
+    }
+
+    
+    public static function run_oauth_cimd_probe(): void {
+        OAuth\Client_Metadata_Support::run_probe();
     }
 
     
@@ -1612,6 +1643,35 @@ class Plugin {
 
     public static function learnpress_group_added( $option, $value ): void {
         Compat\Learnpress_Abilities::group_changed( array(), $value );
+    }
+
+    
+
+
+
+    public static function register_elementor_abilities(): void {
+        Compat\Elementor_Abilities::register_abilities();
+        Compat\Elementor_Abilities::enable_pending();
+    }
+
+    
+
+
+
+
+
+    public static function elementor_group_updated( $old_value, $value ): void {
+        Compat\Elementor_Abilities::group_changed( $old_value, $value );
+    }
+
+    
+
+
+
+
+
+    public static function elementor_group_added( $option, $value ): void {
+        Compat\Elementor_Abilities::group_changed( array(), $value );
     }
 
     

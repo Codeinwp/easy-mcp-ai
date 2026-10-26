@@ -204,15 +204,40 @@ class Tool_Catalogue {
             foreach ( $by_category[ $category ] as $definition ) {
                 $items[] = $this->detail( $definition, 'core', ! in_array( $definition['name'], $disabled, true ) );
             }
-            $rows[] = array(
+            $row = array(
                 'key'    => $category,
                 'label'  => $label,
                 'counts' => self::counts( $items ),
                 'tools'  => self::active_names( $items, $disabled, $patterns ),
                 'items'  => $items,
             );
+            $covers = self::covers( $category );
+            if ( array() !== $covers ) {
+                $row['covers'] = $covers;
+            }
+            $rows[] = $row;
         }
         return $rows;
+    }
+
+    
+
+
+
+
+
+
+
+    private static function covers( string $category ): array {
+        if ( 'builders' !== $category ) {
+            return array();
+        }
+        return array_map(
+            static function ( \Easy_MCP_AI\Builders\Layout_Adapter $adapter ): string {
+                return $adapter->label();
+            },
+            \Easy_MCP_AI\Builders\Builder_Registry::present()
+        );
     }
 
     
@@ -274,6 +299,11 @@ class Tool_Catalogue {
                 'tools'       => $tools,
                 'items'       => $items,
             );
+            
+            
+            if ( ! empty( $group['abilities'] ) && is_string( $group['abilities'] ) ) {
+                $rows[ count( $rows ) - 1 ]['abilities'] = $group['abilities'];
+            }
         }
         return $rows;
     }

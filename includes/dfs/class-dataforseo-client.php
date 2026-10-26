@@ -132,6 +132,13 @@ class DataforSEO_Client {
 
 
 	public static function get_credentials(): array {
+		
+		if ( \Easy_MCP_AI\Provider_Credentials::is_deployed( 'dfs' ) ) {
+			return array(
+				'login'        => \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_LOGIN ),
+				'api_password' => \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_API_PASSWORD ),
+			);
+		}
 		$login = \get_option( self::OPTION_LOGIN, '' );
 		$password = \get_option( self::OPTION_API_PASSWORD, '' );
 

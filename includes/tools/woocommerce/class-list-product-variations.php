@@ -14,7 +14,7 @@ class List_Product_Variations extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists variations for a WooCommerce variable product, paginated (default per_page 10 — use `per_page`/`page` to page through all variations; the response has no total/total_pages count, so callers must keep paging until a short/empty page is returned). Returns each variation\'s id, sku, price, stock_status, stock_quantity, and attributes; `_links` is omitted.';
+        return 'Lists variations for a WooCommerce variable product, paginated (default per_page 10). Returns { variations, product_id, total, total_pages, page, per_page }: total and total_pages count every variation of the product, so page through them with `page` until it reaches total_pages. Each variation carries its id, sku, price, stock_status, stock_quantity, and attributes; `_links` is omitted.';
     }
 
     public function get_category() {
@@ -72,11 +72,15 @@ class List_Product_Variations extends Base_Tool {
             'page'     => isset( $arguments['page'] ) ? absint( $arguments['page'] ) : 1,
         );
 
-        $data = $this->rest_request( 'GET', '/wc/v3/products/' . $product_id . '/variations', $params );
+        $response = $this->rest_response( 'GET', '/wc/v3/products/' . $product_id . '/variations', $params );
+        $data     = $response->get_data();
 
-        return array(
-            'variations' => $this->strip_response_noise( $data ),
-            'product_id' => $product_id,
+        return array_merge(
+            array(
+                'variations' => $this->strip_response_noise( $data ),
+                'product_id' => $product_id,
+            ),
+            $this->pagination_meta( $response, $params['page'], $params['per_page'], is_array( $data ) ? count( $data ) : 0 )
         );
     }
 }

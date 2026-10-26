@@ -255,12 +255,31 @@ class Approval_Gate {
     }
 
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public static function is_destructive_by_annotation( $tool ) {
-        if ( ! is_object( $tool ) || ! method_exists( $tool, 'get_annotations' ) ) {
-            return false;
+        $annotations = is_object( $tool ) && method_exists( $tool, 'get_annotations' ) ? $tool->get_annotations() : array();
+        if ( ! is_array( $annotations ) ) {
+            $annotations = array();
         }
-        $annotations = $tool->get_annotations();
-        return is_array( $annotations ) && ! empty( $annotations['destructiveHint'] );
+        $destructive = isset( $annotations['destructiveHint'] ) ? $annotations['destructiveHint'] : null;
+        if ( null !== $destructive ) {
+            return false !== $destructive;
+        }
+        return ! ( isset( $annotations['readOnlyHint'] ) && true === $annotations['readOnlyHint'] );
     }
 
     
@@ -346,6 +365,7 @@ class Approval_Gate {
 
 
 
+
     public function evaluate( $tool, array $arguments, array $identity, array $params, $client_caps = null, $client_protocol = null ) {
         if ( ! self::requires_approval( $tool, $arguments ) ) {
             return array( 'kind' => 'run' );
@@ -356,10 +376,14 @@ class Approval_Gate {
         
         
         
+        
+        
+        
         if ( method_exists( $tool, 'approval_refusal' ) ) {
             $refusal = $tool->approval_refusal( $arguments );
             if ( is_string( $refusal ) && '' !== $refusal ) {
-                return array( 'kind' => 'refused', 'reason' => 'preview', 'message' => $refusal );
+                $replay = $this->consumed_replay( $identity, $tool->get_name(), self::args_hash( $tool->get_name(), $arguments ) );
+                return $replay ? $replay : array( 'kind' => 'refused', 'reason' => 'preview', 'message' => $refusal );
             }
         }
         $tool_name = $tool->get_name();
@@ -376,8 +400,7 @@ class Approval_Gate {
             return $this->redeem_or_refuse( $tool, $arguments, $approved );
         }
         
-        $consumed = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_CONSUMED );
-        $replay   = $consumed && $this->row_is_valid( $consumed, $identity ) ? $this->replay_of( $consumed ) : null;
+        $replay = $this->consumed_replay( $identity, $tool_name, $hash );
         if ( $replay ) {
             return $replay;
         }
@@ -390,6 +413,20 @@ class Approval_Gate {
             }
         }
         return array( 'kind' => $this->offers_form( $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $pending );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private function consumed_replay( array $identity, string $tool_name, string $hash ): ?array {
+        $consumed = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_CONSUMED );
+        return $consumed && $this->row_is_valid( $consumed, $identity ) ? $this->replay_of( $consumed ) : null;
     }
 
     
@@ -827,6 +864,20 @@ class Approval_Gate {
     
     public static function flatten( $text ) {
         return trim( (string) preg_replace( '/\s+/', ' ', (string) $text ) );
+    }
+
+    
+
+
+
+
+
+
+
+    public static function preview_overflow( string $description ): ?int {
+        $text   = self::flatten( $description );
+        $length = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
+        return $length > self::PREVIEW_MAX ? $length : null;
     }
 
     

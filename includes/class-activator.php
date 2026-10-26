@@ -14,6 +14,7 @@ class Activator {
             foreach ( $sites as $blog_id ) {
                 \switch_to_blog( $blog_id );
                 try {
+                    Schema_Guard::reset();
                     self::create_tables();
                     self::create_oauth_tables();
                     self::create_change_log_tables();
@@ -26,6 +27,7 @@ class Activator {
                 }
             }
         } else {
+            Schema_Guard::reset();
             self::create_tables();
             self::create_oauth_tables();
             self::create_change_log_tables();
@@ -163,11 +165,14 @@ class Activator {
 
 
     public static function maybe_upgrade_core_tables() {
-        if ( \get_option( 'easy_mcp_ai_db_version' ) !== EASY_MCP_AI_VERSION ) {
-            
-            self::mark_setup_complete();
-            self::create_tables();
+        if ( \get_option( 'easy_mcp_ai_db_version' ) === EASY_MCP_AI_VERSION
+            || ! Schema_Guard::may_retry( 'easy_mcp_ai_db_version', EASY_MCP_AI_VERSION ) ) {
+            return;
         }
+        
+        self::mark_setup_complete();
+        self::create_tables();
+        Schema_Guard::settle( 'easy_mcp_ai_db_version', EASY_MCP_AI_VERSION, \get_option( 'easy_mcp_ai_db_version' ) === EASY_MCP_AI_VERSION );
     }
 
     
@@ -256,7 +261,7 @@ class Activator {
             auth_source varchar(16) DEFAULT NULL,
             wp_user_id bigint(20) unsigned DEFAULT NULL,
             oauth_client_id varchar(191) DEFAULT NULL,
-            duration_ms int unsigned DEFAULT NULL,
+            duration_ms int(10) unsigned DEFAULT NULL,
             approval_id varchar(36) DEFAULT NULL,
             approved_by bigint(20) unsigned DEFAULT NULL,
             approved_via varchar(16) DEFAULT NULL,
@@ -288,9 +293,9 @@ class Activator {
             return; 
         }
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off existence check on plugin-owned tables.
-        $tokens_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tokens_table ) ) ) === $tokens_table;
+        $tokens_exists = Schema_Guard::table_found( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tokens_table ) ) ), $tokens_table );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off existence check on plugin-owned tables.
-        $audit_exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $audit_table ) ) ) === $audit_table;
+        $audit_exists  = Schema_Guard::table_found( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $audit_table ) ) ), $audit_table );
         if ( ! $tokens_exists || ! $audit_exists ) {
             return;
         }

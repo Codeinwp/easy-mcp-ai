@@ -9,12 +9,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Theme_Mod extends Base_Tool {
 
+    const NOT_A_VALUE = '"value" must be a string, number, boolean, object or list; null is not accepted. Use wp_delete_theme_mod to go back to the default.';
+
     public function get_name() {
         return 'wp_update_theme_mod';
     }
 
     public function get_description() {
-        return 'Changes one theme mod of the active theme, as publishing it in Appearance → Customize does: the setting\'s own validation and sanitizing run. `key` must be a Customizer setting the theme or a plugin registers (wp_get_theme_mods with include_editable: true lists them, with defaults and choices); send `value` in the type the setting stores (see its default). Refused, with nothing written: unknown keys, site options, menu locations, custom_css_post_id, Additional CSS (use wp_update_custom_css) and values the setting rejects. Live: { published: true, changed, key, previous, value, stored, warning? } — `changed` is false when nothing stored changed. Not live: { published: false, staged: true, key, value, checked, preview_url, share_url, message, reason? } — with publish: false, or when this site stops the Customizer outside its own screen (`reason`), the change waits in the Customizer draft for a person to publish at preview_url (login required); share_url shows it on the site to anyone with the link, until it is published.';
+        return 'Changes one theme mod of the active theme, as publishing it in Appearance → Customize does: the setting\'s own validation and sanitizing run. `key` must be a Customizer setting the theme or a plugin registers (wp_get_theme_mods with include_editable: true lists them, with defaults and choices); send `value` in the shape the setting stores (see its default): an object or list when the default is one (it replaces the stored value whole), otherwise a string, number or boolean. Refused, with nothing written: unknown keys, site options, menu locations, custom_css_post_id, Additional CSS (use wp_update_custom_css), values of another shape and values the setting rejects. Live: { published: true, changed, key, previous, value, stored, warning? } — `changed` is false when nothing stored changed. Not live: { published: false, staged: true, key, value, checked, preview_url, share_url, message, reason? } — with publish: false, or when this site stops the Customizer outside its own screen (`reason`), the change waits in the Customizer draft for a person to publish at preview_url (login required); share_url shows it on the site to anyone with the link, until it is published.';
     }
 
     public function get_category() {
@@ -48,12 +50,19 @@ class Update_Theme_Mod extends Base_Tool {
                 
                 
                 
+                
+                
                 'value'   => array(
-                    'description' => 'New value: a string, number or boolean, of the type the setting stores (see its default).',
+                    'description' => 'New value, in the shape the setting stores (see its default): an object or list when the default is one, otherwise a string, number or boolean.',
                     'oneOf'       => array(
                         array( 'type' => 'string' ),
                         array( 'type' => 'number' ),
                         array( 'type' => 'boolean' ),
+                        array( 'type' => 'object' ),
+                        array(
+                            'type'  => 'array',
+                            'items' => new \stdClass(),
+                        ),
                     ),
                 ),
                 'publish' => array(
@@ -73,8 +82,8 @@ class Update_Theme_Mod extends Base_Tool {
 
         $key   = Customizer_Settings::parse_key( $arguments['key'] );
         $value = $arguments['value'];
-        if ( ! is_string( $value ) && ! is_int( $value ) && ! is_float( $value ) && ! is_bool( $value ) ) {
-            throw new \InvalidArgumentException( '"value" must be a string, number or boolean. Arrays, objects and null are not accepted; use wp_delete_theme_mod to go back to the default.' );
+        if ( ! is_scalar( $value ) && ! is_array( $value ) ) {
+            throw new \InvalidArgumentException( self::NOT_A_VALUE );
         }
 
         $publish = ! array_key_exists( 'publish', $arguments ) || rest_sanitize_boolean( $arguments['publish'] );
@@ -100,9 +109,12 @@ class Update_Theme_Mod extends Base_Tool {
         $unknown = false;
         try {
             return Customizer_Settings::with_manager(
-                static function ( $manager ) use ( $key, $value, $publish, &$entered, &$checked, &$unknown ) {
+                static function ( $manager ) use ( $key, &$value, $publish, &$entered, &$checked, &$unknown ) {
                     $entered = true;
                     $setting = Customizer_Settings::resolve_writable_setting( $manager, $key );
+                    
+                    
+                    $value = Theme_Mod_Value::conform( (string) $setting->id, $setting->default, $value );
                     Customizer_Settings::validate_value( $manager, $setting, $value );
                     $checked = $setting;
 

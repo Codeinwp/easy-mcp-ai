@@ -98,6 +98,12 @@ final class Dedicated_Tools {
         'GET /wp/v2/taxonomies'                      => 'wp_get_taxonomies',
         'GET /wp/v2/block-types'                     => 'wp_list_block_types',
         'GET /wp/v2/block-patterns/patterns'         => 'wp_list_patterns',
+        
+        'GET /contact-form-7/v1/contact-forms'       => 'wp_cf7_list_forms',
+        'POST /contact-form-7/v1/contact-forms'      => 'wp_cf7_create_form',
+        'GET /contact-form-7/v1/contact-forms/{id}'  => 'wp_cf7_get_form',
+        'WRITE /contact-form-7/v1/contact-forms/{id}' => 'wp_cf7_update_form',
+        'DELETE /contact-form-7/v1/contact-forms/{id}' => 'wp_cf7_delete_form',
     );
 
     

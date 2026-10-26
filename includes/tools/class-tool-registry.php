@@ -342,6 +342,27 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\WooCommerce\\List_Logs',
             'Easy_MCP_AI\\Tools\\WooCommerce\\Get_Log',
             
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Get_Store_Settings',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Update_Store_Settings',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\List_Countries',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Create_Shipping_Zone',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Update_Shipping_Zone',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Delete_Shipping_Zone',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Add_Shipping_Method',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Update_Shipping_Method',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Delete_Shipping_Method',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\List_Shipping_Classes',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Create_Shipping_Class',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Update_Shipping_Class',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Delete_Shipping_Class',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Update_Payment_Gateway',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Create_Tax_Rate',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Update_Tax_Rate',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Delete_Tax_Rate',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\List_Tax_Classes',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Create_Tax_Class',
+            'Easy_MCP_AI\\Tools\\WooCommerce\\Delete_Tax_Class',
+            
             'Easy_MCP_AI\\Tools\\ACF\\Get_Fields',
             'Easy_MCP_AI\\Tools\\ACF\\Update_Fields',
             'Easy_MCP_AI\\Tools\\ACF\\Get_User_Fields',
@@ -368,6 +389,17 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\Redirection\\List_Groups',
             'Easy_MCP_AI\\Tools\\Redirection\\List_404s',
             
+            'Easy_MCP_AI\\Tools\\Site_Kit\\Get_Status',
+            'Easy_MCP_AI\\Tools\\Site_Kit\\GA_Run_Report',
+            'Easy_MCP_AI\\Tools\\Site_Kit\\GA_List_Key_Events',
+            'Easy_MCP_AI\\Tools\\Site_Kit\\GSC_Query_Performance',
+            
+            'Easy_MCP_AI\\Tools\\Contact_Form_7\\List_Forms',
+            'Easy_MCP_AI\\Tools\\Contact_Form_7\\Get_Form',
+            'Easy_MCP_AI\\Tools\\Contact_Form_7\\Create_Form',
+            'Easy_MCP_AI\\Tools\\Contact_Form_7\\Update_Form',
+            'Easy_MCP_AI\\Tools\\Contact_Form_7\\Delete_Form',
+            
             'Easy_MCP_AI\\Tools\\BuddyPress\\List_Members',
             'Easy_MCP_AI\\Tools\\BuddyPress\\Get_Member',
             'Easy_MCP_AI\\Tools\\BuddyPress\\List_Activity',
@@ -384,9 +416,16 @@ class Tool_Registry {
             'Easy_MCP_AI\\Tools\\SEO\\Yoast_Update_Post_Seo',
             'Easy_MCP_AI\\Tools\\SEO\\Yoast_Get_Term_Seo',
             'Easy_MCP_AI\\Tools\\SEO\\Yoast_Update_Term_Seo',
+            'Easy_MCP_AI\\Tools\\SEO\\Yoast_Get_Settings',
+            'Easy_MCP_AI\\Tools\\SEO\\Yoast_Update_Settings',
             'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Get_Head',
             'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Get_Post_Seo',
             'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Update_Post_Seo',
+            'Easy_MCP_AI\\Tools\\SEO\\Rankmath_List_Redirects',
+            'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Get_Redirect',
+            'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Create_Redirect',
+            'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Update_Redirect',
+            'Easy_MCP_AI\\Tools\\SEO\\Rankmath_Delete_Redirects',
             'Easy_MCP_AI\\Tools\\SEO\\Aioseo_Get_Post_Seo',
             'Easy_MCP_AI\\Tools\\SEO\\Aioseo_Update_Post_Seo',
             
@@ -474,7 +513,16 @@ class Tool_Registry {
             
             'Easy_MCP_AI\\Tools\\Posts\\Create_Preview_Link',
             
+            'Easy_MCP_AI\\Tools\\Posts\\Duplicate_Post',
+            
             'Easy_MCP_AI\\Tools\\Cache\\Clear_Cache',
+            
+            'Easy_MCP_AI\\Tools\\Mail\\Send_Email',
+            
+            
+            'Easy_MCP_AI\\Tools\\Builders\\Get_Page_Layout',
+            'Easy_MCP_AI\\Tools\\Builders\\List_Layout_Elements',
+            'Easy_MCP_AI\\Tools\\Builders\\Update_Page_Layout',
 
             
             'Easy_MCP_AI\\Tools\\Taxonomy\\List_Terms',
@@ -588,6 +636,8 @@ class Tool_Registry {
         'Easy_MCP_AI\\Tools\\ACF\\',
         'Easy_MCP_AI\\Tools\\Events_Calendar\\',
         'Easy_MCP_AI\\Tools\\Redirection\\',
+        'Easy_MCP_AI\\Tools\\Site_Kit\\',
+        'Easy_MCP_AI\\Tools\\Contact_Form_7\\',
         'Easy_MCP_AI\\Tools\\BuddyPress\\',
         'Easy_MCP_AI\\Tools\\SEO\\',
         'Easy_MCP_AI\\Tools\\GSC\\',

@@ -198,7 +198,51 @@ abstract class Rest_Route_Tool extends Base_Tool {
         if ( null !== $refusal ) {
             throw new \RuntimeException( $refusal ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
+        $this->refuse_builder_owned_route_write( $path, $query, $body );
         return array( $method, $path, $query, $body, $resolved );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function refuse_builder_owned_route_write( string $path, array $query, array $body ): void {
+        $sent = array_merge( $query, $body );
+        
+        if ( 1 === preg_match( '#^/wc/v\d+/products/(\d+)/?$#i', $path, $product ) ) {
+            $this->refuse_builder_owned_product_writes( array( array( 'id' => (int) $product[1] ) + $sent ) );
+            return;
+        }
+        if ( 1 === preg_match( '#^/wc/v\d+/products/batch/?$#i', $path ) ) {
+            $this->refuse_builder_owned_product_writes( isset( $sent['update'] ) && is_array( $sent['update'] ) ? $sent['update'] : array() );
+            return;
+        }
+        if ( array() === $sent || 1 !== preg_match( '#^/(.+)/([^/]+)/(\d+)(?:/autosaves)?/?$#i', $path, $match ) ) {
+            return;
+        }
+        $post = get_post( (int) $match[3] );
+        $type = is_object( $post ) ? get_post_type_object( $post->post_type ) : null;
+        if ( ! is_object( $type ) ) {
+            return;
+        }
+        $base      = ! empty( $type->rest_base ) ? (string) $type->rest_base : (string) $type->name;
+        $namespace = ! empty( $type->rest_namespace ) ? (string) $type->rest_namespace : 'wp/v2';
+        if ( 0 !== strcasecmp( $namespace, $match[1] ) || 0 !== strcasecmp( $base, $match[2] ) ) {
+            return;
+        }
+        $this->refuse_builder_owned_write( (int) $post->ID, array_key_exists( 'content', $sent ), isset( $sent['meta'] ) && is_array( $sent['meta'] ) ? $sent['meta'] : array() );
     }
 
     

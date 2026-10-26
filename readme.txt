@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.2.2
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,10 +227,29 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.2.2 =
-- Added tools to create and delete GA4 key events
-- Fixed disabled-tool search finding the WP-CLI tool for auto-update requests.
-- Fixed built-in tools missing on Windows servers.
+= 2.3.0 =
+- Added page layout tools to read and edit Elementor, WPBakery and Flatsome pages.
+- Added Site Kit tools that read Analytics and Search Console data.
+- Added Contact Form 7 tools to list, create, edit and delete forms.
+- Added Rank Math redirect tools to list, create, edit and delete redirects.
+- Added Yoast tools that read and write site-wide title and social settings.
+- Added a duplicate post tool for posts, pages and custom post types.
+- Added a tool that sends plain-text email to site users.
+- Added step-up authorization, so AI clients can ask for a missing OAuth permission mid-task.
+- Added support for OAuth client ID metadata documents.
+- Added wp-config constants for External Data provider credentials.
+- Added page totals and custom field support to WooCommerce and user lists.
+- Fixed several permission gaps that exposed protected data.
+- Fixed several safety and reliability issues in redirects, caching and logging.
+- Fixed OAuth authorization codes granting full access after a revoke or scope change.
+- Fixed abilities that declare no annotations changing the site without approval.
+- Fixed global styles and Additional CSS edits skipping approval in some tools.
+- Fixed the string false deleting items permanently instead of moving them to trash.
+- Fixed theme style settings accepting text that crashed the site.
+- Fixed page and post lists failing on sites with large content.
+- Fixed history, update and list tools returning IDs instead of names and saved values.
+- Fixed Elementor pages showing stale content after a revision restore or cache clear.
+- Fixed database setup repeating on sites with capital letters in the table prefix.
 
 [See changelog for all versions](https://easymcpai.com/changelog).
 

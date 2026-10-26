@@ -120,6 +120,7 @@ class Dashboard_Controller extends Admin_Rest_Controller {
             ),
             'mcpUrl'        => \rest_url( 'easy-mcp-ai/v1/mcp' ),
             'connectorName' => self::connector_name( \get_bloginfo( 'name' ) ),
+            'usageAsk'      => Settings_Controller::usage_ask(),
         );
 
         return $this->ok( $payload );

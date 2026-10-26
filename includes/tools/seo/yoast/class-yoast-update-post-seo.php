@@ -18,7 +18,7 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 	}
 
 	public function get_description() {
-		return 'Updates Yoast SEO metadata on a post or page by writing to the Yoast postmeta keys directly. Fields: seo_title, meta_description, focus_keyword, is_cornerstone, og_title, og_description, og_image, twitter_title, twitter_description, twitter_image, noindex ("0"=default/"1"=noindex/"2"=index), nofollow ("0"/"1"), advanced_robots (csv of noimageindex,noarchive,nosnippet), canonical (URL), primary_term + taxonomy, breadcrumb_title, schema_page_type, schema_article_type.';
+		return 'Updates Yoast SEO metadata on a post or page by writing to the Yoast postmeta keys directly. Fields: seo_title, meta_description, focus_keyword, is_cornerstone, og_title, og_description, og_image, twitter_title, twitter_description, twitter_image, noindex ("0"=default/"1"=noindex/"2"=index), nofollow ("0"/"1"), advanced_robots (csv of noimageindex,noarchive,nosnippet), canonical (URL), primary_term + taxonomy, breadcrumb_title, schema_page_type, schema_article_type. Returns { post_id, updated_fields, fields }: `fields` is the stored value of every field sent, read back after the write (is_cornerstone as a boolean), so a value re-sent unchanged, which updated_fields leaves out, is confirmed too.';
 	}
 
 	public function get_category() {
@@ -261,6 +261,49 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 		return array(
 			'post_id'        => $post_id,
 			'updated_fields' => $updated,
+			'fields'         => self::stored_fields( $post_id, $arguments, array_merge( $meta_map, $url_meta_map ) ),
 		);
+	}
+
+	
+
+
+
+
+
+
+
+
+
+
+	private static function stored_fields( int $post_id, array $arguments, array $text_keys ): array {
+		$keys = array_merge(
+			$text_keys,
+			array(
+				'is_cornerstone'      => '_yoast_wpseo_is_cornerstone',
+				'noindex'             => '_yoast_wpseo_meta-robots-noindex',
+				'nofollow'            => '_yoast_wpseo_meta-robots-nofollow',
+				'advanced_robots'     => '_yoast_wpseo_meta-robots-adv',
+				'canonical'           => '_yoast_wpseo_canonical',
+				'breadcrumb_title'    => '_yoast_wpseo_bctitle',
+				'schema_page_type'    => '_yoast_wpseo_schema_page_type',
+				'schema_article_type' => '_yoast_wpseo_schema_article_type',
+			)
+		);
+		if ( isset( $arguments['primary_term'], $arguments['taxonomy'] ) ) {
+			
+			$keys['primary_term'] = '_yoast_wpseo_primary_' . trim( (string) $arguments['taxonomy'] );
+		}
+		
+		$meta_id = (int) ( wp_is_post_revision( $post_id ) ?: $post_id );
+		$fields  = array();
+		foreach ( $keys as $field => $meta_key ) {
+			if ( ! isset( $arguments[ $field ] ) ) {
+				continue;
+			}
+			$value            = (string) get_post_meta( $meta_id, $meta_key, true );
+			$fields[ $field ] = 'is_cornerstone' === $field ? '1' === $value : $value;
+		}
+		return $fields;
 	}
 }

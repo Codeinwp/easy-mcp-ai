@@ -9,12 +9,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Shipping_Zones extends Base_Tool {
 
+    use Store_Setup;
+
     public function get_name() {
         return 'wp_wc_list_shipping_zones';
     }
 
     public function get_description() {
-        return 'Lists all WooCommerce shipping zones. No parameters. Returns the array of zones from the WooCommerce API, each including id, name, order (display sort order); `_links` is omitted. Zone id=0 is the special "Rest of the World" fallback zone. Use the `id` with `wp_wc_list_shipping_methods` to see what shipping options are configured per zone. Requires WooCommerce active.';
+        return 'Lists all WooCommerce shipping zones. No parameters. Returns the array of zones from the WooCommerce API, each including id, name, order (display sort order) and locations (each { code, type }: country "US", state "US:CA", continent "EU" or postcode); `_links` is omitted. Zone id=0 is the special "Rest of the World" fallback zone: it covers every location no other zone does, so its locations list is empty. Use the `id` with `wp_wc_list_shipping_methods` to see what shipping options are configured per zone. Requires WooCommerce active.';
     }
 
     public function get_category() {
@@ -43,12 +45,18 @@ class List_Shipping_Zones extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        if ( ! class_exists( 'WooCommerce' ) ) {
-            throw new \RuntimeException( 'WooCommerce is not active.' );
+        $this->require_woocommerce();
+
+        $zones = $this->strip_response_noise( $this->rest_request( 'GET', '/wc/v3/shipping/zones' ) );
+        if ( ! is_array( $zones ) ) {
+            return $zones;
         }
 
-        $data = $this->rest_request( 'GET', '/wc/v3/shipping/zones' );
-
-        return $this->strip_response_noise( $data );
+        foreach ( $zones as $index => $zone ) {
+            if ( is_array( $zone ) && isset( $zone['id'] ) ) {
+                $zones[ $index ]['locations'] = $this->zone_locations( (int) $zone['id'] );
+            }
+        }
+        return $zones;
     }
 }

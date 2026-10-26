@@ -159,6 +159,7 @@ class Update_CPT_Item extends Base_Tool {
         $meta_sent      = $this->apply_meta_argument( $arguments, $params );
         $meta_post_type = $meta_sent ? self::refuse_meta_without_support( $rest_base ) : '';
         $this->apply_post_type_fields( $arguments, $rest_base, $params );
+        $this->refuse_builder_owned_write( $item_id, array_key_exists( 'content', $params ), (array) ( $params['meta'] ?? array() ) );
 
         $data = self::update_item( $rest_base, $item_id, $params );
 

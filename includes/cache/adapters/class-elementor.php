@@ -42,6 +42,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+
+
+
+
 final class Elementor extends Cache_Adapter {
 
     
@@ -70,6 +74,9 @@ final class Elementor extends Cache_Adapter {
 
     
     const POST_CSS_CLASS = 'Elementor\\Core\\Files\\CSS\\Post';
+
+    
+    const ELEMENT_CACHE_KEY = 'Elementor\\Core\\Base\\Document::CACHE_META_KEY';
 
     public function id(): string {
         return 'elementor';
@@ -175,18 +182,39 @@ final class Elementor extends Cache_Adapter {
         if ( ! $calls->method_exists( self::POST_CSS_CLASS, 'create' ) ) {
             return $this->helper_missing( 'Elementor\\Core\\Files\\CSS\\Post::create()' );
         }
+        $element_cache_key = $this->element_cache_key();
         foreach ( $post_ids as $post_id ) {
             $file = $calls->call( array( self::POST_CSS_CLASS, 'create' ), array( $post_id ) );
             if ( is_object( $file ) ) {
                 $calls->call( array( $file, 'delete' ) );
             }
             $calls->do_action( 'elementor/atomic-widgets/styles/clear', array( 'local', $post_id ) );
+            if ( null !== $element_cache_key ) {
+                $calls->call( 'delete_post_meta', array( $post_id, $element_cache_key ) );
+            }
         }
-        $detail = sprintf( 'Elementor cleared the CSS of %d post(s).', count( $post_ids ) );
+        $detail = null === $element_cache_key
+            ? sprintf( 'Elementor cleared the CSS of %d post(s).', count( $post_ids ) )
+            : sprintf( 'Elementor cleared the CSS and the element cache of %d post(s).', count( $post_ids ) );
         if ( array() !== $unmapped ) {
             $detail .= sprintf( ' Not a single post or page, so not cleared here: %s (use scope=site).', implode( ', ', $unmapped ) );
         }
         return $this->sent( $detail );
+    }
+
+    
+
+
+
+
+
+    private function element_cache_key(): ?string {
+        $calls = $this->calls();
+        if ( ! $calls->defined( self::ELEMENT_CACHE_KEY ) ) {
+            return null;
+        }
+        $key = $calls->constant( self::ELEMENT_CACHE_KEY );
+        return is_string( $key ) && '' !== $key ? $key : null;
     }
 
     

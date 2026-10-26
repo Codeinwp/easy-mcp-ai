@@ -71,6 +71,21 @@ class Check_Discovery {
                     $slashed[ $name ] = self::probe( $url . '/' );
                 }
             }
+            
+            
+            
+            
+            
+            
+            
+            foreach ( self::mirror_urls() as $name => $url ) {
+                if ( self::needs_second_read( $mirrors[ $name ] ?? null, $roots[ $name ] ?? null, $slashed[ $name ] ?? null ) ) {
+                    $again = self::probe( $url );
+                    if ( self::is_our_document( $again ) && self::only_self_changing_keys_differ( $mirrors[ $name ], $again ) ) {
+                        $mirrors[ $name ] = $again;
+                    }
+                }
+            }
         } catch ( \Throwable $e ) {
             return array( self::unknown( __( 'The discovery test could not run on this site.', 'easy-mcp-ai' ) ) );
         }
@@ -274,6 +289,14 @@ class Check_Discovery {
         }
         \Easy_MCP_AI\OAuth\Root_Fallback::record_root_discovery( $blocked, $mcp_path );
     }
+
+    
+
+
+
+
+
+    const SELF_CHANGING_KEYS = array( 'client_id_metadata_document_supported' );
 
     
 
@@ -722,14 +745,67 @@ class Check_Discovery {
 
 
     private static function slash_form_is_current( ?array $slashed, ?array $mirror ): bool {
-        if ( ! self::looks_like_our_document( $slashed ) || ! self::is_our_document( $mirror ) ) {
+        return self::looks_like_our_document( $slashed ) && self::is_our_document( $mirror )
+            && self::same_document( $slashed, $mirror );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public static function needs_second_read( ?array $mirror, ?array $root, ?array $slashed = null ): bool {
+        if ( ! self::is_our_document( $mirror ) ) {
             return false;
         }
-        $a = json_decode( (string) $slashed['body'], true );
-        $b = json_decode( (string) $mirror['body'], true );
+        foreach ( array( $root, $slashed ) as $copy ) {
+            if ( self::looks_like_our_document( $copy ) && ! self::same_document( $copy, $mirror ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
+
+
+
+
+
+
+
+    public static function only_self_changing_keys_differ( array $first, array $second ): bool {
+        $a = json_decode( (string) $first['body'], true );
+        $b = json_decode( (string) $second['body'], true );
+        if ( ! is_array( $a ) || ! is_array( $b ) ) {
+            return false;
+        }
+        foreach ( self::SELF_CHANGING_KEYS as $key ) {
+            unset( $a[ $key ], $b[ $key ] );
+        }
         self::ksort_recursive( $a );
         self::ksort_recursive( $b );
         return $a === $b;
+    }
+
+    
+
+
+
+
+
+
+    private static function same_document( array $a, array $b ): bool {
+        $x = json_decode( (string) $a['body'], true );
+        $y = json_decode( (string) $b['body'], true );
+        self::ksort_recursive( $x );
+        self::ksort_recursive( $y );
+        return $x === $y;
     }
 
     

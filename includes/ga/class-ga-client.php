@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GA_Client extends Abstract_Google_Client {
 
     const OPTION_JSON        = 'easy_mcp_ai_ga_service_account_json';
+    const PROVIDER           = 'ga';
     const OPTION_PROPERTY_ID = 'easy_mcp_ai_ga_default_property_id';
     const TRANSIENT_TOKEN    = 'easy_mcp_ai_ga_token';
     const SCOPE              = 'https://www.googleapis.com/auth/analytics.readonly';
@@ -196,10 +197,16 @@ class GA_Client extends Abstract_Google_Client {
 
 
     public static function default_property_id(): string {
-        $id = \get_option( self::OPTION_PROPERTY_ID, '' );
+        $id = \Easy_MCP_AI\Config::get( self::OPTION_PROPERTY_ID, '' );
+        if ( empty( $id ) && in_array( \Easy_MCP_AI\Config::constant_name( self::OPTION_PROPERTY_ID ), \Easy_MCP_AI\Config_Admin::invalid_settings(), true ) ) {
+            
+            throw new \RuntimeException(
+                'No property_id provided, and EASY_MCP_AI_GA_DEFAULT_PROPERTY_ID is not a valid GA4 property ID. Set it to the numeric property ID (for example 123456789 or properties/123456789), or pass property_id.'
+            );
+        }
         if ( empty( $id ) ) {
             throw new \RuntimeException(
-                'No property_id provided and no default property configured. Set one in Easy MCP AI → Tools → External data.'
+                'No property_id provided and no default property configured. Set one in Easy MCP AI → Tools → External data, or define EASY_MCP_AI_GA_DEFAULT_PROPERTY_ID in wp-config.php.'
             );
         }
         return self::normalize_property( (string) $id );

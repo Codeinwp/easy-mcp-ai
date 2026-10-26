@@ -16,7 +16,7 @@ class Update_User_Meta extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Updates a user meta key/value. Required: `user_id`, `key`, `value`. Optional: `mode` ("update", the default, replaces the value with update_user_meta(); "add" appends one more row for the key with add_user_meta(), even when the key already exists), `value_format` ("plaintext", the default, stores `value` as sent; "json" decodes `value` as JSON first, so an object or array is stored as an array). Returns { updated: bool, user_id, key, mode, changed: bool, unchanged: bool, meta_id (add mode only) }: `changed` is whether the stored rows differ afterwards; `unchanged` is true when the key already held exactly this value, so nothing was written — `updated: false` with `unchanged: false` means WordPress refused the write. Users can update their own meta. Auth-sensitive keys are blocked for everyone, and so is a key with a character outside printable ASCII (an accented letter, a full-width form): the database compares keys ignoring accents and width, so it could reach a protected key. Writes to any `_`-prefixed key require manage_options (additional admin-only allowlist via `easy_mcp_ai_user_meta_writable_protected_keys` filter).';
+        return 'Updates a user meta key/value. Required: `user_id`, `key`, `value`. Optional: `mode` ("update", the default, replaces the value with update_user_meta(); "add" appends one more row for the key with add_user_meta(), even when the key already exists), `value_format` ("plaintext", the default, stores `value` as sent; "json" decodes `value` as JSON first, so an object or array is stored as an array). Returns { updated: bool, user_id, key, mode, changed: bool, unchanged: bool, meta_id (add mode only) }: `changed` is whether the stored rows differ afterwards; `unchanged` is true when the key already held exactly this value, so nothing was written — `updated: false` with `unchanged: false` means WordPress refused the write. Users can update their own meta. Auth-sensitive keys are blocked for everyone, and so is a key with a character outside printable ASCII (an accented letter, a full-width form) or a backslash: the database compares keys ignoring accents and width, and WordPress strips a backslash before storing the key, so either could reach a protected key. Writes to any `_`-prefixed key require manage_options (additional admin-only allowlist via `easy_mcp_ai_user_meta_writable_protected_keys` filter).';
     }
 
     public function get_category() {
@@ -133,6 +133,9 @@ class Update_User_Meta extends Base_Tool {
         $key = sanitize_text_field( (string) $raw );
         if ( '' === $key ) {
             throw new \InvalidArgumentException( 'Key cannot be empty.' );
+        }
+        if ( self::has_slash( $key ) ) {
+            throw new \RuntimeException( self::slash_refusal( $key, 'written' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( self::is_outside_printable_ascii( $key ) ) {
             throw new \RuntimeException( self::outside_printable_ascii_refusal( $key, 'written' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

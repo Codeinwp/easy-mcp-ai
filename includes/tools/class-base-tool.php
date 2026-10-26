@@ -92,6 +92,8 @@ abstract class Base_Tool {
             'wp_bp_'       => 'BuddyPress',
             'wp_tec_'      => 'Events Calendar',
             'wp_redirection_' => 'Redirection',
+            'wp_sitekit_'  => 'Site Kit',
+            'wp_cf7_'      => 'Contact Form 7',
             'wp_yoast_'    => 'Yoast',
             'wp_rm_'       => 'Rank Math',
             'wp_seranking_' => 'SE Ranking',
@@ -190,11 +192,15 @@ abstract class Base_Tool {
 
 
 
+
+
+
     public function get_approval_policy( array $arguments ) {
         return 'inherit';
     }
 
     
+
 
 
 
@@ -380,9 +386,10 @@ abstract class Base_Tool {
 
 
 
+
+
     public function get_ui_meta() {
-        $annotations = $this->get_annotations();
-        if ( empty( $annotations['destructiveHint'] ) || ! \Easy_MCP_AI\Config::get( 'approval_required' ) ) {
+        if ( ! \Easy_MCP_AI\Config::get( 'approval_required' ) || ! \Easy_MCP_AI\Approvals\Approval_Gate::is_destructive_by_annotation( $this ) ) {
             return array();
         }
         return array( 'resourceUri' => 'ui://easy-mcp-ai/approval' );
@@ -701,6 +708,76 @@ abstract class Base_Tool {
             return;
         }
         $this->refuse_other_type( $post_id, $expected_type, $verb );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    protected function refuse_builder_owned_write( int $post_id, bool $content, array $meta = array() ): void {
+        $post = get_post( $post_id );
+        if ( ! is_object( $post ) || ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+        $adapter = \Easy_MCP_AI\Builders\Builder_Registry::for_post( $post );
+        if ( null === $adapter ) {
+            return;
+        }
+        if ( $content && ! $adapter->renders_post_content( $post ) && ! $adapter->released_by( $meta ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Post %d is built with %s, which shows its own layout, not the post content, so this content edit would not appear. Edit the layout with wp_update_page_layout.', $post_id, $adapter->label() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        $layout = array_values( array_intersect( array_map( 'strval', array_keys( $meta ) ), $adapter->layout_meta_keys() ) );
+        if ( array() !== $layout ) {
+            throw new \InvalidArgumentException( sprintf( 'Post %d is built with %s: writing %s directly leaves the page showing its old layout. Edit the layout with wp_update_page_layout.', $post_id, $adapter->label(), implode( ', ', $layout ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    protected function refuse_builder_owned_product_writes( array $items ): void {
+        foreach ( $items as $item ) {
+            $product_id = is_array( $item ) && isset( $item['id'] ) && is_scalar( $item['id'] ) ? (int) $item['id'] : 0;
+            if ( $product_id <= 0 ) {
+                continue;
+            }
+            $meta = array();
+            foreach ( isset( $item['meta_data'] ) && is_array( $item['meta_data'] ) ? $item['meta_data'] : array() as $entry ) {
+                if ( ! is_array( $entry ) ) {
+                    continue;
+                }
+                if ( isset( $entry['key'] ) && is_scalar( $entry['key'] ) ) {
+                    $meta[ (string) $entry['key'] ] = $entry['value'] ?? null;
+                }
+                $row = isset( $entry['id'] ) && is_scalar( $entry['id'] ) && (int) $entry['id'] > 0 ? get_metadata_by_mid( 'post', (int) $entry['id'] ) : false;
+                if ( is_object( $row ) && isset( $row->meta_key, $row->post_id ) && (int) $row->post_id === $product_id ) {
+                    $meta[ (string) $row->meta_key ] = $entry['value'] ?? null;
+                }
+            }
+            $this->refuse_builder_owned_write( $product_id, array_key_exists( 'description', $item ), $meta );
+        }
     }
 
     
@@ -1789,6 +1866,20 @@ abstract class Base_Tool {
     }
 
     protected function rest_request( $method, $route, $params = array(), $fields = null ) {
+        return $this->dispatch_rest_request( self::build_rest_request( $method, $route, $params, $fields ) );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    protected static function build_rest_request( $method, $route, $params = array(), $fields = null ) {
         $request = new \WP_REST_Request( $method, $route );
         if ( in_array( $method, array( 'POST', 'PUT', 'PATCH' ), true ) && ! empty( $params ) ) {
             $request->set_header( 'content-type', 'application/json' );
@@ -1813,6 +1904,46 @@ abstract class Base_Tool {
         if ( null !== $fields ) {
             $request->set_param( '_fields', $fields );
         }
+        return $request;
+    }
+
+    
+
+
+
+
+
+
+    protected function dispatch_rest_request( \WP_REST_Request $request ) {
+        return $this->dispatch_rest_response( $request )->get_data();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    protected function rest_response( $method, $route, $params = array() ) {
+        return $this->dispatch_rest_response( self::build_rest_request( $method, $route, $params ) );
+    }
+
+    
+
+
+
+
+
+
+
+    private function dispatch_rest_response( \WP_REST_Request $request ) {
+        $method   = $request->get_method();
+        $route    = $request->get_route();
         $response = rest_do_request( $request );
         if ( $response->is_error() ) {
             $message = self::rest_error_message_or_empty( $response );
@@ -1821,7 +1952,7 @@ abstract class Base_Tool {
             }
             throw new \RuntimeException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        return $response->get_data();
+        return $response;
     }
 
     

@@ -76,6 +76,10 @@ class SeRanking_Client {
 
 
 	public function get_api_key(): string {
+		$deployed = \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_API_KEY );
+		if ( null !== $deployed ) {
+			return $deployed; 
+		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {
 			throw new \RuntimeException( 'SE Ranking API key not configured. Go to Easy MCP AI → Tools → External data.' );

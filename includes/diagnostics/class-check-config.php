@@ -158,7 +158,20 @@ class Check_Config {
     public static function deployment_configuration() {
         $controlled = \Easy_MCP_AI\Config::controlled();
         $invalid = \Easy_MCP_AI\Config_Admin::invalid_settings();
+        
+        
+        $credentials = \Easy_MCP_AI\Provider_Credentials::report();
         $label = __( 'Deployment-controlled settings', 'easy-mcp-ai' );
+        if ( $credentials['invalid'] ) {
+            return Diagnostic_Result::warn(
+                'f11', Diagnostic_Result::TIER_INFO, $label,
+                implode( ', ', array_merge( $invalid, $credentials['invalid'] ) ),
+                $invalid
+                    ? __( 'Correct the invalid deployment settings. Safe fallback values are in use for settings, and External Data tools refuse every call while their credential constant is invalid.', 'easy-mcp-ai' )
+                    : __( 'Correct the External Data credential constants named above. Their tools refuse every call until then; the reason is shown under Tools › External data.', 'easy-mcp-ai' ),
+                array( 'controlled' => $controlled, 'invalid' => $invalid, 'credentials' => $credentials['deployed'], 'invalid_credentials' => $credentials['invalid'] )
+            );
+        }
         if ( $invalid ) {
             return Diagnostic_Result::warn(
                 'f11', Diagnostic_Result::TIER_INFO, $label,
@@ -167,7 +180,8 @@ class Check_Config {
                 array( 'controlled' => $controlled, 'invalid' => $invalid )
             );
         }
-        return Diagnostic_Result::pass( 'f11', Diagnostic_Result::TIER_INFO, $label, implode( ', ', array_keys( $controlled ) ), $controlled );
+        $all = array_merge( $controlled, $credentials['deployed'] );
+        return Diagnostic_Result::pass( 'f11', Diagnostic_Result::TIER_INFO, $label, implode( ', ', array_keys( $all ) ), $all );
     }
 
     

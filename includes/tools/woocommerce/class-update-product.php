@@ -269,6 +269,9 @@ class Update_Product extends Base_Tool {
             $params['cross_sell_ids'] = array_map( 'absint', $cross_sell_ids );
         }
 
+        
+        $this->refuse_builder_owned_write( $id, array_key_exists( 'description', $params ) );
+
         $data = $this->rest_request( 'PUT', '/wc/v3/products/' . $id, $params );
 
         $reply = array(

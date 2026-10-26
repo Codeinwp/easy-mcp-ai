@@ -1,6 +1,7 @@
 <?php
 namespace Easy_MCP_AI\Tools\Posts;
 
+use Easy_MCP_AI\Approvals\Approval_Gate;
 use Easy_MCP_AI\Tools\Base_Tool;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,6 +27,13 @@ class Replace_In_Post extends Base_Tool {
     const MAX_SUBJECT_BYTES   = 204800; 
     const MAX_PATTERN_LENGTH  = 500;
     const PCRE_BACKTRACK_LIMIT = 100000;
+
+    
+
+
+
+
+    const SITE_CSS_TYPES = array( 'wp_global_styles', 'custom_css' );
 
     public function get_name() {
         return 'wp_replace_in_post';
@@ -88,7 +96,225 @@ class Replace_In_Post extends Base_Tool {
         );
     }
 
-    public function execute( array $arguments ) {
+    
+
+
+
+
+
+
+
+
+
+
+    public function get_approval_policy( array $arguments ) {
+        try {
+            return null !== $this->site_css_target( $arguments ) ? 'always' : 'inherit';
+        } catch ( \Throwable $e ) {
+            
+            return 'always';
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    public function describe( array $arguments ) {
+        $target = $this->site_css_target( $arguments );
+        if ( null === $target ) {
+            return parent::describe( $arguments );
+        }
+        $max    = isset( $arguments['max_replacements'] ) ? (int) $arguments['max_replacements'] : -1;
+        $format = 'custom_css' === $target['type']
+            /* translators: 1: post ID, 2: post field, e.g. post_content */
+            ? __( 'Edit the Additional CSS (post %1$d, field %2$s): the CSS its theme prints on every page.', 'easy-mcp-ai' )
+            /* translators: 1: post ID, 2: post field, e.g. post_content */
+            : __( 'Edit the site\'s global styles (post %1$d, field %2$s): the block theme styles, Additional CSS included, that every page prints.', 'easy-mcp-ai' );
+        $text   = sprintf( $format, $target['id'], self::as_text( $arguments['field'] ?? '' ) );
+        $text  .= ' ' . sprintf(
+            /* translators: %s: the text or pattern to find, as a JSON string */
+            ! empty( $arguments['regex'] ) ? __( 'Find the regular expression: %s', 'easy-mcp-ai' ) : __( 'Find: %s', 'easy-mcp-ai' ),
+            self::shown( self::as_text( $arguments['search'] ?? '' ) )
+        );
+        $replace = self::as_text( $arguments['replace'] ?? '' );
+        $text   .= ' ' . ( '' === $replace
+            ? __( 'Delete each match.', 'easy-mcp-ai' )
+            /* translators: %s: the replacement text, as a JSON string */
+            : sprintf( __( 'Replace with: %s', 'easy-mcp-ai' ), self::shown( $replace ) ) );
+        if ( $max > 0 ) {
+            /* translators: %d: the most matches replaced */
+            $text .= ' ' . sprintf( __( '(at most %d matches)', 'easy-mcp-ai' ), $max );
+        }
+        return $text;
+    }
+
+    
+
+
+
+
+
+
+
+
+    public function approval_refusal( array $arguments ): ?string {
+        try {
+            $preview = Approval_Gate::flatten( (string) $this->describe( $arguments ) );
+        } catch ( \Throwable $e ) {
+            
+            return null;
+        }
+        $length = function_exists( 'mb_strlen' ) ? mb_strlen( $preview ) : strlen( $preview );
+        if ( $length <= Approval_Gate::PREVIEW_MAX ) {
+            return null;
+        }
+        return sprintf(
+            /* translators: 1: preview length, 2: the most the approval page shows */
+            __( 'This change to the site\'s CSS has an approval preview of %1$d characters and the approval page shows %2$d, so it was not sent for approval: a person must see every change they approve. Make it in shorter replacements.', 'easy-mcp-ai' ),
+            $length,
+            Approval_Gate::PREVIEW_MAX
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public function precheck( array $arguments ): void {
+        $target = $this->site_css_target( $arguments );
+        if ( null === $target ) {
+            return;
+        }
+        $checked = $this->check_arguments( $arguments );
+        if ( ! current_user_can( 'edit_post', $target['id'] ) ) {
+            throw new \RuntimeException( 'You do not have permission to edit this post.' );
+        }
+        if ( null !== $checked['pattern'] ) {
+            
+            
+            $previous = $this->lower_backtrack_limit();
+            if ( false !== $previous ) {
+                @ini_set( 'pcre.backtrack_limit', (string) $previous ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Restoring the PCRE backtrack limit this check lowered.
+            }
+            self::check_regex_bound( $checked['search'], false !== $previous );
+        }
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function check_regex_bound( string $search, bool $bounded ): void {
+        if ( ! $bounded && strlen( $search ) > (int) ( self::MAX_PATTERN_LENGTH / 2 ) ) {
+            throw new \RuntimeException( 'Cannot lower pcre.backtrack_limit on this host; regex patterns longer than 250 chars are not permitted here for ReDoS safety.' );
+        }
+    }
+
+    
+
+
+
+
+
+
+
+    protected function lower_backtrack_limit() {
+        return @ini_set( 'pcre.backtrack_limit', (string) self::PCRE_BACKTRACK_LIMIT ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Scoped lowering of PCRE backtrack limit for ReDoS mitigation; the caller restores it.
+    }
+
+    
+
+
+
+
+
+
+
+    private function site_css_target( array $arguments ): ?array {
+        try {
+            $post_id = $this->parse_required_id( $arguments['id'] ?? null, 'id' );
+        } catch ( \InvalidArgumentException $e ) {
+            return null;
+        }
+        $post = get_post( $post_id );
+        if ( ! is_object( $post ) || ! in_array( $post->post_type, self::SITE_CSS_TYPES, true ) ) {
+            return null;
+        }
+        return array(
+            'id'   => $post_id,
+            'type' => $post->post_type,
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function as_text( $value ): string {
+        return is_array( $value ) ? 'Array' : (string) $value;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    private static function shown( string $value ): string {
+        $json = (string) wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE );
+        return (string) preg_replace_callback(
+            '/(?<= ) |\x7f|&(?=#?[A-Za-z0-9]+;)/',
+            static function ( array $match ): string {
+                return sprintf( '\\u%04x', ord( $match[0] ) );
+            },
+            $json
+        );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private function check_arguments( array $arguments ): array {
         
         
         
@@ -100,36 +326,17 @@ class Replace_In_Post extends Base_Tool {
         }
         $post_id = $this->parse_required_id( $arguments['id'], 'id' );
 
-        $field = (string) $arguments['field'];
+        $field = self::as_text( $arguments['field'] );
         if ( ! in_array( $field, array( 'post_content', 'post_excerpt', 'post_title' ), true ) ) {
             throw new \InvalidArgumentException( 'field must be one of: post_content, post_excerpt, post_title' );
         }
 
-        $post = get_post( $post_id );
-        if ( ! $post ) {
-            throw new \InvalidArgumentException( 'Post not found.' );
-        }
-
-        if ( ! current_user_can( 'edit_post', $post_id ) ) {
-            throw new \RuntimeException( 'You do not have permission to edit this post.' );
-        }
-
-        $subject = (string) $post->{$field};
-        $before_len = strlen( $subject );
-        if ( $before_len > self::MAX_SUBJECT_BYTES ) {
-            throw new \InvalidArgumentException(
-                sprintf( 'Field is too large for in-place replacement (%d bytes; max %d). Use wp_update_post instead.', $before_len, self::MAX_SUBJECT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            );
-        }
-
-        $search = (string) $arguments['search'];
+        $search = self::as_text( $arguments['search'] );
         if ( strlen( $search ) > self::MAX_PATTERN_LENGTH ) {
             throw new \InvalidArgumentException(
                 sprintf( 'Search pattern is too long (max %d chars).', self::MAX_PATTERN_LENGTH ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
-        $replace = (string) $arguments['replace'];
-        $regex   = ! empty( $arguments['regex'] );
 
         $max = isset( $arguments['max_replacements'] ) ? (int) $arguments['max_replacements'] : -1;
         if ( 0 === $max ) {
@@ -137,7 +344,8 @@ class Replace_In_Post extends Base_Tool {
             throw new \InvalidArgumentException( 'max_replacements must be -1 (unlimited) or a positive integer.' );
         }
 
-        if ( $regex ) {
+        $pattern = null;
+        if ( ! empty( $arguments['regex'] ) ) {
             $allow_regex = (bool) apply_filters( 'easy_mcp_ai_replace_in_post_allow_regex', true );
             if ( ! $allow_regex ) {
                 throw new \InvalidArgumentException( 'Regex replacement is disabled on this site (filter: easy_mcp_ai_replace_in_post_allow_regex).' );
@@ -155,16 +363,50 @@ class Replace_In_Post extends Base_Tool {
             if ( false === $compile_check ) {
                 throw new \InvalidArgumentException( 'Invalid regex pattern. Provide the pattern body only — do not include delimiters or trailing modifiers (e.g. send `foo` not `/foo/i`; use inline modifiers like `(?i)foo`).' );
             }
+        }
+
+        return array(
+            'post_id' => $post_id,
+            'field'   => $field,
+            'search'  => $search,
+            'max'     => $max,
+            'pattern' => $pattern,
+        );
+    }
+
+    public function execute( array $arguments ) {
+        $checked = $this->check_arguments( $arguments );
+        $post_id = $checked['post_id'];
+        $field   = $checked['field'];
+        $search  = $checked['search'];
+        $max     = $checked['max'];
+
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            throw new \InvalidArgumentException( 'Post not found.' );
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            throw new \RuntimeException( 'You do not have permission to edit this post.' );
+        }
+        $this->refuse_builder_owned_write( $post_id, 'post_content' === $field );
+
+        $subject = (string) $post->{$field};
+        $before_len = strlen( $subject );
+        if ( $before_len > self::MAX_SUBJECT_BYTES ) {
+            throw new \InvalidArgumentException(
+                sprintf( 'Field is too large for in-place replacement (%d bytes; max %d). Use wp_update_post instead.', $before_len, self::MAX_SUBJECT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
+
+        $replace = self::as_text( $arguments['replace'] );
+
+        if ( null !== $checked['pattern'] ) {
+            $pattern = $checked['pattern'];
 
             $previous_backtrack = ini_get( 'pcre.backtrack_limit' );
-            
-            
-            
-            
-            $lowered = @ini_set( 'pcre.backtrack_limit', (string) self::PCRE_BACKTRACK_LIMIT ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Scoped lowering of PCRE backtrack limit for ReDoS mitigation; restored in finally.
-            if ( false === $lowered && strlen( $search ) > (int) ( self::MAX_PATTERN_LENGTH / 2 ) ) {
-                throw new \RuntimeException( 'Cannot lower pcre.backtrack_limit on this host; regex patterns longer than 250 chars are not permitted here for ReDoS safety.' );
-            }
+            $lowered            = $this->lower_backtrack_limit();
+            self::check_regex_bound( $search, false !== $lowered );
 
             $limit  = $max > 0 ? $max : -1;
             $count  = 0;

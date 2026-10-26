@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\WooCommerce;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Row_Extension;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -134,8 +135,9 @@ class List_Orders extends Base_Tool {
 
         $data = $response->get_data();
 
-        $orders = array_map( function( $order ) {
-            return array(
+        $tool   = $this->get_name();
+        $orders = array_map( function( $order ) use ( $tool ) {
+            $row = array(
                 'id'           => $order['id'],
                 'number'       => $order['number'],
                 'status'       => $order['status'],
@@ -148,6 +150,7 @@ class List_Orders extends Base_Tool {
                 'date_created' => $order['date_created'],
                 'rest_url'     => $order['_links']['self'][0]['href'] ?? '',
             );
+            return Row_Extension::apply( Row_Extension::WC_ORDER, $row, $order, $tool, true );
         }, $data );
 
         return array_merge(

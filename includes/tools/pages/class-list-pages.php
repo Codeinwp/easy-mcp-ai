@@ -10,6 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Pages extends Base_Tool {
 
+    
+
+
+
+
+    const REST_FIELDS = 'id,title,status,date,modified,slug,parent,menu_order,link';
+
     public function get_name() {
         return 'wp_list_pages';
     }
@@ -118,6 +125,7 @@ class List_Pages extends Base_Tool {
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
         }
+        $request->set_param( '_fields', self::REST_FIELDS );
 
         $response = List_CPT_Items::dispatch( $request, 'page', $vars );
 

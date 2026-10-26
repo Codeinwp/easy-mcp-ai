@@ -19,6 +19,13 @@ class List_CPT_Items extends Base_Tool {
     const QUERY_ORDERBY = array( 'comment_count', 'rand', 'meta_value', 'meta_value_num' );
 
     
+
+
+
+
+    const REST_FIELDS = 'id,title,status,date,modified,link,slug';
+
+    
     const QUERY_MAX_DEPTH = 3;
 
     
@@ -235,6 +242,7 @@ class List_CPT_Items extends Base_Tool {
         $request->set_param( 'per_page', $per_page );
         $request->set_param( 'page', $page );
         $request->set_param( 'context', $context );
+        $request->set_param( '_fields', self::REST_FIELDS );
 
         if ( ! empty( $arguments['search'] ) ) {
             $request->set_param( 'search', sanitize_text_field( $arguments['search'] ) );

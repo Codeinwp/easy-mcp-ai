@@ -40,6 +40,19 @@ class Consent_Screen {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     public static function render( $client, $user, $scope, array $request_params, $script_nonce = '', array $options = array() ) {
 
         $client_name       = isset( $client->client_name ) ? $client->client_name : __( 'Unknown Application', 'easy-mcp-ai' );
@@ -64,6 +77,7 @@ class Consent_Screen {
         $context_label = isset( $options['context_label'] ) ? (string) $options['context_label'] : __( 'Redirects to:', 'easy-mcp-ai' );
         $context_value = isset( $options['context_value'] ) ? (string) $options['context_value'] : (string) $redirect_host;
         $notice        = isset( $options['notice'] ) ? (string) $options['notice'] : '';
+        $client_label  = isset( $options['client_label'] ) ? (string) $options['client_label'] : '';
 
         
         
@@ -76,6 +90,7 @@ class Consent_Screen {
         );
         $default_level  = $ceiling_all ? 'full' : 'custom';
         $checked_scopes = $ceiling;
+        $tick_all       = $ceiling_all;
 
         
         
@@ -90,10 +105,36 @@ class Consent_Screen {
         }
 
         
+        
+        $new_scopes = array();
+        if ( isset( $options['step_up']['new'] ) && is_array( $options['step_up']['new'] ) ) {
+            $new_scopes = array_values( array_intersect( array_map( 'strval', $options['step_up']['new'] ), $ceiling_all ? Scope_Map::get_all_scopes() : $ceiling ) );
+        }
+        
+        
+        
+        $carried_scopes = array();
+        if ( array() !== $new_scopes ) {
+            $held           = isset( $options['step_up']['held'] ) && is_array( $options['step_up']['held'] ) ? array_map( 'strval', $options['step_up']['held'] ) : array();
+            $default_level  = 'custom';
+            $tick_all       = false;
+            $checked_scopes = array_values( array_unique( array_merge( $held, $new_scopes ) ) );
+            $carried_scopes = array_values(
+                array_diff(
+                    array_intersect( $held, array_diff( Scope_Map::get_all_scopes(), array( 'mcp' ) ) ),
+                    self::box_scopes( $categories, $privileged_rows, $ceiling, $ceiling_all )
+                )
+            );
+        }
+
+        $step_up_notice = array() === $new_scopes ? '' : self::step_up_notice( $client_name, $new_scopes, $categories, $privileged_rows );
+
+        
         $template_vars = array(
             'client_name'       => $client_name,
             'client_id'         => $client_id,
             'client_id_prefix'  => $client_id_prefix,
+            'client_label'      => $client_label,
             'redirect_host'     => $redirect_host,
             'user_display_name' => $user_display_name,
             'user_roles'        => $user_roles,
@@ -115,6 +156,10 @@ class Consent_Screen {
             'default_level'     => $default_level,
             'checked_scopes'    => $checked_scopes,
             'privileged_rows'   => $privileged_rows,
+            'tick_all'          => $tick_all,
+            'new_scopes'        => $new_scopes,
+            'step_up_notice'    => $step_up_notice,
+            'carried_scopes'    => $carried_scopes,
         );
 
         
@@ -124,5 +169,83 @@ class Consent_Screen {
         ob_start();
         include __DIR__ . '/views/consent.php';
         return ob_get_clean();
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    private static function box_scopes( array $categories, array $privileged_rows, array $ceiling, $ceiling_all ) {
+        $boxes = array();
+        foreach ( $categories as $category ) {
+            if ( ! empty( $category['plugin_required'] ) && ! Scope_Map::is_plugin_category_active( (string) $category['slug'] ) ) {
+                continue;
+            }
+            foreach ( array( 'read_scope', 'write_scope' ) as $key ) {
+                if ( ! empty( $category[ $key ] ) ) {
+                    $boxes[] = (string) $category[ $key ];
+                }
+            }
+        }
+        foreach ( $privileged_rows as $row ) {
+            if ( $ceiling_all || in_array( $row['scope'], $ceiling, true ) ) {
+                $boxes[] = $row['scope'];
+            }
+        }
+        return $boxes;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+    private static function step_up_notice( $client_name, array $new_scopes, array $categories, array $privileged_rows ) {
+        $labels = array();
+        foreach ( $categories as $category ) {
+            $label = isset( $category['label'] ) ? (string) $category['label'] : '';
+            if ( ! empty( $category['is_ability'] ) ) {
+                $labels[ (string) $category['read_scope'] ] = $label;
+                continue;
+            }
+            if ( ! empty( $category['read_scope'] ) ) {
+                /* translators: %s: permission category, e.g. "Posts & Pages" */
+                $labels[ (string) $category['read_scope'] ] = sprintf( __( '%s (read)', 'easy-mcp-ai' ), $label );
+            }
+            if ( ! empty( $category['write_scope'] ) ) {
+                /* translators: %s: permission category, e.g. "Posts & Pages" */
+                $labels[ (string) $category['write_scope'] ] = sprintf( __( '%s (write)', 'easy-mcp-ai' ), $label );
+            }
+        }
+        foreach ( $privileged_rows as $row ) {
+            $labels[ $row['scope'] ] = $row['label'];
+        }
+        $names = array();
+        foreach ( $new_scopes as $scope ) {
+            $names[] = isset( $labels[ $scope ] ) ? $labels[ $scope ] : $scope;
+        }
+        return sprintf(
+            /* translators: 1: application name, 2: comma-separated permission names */
+            _n(
+                '%1$s asked for one more permission to finish a task: %2$s. It is ticked below and marked New, and the access you already gave this app stays ticked.',
+                '%1$s asked for more permissions to finish a task: %2$s. They are ticked below and marked New, and the access you already gave this app stays ticked.',
+                count( $names ),
+                'easy-mcp-ai'
+            ),
+            $client_name,
+            implode( ', ', $names )
+        );
     }
 }

@@ -36,7 +36,15 @@ class Task_Schema {
         if ( \version_compare( $installed, self::DB_VERSION, '>=' ) ) {
             return;
         }
+        if ( ! \Easy_MCP_AI\Schema_Guard::may_retry( self::OPTION_NAME, self::DB_VERSION ) ) {
+            return;
+        }
         self::create_tables();
+        \Easy_MCP_AI\Schema_Guard::settle(
+            self::OPTION_NAME,
+            self::DB_VERSION,
+            \version_compare( (string) \get_option( self::OPTION_NAME, '0' ), self::DB_VERSION, '>=' )
+        );
     }
 
     public static function table_name() {
@@ -48,34 +56,38 @@ class Task_Schema {
         global $wpdb;
         $table           = self::table_name();
         $charset_collate = method_exists( $wpdb, 'get_charset_collate' ) ? $wpdb->get_charset_collate() : '';
+        
+        
+        
+        
         $sql = "CREATE TABLE {$table} (
-            id               bigint(20)   unsigned NOT NULL AUTO_INCREMENT,
-            task_id          varchar(36)  NOT NULL,
-            auth_source      varchar(16)  NOT NULL DEFAULT 'legacy',
-            token_id         bigint(20)   unsigned NOT NULL DEFAULT 0,
-            oauth_client_id  varchar(191) DEFAULT NULL,
-            wp_user_id       bigint(20)   unsigned NOT NULL DEFAULT 0,
-            tool_name        varchar(255) NOT NULL,
-            arguments        longtext     DEFAULT NULL,
-            approval_id      varchar(36)  DEFAULT NULL,
-            mode             varchar(16)  NOT NULL DEFAULT 'cursor',
-            phase            varchar(16)  NOT NULL DEFAULT 'cursor',
-            status           varchar(16)  NOT NULL DEFAULT 'working',
-            status_message   text         DEFAULT NULL,
-            progress_current bigint(20)   unsigned NOT NULL DEFAULT 0,
-            progress_total   bigint(20)   unsigned NOT NULL DEFAULT 0,
-            task_cursor      longtext     DEFAULT NULL,
-            job_id           text         DEFAULT NULL,
-            result           longtext     DEFAULT NULL,
-            error            text         DEFAULT NULL,
-            signature        varchar(64)  DEFAULT NULL,
-            ticks            int(10)      unsigned NOT NULL DEFAULT 0,
-            lock_token       varchar(32)  DEFAULT NULL,
-            locked_until     datetime     DEFAULT NULL,
-            created_at       datetime     NOT NULL,
-            updated_at       datetime     NOT NULL,
-            completed_at     datetime     DEFAULT NULL,
-            expires_at       datetime     NOT NULL,
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            task_id varchar(36) NOT NULL,
+            auth_source varchar(16) NOT NULL DEFAULT 'legacy',
+            token_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            oauth_client_id varchar(191) DEFAULT NULL,
+            wp_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            tool_name varchar(255) NOT NULL,
+            arguments longtext DEFAULT NULL,
+            approval_id varchar(36) DEFAULT NULL,
+            mode varchar(16) NOT NULL DEFAULT 'cursor',
+            phase varchar(16) NOT NULL DEFAULT 'cursor',
+            status varchar(16) NOT NULL DEFAULT 'working',
+            status_message text DEFAULT NULL,
+            progress_current bigint(20) unsigned NOT NULL DEFAULT 0,
+            progress_total bigint(20) unsigned NOT NULL DEFAULT 0,
+            task_cursor longtext DEFAULT NULL,
+            job_id text DEFAULT NULL,
+            result longtext DEFAULT NULL,
+            error text DEFAULT NULL,
+            signature varchar(64) DEFAULT NULL,
+            ticks int(10) unsigned NOT NULL DEFAULT 0,
+            lock_token varchar(32) DEFAULT NULL,
+            locked_until datetime DEFAULT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            completed_at datetime DEFAULT NULL,
+            expires_at datetime NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY task_id (task_id),
             KEY status_updated (status, updated_at),
@@ -90,7 +102,7 @@ class Task_Schema {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table existence check.
         $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-        if ( $exists !== $table ) {
+        if ( ! \Easy_MCP_AI\Schema_Guard::table_found( $exists, $table ) ) {
             return;
         }
         

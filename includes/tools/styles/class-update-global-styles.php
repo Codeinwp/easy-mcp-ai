@@ -25,11 +25,17 @@ class Update_Global_Styles extends Base_Tool {
         return 'edit_theme_options';
     }
 
+    
+
+
+
+
+
     public function get_annotations() {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false,
+            'destructiveHint' => true,
             'openWorldHint'   => false,
         );
     }

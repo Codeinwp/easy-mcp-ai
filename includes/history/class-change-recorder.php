@@ -166,6 +166,10 @@ class Change_Recorder {
         '_transient_', '_site_transient_', 'cron', '_wp_session_',
         'action_scheduler_', 'easy_mcp_ai_change_log_', 'easy_mcp_ai_audit_',
         'easy_mcp_ai_sr_', 'easy_mcp_ai_last_tool_call', 'easy_mcp_ai_cache_',
+        
+        'easy_mcp_ai_layout_lock_',
+        
+        'easy_mcp_ai_yoast_settings_lock',
     );
 
     

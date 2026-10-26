@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+
 abstract class Abstract_Google_Client {
 
     
@@ -89,6 +90,12 @@ abstract class Abstract_Google_Client {
 
 
     public static function get_credentials(): array {
+        
+        
+        $deployed = Provider_Credentials::google_key( static::PROVIDER );
+        if ( null !== $deployed ) {
+            return $deployed;
+        }
         $stored = \get_option( static::OPTION_JSON, '' );
         if ( empty( $stored ) ) {
             throw new \RuntimeException(

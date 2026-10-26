@@ -103,6 +103,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+
+
+
+
 class Theme_Adapter extends Command_Handler {
 
     const SWITCH  = 'wp_switch_theme';
@@ -640,13 +644,26 @@ class Theme_Adapter extends Command_Handler {
             $ctx->mark_changed();
         }
 
-        if ( array_key_exists( 'value', $result['payload'] ) && $value === $result['payload']['value'] ) {
+        if ( array_key_exists( 'value', $result['payload'] ) && self::mod_set_holds( $value, $result['payload']['value'] ) ) {
             $ctx->out->success( "Theme mod {$mod} set to {$value}." );
         } else {
             $stored = array_key_exists( 'stored', $result['payload'] ) ? $result['payload']['stored'] : null;
             $ctx->note( sprintf( self::NOTE_MOD_STORED, (string) json_encode( $stored, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR ), $mod ) );
             $ctx->out->success( "Could not update theme mod {$mod}." );
         }
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function mod_set_holds( string $value, $read_back ): bool {
+        return $value === $read_back || ( is_array( $read_back ) && json_decode( $value, true ) === $read_back );
     }
 
     

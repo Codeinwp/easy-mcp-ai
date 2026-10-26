@@ -151,6 +151,8 @@ class Update_Post_Blocks extends Base_Tool {
             throw new \InvalidArgumentException( 'ops must be a non-empty array of operation objects.' );
         }
 
+        $this->refuse_builder_owned_write( $post_id, true );
+
         
         $route = self::post_type_route( $post_type, $post_id, ...self::sent_methods( $arguments ) );
         $data  = $this->rest_request( 'GET', $route, array( 'context' => 'edit' ) );

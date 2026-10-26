@@ -248,6 +248,9 @@ class OAuth_Routes {
         
         
         
+        
+        
+        \Easy_MCP_AI\Cache\Page_Cache_Opt_Out::apply_to_direct_response();
         \nocache_headers();
         
         
@@ -377,13 +380,16 @@ class OAuth_Routes {
         
         
         
-        $client = ( new Client_Registry() )->get_client( $client_id );
+        $client = ( new Client_Registry() )->find_client( $client_id );
         if ( null !== $client ) {
             $auth_error = Token_Endpoint::authenticate_client( $request, $client, $basic );
             if ( null !== $auth_error ) {
                 return $auth_error;
             }
         }
+        
+        
+        $client_id = Client_Metadata::storage_id( $client_id );
 
         
         

@@ -14,7 +14,7 @@ class Update_Media extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Updates metadata of an existing WordPress media attachment (PATCH semantics — does NOT replace the file). Required: `media_id`. Optional: `title`, `alt_text` (important for accessibility and SEO), `caption`, `description`. Returns { id, title, alt_text, source_url }. To replace the file itself, delete and re-upload. Passing an empty string for a text field (`title`, `alt_text`, `caption`, `description`) preserves the existing value (it is not cleared) — omit the field, or edit in wp-admin, to blank it.';
+        return 'Updates metadata of an existing WordPress media attachment (PATCH semantics — does NOT replace the file). Required: `media_id`. Optional: `title`, `alt_text` (important for accessibility and SEO), `caption`, `description`. Returns { id, title, alt_text, caption, description, source_url }, each as stored. To replace the file itself, delete and re-upload. Passing an empty string for a text field (`title`, `alt_text`, `caption`, `description`) preserves the existing value (it is not cleared) — omit the field, or edit in wp-admin, to blank it.';
     }
 
     public function get_category() {
@@ -92,10 +92,27 @@ class Update_Media extends Base_Tool {
         $data = $this->rest_request( 'POST', '/wp/v2/media/' . $media_id, $params );
 
         return array(
-            'id'         => $data['id'],
-            'title'      => $data['title']['raw'] ?? $data['title']['rendered'],
-            'alt_text'   => $data['alt_text'] ?? '',
-            'source_url' => $data['source_url'],
+            'id'          => $data['id'],
+            'title'       => $data['title']['raw'] ?? $data['title']['rendered'],
+            'alt_text'    => $data['alt_text'] ?? '',
+            'caption'     => self::stored_text( $data['caption'] ?? '' ),
+            'description' => self::stored_text( $data['description'] ?? '' ),
+            'source_url'  => $data['source_url'],
         );
+    }
+
+    
+
+
+
+
+
+
+
+    private static function stored_text( $value ): string {
+        if ( is_array( $value ) ) {
+            return isset( $value['raw'] ) ? (string) $value['raw'] : trim( wp_strip_all_tags( (string) ( $value['rendered'] ?? '' ) ) );
+        }
+        return (string) $value;
     }
 }

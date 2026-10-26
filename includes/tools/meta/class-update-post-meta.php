@@ -109,6 +109,7 @@ class Update_Post_Meta extends Base_Tool {
         $post_type = ! empty( $arguments['post_type'] )
             ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' )
             : 'posts';
+        $this->refuse_builder_owned_write( $post_id, false, $meta );
 
         
         

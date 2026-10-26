@@ -289,9 +289,10 @@ class Check_Schema {
                 Diagnostic_Result::TIER_WARNING,
                 $label,
                 sprintf(
-                    /* translators: %s: comma-separated "option (stored < code)" entries. */
-                    __( 'A database upgrade started but did not finish: %s. The plugin retries on each admin page load, so a version that never advances means the change is being refused.', 'easy-mcp-ai' ),
-                    implode( ', ', $behind )
+                    /* translators: 1: comma-separated "option (stored < code)" entries, 2: minutes between retries. */
+                    __( 'A database upgrade started but did not finish: %1$s. The plugin tries again at most every %2$d minutes, on admin, REST API, WP-CLI and cron requests, so a version that never advances means the change is being refused.', 'easy-mcp-ai' ),
+                    implode( ', ', $behind ),
+                    (int) ( \Easy_MCP_AI\Schema_Guard::RETRY_AFTER / 60 )
                 ),
                 __( 'Deactivate and reactivate the plugin. If the version still does not advance, check the database privileges below.', 'easy-mcp-ai' ),
                 array( 'behind' => $behind )
@@ -495,6 +496,12 @@ class Check_Schema {
 
         $versions = array();
 
+        if ( defined( 'EASY_MCP_AI_VERSION' ) ) {
+            $versions['easy_mcp_ai_db_version'] = array(
+                'stored' => (string) \get_option( 'easy_mcp_ai_db_version', '' ),
+                'code'   => (string) EASY_MCP_AI_VERSION,
+            );
+        }
         if ( self::oauth_layer_used() ) {
             $versions['easy_mcp_ai_oauth_db_version'] = array(
                 'stored' => (string) \get_option( 'easy_mcp_ai_oauth_db_version', '' ),
@@ -505,6 +512,18 @@ class Check_Schema {
             $versions['easy_mcp_ai_change_log_db_version'] = array(
                 'stored' => (string) \get_option( 'easy_mcp_ai_change_log_db_version', '' ),
                 'code'   => (string) \Easy_MCP_AI\History\Change_Log_Schema::DB_VERSION,
+            );
+        }
+        if ( class_exists( '\Easy_MCP_AI\Tasks\Task_Schema' ) ) {
+            $versions[ \Easy_MCP_AI\Tasks\Task_Schema::OPTION_NAME ] = array(
+                'stored' => (string) \get_option( \Easy_MCP_AI\Tasks\Task_Schema::OPTION_NAME, '' ),
+                'code'   => (string) \Easy_MCP_AI\Tasks\Task_Schema::DB_VERSION,
+            );
+        }
+        if ( class_exists( '\Easy_MCP_AI\Approvals\Approval_Schema' ) ) {
+            $versions[ \Easy_MCP_AI\Approvals\Approval_Schema::OPTION_NAME ] = array(
+                'stored' => (string) \get_option( \Easy_MCP_AI\Approvals\Approval_Schema::OPTION_NAME, '' ),
+                'code'   => (string) \Easy_MCP_AI\Approvals\Approval_Schema::DB_VERSION,
             );
         }
 

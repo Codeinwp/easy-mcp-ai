@@ -169,8 +169,10 @@ final class Redactor {
 
 
 
+
+
     private static function mask_flag_value( string $word, string $name, string $value, array &$names ): string {
-        if ( '' !== $value && preg_match( \Easy_MCP_AI\Text_Redactor::SENSITIVE_KEY_PATTERN, $name ) ) {
+        if ( '' !== $value && self::key_is_secret( $name ) ) {
             $names[] = '--' . $name;
             return self::quote( '--' . $name . '=' ) . self::MASK;
         }
@@ -351,11 +353,12 @@ final class Redactor {
     }
 
     
+
+
+
+
     private static function key_is_secret( string $key ): bool {
-        if ( preg_match( \Easy_MCP_AI\Text_Redactor::SENSITIVE_KEY_PATTERN, $key ) ) {
-            return true;
-        }
-        return class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) && \Easy_MCP_AI\History\Change_Redactor::option_name_is_sensitive( $key );
+        return Handlers\Option_Handler::key_is_secret( $key );
     }
 
     

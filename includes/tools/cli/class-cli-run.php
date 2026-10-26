@@ -176,20 +176,15 @@ class Cli_Run extends Base_Tool {
 
 
     public function approval_refusal( array $arguments ): ?string {
-        $gate    = class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' );
-        $max     = $gate ? \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX : 2000;
-        $preview = (string) $this->describe( $arguments );
-        
-        $preview = $gate ? \Easy_MCP_AI\Approvals\Approval_Gate::flatten( $preview ) : trim( (string) preg_replace( '/\s+/', ' ', $preview ) );
-        $length  = function_exists( 'mb_strlen' ) ? mb_strlen( $preview ) : strlen( $preview );
-        if ( $length <= $max ) {
+        $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
+        if ( null === $length ) {
             return null;
         }
         return sprintf(
             /* translators: 1: preview length, 2: the most the approval page shows */
             __( 'This command\'s approval preview is %1$d characters long and the approval page shows %2$d, so it was not sent for approval: a person must see every write they approve. Run it for fewer targets at a time.', 'easy-mcp-ai' ),
             $length,
-            $max
+            \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX
         );
     }
 

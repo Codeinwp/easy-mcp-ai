@@ -19,7 +19,7 @@ class Create_Redirect extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Creates a redirect in the Redirection plugin, matched on the URL path. Required: `source` (the path to redirect from, e.g. "/old-page"; Redirection stores it as its own editor does: a URL on another site becomes a match on that domain). Optional: `action_type` ("url" default: redirect to `target`; "pass": serve `target` without redirecting; "error": answer an HTTP error; "random": a random post; "nothing"), `target` (required for url and pass, e.g. "/new-page" or "https://example.com/"), `code` (url/random: 301 default, 302, 303, 304, 307, 308; error: 404 default, 410, 400, 401, 403, 418, 451, 500-504), `group_id` (default: Redirection\'s default group; see wp_redirection_list_groups), `title`, `regex` (source is a regular expression), `ignore_case`, `ignore_trailing_slash`, `query_handling` ("exact", "ignore", "pass"; unset uses Redirection\'s defaults), `position` (unset or 0: last in the group). Redirection\'s own rules apply: like its editor, it stores a redirect whose source another redirect already uses (the first one runs) and one whose target is its own source. Returns { created: true, redirect: { id, source, action_type, code, target, group_id, enabled, … } }, read back from Redirection. Requires the Redirection plugin active with its setup finished.';
+        return 'Creates a redirect in the Redirection plugin, matched on the URL path. Required: `source` (the path to redirect from, e.g. "/old-page"; Redirection stores it as its own editor does: a URL on another site becomes a match on that domain). Optional: `action_type` ("url" default: redirect to `target`; "pass": serve `target` without redirecting; "error": answer an HTTP error; "random": a random post; "nothing"), `target` (required for url and pass, e.g. "/new-page" or "https://example.com/"), `code` (url/random: 301 default, 302, 303, 304, 307, 308; error: 404 default, 410, 400, 401, 403, 418, 451, 500-504), `group_id` (default: Redirection\'s default group; see wp_redirection_list_groups), `title`, `regex` (source is a regular expression), `ignore_case`, `ignore_trailing_slash`, `query_handling` ("exact", "ignore", "pass"; unset uses Redirection\'s defaults), `position` (unset or 0: last in the group). Redirection\'s own rules apply: like its editor, it stores a redirect whose source another redirect already uses (the first one runs) and one whose target is its own source. A source that would redirect the home page, the sign-in page or the REST API is refused unless `allow_protected_source` is true. Returns { created: true, redirect: { id, source, action_type, code, target, group_id, enabled, … } }, read back from Redirection. Requires the Redirection plugin active with its setup finished.';
     }
 
     public function get_annotations() {
@@ -94,6 +94,10 @@ class Create_Redirect extends Base_Tool {
                 'description' => 'Order within the group; lower runs first.' . ( $create ? ' Unset or 0: Redirection puts the new redirect last.' : '' ),
                 'minimum'     => 0,
             ),
+            Protected_Sources::OVERRIDE => array(
+                'type'        => 'boolean',
+                'description' => 'true only when the user asked for this exact redirect of the home page, the sign-in page (wp-login.php) or the REST API (/wp-json/, ?rest_route=). Without it, a source that would redirect one of them is refused' . ( $create ? '.' : ', and so is switching on, or changing anything but the title or position of, a redirect that has one.' ),
+            ),
         );
         return $properties;
     }
@@ -118,6 +122,8 @@ class Create_Redirect extends Base_Tool {
         
         $body   = array_merge( $body, $this->optional_fields( $arguments, $target, $regex ) );
         $stored = self::stored_source( $source, $regex );
+        $query  = isset( $body['match_data'] ) ? $body['match_data']['source']['flag_query'] : self::default_source_flags()['flag_query'];
+        Protected_Sources::refuse( 'This source', $arguments, Protected_Sources::host_of( $source ), $stored, $regex, $query );
 
         $before = $this->highest_redirect_id();
         

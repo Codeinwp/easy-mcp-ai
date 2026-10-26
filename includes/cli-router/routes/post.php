@@ -58,7 +58,7 @@ return array(
             $easy_mcp_ai_post_fields_refused,
             array(
                 'file'      => 'it reads the post content from a file on the server (plan §4.1); pass it with --post_content',
-                'from-post' => 'it copies every meta key of another post, protected ones included, and no tool duplicates a post',
+                'from-post' => 'it copies the other post\'s status, only its last value of each meta key and only its categories and tags; use the wp_duplicate_post tool',
                 'edit'      => 'it opens an interactive editor (plan Q17); pass the content with --post_content',
             )
         ),

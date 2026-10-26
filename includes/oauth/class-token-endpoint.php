@@ -139,7 +139,7 @@ class Token_Endpoint {
 
         
         
-        $client = ( new Client_Registry() )->get_client( $client_id );
+        $client = ( new Client_Registry() )->find_client( $client_id );
         if ( null === $client ) {
             return $this->token_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }
@@ -218,23 +218,9 @@ class Token_Endpoint {
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        $consent = self::live_consent( (int) $row->wp_user_id, (string) $row->client_id );
-        if ( ! self::consent_backs_row( $consent, $row ) ) {
-            return $this->token_error( 'invalid_grant', __( 'The grant behind this device code has been revoked.', 'easy-mcp-ai' ) );
-        }
-        $effective_scope = self::cap_scope( (string) $row->scope, (string) $consent->scope );
-        if ( '' === $effective_scope ) {
-            return $this->token_error( 'invalid_grant', __( 'The grant behind this device code no longer covers any permission.', 'easy-mcp-ai' ) );
+        $scope = $this->scope_backed_by_consent( Device_Authorization::GRANT_TYPE, $row );
+        if ( $scope instanceof \WP_REST_Response ) {
+            return $scope;
         }
 
         $token_manager = new OAuth_Token_Manager();
@@ -242,82 +228,16 @@ class Token_Endpoint {
             (string) $row->client_id,
             (int) $row->wp_user_id,
             (string) $row->resource,
-            $effective_scope
+            $scope
         );
 
         if ( null === $tokens ) {
             return $this->token_error( 'server_error', __( 'Failed to issue access token.', 'easy-mcp-ai' ), 500 );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        $post_consent = self::live_consent( (int) $row->wp_user_id, (string) $row->client_id );
-        $token_id     = isset( $tokens['token_id'] ) ? (int) $tokens['token_id'] : 0;
-        if ( ! self::consent_backs_row( $post_consent, $row ) ) {
-            $token_manager->revoke_chain( $token_id );
-            return $this->token_error( 'invalid_grant', __( 'The grant behind this device code has been revoked.', 'easy-mcp-ai' ) );
-        }
-        $settled_scope = self::cap_scope( (string) $row->scope, (string) $post_consent->scope );
-        if ( '' === $settled_scope ) {
-            $token_manager->revoke_chain( $token_id );
-            return $this->token_error( 'invalid_grant', __( 'The grant behind this device code no longer covers any permission.', 'easy-mcp-ai' ) );
-        }
-        if ( $token_id > 0 ) {
-            global $wpdb;
-            $tokens_table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
-            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix; the conditional UPDATE and the read-back are the point.
-            if ( $settled_scope !== $effective_scope ) {
-                
-                
-                
-                
-                
-                
-                
-                
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "UPDATE {$tokens_table} SET scope = %s WHERE id = %d AND scope = %s",
-                        $settled_scope,
-                        $token_id,
-                        $effective_scope
-                    )
-                );
-            }
-            
-            
-            
-            
-            $final = $wpdb->get_row(
-                $wpdb->prepare( "SELECT scope, is_active FROM {$tokens_table} WHERE id = %d LIMIT 1", $token_id )
-            );
-            // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            if ( ! is_object( $final ) || empty( $final->is_active ) || '' === trim( (string) $final->scope ) ) {
-                $token_manager->revoke_chain( $token_id );
-                return $this->token_error( 'invalid_grant', __( 'The grant behind this device code no longer covers any permission.', 'easy-mcp-ai' ) );
-            }
-            
-            
-            
-            
-            
-            
-            
-            $final_scope = (string) $final->scope;
-            if ( self::cap_scope( $final_scope, (string) $post_consent->scope ) !== $final_scope ) {
-                $token_manager->revoke_chain( $token_id );
-                return $this->token_error( 'invalid_grant', __( 'The grant behind this device code could not be narrowed to its current permissions.', 'easy-mcp-ai' ) );
-            }
-            $tokens['scope'] = $final_scope;
+        $tokens = $this->settle_against_consent( $token_manager, $tokens, Device_Authorization::GRANT_TYPE, $row, $scope );
+        if ( $tokens instanceof \WP_REST_Response ) {
+            return $tokens;
         }
 
         $response = new \WP_REST_Response(
@@ -343,11 +263,179 @@ class Token_Endpoint {
 
 
 
-    private static function consent_backs_row( $consent, $row ): bool {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function scope_backed_by_consent( string $grant_type, $grant ) {
+        $consent = self::live_consent( (int) $grant->wp_user_id, (string) $grant->client_id );
+        if ( ! self::consent_backs( $consent, self::bound_consent_id( $grant_type, $grant ) ) ) {
+            return $this->consent_refusal( $grant_type, 'revoked' );
+        }
+        $scope = self::cap_by_consent( (string) $grant->scope, (string) $consent->scope );
+        if ( '' === $scope ) {
+            return $this->consent_refusal( $grant_type, 'empty' );
+        }
+        return $scope;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function settle_against_consent( OAuth_Token_Manager $token_manager, array $tokens, string $grant_type, $grant, string $minted_scope ) {
+        $post_consent = self::live_consent( (int) $grant->wp_user_id, (string) $grant->client_id );
+        $token_id     = isset( $tokens['token_id'] ) ? (int) $tokens['token_id'] : 0;
+        if ( ! self::consent_backs( $post_consent, self::bound_consent_id( $grant_type, $grant ) ) ) {
+            $token_manager->revoke_chain( $token_id );
+            return $this->consent_refusal( $grant_type, 'revoked' );
+        }
+        $settled_scope = self::cap_by_consent( (string) $grant->scope, (string) $post_consent->scope );
+        if ( '' === $settled_scope ) {
+            $token_manager->revoke_chain( $token_id );
+            return $this->consent_refusal( $grant_type, 'empty' );
+        }
+        if ( $token_id <= 0 ) {
+            return $tokens;
+        }
+
+        global $wpdb;
+        $tokens_table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix; the conditional UPDATE and the read-back are the point.
+        if ( $settled_scope !== $minted_scope ) {
+            
+            
+            
+            
+            
+            
+            
+            
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE {$tokens_table} SET scope = %s WHERE id = %d AND scope = %s",
+                    $settled_scope,
+                    $token_id,
+                    $minted_scope
+                )
+            );
+        }
+        
+        
+        
+        
+        $final = $wpdb->get_row(
+            $wpdb->prepare( "SELECT scope, is_active FROM {$tokens_table} WHERE id = %d LIMIT 1", $token_id )
+        );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        if ( ! is_object( $final ) || empty( $final->is_active ) || '' === trim( (string) $final->scope ) ) {
+            $token_manager->revoke_chain( $token_id );
+            return $this->consent_refusal( $grant_type, 'empty' );
+        }
+        
+        
+        
+        
+        
+        
+        
+        $final_scope = (string) $final->scope;
+        if ( self::cap_by_consent( $final_scope, (string) $post_consent->scope ) !== $final_scope ) {
+            $token_manager->revoke_chain( $token_id );
+            return $this->consent_refusal( $grant_type, 'not_narrowed' );
+        }
+        $tokens['scope'] = $final_scope;
+        return $tokens;
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function bound_consent_id( string $grant_type, $grant ): ?int {
+        if ( Device_Authorization::GRANT_TYPE !== $grant_type ) {
+            return null;
+        }
+        return isset( $grant->consent_id ) ? (int) $grant->consent_id : 0;
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function consent_backs( $consent, ?int $consent_id ): bool {
         return null !== $consent
-            && ! empty( $row->consent_id )
-            && (int) $consent->id === (int) $row->consent_id
-            && '' !== trim( (string) $consent->scope );
+            && '' !== trim( (string) $consent->scope )
+            && ( null === $consent_id || ( $consent_id > 0 && (int) $consent->id === $consent_id ) );
+    }
+
+    
+
+
+
+
+
+
+    private function consent_refusal( string $grant_type, string $reason ): \WP_REST_Response {
+        $device = Device_Authorization::GRANT_TYPE === $grant_type;
+        if ( 'revoked' === $reason ) {
+            $message = $device
+                ? __( 'The grant behind this device code has been revoked.', 'easy-mcp-ai' )
+                : __( 'The grant behind this authorization code has been revoked.', 'easy-mcp-ai' );
+        } elseif ( 'not_narrowed' === $reason ) {
+            $message = $device
+                ? __( 'The grant behind this device code could not be narrowed to its current permissions.', 'easy-mcp-ai' )
+                : __( 'The grant behind this authorization code could not be narrowed to its current permissions.', 'easy-mcp-ai' );
+        } else {
+            $message = $device
+                ? __( 'The grant behind this device code no longer covers any permission.', 'easy-mcp-ai' )
+                : __( 'The grant behind this authorization code no longer covers any permission.', 'easy-mcp-ai' );
+        }
+        return $this->token_error( 'invalid_grant', $message );
     }
 
     
@@ -430,14 +518,16 @@ class Token_Endpoint {
         }
 
         
-        if ( $code_row->client_id !== $client_id ) {
+        
+        
+        if ( $code_row->client_id !== Client_Metadata::storage_id( $client_id ) ) {
             return $this->token_error( 'invalid_grant', __( 'Client ID mismatch.', 'easy-mcp-ai' ) );
         }
 
         
         
         $registry = new Client_Registry();
-        $client   = $registry->get_client( $client_id );
+        $client   = $registry->find_client( $client_id );
         if ( null === $client ) {
             return $this->token_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }
@@ -508,18 +598,28 @@ class Token_Endpoint {
         }
 
         
+        
+        
+        $scope = $this->scope_backed_by_consent( 'authorization_code', $code_row );
+        if ( $scope instanceof \WP_REST_Response ) {
+            return $scope;
+        }
+
+        
         $token_manager = new OAuth_Token_Manager();
         $tokens = $token_manager->mint_access_token(
             $code_row->client_id,
             (int) $code_row->wp_user_id,
             $code_row->resource,
-            $code_row->scope
+            $scope
         );
 
         if ( null === $tokens ) {
             return $this->token_error( 'server_error', __( 'Failed to issue access token.', 'easy-mcp-ai' ), 500 );
         }
 
+        
+        
         
         
         $minted_token_id = isset( $tokens['token_id'] ) ? (int) $tokens['token_id'] : 0;
@@ -532,6 +632,11 @@ class Token_Endpoint {
                 array( '%d' ),
                 array( '%s' )
             );
+        }
+
+        $tokens = $this->settle_against_consent( $token_manager, $tokens, 'authorization_code', $code_row, $scope );
+        if ( $tokens instanceof \WP_REST_Response ) {
+            return $tokens;
         }
 
         $response = new \WP_REST_Response(
@@ -572,7 +677,9 @@ class Token_Endpoint {
 
         
         
-        $client = ( new Client_Registry() )->get_client( $client_id );
+        
+        
+        $client = ( new Client_Registry() )->find_client( $client_id );
         if ( ! $client ) {
             return $this->token_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }
@@ -602,7 +709,7 @@ class Token_Endpoint {
         }
 
         $token_manager = new OAuth_Token_Manager();
-        $result = $token_manager->refresh( $refresh_token, $client_id, $resource );
+        $result = $token_manager->refresh( $refresh_token, Client_Metadata::storage_id( $client_id ), $resource );
 
         if ( false === $result ) {
             return $this->token_error( 'invalid_grant', __( 'Refresh token is invalid, expired, or revoked.', 'easy-mcp-ai' ) );
@@ -662,6 +769,84 @@ class Token_Endpoint {
             return implode( ' ', $c );
         }
         return implode( ' ', array_values( array_intersect( $g, $c ) ) );
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static function cap_by_consent( string $granted, string $consent ): string {
+        $held = array_values( array_filter( array_map( 'trim', explode( ' ', $consent ) ) ) );
+        $want = array_values( array_filter( array_map( 'trim', explode( ' ', $granted ) ) ) );
+        if ( in_array( 'mcp', $held, true ) || in_array( 'mcp', $want, true ) ) {
+            
+            return implode( ' ', array_values( array_unique( explode( ' ', self::cap_scope( $granted, $consent ) ) ) ) );
+        }
+        $held = array_values( array_unique( array_merge( $held, self::leaves_of( $held ) ) ) );
+        $kept = array();
+        foreach ( $want as $scope ) {
+            $grants = array_merge( array( $scope ), self::leaves_of( array( $scope ) ) );
+            $parts  = self::holds( $held, $scope ) ? array( $scope ) : array_filter(
+                $held,
+                static function ( $part ) use ( $grants ) {
+                    return self::holds( $grants, $part );
+                }
+            );
+            foreach ( $parts as $part ) {
+                if ( ! in_array( $part, $kept, true ) ) {
+                    $kept[] = $part;
+                }
+            }
+        }
+        return implode( ' ', $kept );
+    }
+
+    
+
+
+
+
+
+
+
+
+    private static function holds( array $scopes, string $scope ): bool {
+        return in_array( $scope, $scopes, true )
+            || ( 0 === strpos( $scope, 'mcp:abilities:' ) && in_array( 'mcp:abilities', $scopes, true ) );
+    }
+
+    
+
+
+
+
+
+
+    private static function leaves_of( array $scopes ): array {
+        return Scope_Map::expand_category_scopes( Scope_Map::apply_legacy_scope_upgrades( $scopes ) );
     }
 
     

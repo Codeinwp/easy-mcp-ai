@@ -198,7 +198,14 @@ final class Customizer_Changeset {
 
 
     private static function write( array $data, int $id, string $status ): int {
-        $post = array( 'post_content' => (string) wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) );
+        $json = wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+        if ( ! is_string( $json ) || ! is_array( json_decode( $json, true ) ) ) {
+            
+            
+            
+            throw new \RuntimeException( 'The Customizer changeset was not written: its data cannot be stored as JSON. Nothing was changed.' );
+        }
+        $post = array( 'post_content' => $json );
         $keep = static function ( $prepared, $postarr, $unsanitized ) {
             if ( is_array( $prepared ) && isset( $prepared['post_type'], $unsanitized['post_content'] ) && self::POST_TYPE === $prepared['post_type'] ) {
                 $prepared['post_content'] = $unsanitized['post_content'];

@@ -27,6 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+
 final class Tool_Directories {
 
     
@@ -38,6 +39,8 @@ final class Tool_Directories {
         'feedback',
         
         'cache',
+        
+        'mail',
         
         'skills',
         
@@ -55,6 +58,8 @@ final class Tool_Directories {
         'acf'                 => 'acf',
         'the-events-calendar' => 'events-calendar',
         'redirection'         => 'redirection',
+        'site-kit'            => 'site-kit',
+        'contact-form-7'      => 'contact-form-7',
         'buddypress'          => 'buddypress',
         'yoast-seo'           => 'seo/yoast',
         'rank-math'           => 'seo/rank-math',
@@ -68,12 +73,15 @@ final class Tool_Directories {
     const EXTERNAL_DATA = array( 'ahrefs', 'gsc', 'ga', 'dfs', 'semrush', 'seranking' );
 
     
+    const BUILDERS = 'builders';
+
+    
 
 
 
 
     public static function enabled(): array {
-        return array_values( array_unique( array_merge( self::ALWAYS_ON, self::external_data(), self::plugin_groups() ) ) );
+        return array_values( array_unique( array_merge( self::ALWAYS_ON, self::external_data(), self::plugin_groups(), self::builders() ) ) );
     }
 
     
@@ -83,7 +91,7 @@ final class Tool_Directories {
 
 
     public static function all(): array {
-        return array_values( array_unique( array_merge( self::ALWAYS_ON, self::EXTERNAL_DATA, array_values( self::PLUGIN_GROUPS ) ) ) );
+        return array_values( array_unique( array_merge( self::ALWAYS_ON, self::EXTERNAL_DATA, array_values( self::PLUGIN_GROUPS ), array( self::BUILDERS ) ) ) );
     }
 
     
@@ -102,28 +110,39 @@ final class Tool_Directories {
             $tool_dirs[] = 'ahrefs';
         }
         
-        if ( ! empty( \get_option( \Easy_MCP_AI\GSC\GSC_Client::OPTION_JSON, '' ) ) ) {
+        
+        
+        if ( \Easy_MCP_AI\Provider_Credentials::is_configured( 'gsc' ) ) {
             $tool_dirs[] = 'gsc';
         }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\GA\GA_Client::OPTION_JSON, '' ) ) ) {
+        if ( \Easy_MCP_AI\Provider_Credentials::is_configured( 'ga' ) ) {
             $tool_dirs[] = 'ga';
         }
-        
-        $dfs_login    = \get_option( \Easy_MCP_AI\DFS\DataforSEO_Client::OPTION_LOGIN, '' );
-        $dfs_api_pwd  = \get_option( \Easy_MCP_AI\DFS\DataforSEO_Client::OPTION_API_PASSWORD, '' );
-        if ( ! empty( $dfs_login ) && ! empty( $dfs_api_pwd ) ) {
+        if ( \Easy_MCP_AI\Provider_Credentials::is_configured( 'dfs' ) ) {
             $tool_dirs[] = 'dfs';
         }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\Semrush\Semrush_Client::OPTION_API_KEY, '' ) ) ) {
+        if ( \Easy_MCP_AI\Provider_Credentials::is_configured( 'semrush' ) ) {
             $tool_dirs[] = 'semrush';
         }
-        
-        if ( ! empty( \get_option( \Easy_MCP_AI\SeRanking\SeRanking_Client::OPTION_API_KEY, '' ) ) ) {
+        if ( \Easy_MCP_AI\Provider_Credentials::is_configured( 'seranking' ) ) {
             $tool_dirs[] = 'seranking';
         }
         return $tool_dirs;
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+    public static function builders(): array {
+        return \Easy_MCP_AI\Builders\Builder_Registry::any_present() ? array( self::BUILDERS ) : array();
     }
 
     

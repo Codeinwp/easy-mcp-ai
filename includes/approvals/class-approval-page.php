@@ -210,7 +210,7 @@ class Approval_Page {
             $brand
         ) ) . '</p>';
         $html .= '<div class="emcp-card emcp-card--subtle">';
-        $html .= '<p class="emcp-text emcp-text--pre" data-feedback-report>' . \esc_html( $row['preview'] ) . '</p>';
+        $html .= '<p class="emcp-text emcp-text--pre" data-feedback-report>' . self::report_html( (string) $row['preview'] ) . '</p>';
         $html .= '<p class="emcp-text emcp-text--small emcp-text--muted" title="' . \esc_attr( $row['expires_at'] . ' UTC' ) . '">' . \esc_html( $meta ) . '</p>';
         $html .= '</div>';
         $html .= '<div class="emcp-notice emcp-notice--error" id="emcp-feedback-error" hidden>' . \esc_html__( 'The report could not be sent, so it is still waiting. Please try again in a moment.', 'easy-mcp-ai' ) . '</div>';
@@ -308,6 +308,17 @@ class Approval_Page {
             default:
                 return __( 'This request has expired. Ask your assistant to run the operation again.', 'easy-mcp-ai' );
         }
+    }
+
+    
+
+
+
+
+
+
+    private static function report_html( string $text ): string {
+        return htmlspecialchars( $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
     }
 
     private function render_form( array $row, $notice = '', $status = 200 ) {

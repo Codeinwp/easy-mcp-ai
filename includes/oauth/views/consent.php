@@ -33,6 +33,11 @@
 
 
 
+
+
+
+
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -98,10 +103,22 @@ if ( ! defined( 'ABSPATH' ) ) {
         <input type="hidden" name="<?php echo esc_attr( $easy_mcp_ai_hidden_name ); ?>" value="<?php echo esc_attr( $easy_mcp_ai_hidden_value ); ?>">
         <?php endforeach; ?>
 
+        <?php
+        
+        
+        foreach ( $carried_scopes as $easy_mcp_ai_carried_scope ) :
+            ?>
+        <input type="hidden" name="scopes[]" value="<?php echo esc_attr( $easy_mcp_ai_carried_scope ); ?>" data-carried-scope>
+        <?php endforeach; ?>
+
     <div class="emcp-body">
 
         <?php if ( ! empty( $notice ) ) : ?>
         <div class="emcp-notice emcp-notice--warn"><?php echo esc_html( $notice ); ?></div>
+        <?php endif; ?>
+
+        <?php if ( ! empty( $step_up_notice ) ) : ?>
+        <div class="emcp-notice emcp-notice--info" data-step-up-notice><?php echo esc_html( $step_up_notice ); ?></div>
         <?php endif; ?>
 
         <div class="emcp-card emcp-card--subtle">
@@ -118,7 +135,11 @@ if ( ! defined( 'ABSPATH' ) ) {
             </p>
             <p class="emcp-text emcp-text--small emcp-text--muted">
                 <?php echo esc_html__( 'Client ID:', 'easy-mcp-ai' ); ?>
+                <?php if ( '' !== $client_label ) : ?>
+                <code class="emcp-mono"><?php echo esc_html( $client_label ); ?></code>
+                <?php else : ?>
                 <code class="emcp-mono"><?php echo esc_html( $client_id_prefix ); ?>&hellip;</code>
+                <?php endif; ?>
                 &nbsp;&middot;&nbsp;
                 <?php echo esc_html( $context_label ); ?>
                 <code class="emcp-mono"><?php echo esc_html( $context_value ); ?></code>
@@ -229,9 +250,11 @@ if ( ! defined( 'ABSPATH' ) ) {
                         if ( ! empty( $category['is_ability'] ) ) {
                             $has_ability_row = true;
                         }
-                        $label = isset( $category['label'] ) ? $category['label'] : '';
+                        $label   = isset( $category['label'] ) ? $category['label'] : '';
+                        $row_new = in_array( isset( $category['read_scope'] ) ? (string) $category['read_scope'] : '', $new_scopes, true )
+                            || in_array( isset( $category['write_scope'] ) ? (string) $category['write_scope'] : '', $new_scopes, true );
                         ?>
-                    <tr>
+                    <tr<?php echo $row_new ? ' class="emcp-table__row--new"' : ''; ?>>
                         <td><?php echo esc_html( $label ); ?></td>
                         <?php
                         foreach ( array( 'read', 'write' ) as $kind ) :
@@ -240,8 +263,11 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <td class="emcp-table__toggle">
                             <?php if ( '' !== $box_scope ) : ?>
                                 <input type="checkbox" name="scopes[]" value="<?php echo esc_attr( $box_scope ); ?>" class="scope-checkbox emcp-checkbox" data-kind="<?php echo esc_attr( $kind ); ?>"
-                                    <?php checked( $ceiling_all || in_array( $box_scope, $checked_scopes, true ) ); ?>
+                                    <?php checked( $tick_all || in_array( $box_scope, $checked_scopes, true ) ); ?>
                                     <?php disabled( ! $ceiling_all && ! in_array( $box_scope, $ceiling, true ) ); ?>>
+                                <?php if ( in_array( $box_scope, $new_scopes, true ) ) : ?>
+                                <span class="emcp-flag emcp-flag--new" data-new-scope="<?php echo esc_attr( $box_scope ); ?>"><?php echo esc_html__( 'New', 'easy-mcp-ai' ); ?></span>
+                                <?php endif; ?>
                             <?php else : ?>
                                 <span class="emcp-none">&mdash;</span>
                             <?php endif; ?>
@@ -259,14 +285,17 @@ if ( ! defined( 'ABSPATH' ) ) {
                             continue;
                         }
                         ?>
-                    <tr data-privileged-row>
+                    <tr data-privileged-row<?php echo in_array( $box_scope, $new_scopes, true ) ? ' class="emcp-table__row--new"' : ''; ?>>
                         <td>
                             <?php echo esc_html( $privileged_row['label'] ); ?>
                             <span class="emcp-flag emcp-flag--danger"><?php echo esc_html__( 'Privileged', 'easy-mcp-ai' ); ?></span>
                         </td>
                         <td class="emcp-table__toggle" colspan="2">
                             <input type="checkbox" name="scopes[]" value="<?php echo esc_attr( $box_scope ); ?>" class="scope-checkbox emcp-checkbox"
-                                <?php checked( $ceiling_all || in_array( $box_scope, $checked_scopes, true ) ); ?>>
+                                <?php checked( $tick_all || in_array( $box_scope, $checked_scopes, true ) ); ?>>
+                            <?php if ( in_array( $box_scope, $new_scopes, true ) ) : ?>
+                            <span class="emcp-flag emcp-flag--new" data-new-scope="<?php echo esc_attr( $box_scope ); ?>"><?php echo esc_html__( 'New', 'easy-mcp-ai' ); ?></span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

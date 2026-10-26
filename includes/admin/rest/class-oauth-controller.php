@@ -36,6 +36,7 @@ namespace Easy_MCP_AI\Admin\Rest;
 use Easy_MCP_AI\Admin\Access_Presets;
 use Easy_MCP_AI\Admin\OAuth_Admin;
 use Easy_MCP_AI\Config;
+use Easy_MCP_AI\OAuth\Client_Metadata_Support;
 use Easy_MCP_AI\OAuth\Client_Registry;
 use Easy_MCP_AI\OAuth\OAuth_Site_Move;
 use Easy_MCP_AI\OAuth\Scope_Map;
@@ -256,13 +257,17 @@ class OAuth_Controller extends Admin_Rest_Controller {
         $clients = $this->wpdb->prefix . 'easy_mcp_ai_oauth_clients';
         $tokens  = $this->wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
         $now     = \current_time( 'mysql', true );
+        
+        
+        
+        $document = Client_Metadata_Support::schema_ready() ? ' c.metadata_url,' : '';
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned tables; names prefixed by $wpdb->prefix.
         
         
         $rows = (array) $this->wpdb->get_results(
             $this->wpdb->prepare(
-                "SELECT c.id, c.client_id, c.client_name, c.redirect_uris, c.grant_types, c.token_endpoint_auth_method, c.client_secret_hash, c.created_at,
+                "SELECT c.id, c.client_id, c.client_name, c.redirect_uris, c.grant_types, c.token_endpoint_auth_method, c.client_secret_hash, c.created_at,{$document}
                         (SELECT COUNT(*) FROM {$tokens} t WHERE t.client_id = c.client_id AND t.is_active = 1 AND t.expires_at > %s) AS active_tokens
                  FROM {$clients} c
                  WHERE c.is_active = 1
@@ -338,6 +343,9 @@ class OAuth_Controller extends Admin_Rest_Controller {
 
 
 
+
+
+
     public static function shape_client( array $row, bool $issued_elsewhere = false ): array {
         $method = Client_Registry::effective_auth_method( $row );
         $uris   = json_decode( (string) ( $row['redirect_uris'] ?? '' ), true );
@@ -365,6 +373,7 @@ class OAuth_Controller extends Admin_Rest_Controller {
             'activeTokens' => (int) ( $row['active_tokens'] ?? 0 ),
             'status'       => 'active',
             'issuedElsewhere' => (bool) $issued_elsewhere,
+            'metadataUrl'  => isset( $row['metadata_url'] ) && '' !== (string) $row['metadata_url'] ? (string) $row['metadata_url'] : null,
         );
     }
 

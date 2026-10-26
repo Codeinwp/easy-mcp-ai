@@ -100,7 +100,10 @@ class External_Data_Controller extends Admin_Rest_Controller {
         if ( \is_wp_error( $key ) ) {
             return $key;
         }
-        $this->service->remove_key( $key );
+        $removed = $this->service->remove_key( $key );
+        if ( \is_wp_error( $removed ) ) {
+            return $removed;
+        }
         return $this->ok( $this->service->describe( $key ) );
     }
 

@@ -37,6 +37,7 @@ final class Compat_Registry {
         'tec-no-duplicate-reuse'   => 'Easy_MCP_AI\\Compat\\Shims\\Tec_No_Duplicate_Reuse',
         'learnpress-mcp-auth'      => 'Easy_MCP_AI\\Compat\\Shims\\Learnpress_Mcp_Auth',
         'astra-customizer-loader'  => 'Easy_MCP_AI\\Compat\\Shims\\Astra_Customizer_Loader',
+        'sitekit-user-binding'     => 'Easy_MCP_AI\\Compat\\Shims\\Sitekit_User_Binding',
     );
 
     

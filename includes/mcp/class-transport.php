@@ -23,6 +23,11 @@ class Transport {
     private $oauth_scope = null;
     
     private $last_scope_challenge = null;
+    
+
+
+
+    private $in_batch = false;
 
     public function __construct( Server $server, Token_Manager $token_manager ) {
         $this->server        = $server;
@@ -659,17 +664,27 @@ class Transport {
 
 
 
-    private function scope_challenge_response( $body ) {
+
+
+
+
+
+
+
+    private function scope_challenge_response( $body, $wp_user_id = 0, $client_id = null ) {
         $scope                      = $this->last_scope_challenge;
         $this->last_scope_challenge = null;
-        if ( null === $scope || '' === $scope ) {
+        if ( $this->in_batch || null === $scope || '' === $scope ) {
             return null;
         }
+        $granted = preg_split( '/\s+/', trim( (string) $this->oauth_scope ), -1, PREG_SPLIT_NO_EMPTY );
+        $added   = array_diff( preg_split( '/\s+/', trim( $scope ), -1, PREG_SPLIT_NO_EMPTY ), $granted );
+        \Easy_MCP_AI\OAuth\Step_Up::record( (int) $wp_user_id, (string) $client_id, $added );
         $response = new \WP_REST_Response( $body, 403 );
         $response->header( 'Cache-Control', 'no-store, private' );
         $response->header(
             'WWW-Authenticate',
-            'Bearer error="insufficient_scope", scope="' . $scope . '", resource_metadata="' . \home_url( '/.well-known/oauth-protected-resource' ) . '", error_description="This tool needs an additional scope; ask the user to authorize it"'
+            'Bearer error="insufficient_scope", scope="' . $scope . '", resource_metadata="' . self::resource_metadata_url() . '", error_description="This tool needs an additional scope; ask the user to authorize it"'
         );
         $this->add_cors_headers( $response );
         return $response;
@@ -784,7 +799,7 @@ class Transport {
         if ( 'subscriptions/listen' === $method && isset( $body['result'] ) ) {
             return $this->listen_stream_response( $id, $body );
         }
-        $challenged = $this->scope_challenge_response( $body );
+        $challenged = $this->scope_challenge_response( $body, $wp_user_id, $client_id );
         if ( $challenged ) {
             return $challenged;
         }
@@ -988,7 +1003,7 @@ class Transport {
         $response_data = $this->call_handle_message_with_identity( $message, $token_id, $allowed_tools, $auth_source, $wp_user_id, $oauth_client_id );
         
         
-        $challenged    = $this->scope_challenge_response( $response_data );
+        $challenged    = $this->scope_challenge_response( $response_data, $wp_user_id, $oauth_client_id );
         if ( $challenged ) {
             return $challenged;
         }
@@ -1041,17 +1056,22 @@ class Transport {
             
         }
 
-        $responses = array();
-        foreach ( $messages as $message ) {
-            
-            if ( \is_wp_error( $message ) ) {
-                $responses[] = JSON_RPC::error_response( null, Error_Codes::INVALID_REQUEST, $message->get_error_message() );
-                continue;
+        $responses      = array();
+        $this->in_batch = true;
+        try {
+            foreach ( $messages as $message ) {
+                
+                if ( \is_wp_error( $message ) ) {
+                    $responses[] = JSON_RPC::error_response( null, Error_Codes::INVALID_REQUEST, $message->get_error_message() );
+                    continue;
+                }
+                $result = $this->process_single_message( $message, $token_id, $wp_user_id, $request, $revalidated, $allowed_tools, $auth_source, $oauth_client_id );
+                if ( $result instanceof \WP_REST_Response && null !== $result->get_data() ) {
+                    $responses[] = $result->get_data();
+                }
             }
-            $result = $this->process_single_message( $message, $token_id, $wp_user_id, $request, $revalidated, $allowed_tools, $auth_source, $oauth_client_id );
-            if ( $result instanceof \WP_REST_Response && null !== $result->get_data() ) {
-                $responses[] = $result->get_data();
-            }
+        } finally {
+            $this->in_batch = false;
         }
         
         $response = empty( $responses ) ? new \WP_REST_Response( null, 202 ) : new \WP_REST_Response( $responses, 200 );

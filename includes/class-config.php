@@ -57,6 +57,8 @@ class Config {
         'skills_sync',
         
         'api_key_header_only',
+        
+        'oauth_cimd',
     );
 
     
@@ -98,6 +100,12 @@ class Config {
             'oauth_access_token_ttl' => array( 3600, 'integer', 60, PHP_INT_MAX ),
             'oauth_refresh_token_ttl' => array( 2592000, 'integer', 60, PHP_INT_MAX ),
             'oauth_dcr_enabled' => array( true, 'boolean' ),
+            
+            
+            
+            
+            
+            'oauth_cimd' => array( true, 'opt_out' ),
             'oauth_max_clients' => array( 5000, 'integer', 0, PHP_INT_MAX ),
             'oauth_client_retention' => array( 7, 'integer', 0, 3650 ),
             'oauth_enabled' => array( true, 'boolean' ),
@@ -142,6 +150,11 @@ class Config {
             
             
             'skills_sync' => array( true, 'opt_out' ),
+            
+            
+            
+            'ga_default_property_id' => array( '', 'ga_property' ),
+            'gsc_default_site_url' => array( '', 'gsc_site' ),
         );
     }
 
@@ -327,6 +340,21 @@ class Config {
                     $host = Site_Host::normalize( $raw );
                     if ( '' !== $host ) {
                         return $host;
+                    }
+                }
+                break;
+            case 'ga_property':
+            case 'gsc_site':
+                if ( is_string( $raw ) ) {
+                    if ( '' === trim( $raw ) ) {
+                        return ''; 
+                    }
+                    try {
+                        return 'ga_property' === $spec[1]
+                            ? GA\GA_Client::normalize_property( $raw )
+                            : GSC\GSC_Client::validate_site_url( $raw );
+                    } catch ( \Exception $e ) {
+                        break;
                     }
                 }
                 break;

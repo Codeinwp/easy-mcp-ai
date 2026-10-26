@@ -193,23 +193,65 @@ class Authorization_Endpoint {
         }
 
         
+        
+        $stored = array( 'client_id' => Client_Metadata::storage_id( $params['client_id'] ) ) + $params;
+
+        
+        
+        
+        
+        
+        $local_document = ! empty( $client->metadata_url ) && Client_Metadata::is_local_redirect( $params['redirect_uri'] );
+
+        
         $user    = wp_get_current_user();
-        $consent = $this->get_existing_consent( $user->ID, $params['client_id'] );
+        $consent = $this->get_existing_consent( $user->ID, $stored['client_id'] );
+        $focus   = array();
 
         if ( $consent ) {
             $consented_scopes = array_filter( array_map( 'trim', explode( ' ', $consent->scope ) ) );
-            $is_subset        = empty( array_diff( $scope_list, $consented_scopes ) )
-                                || in_array( 'mcp', $consented_scopes, true );
+            $full_consent     = in_array( 'mcp', $consented_scopes, true );
+            $is_subset        = empty( array_diff( $scope_list, $consented_scopes ) ) || $full_consent;
+            
+            
+            
+            
+            
+            
+            $step_up       = Step_Up::pending( $user->ID, $stored['client_id'] );
+            $consented_now = Scope_Map::expand_category_scopes( Scope_Map::apply_legacy_scope_upgrades( array_values( $consented_scopes ) ) );
+            $step_up_new   = $full_consent ? array() : array_values( array_diff( $step_up, $consented_now ) );
 
-            if ( $is_subset ) {
+            if ( $is_subset && array() === $step_up_new ) {
                 
                 
-                $grant_scope = implode( ' ', $scope_list );
-                $code        = $this->mint_authorization_code( $params, $user->ID, $grant_scope );
-                if ( null === $code ) {
-                    return $this->redirect_with_error( $params, 'server_error', __( 'Failed to issue authorization code.', 'easy-mcp-ai' ), 'code_issue_failed' );
+                
+                $grant_list  = in_array( 'mcp', $scope_list, true ) ? $scope_list : array_values( array_unique( array_merge( $scope_list, $step_up ) ) );
+                $grant_scope = implode( ' ', $grant_list );
+
+                if ( $local_document ) {
+                    
+                    $requested_scope = $grant_scope;
+                    $params['scope'] = $grant_scope;
+                } else {
+                    
+                    $code = $this->mint_authorization_code( $stored, $user->ID, $grant_scope );
+                    if ( null === $code ) {
+                        return $this->redirect_with_error( $params, 'server_error', __( 'Failed to issue authorization code.', 'easy-mcp-ai' ), 'code_issue_failed' );
+                    }
+                    Step_Up::clear( $user->ID, $stored['client_id'] );
+                    return $this->redirect_with_code( $params['redirect_uri'], $code, $params['state'] );
                 }
-                return $this->redirect_with_code( $params['redirect_uri'], $code, $params['state'] );
+            }
+
+            if ( array() !== $step_up_new ) {
+                
+                $requested_scope = implode( ' ', array_values( array_unique( array_merge( $scope_list, $consented_now, $step_up ) ) ) );
+                $params['scope'] = $requested_scope;
+                $focus           = array(
+                    'new'  => $step_up_new,
+                    'held' => $consented_now,
+                );
             }
         }
 
@@ -233,11 +275,29 @@ class Authorization_Endpoint {
                 'nonce_action' => self::consent_nonce_action( $params['client_id'], $this->iss_mode ),
             );
         }
+        if ( ! empty( $client->metadata_url ) ) {
+            
+            
+            
+            $consent_options['nonce_action'] = self::consent_nonce_action( $params['client_id'], $this->iss_mode );
+            $consent_options['client_label'] = Client_Metadata::host( $params['client_id'] );
+            if ( $local_document ) {
+                $consent_options['notice'] = sprintf(
+                    /* translators: 1: application name, 2: where the sign-in goes, such as 127.0.0.1 */
+                    __( '%1$s will hand this sign-in to a program on your computer (%2$s). Any program can use this application\'s public client ID, so approve only if you started this connection yourself just now.', 'easy-mcp-ai' ),
+                    (string) $client->client_name,
+                    (string) ( wp_parse_url( $params['redirect_uri'], PHP_URL_HOST ) ?: wp_parse_url( $params['redirect_uri'], PHP_URL_SCHEME ) )
+                );
+            }
+        }
+        if ( array() !== $focus ) {
+            $consent_options['step_up'] = $focus;
+        }
         $html = Consent_Screen::render( $client, $user, $requested_scope, $params, $script_nonce, $consent_options );
 
         $response = new \WP_REST_Response( $html, 200 );
         $response->header( 'Content-Type', 'text/html; charset=utf-8' );
-        $this->add_security_headers( $response, $script_nonce, $params['redirect_uri'] );
+        $this->add_security_headers( $response, $script_nonce );
         return $response;
     }
 
@@ -383,6 +443,7 @@ class Authorization_Endpoint {
 
 
     private function handle_deny_action( array $params ) {
+        Step_Up::clear( get_current_user_id(), isset( $params['client_id'] ) ? Client_Metadata::storage_id( (string) $params['client_id'] ) : '' );
         return $this->redirect_with_error(
             $params,
             'access_denied',
@@ -435,14 +496,19 @@ class Authorization_Endpoint {
         
         
         if ( '' === $scope_string ) {
+            Step_Up::clear( $user->ID, Client_Metadata::storage_id( $params['client_id'] ) );
             return $this->handle_approved_without_scopes( $params );
         }
 
-        self::store_consent( $user->ID, $params['client_id'], $scope_string );
-        $code = $this->mint_authorization_code( $params, $user->ID, $scope_string );
+        
+        
+        $stored = array( 'client_id' => Client_Metadata::storage_id( $params['client_id'] ) ) + $params;
+        self::store_consent( $user->ID, $stored['client_id'], $scope_string );
+        $code = $this->mint_authorization_code( $stored, $user->ID, $scope_string );
         if ( null === $code ) {
             return $this->redirect_with_error( $params, 'server_error', __( 'Failed to issue authorization code.', 'easy-mcp-ai' ), 'code_issue_failed' );
         }
+        Step_Up::clear( $user->ID, $stored['client_id'] );
 
         return $this->redirect_with_code( $params['redirect_uri'], $code, $params['state'] );
     }
@@ -559,6 +625,8 @@ class Authorization_Endpoint {
         
         
         
+        
+        
         return hash_hmac( 'sha256', $client_id . '|' . $scope, wp_salt( 'auth' ) );
     }
 
@@ -587,7 +655,9 @@ class Authorization_Endpoint {
 
 
 
-    private function log_authorize_failure( $reason, array $params = array() ) {
+
+
+    private function log_authorize_failure( $reason, array $params = array(), $detail = '' ) {
         if ( ! \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_enabled', true ) ) {
             return;
         }
@@ -609,6 +679,9 @@ class Authorization_Endpoint {
             'redirect_host' => $redirect_host,
             'wp_user_id'    => get_current_user_id(),
         );
+        if ( '' !== (string) $detail ) {
+            $details['detail'] = (string) $detail;
+        }
 
         global $wpdb;
         $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct insert required for audit logging; mirrors Server::log_auth_failure().
@@ -637,7 +710,10 @@ class Authorization_Endpoint {
                 
                 
                 
-                'oauth_client_id' => self::column_safe_client_id( $details['client_id'] ),
+                
+                
+                
+                'oauth_client_id' => self::column_safe_client_id( Client_Metadata::storage_id( $details['client_id'] ) ),
                 'created_at'      => current_time( 'mysql', true ),
             ),
             array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
@@ -740,7 +816,31 @@ class Authorization_Endpoint {
         }
 
         
-        $client = ( new Client_Registry() )->get_client( $params['client_id'] );
+        
+        
+        
+        
+        
+        $client = null;
+        if ( Client_Metadata::is_url( $params['client_id'] ) && Client_Metadata_Support::resolves() ) {
+            $accept_new = Client_Metadata_Support::accepts_sign_ins();
+            if ( $accept_new || Client_Metadata::is_stored( $params['client_id'] ) ) {
+                
+                if ( ! \Easy_MCP_AI\Auth\Connect_Policy::current_user_can_connect( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_OAUTH ) ) {
+                    return new \WP_Error(
+                        'access_denied',
+                        __( 'Your account does not have sufficient permissions to authorize MCP access.', 'easy-mcp-ai' ),
+                        array( 'status' => 403, 'no_redirect' => true, 'log_reason' => 'insufficient_capability' )
+                    );
+                }
+                $client = Client_Metadata::for_authorization( $params['client_id'], $params['redirect_uri'], $accept_new );
+                if ( is_wp_error( $client ) ) {
+                    return $client;
+                }
+            }
+        } else {
+            $client = ( new Client_Registry() )->find_client( $params['client_id'] );
+        }
         if ( ! $client ) {
             return new \WP_Error(
                 'invalid_client',
@@ -832,7 +932,13 @@ class Authorization_Endpoint {
     private function error_response( \WP_Error $error, array $params ) {
         $data = $error->get_error_data();
 
-        $this->log_authorize_failure( $error->get_error_code(), $params );
+        
+        
+        $this->log_authorize_failure(
+            is_array( $data ) && ! empty( $data['log_reason'] ) ? (string) $data['log_reason'] : $error->get_error_code(),
+            $params,
+            is_array( $data ) && ! empty( $data['log_detail'] ) ? (string) $data['log_detail'] : ''
+        );
 
         
         if (
@@ -1111,7 +1217,7 @@ class Authorization_Endpoint {
 
 
 
-    private function add_security_headers( \WP_REST_Response $response, $script_nonce = null, $form_action_uri = null ) {
+    private function add_security_headers( \WP_REST_Response $response, $script_nonce = null ) {
         
         
         
@@ -1122,35 +1228,7 @@ class Authorization_Endpoint {
         
         
         
-        
-        
-        $form_action = "'self'";
-        if ( $form_action_uri ) {
-            $parts  = wp_parse_url( $form_action_uri );
-            $scheme = ! empty( $parts['scheme'] ) ? strtolower( $parts['scheme'] ) : '';
-            if ( ( 'http' === $scheme || 'https' === $scheme ) && ! empty( $parts['host'] ) ) {
-                
-                $origin = $scheme . '://' . $parts['host'];
-                if ( ! empty( $parts['port'] ) ) {
-                    $origin .= ':' . $parts['port'];
-                }
-                $form_action .= ' ' . $origin;
-            } elseif ( '' !== $scheme && preg_match( '/^[a-z][a-z0-9.+-]*$/', $scheme ) ) {
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                $form_action .= ' ' . $scheme . ':';
-            }
-        }
-        $csp = "default-src 'self'; style-src 'unsafe-inline' 'self'; frame-ancestors 'none'; form-action " . $form_action;
+        $csp = "default-src 'self'; style-src 'unsafe-inline' 'self'; frame-ancestors 'none'";
         if ( $script_nonce ) {
             $csp .= "; script-src 'nonce-" . $script_nonce . "'";
         }

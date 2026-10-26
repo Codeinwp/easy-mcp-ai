@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\Users;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Row_Extension;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -188,7 +189,7 @@ class List_Users extends Base_Tool {
         $with_caps = ! empty( $arguments['include_capabilities'] ) && rest_sanitize_boolean( $arguments['include_capabilities'] );
 
         return array_merge(
-            array( 'users' => self::user_rows( $users, $with_caps ) ),
+            array( 'users' => self::user_rows( $users, $with_caps, $this->get_name() ) ),
             $this->pagination_meta( $response, $params['page'], $params['per_page'], count( $users ) )
         );
     }
@@ -331,11 +332,13 @@ class List_Users extends Base_Tool {
 
 
 
-    private static function user_rows( array $users, bool $with_caps ): array {
+
+
+    private static function user_rows( array $users, bool $with_caps, string $tool ): array {
         $cap_key_base = self::cap_key();
         $result       = array();
         foreach ( $users as $user ) {
-            $result[] = self::user_row( $user, $with_caps, $cap_key_base );
+            $result[] = Row_Extension::apply( Row_Extension::USER, self::user_row( $user, $with_caps, $cap_key_base ), $user, $tool, true );
         }
         return $result;
     }

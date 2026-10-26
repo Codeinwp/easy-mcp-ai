@@ -76,6 +76,11 @@ class Delete_Post_Meta extends Base_Tool {
         $this->refuse_restricted_integration_field( $key, $post_id );
         
         
+        
+        $parent = wp_is_post_revision( $post_id );
+        $this->refuse_builder_owned_write( $parent ? (int) $parent : $post_id, false, array( $exact_key ? $key : wp_unslash( $key ) => null ) );
+        
+        
         $target         = $exact_key ? wp_slash( $key ) : $key;
         $value_provided = array_key_exists( 'value', $arguments );
         if ( $value_provided ) {

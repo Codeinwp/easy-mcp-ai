@@ -14,7 +14,7 @@ class List_Products extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists WooCommerce products with optional filtering by status, category, price range, stock status, and search. Returns { products: [ { id, name, sku, status, price, regular_price, sale_price, stock_status, stock_quantity, type, permalink } ], page }.';
+        return 'Lists WooCommerce products with optional filtering by status, category, price range, stock status, and search. Returns { products: [ { id, name, sku, status, price, regular_price, sale_price, stock_status, stock_quantity, type, permalink } ], total, total_pages, page, per_page }, where total and total_pages count every product that matches the filters.';
     }
 
     public function get_category() {
@@ -68,8 +68,9 @@ class List_Products extends Base_Tool {
         if ( isset( $arguments['on_sale'] ) ) {
             $params['on_sale'] = (bool) $arguments['on_sale'];
         }
-        $data   = $this->rest_request( 'GET', '/wc/v3/products', $params );
-        $result = array();
+        $response = $this->rest_response( 'GET', '/wc/v3/products', $params );
+        $data     = $response->get_data();
+        $result   = array();
         foreach ( $data as $p ) {
             $result[] = array(
                 'id'             => $p['id'],
@@ -85,6 +86,9 @@ class List_Products extends Base_Tool {
                 'permalink'      => $p['permalink'],
             );
         }
-        return array( 'products' => $result, 'page' => $params['page'] );
+        return array_merge(
+            array( 'products' => $result ),
+            $this->pagination_meta( $response, $params['page'], $params['per_page'], count( $data ) )
+        );
     }
 }

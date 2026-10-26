@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GSC_Client extends Abstract_Google_Client {
 
     const OPTION_JSON     = 'easy_mcp_ai_gsc_service_account_json';
+    const PROVIDER        = 'gsc';
     const OPTION_SITE_URL = 'easy_mcp_ai_gsc_default_site_url';
     const TRANSIENT_TOKEN = 'easy_mcp_ai_gsc_token';
     const SCOPE           = 'https://www.googleapis.com/auth/webmasters';
@@ -127,10 +128,16 @@ class GSC_Client extends Abstract_Google_Client {
     }
 
     public static function default_site_url(): string {
-        $url = \get_option( self::OPTION_SITE_URL, '' );
+        $url = (string) \Easy_MCP_AI\Config::get( self::OPTION_SITE_URL, '' );
+        if ( empty( $url ) && in_array( \Easy_MCP_AI\Config::constant_name( self::OPTION_SITE_URL ), \Easy_MCP_AI\Config_Admin::invalid_settings(), true ) ) {
+            
+            throw new \RuntimeException(
+                'No site_url provided, and EASY_MCP_AI_GSC_DEFAULT_SITE_URL is not a valid Search Console property. Set it to a URL-prefix property (https://example.com/) or a domain property (sc-domain:example.com), or pass site_url.'
+            );
+        }
         if ( empty( $url ) ) {
             throw new \RuntimeException(
-                'No site_url provided and no default property configured. Set one in Easy MCP AI → Tools → External data.'
+                'No site_url provided and no default property configured. Set one in Easy MCP AI → Tools → External data, or define EASY_MCP_AI_GSC_DEFAULT_SITE_URL in wp-config.php.'
             );
         }
         return self::validate_site_url( $url );
