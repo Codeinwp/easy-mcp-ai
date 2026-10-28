@@ -7,17 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Rest_Write extends Rest_Route_Tool {
 
-    
     const METHODS = array( 'POST', 'PUT', 'PATCH' );
 
-    
     const PUBLISHING_STATUSES = array( 'publish', 'future' );
 
     public function get_name() {
@@ -71,13 +64,6 @@ class Rest_Write extends Rest_Route_Tool {
     protected function reports_changes(): bool {
         return true;
     }
-
-    
-
-
-
-
-
 
     protected function around_dispatch( callable $dispatch, array &$notes ): \WP_REST_Response {
         if ( ! \Easy_MCP_AI\Config::get( 'easy_mcp_ai_force_draft_on_create', false ) ) {

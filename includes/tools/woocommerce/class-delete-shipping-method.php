@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Delete_Shipping_Method extends Base_Tool {
 
     use Store_Setup;
@@ -58,7 +53,6 @@ class Delete_Shipping_Method extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $zone_id     = isset( $arguments['zone_id'] ) ? (int) $arguments['zone_id'] : -1;
         $instance_id = isset( $arguments['instance_id'] ) ? (int) $arguments['instance_id'] : 0;

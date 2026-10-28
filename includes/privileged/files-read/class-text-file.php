@@ -7,51 +7,23 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 final class Text_File {
 
-    
     const LINE_BYTES = 8192;
-    
     const BINARY_PROBE_BYTES = 8192;
     const CUT_MARKER = ' [line cut at 8192 bytes]';
 
-    
     private $handle;
-    
     private $size;
-    
     private $mtime;
-    
     public $redacted_lines = 0;
-    
     public $invalid_utf8_lines = 0;
 
-    
     private function __construct( $handle, int $size, int $mtime ) {
         $this->handle = $handle;
         $this->size   = $size;
         $this->mtime  = $mtime;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function open( array $file ): self {
         $abs    = $file['abs'];
@@ -59,8 +31,6 @@ final class Text_File {
         if ( false === $handle ) {
             throw Refusal::for_path( $file['rel'] );
         }
-        
-        
         clearstatcache( true );
         $opened = fstat( $handle );
         $now    = @lstat( $abs ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -70,12 +40,6 @@ final class Text_File {
         }
         return new self( $handle, (int) $opened['size'], (int) $opened['mtime'] );
     }
-
-    
-
-
-
-
 
     public static function same_file( array $opened, array $now ): bool {
         return (int) $opened['dev'] === (int) $now['dev']
@@ -88,35 +52,25 @@ final class Text_File {
         return $this->size;
     }
 
-    
     public function modified(): string {
         return gmdate( 'Y-m-d\TH:i:s\Z', $this->mtime );
     }
 
-    
     public function is_binary(): bool {
         $head = (string) fread( $this->handle, self::BINARY_PROBE_BYTES ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
         rewind( $this->handle );
         return false !== strpos( $head, "\0" );
     }
 
-    
-
-
-
-
-
     public function next_line(): ?string {
         $raw = $this->next_raw_line();
         return null === $raw ? null : $this->clean( $raw );
     }
 
-    
     public function skip_line(): bool {
         return null !== $this->next_raw_line();
     }
 
-    
     private function next_raw_line(): ?string {
         $line = fgets( $this->handle, self::LINE_BYTES + 1 );
         if ( false === $line ) {
@@ -128,18 +82,12 @@ final class Text_File {
         if ( feof( $this->handle ) ) {
             return rtrim( $line, "\r" );
         }
-        
         do {
             $rest = fgets( $this->handle, self::LINE_BYTES + 1 );
         } while ( false !== $rest && "\n" !== substr( $rest, -1 ) );
         $cut = function_exists( 'mb_strcut' ) ? mb_strcut( $line, 0, strlen( $line ), 'UTF-8' ) : $line;
         return $cut . self::CUT_MARKER;
     }
-
-    
-
-
-
 
     public function clean( string $line ): string {
         if ( ! self::is_utf8( $line ) ) {
@@ -153,13 +101,6 @@ final class Text_File {
         return $redacted;
     }
 
-    
-
-
-
-
-
-
     public static function redact( string $line ): string {
         if ( '' === $line ) {
             return $line;
@@ -167,29 +108,12 @@ final class Text_File {
         return self::checked( Text_Redactor::redact( $line, false ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function checked( ?string $redacted ): string {
         if ( null === $redacted || '' === $redacted ) {
             throw new \RuntimeException( 'A line could not be checked for secrets, so the file was not returned. Nothing was read out.' );
         }
         return $redacted;
     }
-
-    
-
-
-
-
-
 
     public function contents( int $max_bytes ): string {
         rewind( $this->handle );
@@ -207,11 +131,6 @@ final class Text_File {
         return $data;
     }
 
-    
-
-
-
-
     public static function safe( string $text ): string {
         return self::redact( self::is_utf8( $text ) ? $text : self::to_utf8( $text ) );
     }
@@ -220,7 +139,6 @@ final class Text_File {
         return 1 === preg_match( '//u', $text );
     }
 
-    
     public static function to_utf8( string $text ): string {
         if ( function_exists( 'mb_convert_encoding' ) && function_exists( 'mb_substitute_character' ) ) {
             $previous = mb_substitute_character();
@@ -231,7 +149,6 @@ final class Text_File {
                 return $clean;
             }
         }
-        
         return (string) preg_replace( '/[\x80-\xff]/', "\xEF\xBF\xBD", $text );
     }
 

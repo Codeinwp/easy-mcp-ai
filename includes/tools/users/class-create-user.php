@@ -34,11 +34,6 @@ class Create_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
     public function get_redacted_arguments() {
         return array( 'password' );
     }
@@ -110,16 +105,6 @@ class Create_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function get_approval_policy( array $arguments ) {
         try {
             $roles = ( isset( $arguments['roles'] ) && is_array( $arguments['roles'] ) && ! empty( $arguments['roles'] ) )
@@ -131,17 +116,10 @@ class Create_User extends Base_Tool {
                 }
             }
         } catch ( \Throwable $e ) {
-            
             return 'always';
         }
         return 'inherit';
     }
-
-    
-
-
-
-
 
     public function describe( array $arguments ) {
         try {
@@ -159,13 +137,6 @@ class Create_User extends Base_Tool {
             return '';
         }
     }
-
-    
-
-
-
-
-
 
     private static function describe_roles( array $arguments ): string {
         $roles = ( isset( $arguments['roles'] ) && is_array( $arguments['roles'] ) && ! empty( $arguments['roles'] ) )
@@ -187,8 +158,6 @@ class Create_User extends Base_Tool {
 
         $notified = false;
         if ( $send_email ) {
-            
-            
             wp_new_user_notification( (int) $data['id'], null, 'both' );
             $notified = true;
         }
@@ -201,15 +170,6 @@ class Create_User extends Base_Tool {
             'new_user_notification' => $notified,
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private function create_params( array $arguments ): array {
         $username = sanitize_user( $arguments['username'] );
@@ -248,16 +208,6 @@ class Create_User extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function string_params( array $arguments ): array {
         $params = array();
         foreach ( array( 'name', 'nickname', 'slug', 'url', 'description' ) as $field ) {
@@ -272,14 +222,6 @@ class Create_User extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private static function extra_fields( array $arguments ): array {
         $extra = array();
         if ( isset( $arguments['user_registered'] ) ) {
@@ -291,14 +233,6 @@ class Create_User extends Base_Tool {
         return $extra;
     }
 
-    
-
-
-
-
-
-
-
     private static function send_email_requested( array $arguments ): bool {
         $send_email = ! empty( $arguments['send_email'] ) && rest_sanitize_boolean( $arguments['send_email'] );
         if ( $send_email && ! function_exists( 'wp_new_user_notification' ) ) {
@@ -306,16 +240,6 @@ class Create_User extends Base_Tool {
         }
         return $send_email;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function rest_create( array $params, array $extra ): array {
         $filter = self::extra_fields_filter( $extra );
@@ -330,14 +254,6 @@ class Create_User extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function extra_fields_filter( array $extra ): ?\Closure {
         if ( empty( $extra ) ) {

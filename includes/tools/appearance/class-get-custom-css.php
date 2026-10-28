@@ -69,18 +69,6 @@ class Get_Custom_Css extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function is_installed_theme( string $stylesheet ): bool {
         return array_key_exists( $stylesheet, wp_get_themes( array( 'errors' => null ) ) );
     }

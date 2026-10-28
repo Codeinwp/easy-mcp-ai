@@ -112,7 +112,6 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['target'] ) || empty( $arguments['target'] ) ) {
 			throw new \RuntimeException(
 				'target is required.'
@@ -120,7 +119,6 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 		}
 		$target = (string) $arguments['target'];
 
-		
 		if ( isset( $arguments['historical_serp_mode'] ) ) {
 			$mode = (string) $arguments['historical_serp_mode'];
 			if ( ! in_array( $mode, array( 'live', 'lost', 'all' ), true ) ) {
@@ -130,7 +128,6 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['item_types'] ) ) {
 			if ( ! is_array( $arguments['item_types'] ) ) {
 				throw new \RuntimeException(
@@ -147,7 +144,6 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['limit'] ) ) {
 			$limit = (int) $arguments['limit'];
 			if ( $limit < 1 || $limit > 1000 ) {
@@ -157,10 +153,8 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 			}
 		}
 
-		
 		$task = array( 'target' => $target );
 
-		
 		if ( isset( $arguments['location_code'] ) ) {
 			$task['location_code'] = (int) $arguments['location_code'];
 		}
@@ -168,7 +162,6 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 			$task['location_name'] = (string) $arguments['location_name'];
 		}
 
-		
 		if ( isset( $arguments['language_code'] ) ) {
 			$task['language_code'] = (string) $arguments['language_code'];
 		}
@@ -203,14 +196,12 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 			$task['offset'] = (int) $arguments['offset'];
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/dataforseo_labs/google/ranked_keywords/live',
 			$task
 		);
 
-		
 		return array_merge(
 			$result['tasks'][0]['result'][0] ?? array(),
 			array( '_cost_usd' => $result['cost'] ?? 0 )

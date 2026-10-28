@@ -115,8 +115,6 @@ class Add_Post_Terms extends Base_Tool {
         $tt_ids  = array_map( 'intval', (array) $result );
         $changed = self::terms_changed( $before, $tt_ids, $append );
         if ( $changed ) {
-            
-            
             $this->clear_page_cache( array( $post_id ) );
         }
 
@@ -131,15 +129,6 @@ class Add_Post_Terms extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function assignable_taxonomy( string $taxonomy ): object {
         if ( ! taxonomy_exists( $taxonomy ) ) {
             throw new \InvalidArgumentException( sprintf( 'Unknown taxonomy: %s', $taxonomy ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -151,19 +140,7 @@ class Add_Post_Terms extends Base_Tool {
         return $tax_obj;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_taxonomy_of_another_type( int $post_id, string $taxonomy ): void {
-        
-        
         $post       = get_post( $post_id );
         $post_type  = (string) get_post_type( $post_id );
         $registered = array_values( array_unique( array_map( 'strval', (array) get_object_taxonomies( $post ? $post : $post_type, 'names' ) ) ) );
@@ -179,16 +156,6 @@ class Add_Post_Terms extends Base_Tool {
             )
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function terms_to_set( array $terms_raw, string $by ): array {
         $terms = array();
@@ -208,26 +175,12 @@ class Add_Post_Terms extends Base_Tool {
         return $terms;
     }
 
-    
-
-
-
-
-
-
     private static function term_id_value( $t ): int {
         if ( ( is_int( $t ) && $t > 0 ) || ( is_string( $t ) && ctype_digit( $t ) && (int) $t > 0 ) ) {
             return (int) $t;
         }
         throw new \InvalidArgumentException( sprintf( 'by id: %s is not a term ID (a positive integer).', is_scalar( $t ) ? (string) $t : gettype( $t ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
 
     private static function slug_value( $t ): ?string {
         if ( is_int( $t ) ) {
@@ -239,13 +192,6 @@ class Add_Post_Terms extends Base_Tool {
         return null;
     }
 
-    
-
-
-
-
-
-
     private static function auto_value( $t ) {
         if ( is_int( $t ) ) {
             return $t;
@@ -255,17 +201,6 @@ class Add_Post_Terms extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function terms_to_create( array $terms, string $taxonomy, string $by ): array {
         $missing_ids = array();
@@ -278,8 +213,6 @@ class Add_Post_Terms extends Base_Tool {
                 $missing_ids[] = $term;
                 continue;
             }
-            
-            
             $slug = sanitize_title( $term );
             $slot = '' !== $slug ? $slug : $term;
             if ( ! isset( $to_create[ $slot ] ) ) {
@@ -287,27 +220,10 @@ class Add_Post_Terms extends Base_Tool {
             }
         }
         if ( 'id' === $by && ! empty( $missing_ids ) ) {
-            
-            
             throw new \InvalidArgumentException( sprintf( 'Term ID(s) not found in taxonomy %s: %s. Nothing was changed.', $taxonomy, implode( ', ', $missing_ids ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $to_create;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function refuse_uncreatable_terms( array $to_create, string $taxonomy, object $tax_obj ): void {
         if ( empty( $to_create ) ) {
@@ -318,19 +234,6 @@ class Add_Post_Terms extends Base_Tool {
             throw new \RuntimeException( sprintf( 'No term in taxonomy %1$s matches %2$s, and creating one needs the %3$s capability. Nothing was changed.', $taxonomy, implode( ', ', $to_create ), $create_cap ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function terms_changed( $before, array $tt_ids, bool $append ): bool {
         if ( is_wp_error( $before ) || ! is_array( $before ) ) {

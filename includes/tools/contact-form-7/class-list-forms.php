@@ -11,11 +11,6 @@ class List_Forms extends Base_Tool {
 
     use CF7_Rest;
 
-    
-
-
-
-
     const ORDERS = array( 'ID', 'title', 'date', 'modified' );
 
     public function get_name() {
@@ -88,8 +83,6 @@ class List_Forms extends Base_Tool {
         }
         if ( isset( $arguments['orderby'] ) && '' !== $arguments['orderby'] ) {
             $this->refuse_unless_one_of( 'orderby', $arguments['orderby'], self::ORDERS, $arguments['orderby'], implode( ', ', self::ORDERS ) );
-            
-            
             $params['orderby'] = 'ID' === $arguments['orderby'] ? 'ID' : $arguments['orderby'] . ' ID';
         }
         if ( isset( $arguments['order'] ) && '' !== $arguments['order'] ) {
@@ -114,10 +107,6 @@ class List_Forms extends Base_Tool {
                 'shortcode' => self::shortcode_of( $id ),
             );
         }
-        
-        
-        
-        
         $total = (int) \WPCF7_ContactForm::count();
         if ( empty( $forms ) && $page > 1 ) {
             unset( $params['per_page'], $params['offset'] );

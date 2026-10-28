@@ -22,7 +22,6 @@ class Get_CPT_Item extends Base_Tool {
         return 'cpt';
     }
 
-    
     public function get_required_capability() {
         return 'read';
     }

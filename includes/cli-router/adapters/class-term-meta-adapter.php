@@ -14,63 +14,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Term_Meta_Adapter extends Meta_Command {
 
     use Planned_Run;
 
     use \Easy_MCP_AI\Tools\Taxonomy\Term_Meta_Auth_Guard;
 
-    
     protected $meta_type = 'term';
 
-    
     const NOT_FOUND = 'Could not find the term with ID %s.';
 
     const KEY_REWRITTEN = "wp_cli_run cannot pass the term meta key '%s' on unchanged: the term meta tools clean a key with sanitize_text_field(), which turns it into '%s', so they would address another key. Pass the key as `term meta list` prints it.";
 
     const WITHHELD = '%d protected term meta %s left out: reading protected keys needs the manage_options capability.';
 
-    
     const TOOLS = array(
         'list'   => array( 'wp_get_term_meta' ),
         'get'    => array( 'wp_get_term_meta' ),
@@ -80,31 +37,11 @@ final class Term_Meta_Adapter extends Meta_Command {
         'patch'  => array( 'wp_get_term_meta', 'wp_update_term_meta' ),
     );
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_id( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
         $at   = isset( $inv->leaf['name'] ) && 'patch' === $inv->leaf['name'] ? 1 : 0;
         Ids::require_digits( $ctx, isset( $args[ $at ] ) ? $args[ $at ] : '', 'a term ID' );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function plan_patch( Invocation $inv ): array {
         $args = array_values( $inv->args );
@@ -118,13 +55,6 @@ final class Term_Meta_Adapter extends Meta_Command {
             array( 'wp_get_term_meta' => '\\Easy_MCP_AI\\Tools\\Taxonomy\\Get_Term_Meta' )
         );
     }
-
-    
-
-
-
-
-
 
     protected function check_object_id( $object_id, string $subcommand ) {
         $tools = $this->required_tools( $subcommand );
@@ -145,12 +75,6 @@ final class Term_Meta_Adapter extends Meta_Command {
         return (int) $term->term_id;
     }
 
-    
-
-
-
-
-
     private function required_tools( string $subcommand ): array {
         $tools = isset( self::TOOLS[ $subcommand ] ) ? self::TOOLS[ $subcommand ] : array( 'wp_get_term_meta' );
         if ( 'delete' === $subcommand && Read_Value::flag( $this->inv->assoc, 'all' ) ) {
@@ -158,13 +82,6 @@ final class Term_Meta_Adapter extends Meta_Command {
         }
         return $tools;
     }
-
-    
-
-
-
-
-
 
     private function require_term_caps( object $term, array $tools, string $subcommand ): void {
         $term_id = (int) $term->term_id;
@@ -179,12 +96,6 @@ final class Term_Meta_Adapter extends Meta_Command {
         }
     }
 
-    
-
-
-
-
-
     private function authorize_write( string $key, object $term ): void {
         $refusal = Term_Meta_Handler::integration_refusal( $key );
         if ( null === $refusal ) {
@@ -198,13 +109,6 @@ final class Term_Meta_Adapter extends Meta_Command {
             $this->ctx->out->error( $refusal );
         }
     }
-
-    
-
-
-
-
-
 
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         $arguments = array( 'term_id' => (int) $object_id );
@@ -227,29 +131,15 @@ final class Term_Meta_Adapter extends Meta_Command {
         return $single ? '' : array();
     }
 
-    
     private function warn_withheld( int $withheld ): void {
         if ( $withheld > 0 ) {
             $this->ctx->out->warning( sprintf( self::WITHHELD, $withheld, 1 === $withheld ? 'key was' : 'keys were' ) );
         }
     }
 
-    
-
-
-
-
-
-
     protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool {
         throw new \LogicException( 'term meta add is Handlers\\Term_Meta_Handler.' );
     }
-
-    
-
-
-
-
 
     protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool {
         $value     = function_exists( 'wp_unslash' ) ? \wp_unslash( $meta_value ) : $meta_value;
@@ -271,14 +161,6 @@ final class Term_Meta_Adapter extends Meta_Command {
         return ! empty( $result['payload']['updated'] );
     }
 
-    
-
-
-
-
-
-
-
     protected function delete_metadata( $object_id, string $meta_key, string $meta_value = '' ): bool {
         $arguments = array(
             'term_id' => (int) $object_id,
@@ -289,11 +171,9 @@ final class Term_Meta_Adapter extends Meta_Command {
         }
         $result = $this->delegate( 'wp_delete_term_meta', $arguments );
         if ( Batch::is_rate_limited( $result ) && Read_Value::flag( $this->inv->assoc, 'all' ) ) {
-            return false; 
+            return false;
         }
         if ( ! $result['ok'] ) {
-            
-            
             if ( Read_Value::flag( $this->inv->assoc, 'all' ) ) {
                 $this->ctx->out->warning( (string) $result['error'] );
                 return false;
@@ -302,10 +182,6 @@ final class Term_Meta_Adapter extends Meta_Command {
         }
         return ! empty( $result['payload']['deleted'] );
     }
-
-    
-
-
 
     protected function protect_key( string $key, bool $write ): ?string {
         $refusal = parent::protect_key( $key, $write );

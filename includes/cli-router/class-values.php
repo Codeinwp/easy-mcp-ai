@@ -5,28 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 final class Values {
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function print_value( Output $out, $value, array $assoc_args = array() ): void {
         $format = isset( $assoc_args['format'] ) ? $assoc_args['format'] : null;
@@ -40,13 +19,6 @@ final class Values {
 
         $out->out( $value . "\n" );
     }
-
-    
-
-
-
-
-
 
     public static function report_batch( Output $out, string $noun, string $verb, int $total, int $successes, int $failures, ?int $skips = null ): void {
         $plural_noun           = $noun . 's';
@@ -70,7 +42,6 @@ final class Values {
         }
     }
 
-    
     public static function past_tense_verb( string $verb ): string {
         static $irregular = array(
             'reset' => 'reset',
@@ -84,18 +55,10 @@ final class Values {
         } elseif ( 'y' === $last && ! preg_match( '/[aeiou]y$/', $verb ) ) {
             $verb = substr( $verb, 0, -1 ) . 'i';
         } elseif ( preg_match( '/^[^aeiou]*[aeiou][^aeiouhwxy]$/', $verb ) ) {
-            
             $verb .= $last;
         }
         return $verb . 'ed';
     }
-
-    
-
-
-
-
-
 
     public static function pick_fields( $item, array $fields ): array {
         $values = array();

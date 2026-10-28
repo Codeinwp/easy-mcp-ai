@@ -9,11 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; the name is prefix + a constant, never input, and the queue must be read fresh.
 
-
-
-
-
-
 class Wpdb_Feedback_Store extends Wpdb_Approval_Store implements Feedback_Report_Store {
 
     private function table_name(): string {

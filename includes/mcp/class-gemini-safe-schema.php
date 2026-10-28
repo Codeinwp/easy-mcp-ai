@@ -5,26 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Gemini_Safe_Schema {
-
-    
-
-
 
     public static function sanitize( array $schema ) {
         $map    = array();
@@ -34,57 +15,6 @@ class Gemini_Safe_Schema {
         return array( 'schema' => $safe, 'map' => $map );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function is_ambiguous_property_name( $name ) {
         if ( '' === $name ) {
             return true;
@@ -92,35 +22,12 @@ class Gemini_Safe_Schema {
         if ( false !== strpos( $name, '.' ) || false !== strpos( $name, '[' ) || false !== strpos( $name, ']' ) ) {
             return true;
         }
-        
         return in_array(
             $name,
             array( 'items', 'not', 'contains', 'propertyNames', 'if', 'then', 'else', 'additionalItems' ),
             true
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function is_uncoercible_path( $path ) {
         if ( self::UNCOERCIBLE_PATH === $path ) {
@@ -130,8 +37,6 @@ class Gemini_Safe_Schema {
             if ( 'items' === $segment ) {
                 return true;
             }
-            
-            
             if ( false !== strpos( $segment, '[' ) ) {
                 return true;
             }
@@ -141,17 +46,6 @@ class Gemini_Safe_Schema {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function unreachable_paths( array $map ): array {
         $unreachable = array();
@@ -171,10 +65,6 @@ class Gemini_Safe_Schema {
     }
 
     private static function warn_about_uncoercible_paths( array $map ) {
-        
-        
-        
-        
         static $already_logged = array();
 
         $unreachable = array();
@@ -188,8 +78,6 @@ class Gemini_Safe_Schema {
         if ( empty( $unreachable ) ) {
             return;
         }
-        
-        
         $readable = array_map(
             static function ( $path ) {
                 return self::UNCOERCIBLE_PATH === $path
@@ -207,100 +95,28 @@ class Gemini_Safe_Schema {
         ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     const MAX_WALK_DEPTH = 64;
 
-    
-
-
-
-
-
-
-
-
-
-
-
     const MAX_TOTAL_NODES = 20000;
-
-    
-
-
-
-
-
 
     private static function is_list_array( $value ) {
         if ( ! is_array( $value ) ) {
             return false;
         }
         if ( array() === $value ) {
-            return false; 
+            return false;
         }
         return array_keys( $value ) === range( 0, count( $value ) - 1 );
     }
 
-    
-
-
-
-
-
-
-
     const MAX_REF_HOPS = 16;
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const GEMINI_REJECTED_KEYWORDS = array(
-        
         'patternProperties',
         'multipleOf',
         'uniqueItems',
         'exclusiveMinimum',
         'exclusiveMaximum',
-        
         'dependentSchemas',
         'dependentRequired',
         'if',
@@ -314,7 +130,6 @@ class Gemini_Safe_Schema {
         'additionalItems',
         'unevaluatedProperties',
         'unevaluatedItems',
-        
         'readOnly',
         'writeOnly',
         'deprecated',
@@ -324,39 +139,9 @@ class Gemini_Safe_Schema {
         '$id',
     );
 
-    
-
-
-
-
-
-
-
-
     const UNCOERCIBLE_PATH = "\0uncoercible";
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private const CALL_TIME_KINDS = array( 'stringify_enum', 'string_union', 'unaddressable_property_name' );
-
-    
-
-
-
-
-
 
     private static function collect_defs( array $schema ) {
         $defs = array();
@@ -372,15 +157,6 @@ class Gemini_Safe_Schema {
         return $defs;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function resolve_ref( $ref, array $defs ) {
         foreach ( array( '#/$defs/', '#/definitions/' ) as $prefix ) {
             if ( 0 === strpos( $ref, $prefix ) ) {
@@ -391,69 +167,6 @@ class Gemini_Safe_Schema {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function summarize_unwalkable( $node ) {
         if ( ! is_array( $node ) ) {
@@ -484,14 +197,10 @@ class Gemini_Safe_Schema {
             $safe['nullable'] = (bool) $node['nullable'];
         }
 
-        
-        
-        
         if ( isset( $safe['type'] ) && 'array' === $safe['type'] ) {
             $safe['items'] = new \stdClass();
         }
 
-        
         return array() === $safe ? new \stdClass() : $safe;
     }
 
@@ -500,45 +209,10 @@ class Gemini_Safe_Schema {
             return $node;
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( $depth > self::MAX_WALK_DEPTH || --$budget < 0 ) {
             return self::summarize_unwalkable( $node );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $ref_unresolved = false;
 
         $ref_hops = 0;
@@ -560,10 +234,8 @@ class Gemini_Safe_Schema {
             $node        = array_merge( $resolved, $rest );
         }
         if ( isset( $node['$ref'] ) ) {
-            
             $ref_unresolved = true;
         }
-        
         unset( $node['$ref'] );
 
         unset( $node['$defs'], $node['definitions'] );
@@ -575,40 +247,6 @@ class Gemini_Safe_Schema {
                     ? array_keys( $node['properties'] )
                     : array();
 
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 $has_dynamic_keys = $ref_unresolved;
                 foreach ( array( 'patternProperties', 'dependentSchemas', 'allOf', 'anyOf', 'oneOf' ) as $key_source ) {
                     if ( isset( $node[ $key_source ] ) && is_array( $node[ $key_source ] ) && array() !== $node[ $key_source ] ) {
@@ -625,12 +263,6 @@ class Gemini_Safe_Schema {
         }
 
         if ( isset( $node['type'] ) && is_array( $node['type'] ) ) {
-            
-            
-            
-            
-            
-            
             $types = array_values( array_filter(
                 array_values( $node['type'] ),
                 static function ( $t ) {
@@ -638,20 +270,11 @@ class Gemini_Safe_Schema {
                 }
             ) );
             if ( array() === $types ) {
-                
-                
                 $node['type'] = 'string';
             } elseif ( in_array( 'null', $types, true ) ) {
                 $non_null = array_values( array_diff( $types, array( 'null' ) ) );
                 $node['type']     = isset( $non_null[0] ) ? $non_null[0] : 'string';
                 $node['nullable'] = true;
-                
-                
-                
-                
-                
-                
-                
                 $map[ $path ][]   = array( 'kind' => 'nullable_union' );
             } else {
                 $node['type'] = 'string';
@@ -661,35 +284,6 @@ class Gemini_Safe_Schema {
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( array_key_exists( 'const', $node ) ) {
             $const_value = $node['const'];
             unset( $node['const'] );
@@ -712,23 +306,12 @@ class Gemini_Safe_Schema {
             $needs_stringify = false;
             $new_enum     = array();
             foreach ( $original as $member ) {
-                
-                
-                
-                
-                
-                
-                
                 if ( ! is_scalar( $member ) && ! ( is_object( $member ) && method_exists( $member, '__toString' ) ) ) {
                     continue;
                 }
-                
-                
-                
-                
                 $stringified = is_string( $member ) ? $member : (string) $member;
                 if ( '' === $stringified ) {
-                    continue; 
+                    continue;
                 }
                 if ( ! is_string( $member ) ) {
                     $needs_stringify = true;
@@ -738,21 +321,12 @@ class Gemini_Safe_Schema {
             $node['enum'] = array_values( $new_enum );
             if ( $needs_stringify ) {
                 $map[ $path ][] = array( 'kind' => 'stringify_enum', 'original_members' => $original );
-                
-                
-                
-                
-                
-                
                 if ( isset( $node['type'] ) && in_array( $node['type'], array( 'integer', 'number', 'boolean' ), true ) ) {
                     $node['type'] = 'string';
                 }
             }
         }
 
-        
-        
-        
         $lifted = array();
         if ( isset( $node['properties'] ) && is_array( $node['properties'] ) ) {
             foreach ( $node['properties'] as $name => $sub ) {
@@ -764,22 +338,6 @@ class Gemini_Safe_Schema {
 
         if ( isset( $node['properties'] ) && is_array( $node['properties'] ) ) {
             foreach ( $node['properties'] as $name => $sub ) {
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 $ambiguous = self::is_ambiguous_property_name( (string) $name );
 
                 if ( $ambiguous ) {
@@ -799,13 +357,6 @@ class Gemini_Safe_Schema {
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
         if ( array_key_exists( 'required', $node ) || array() !== $lifted ) {
             $declared = array();
             if ( isset( $node['required'] ) && is_array( $node['required'] ) ) {
@@ -825,22 +376,6 @@ class Gemini_Safe_Schema {
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( ! array_key_exists( 'items', $node )
             && isset( $node['type'] ) && 'array' === $node['type'] ) {
             $node['items'] = new \stdClass();
@@ -848,42 +383,7 @@ class Gemini_Safe_Schema {
 
         if ( isset( $node['items'] ) ) {
             $items_path = '' === $path ? 'items' : $path . '.items';
-            
-            
-            
-            
-            
             if ( self::is_list_array( $node['items'] ) ) {
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 foreach ( $node['items'] as $i => $sub ) {
                     if ( ! is_array( $sub ) ) {
                         continue;
@@ -905,19 +405,6 @@ class Gemini_Safe_Schema {
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         foreach ( array( 'not', 'contains', 'propertyNames', 'if', 'then', 'else', 'additionalItems' ) as $sub_key ) {
             if ( isset( $node[ $sub_key ] ) && is_array( $node[ $sub_key ] ) ) {
                 $node[ $sub_key ] = self::walk(
@@ -932,79 +419,22 @@ class Gemini_Safe_Schema {
             }
         }
 
-        
-        
-        
-        
         foreach ( array( 'patternProperties', 'dependentSchemas' ) as $map_key ) {
             if ( isset( $node[ $map_key ] ) && is_array( $node[ $map_key ] ) ) {
                 foreach ( $node[ $map_key ] as $name => $sub ) {
                     if ( ! is_array( $sub ) ) {
                         continue;
                     }
-                    
-                    
-                    
-                    
-                    
                     $sub_path = ( '' === $path ? $map_key : $path . '.' . $map_key ) . '[' . $name . ']';
                     $node[ $map_key ][ $name ] = self::walk( $sub, $sub_path, $map, $defs, $depth + 1, $ancestors, $budget );
                 }
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         foreach ( self::GEMINI_REJECTED_KEYWORDS as $rejected ) {
             unset( $node[ $rejected ] );
         }
 
-        
-        
-        
-        
-        
         if ( array() === $node ) {
             return new \stdClass();
         }
@@ -1012,24 +442,7 @@ class Gemini_Safe_Schema {
         return $node;
     }
 
-    
-
-
-
-
     public static function coerce( array $arguments, array $map ) {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         foreach ( $map as $path => $transforms ) {
             if ( self::is_uncoercible_path( (string) $path ) ) {
                 continue;
@@ -1047,22 +460,13 @@ class Gemini_Safe_Schema {
         }
 
         foreach ( $map as $path => $transforms ) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
             if ( self::is_uncoercible_path( (string) $path ) ) {
                 continue;
             }
             foreach ( $transforms as $transform ) {
                 switch ( $transform['kind'] ) {
                     case 'nullable_union':
-                        break; 
+                        break;
 
                     case 'string_union':
                         $arguments = self::apply_at_path( $arguments, $path, function ( $value ) use ( $transform ) {
@@ -1082,26 +486,6 @@ class Gemini_Safe_Schema {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function apply_at_path( array $arguments, $path, callable $fn ) {
         if ( '' === $path ) {
             $result = $fn( $arguments );
@@ -1111,7 +495,7 @@ class Gemini_Safe_Schema {
         $cursor   = &$arguments;
         foreach ( $segments as $i => $segment ) {
             if ( ! is_array( $cursor ) || ! array_key_exists( $segment, $cursor ) ) {
-                return $arguments; 
+                return $arguments;
             }
             if ( $i === count( $segments ) - 1 ) {
                 $cursor[ $segment ] = $fn( $cursor[ $segment ] );
@@ -1122,22 +506,10 @@ class Gemini_Safe_Schema {
         return $arguments;
     }
 
-    
-
-
-
-
     private static function coerce_string_union( $value, array $original_types ) {
         if ( ! is_string( $value ) ) {
             return $value;
         }
-        
-        
-        
-        
-        
-        
-        
         if ( in_array( 'array', $original_types, true ) || in_array( 'object', $original_types, true ) ) {
             $decoded = json_decode( $value, true );
             if ( is_array( $decoded ) ) {
@@ -1150,14 +522,6 @@ class Gemini_Safe_Schema {
         if ( ! is_numeric( $value ) ) {
             return $value;
         }
-        
-        
-        
-        
-        
-        
-        
-        
         $looks_like_integer = ( false === strpos( $value, '.' ) )
             && ( false === stripos( $value, 'e' ) )
             && ctype_digit( ltrim( $value, '-' ) );
@@ -1168,13 +532,8 @@ class Gemini_Safe_Schema {
         if ( in_array( 'number', $original_types, true ) || in_array( 'float', $original_types, true ) ) {
             return (float) $value;
         }
-        return $value; 
+        return $value;
     }
-
-    
-
-
-
 
     private static function coerce_stringify_enum( $value, array $original_members ) {
         if ( ! is_string( $value ) ) {
@@ -1188,60 +547,12 @@ class Gemini_Safe_Schema {
         return $value;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function conform( $result, array $map ) {
         if ( ! is_array( $result ) || empty( $map ) ) {
             return $result;
         }
 
         foreach ( $map as $path => $transforms ) {
-            
-            
-            
-            
-            
             if ( self::is_uncoercible_path( (string) $path ) ) {
                 continue;
             }
@@ -1265,14 +576,6 @@ class Gemini_Safe_Schema {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
     private static function conform_stringify_enum( $value, array $original_members ) {
         if ( is_string( $value ) || is_array( $value ) || is_object( $value ) || null === $value ) {
             return $value;
@@ -1284,15 +587,6 @@ class Gemini_Safe_Schema {
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function conform_string_union( $value ) {
         if ( is_bool( $value ) ) {

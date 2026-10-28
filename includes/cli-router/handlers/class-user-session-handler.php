@@ -14,37 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class User_Session_Handler extends Command_Handler {
 
-    
     const FIELDS = array( 'token', 'login_time', 'expiration_time', 'ip', 'ua' );
 
     const NOT_CAPTURED = 'Login sessions are never recorded by change history, so a destroyed session cannot be restored.';
 
     const MSG_CANNOT_EDIT = 'Sorry, you are not allowed to edit this user.';
 
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         list( , $manager ) = $this->manager( $inv, $ctx );
         $assoc_args        = $inv->assoc;
@@ -68,7 +45,6 @@ final class User_Session_Handler extends Command_Handler {
         $formatter->display_items( $sessions );
     }
 
-    
     public function destroy( Invocation $inv, Context $ctx ): void {
         list( $user, $manager ) = $this->manager( $inv, $ctx );
         $token                  = isset( $inv->args[1] ) ? $inv->args[1] : null;
@@ -101,10 +77,6 @@ final class User_Session_Handler extends Command_Handler {
         $ctx->out->success( "Destroyed session. {$remaining} remaining." );
     }
 
-    
-
-
-
     private static function destroy_all( int $user_id, \WP_Session_Tokens $manager, Context $ctx ): void {
         $before = self::stored( $user_id );
         $count  = count( $manager->get_all() );
@@ -115,13 +87,6 @@ final class User_Session_Handler extends Command_Handler {
         $ctx->out->success( 'Destroyed all sessions.' );
     }
 
-    
-
-
-
-
-
-
     private static function latest_token( array $sessions, Context $ctx ): ?string {
         if ( empty( $sessions ) ) {
             $ctx->out->success( 'No sessions to destroy.' );
@@ -130,12 +95,6 @@ final class User_Session_Handler extends Command_Handler {
         $last = end( $sessions );
         return $last['token'];
     }
-
-    
-
-
-
-
 
     public function describe_destroy( Invocation $inv ): array {
         $user = Fetchers::user( (string) ( isset( $inv->args[0] ) ? $inv->args[0] : '' ), new Output() );
@@ -157,12 +116,6 @@ final class User_Session_Handler extends Command_Handler {
         return array( self::describe_session( $label, $sessions, $token ) );
     }
 
-    
-
-
-
-
-
     private static function describe_session( string $label, array $sessions, ?string $token ): string {
         if ( null === $token ) {
             $session = end( $sessions );
@@ -181,17 +134,6 @@ final class User_Session_Handler extends Command_Handler {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     private function manager( Invocation $inv, Context $ctx ): array {
         $user = Fetchers::of( 'user' )->get_check( isset( $inv->args[0] ) ? $inv->args[0] : '', $ctx->out );
         if ( ! \current_user_can( 'edit_user', (int) $user->ID ) ) {
@@ -200,15 +142,7 @@ final class User_Session_Handler extends Command_Handler {
         return array( $user, \WP_Session_Tokens::get_instance( (int) $user->ID ) );
     }
 
-    
-
-
-
-
-
-
     private static function get_all_sessions( \WP_Session_Tokens $manager ): array {
-        
         $get_sessions = new \ReflectionMethod( $manager, 'get_sessions' );
         $get_sessions->setAccessible( true );
         $sessions = (array) $get_sessions->invoke( $manager );
@@ -225,18 +159,11 @@ final class User_Session_Handler extends Command_Handler {
         return $sessions;
     }
 
-    
     private static function destroy_session( \WP_Session_Tokens $manager, string $token ): void {
         $update_session = new \ReflectionMethod( $manager, 'update_session' );
         $update_session->setAccessible( true );
         $update_session->invoke( $manager, $token, null );
     }
-
-    
-
-
-
-
 
     private static function stored( int $user_id ) {
         return function_exists( 'get_user_meta' ) ? \get_user_meta( $user_id, 'session_tokens', true ) : null;

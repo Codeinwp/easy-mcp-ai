@@ -11,35 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Taxonomy_Handler extends Command_Handler {
 
-    
     const FIELDS = array( 'name', 'label', 'description', 'object_type', 'show_tagcloud', 'hierarchical', 'public' );
 
     const MSG_FILTER_NEEDS_STRICT = "Parameter errors:\n%s";
 
     const MSG_FILTER = " --%s parameter is not available without --strict: WP-CLI ignores every filter but --object_type unless --strict is given, so it would list taxonomies that do not match. Add --strict to filter by it.";
 
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $formatter  = $this->taxonomy_formatter( $ctx, $assoc_args );
 
-        
         $strict = Read_Value::flag( $assoc_args, 'strict', false );
 
         unset( $assoc_args['strict'] );
@@ -90,7 +73,6 @@ final class Taxonomy_Handler extends Command_Handler {
         $formatter->display_items( $listed );
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $arg        = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
@@ -128,13 +110,6 @@ final class Taxonomy_Handler extends Command_Handler {
         $formatter->display_item( $data );
     }
 
-    
-
-
-
-
-
-
     public static function get_counts( array $taxonomies ): array {
         global $wpdb;
 
@@ -152,7 +127,6 @@ final class Taxonomy_Handler extends Command_Handler {
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above; WP-CLI's own query.
         $counts = $wpdb->get_results( $query );
 
-        
         $plucked = array();
         foreach ( is_array( $counts ) ? $counts : array() as $row ) {
             $plucked[ $row->taxonomy ] = $row->count;
@@ -160,7 +134,6 @@ final class Taxonomy_Handler extends Command_Handler {
         return array_merge( array_fill_keys( $taxonomies, 0 ), $plucked );
     }
 
-    
     private function taxonomy_formatter( Context $ctx, array &$assoc_args ): Formatter {
         return new Formatter( $ctx->out, $assoc_args, self::FIELDS, 'taxonomy' );
     }

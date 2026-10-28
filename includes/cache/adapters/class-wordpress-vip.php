@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,32 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Wordpress_Vip extends Cache_Adapter {
 
@@ -99,7 +68,6 @@ final class Wordpress_Vip extends Cache_Adapter {
             if ( '' === $ban ) {
                 return $this->helper_missing( 'wpvip_purge_edge_cache_for_site()' );
             }
-            
             $calls->call( $ban );
             return $this->parked( 'WordPress VIP queued a ban of every cached response of the site, uploads and static assets included; it sends it when this request ends.' );
         }
@@ -127,7 +95,6 @@ final class Wordpress_Vip extends Cache_Adapter {
         if ( '' === $api ) {
             return $this->helper_missing( 'wpvip_purge_edge_cache_for_url()' );
         }
-        
         $refused  = $this->queue_urls( $api, $request->urls );
         $post_api = $this->api( 'post' );
         $posts    = 0;
@@ -140,13 +107,6 @@ final class Wordpress_Vip extends Cache_Adapter {
         return $this->queued_row( $queued + $posts, $refused, sprintf( '%d URL(s) and %d post(s) with their related pages', $queued, $posts ) );
     }
 
-    
-
-
-
-
-
-
     private function queue_urls( string $api, array $urls ): array {
         $refused = array();
         foreach ( $urls as $url ) {
@@ -157,14 +117,6 @@ final class Wordpress_Vip extends Cache_Adapter {
         return $refused;
     }
 
-    
-
-
-
-
-
-
-
     private function queued_row( int $queued, array $refused, string $what ): Layer_Result {
         $rejected = array() === $refused ? '' : sprintf( ' It refused %d URL(s) as invalid: %s.', count( $refused ), implode( ', ', $refused ) );
         if ( 0 === $queued && '' !== $rejected ) {
@@ -172,12 +124,6 @@ final class Wordpress_Vip extends Cache_Adapter {
         }
         return $this->parked( sprintf( 'WordPress VIP queued a purge of %s; it sends it when this request ends.%s', $what, $rejected ) );
     }
-
-    
-
-
-
-
 
     private function api( string $what ): string {
         foreach ( array( 'wpvip_purge_edge_cache_for_', 'wpcom_vip_purge_edge_cache_for_' ) as $prefix ) {

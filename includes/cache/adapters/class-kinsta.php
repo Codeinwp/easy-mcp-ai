@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,27 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Kinsta extends Cache_Adapter {
 
@@ -111,11 +85,6 @@ final class Kinsta extends Cache_Adapter {
         return $this->sent( sprintf( 'Kinsta cleared %d page(s).', count( $request->urls ) ) );
     }
 
-    
-
-
-
-
     private function purger(): ?object {
         $kinsta = $this->calls()->global_value( 'kinsta_cache' );
         if ( ! is_object( $kinsta ) || ! isset( $kinsta->kinsta_cache_purge ) || ! is_object( $kinsta->kinsta_cache_purge ) ) {
@@ -123,12 +92,6 @@ final class Kinsta extends Cache_Adapter {
         }
         return $kinsta->kinsta_cache_purge;
     }
-
-    
-
-
-
-
 
     private function immediate_path( object $purger ): string {
         $cache  = isset( $purger->kinsta_cache ) && is_object( $purger->kinsta_cache ) ? $purger->kinsta_cache : null;

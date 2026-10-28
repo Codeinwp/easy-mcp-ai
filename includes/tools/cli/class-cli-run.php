@@ -11,32 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Cli_Run extends Base_Tool {
 
-    
     private $dispatcher = null;
 
-    
     private $may_use = null;
 
     public function get_name() {
@@ -47,23 +25,7 @@ class Cli_Run extends Base_Tool {
         return 'WP-CLI Command';
     }
 
-    
-
-
-
-
     const COVERS = 'object cache, transients, cron, rewrite rules, roles and capabilities, database maintenance, language packs, and plugin and theme auto-updates';
-
-    
-
-
-
-
-
-
-
-
-
 
     const MATCH_PHRASES = 'auto-updates, automatic updates, plugin auto-updates, theme auto-updates, automatic plugin updates, automatic theme updates';
 
@@ -84,14 +46,8 @@ class Cli_Run extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
         return 'manage_options';
     }
-
-    
-
 
     public function get_annotations() {
         return array(
@@ -99,8 +55,6 @@ class Cli_Run extends Base_Tool {
             'readOnlyHint'    => false,
             'destructiveHint' => true,
             'idempotentHint'  => false,
-            
-            
             'openWorldHint'   => true,
         );
     }
@@ -127,29 +81,12 @@ class Cli_Run extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     public function set_dispatcher( callable $dispatcher, ?callable $may_use = null ): void {
         $this->dispatcher = $dispatcher;
         $this->may_use    = $may_use;
     }
 
-    
-
-
-
-
-
     public function get_approval_policy( array $arguments ) {
-        
-        
-        
-        
-        
         $classification = self::classify( $arguments );
         return Router::approval_policy( $classification );
     }
@@ -166,14 +103,6 @@ class Cli_Run extends Base_Tool {
         $classification = self::classify( $arguments );
         return Router::describe( $classification );
     }
-
-    
-
-
-
-
-
-
 
     public function approval_refusal( array $arguments ): ?string {
         $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
@@ -195,19 +124,7 @@ class Cli_Run extends Base_Tool {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
     public function execute( array $arguments ) {
-        
-        
-        
-        
-        
         $redeemed = 'redeem' === \Easy_MCP_AI\MCP\Server::current_call_approval_kind();
         $ctx      = new Context(
             new Output(),
@@ -217,9 +134,6 @@ class Cli_Run extends Base_Tool {
         );
         return Router::run( $arguments, $ctx );
     }
-
-    
-
 
     private static function classify( array $arguments ): \Easy_MCP_AI\Cli_Router\Classification {
         return Router::classify( isset( $arguments['command'] ) && is_string( $arguments['command'] ) ? $arguments['command'] : '' );

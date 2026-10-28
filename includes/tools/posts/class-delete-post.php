@@ -52,7 +52,6 @@ class Delete_Post extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id = isset( $arguments['post_id'] ) ? (int) $arguments['post_id'] : 0;
         $post = $id > 0 ? $this->peek( '/wp/v2/posts/' . $id, 'id,title,status' ) : null;
@@ -68,7 +67,6 @@ class Delete_Post extends Base_Tool {
         );
     }
 
-    
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'post_id', 'post', 'delete' );
     }
@@ -88,7 +86,6 @@ class Delete_Post extends Base_Tool {
 
         $data = $this->rest_request( 'DELETE', '/wp/v2/posts/' . $post_id, $params );
 
-        
         if ( $force ) {
             $post = $data['previous'] ?? array();
         } else {

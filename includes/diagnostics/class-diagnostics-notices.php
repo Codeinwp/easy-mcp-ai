@@ -1,15 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,51 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Diagnostics_Notices {
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const LIVE_CHECK_IDS = array( 'a7', 'a8' );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function live_results( $runner = null ) {
         if ( ! is_callable( $runner ) ) {
@@ -75,21 +21,8 @@ class Diagnostics_Notices {
             return array();
         }
 
-        
-        
-        
         return is_array( $results ) ? $results : array();
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function with_live( array $results, $runner = null ) {
         $live = array();

@@ -95,7 +95,6 @@ class Create_Activity extends Base_Tool {
 
         $data = $this->rest_request( 'POST', '/buddypress/v1/activity', $params );
 
-        
         $item = isset( $data[0] ) ? $data[0] : $data;
 
         return array(

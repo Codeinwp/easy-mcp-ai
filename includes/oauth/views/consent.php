@@ -1,43 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -72,43 +34,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <?php
-    
-
-
-
-
-
-
-
     ?>
     <form method="post" action="<?php echo esc_url( $form_action ); ?>">
         <?php
-        
-
-
-
-
         wp_nonce_field( $nonce_action, '_wpnonce', false );
         ?>
 
         <?php
-        
-
-
-
-
-
         foreach ( $hidden_fields as $easy_mcp_ai_hidden_name => $easy_mcp_ai_hidden_value ) :
             ?>
         <input type="hidden" name="<?php echo esc_attr( $easy_mcp_ai_hidden_name ); ?>" value="<?php echo esc_attr( $easy_mcp_ai_hidden_value ); ?>">
-        <?php endforeach; ?>
-
-        <?php
-        
-        
-        foreach ( $carried_scopes as $easy_mcp_ai_carried_scope ) :
-            ?>
-        <input type="hidden" name="scopes[]" value="<?php echo esc_attr( $easy_mcp_ai_carried_scope ); ?>" data-carried-scope>
         <?php endforeach; ?>
 
     <div class="emcp-body">
@@ -210,11 +145,6 @@ if ( ! defined( 'ABSPATH' ) ) {
             <p class="emcp-text emcp-text--small emcp-text--muted"><?php echo esc_html__( 'These boxes apply when Custom is selected.', 'easy-mcp-ai' ); ?></p>
 
             <?php
-            
-
-
-
-
             ?>
             <div class="emcp-btn-row" data-bulk-row hidden>
                 <button type="button" class="emcp-btn emcp-btn--secondary emcp-btn--sm" data-bulk="all"><?php echo esc_html__( 'Select all', 'easy-mcp-ai' ); ?></button>
@@ -276,9 +206,6 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </tr>
                     <?php endforeach; ?>
                     <?php
-                    
-                    
-                    
                     foreach ( $privileged_rows as $privileged_row ) :
                         $box_scope = $privileged_row['scope'];
                         if ( ! $ceiling_all && ! in_array( $box_scope, $ceiling, true ) ) {
@@ -299,9 +226,43 @@ if ( ! defined( 'ABSPATH' ) ) {
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php
+                    foreach ( $carried_rows as $carried_row ) :
+                        if ( 'mcp:abilities' === $carried_row['read'] ) {
+                            $has_ability_row = true;
+                        }
+                        ?>
+                    <tr data-carried-row>
+                        <td>
+                            <?php echo esc_html( $carried_row['label'] ); ?>
+                            <?php if ( '' !== $carried_row['flag'] ) : ?>
+                            <span class="emcp-flag"><?php echo esc_html( $carried_row['flag'] ); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <?php
+                        foreach ( array( 'read', 'write' ) as $kind ) :
+                            $box_scope = $carried_row[ $kind ];
+                            ?>
+                        <td class="emcp-table__toggle">
+                            <?php if ( '' !== $box_scope ) : ?>
+                                <input type="checkbox" name="scopes[]" value="<?php echo esc_attr( $box_scope ); ?>" class="scope-checkbox emcp-checkbox" data-kind="<?php echo esc_attr( $kind ); ?>" data-carried-scope
+                                    <?php checked( $tick_all || in_array( $box_scope, $checked_scopes, true ) ); ?>>
+                            <?php else : ?>
+                                <span class="emcp-none">&mdash;</span>
+                            <?php endif; ?>
+                        </td>
+                        <?php endforeach; ?>
+                    </tr>
+                    <?php endforeach; ?>
                     <?php // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound ?>
                 </tbody>
             </table>
+
+            <?php if ( ! empty( $carried_rows ) ) : ?>
+            <p class="emcp-text emcp-text--small emcp-text--muted" data-carried-note>
+                <?php echo esc_html__( 'The last rows are access you already gave this app that the categories above do not cover. Untick one to remove it.', 'easy-mcp-ai' ); ?>
+            </p>
+            <?php endif; ?>
 
             <?php if ( ! empty( $has_ability_row ) ) : ?>
             <p class="emcp-text emcp-text--small emcp-text--muted">

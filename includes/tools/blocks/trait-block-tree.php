@@ -5,28 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Block_Tree {
-
-    
-
-
-
-
-
 
     protected function is_addressable_block( $block ) {
         if ( ! is_array( $block ) ) {
@@ -38,21 +17,9 @@ trait Block_Tree {
         return '' !== trim( isset( $block['innerHTML'] ) ? (string) $block['innerHTML'] : '' );
     }
 
-    
-
-
-
-
-
     protected function is_whitespace_block( $block ) {
         return is_array( $block ) && empty( $block['blockName'] ) && ! $this->is_addressable_block( $block );
     }
-
-    
-
-
-
-
 
     protected function addressable_indexes( array $blocks ) {
         $map = array();
@@ -64,22 +31,9 @@ trait Block_Tree {
         return $map;
     }
 
-    
-
-
-
-
-
     protected function block_display_name( array $block ) {
         return ! empty( $block['blockName'] ) ? (string) $block['blockName'] : 'core/freeform';
     }
-
-    
-
-
-
-
-
 
     protected function parse_block_path( $path ) {
         if ( is_int( $path ) ) {
@@ -93,16 +47,6 @@ trait Block_Tree {
         }
         return array_map( 'intval', explode( '.', $path ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function raw_index_at( array $list, $segment, $path_label, $depth ) {
         $map = $this->addressable_indexes( $list );
@@ -119,19 +63,6 @@ trait Block_Tree {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     protected function &resolve_container( array &$root, array $segments, $path_label ) {
         $container = &$root;
         $parents   = array_slice( $segments, 0, -1 );
@@ -147,15 +78,6 @@ trait Block_Tree {
         }
         return $container;
     }
-
-    
-
-
-
-
-
-
-
 
     protected function build_block_tree( array $blocks, array $parent, $level, $depth ) {
         $out      = array();
@@ -187,14 +109,6 @@ trait Block_Tree {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
     protected function inner_html_preview( array $block, $length = 160 ) {
         $html = isset( $block['innerHTML'] ) ? (string) $block['innerHTML'] : '';
         $text = preg_replace( '/\s+/u', ' ', $html );
@@ -204,13 +118,6 @@ trait Block_Tree {
         $text = trim( (string) $text );
         return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, $length, 'UTF-8' ) : substr( $text, 0, $length );
     }
-
-    
-
-
-
-
-
 
     protected function collect_block_names( array $blocks, array &$names ) {
         foreach ( $blocks as $block ) {
@@ -226,37 +133,10 @@ trait Block_Tree {
         }
     }
 
-    
-
-
-
-
-
     protected function is_block_type_registered( $name ) {
         return class_exists( 'WP_Block_Type_Registry' )
             && \WP_Block_Type_Registry::get_instance()->is_registered( (string) $name );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function block_has_saved_markup( array $block ) {
         if ( isset( $block['innerHTML'] ) && '' !== trim( (string) $block['innerHTML'] ) ) {
@@ -272,12 +152,6 @@ trait Block_Tree {
         return false;
     }
 
-    
-
-
-
-
-
     protected function unregistered_block_names( array $blocks ) {
         $names = array();
         $this->collect_block_names( $blocks, $names );
@@ -289,15 +163,6 @@ trait Block_Tree {
         }
         return $missing;
     }
-
-    
-
-
-
-
-
-
-
 
     protected function parse_markup_for_insert( $markup, $label ) {
         $blocks = parse_blocks( (string) $markup );
@@ -329,11 +194,6 @@ trait Block_Tree {
         return $out;
     }
 
-    
-
-
-
-
     protected function separator_block() {
         return array(
             'blockName'    => null,
@@ -343,12 +203,6 @@ trait Block_Tree {
             'innerContent' => array( "\n\n" ),
         );
     }
-
-    
-
-
-
-
 
     protected function with_separators( array $blocks ) {
         $out = array();
@@ -360,13 +214,6 @@ trait Block_Tree {
         }
         return $out;
     }
-
-    
-
-
-
-
-
 
     protected function marker_position( array $inner_content, $k ) {
         $seen = -1;
@@ -381,12 +228,6 @@ trait Block_Tree {
         return null;
     }
 
-    
-
-
-
-
-
     protected function sync_inner_html( array &$block ) {
         if ( ! isset( $block['innerContent'] ) || ! is_array( $block['innerContent'] ) ) {
             return;
@@ -400,24 +241,9 @@ trait Block_Tree {
         $block['innerHTML'] = $html;
     }
 
-    
-
-
-
-
-
     protected function is_root_container( array $container ) {
         return ! isset( $container['innerContent'] ) || ! is_array( $container['innerContent'] );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function container_insert_relative( array &$container, $raw, array $new_blocks, $before ) {
         $container['innerBlocks'] = array_values( $container['innerBlocks'] );
@@ -449,14 +275,6 @@ trait Block_Tree {
         $this->sync_inner_html( $container );
     }
 
-    
-
-
-
-
-
-
-
     protected function root_insert_end( array &$root, array $new_blocks, $prepend ) {
         $root['innerBlocks'] = array_values( $root['innerBlocks'] );
         $has_existing        = count( $this->addressable_indexes( $root['innerBlocks'] ) ) > 0;
@@ -473,13 +291,6 @@ trait Block_Tree {
         }
         $root['innerBlocks'] = array_merge( $root['innerBlocks'], $chunk );
     }
-
-    
-
-
-
-
-
 
     protected function container_remove( array &$container, $raw ) {
         $container['innerBlocks'] = array_values( $container['innerBlocks'] );
@@ -507,14 +318,6 @@ trait Block_Tree {
         $this->sync_inner_html( $container );
     }
 
-    
-
-
-
-
-
-
-
     protected function container_replace( array &$container, $raw, array $new_blocks ) {
         $container['innerBlocks'] = array_values( $container['innerBlocks'] );
         if ( $this->is_root_container( $container ) ) {
@@ -539,13 +342,6 @@ trait Block_Tree {
         $this->sync_inner_html( $container );
     }
 
-    
-
-
-
-
-
-
     protected function block_attribute_schema( $name ) {
         $attributes = array();
         if ( class_exists( 'WP_Block_Type_Registry' ) ) {
@@ -562,24 +358,9 @@ trait Block_Tree {
             $attributes = array();
         }
 
-        
-
-
-
-
-
-
         $filtered = apply_filters( 'easy_mcp_ai_block_attribute_schema', $attributes, (string) $name );
         return is_array( $filtered ) ? $filtered : $attributes;
     }
-
-    
-
-
-
-
-
-
 
     protected function attribute_type_matches( $value, $types ) {
         if ( null === $types || '' === $types || array() === $types ) {
@@ -628,12 +409,6 @@ trait Block_Tree {
         }
         return false;
     }
-
-    
-
-
-
-
 
     protected function json_type_label( $value ) {
         if ( is_null( $value ) ) {

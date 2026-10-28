@@ -24,7 +24,7 @@ class Update_Product extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'edit_products'; 
+        return 'edit_products';
     }
 
     public function get_annotations() {
@@ -207,7 +207,7 @@ class Update_Product extends Base_Tool {
             $params['sku'] = sanitize_text_field( $arguments['sku'] );
         }
         if ( isset( $arguments['stock_quantity'] ) ) {
-            $params['stock_quantity'] = (int) $arguments['stock_quantity']; 
+            $params['stock_quantity'] = (int) $arguments['stock_quantity'];
         }
         if ( isset( $arguments['manage_stock'] ) ) {
             $params['manage_stock'] = (bool) $arguments['manage_stock'];
@@ -269,7 +269,6 @@ class Update_Product extends Base_Tool {
             $params['cross_sell_ids'] = array_map( 'absint', $cross_sell_ids );
         }
 
-        
         $this->refuse_builder_owned_write( $id, array_key_exists( 'description', $params ) );
 
         $data = $this->rest_request( 'PUT', '/wc/v3/products/' . $id, $params );

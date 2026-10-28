@@ -98,7 +98,6 @@ class Wpdb_Task_Store implements Task_Store {
     public function count_working( $auth_source, $wp_user_id, $token_id, $oauth_client_id ) {
         global $wpdb;
         if ( 'oauth' === $auth_source ) {
-            
             return (int) $wpdb->get_var( $wpdb->prepare(
                 "SELECT COUNT(*) FROM `{$this->table()}` WHERE status = 'working' AND auth_source = 'oauth' AND wp_user_id = %d AND oauth_client_id = %s",
                 (int) $wp_user_id, (string) $oauth_client_id

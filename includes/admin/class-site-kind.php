@@ -1,14 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,14 +11,7 @@ class Site_Kind {
     const PUBLIC_SITE = 'public';
     const LOCAL_SITE  = 'local';
 
-    
     const LOCAL_SUFFIXES = array( '.local', '.test', '.localhost' );
-
-    
-
-
-
-
 
     public static function detect( $home_url ) {
         $host = self::host_of( $home_url );
@@ -52,12 +36,6 @@ class Site_Kind {
         return self::PUBLIC_SITE;
     }
 
-    
-
-
-
-
-
     private static function host_of( $url ) {
         $parts = \wp_parse_url( (string) $url );
         if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
@@ -65,12 +43,6 @@ class Site_Kind {
         }
         return strtolower( trim( (string) $parts['host'], '[]' ) );
     }
-
-    
-
-
-
-
 
     private static function is_loopback_or_private_ipv4( $host ) {
         if ( ! filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
@@ -80,7 +52,6 @@ class Site_Kind {
         if ( false === $long ) {
             return false;
         }
-        
         $long = $long & 0xFFFFFFFF;
 
         $ranges = array(

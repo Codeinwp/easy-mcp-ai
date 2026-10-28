@@ -1,56 +1,22 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Rest_Routes;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 final class Route_Gate {
-
-    
-
-
-
-
 
     const OWN_NAMESPACES = array( 'easy-mcp-ai/v1', 'easy-mcp-ai-admin/v1' );
 
-    
     const MAX_ROUTE_LENGTH = 2048;
 
-    
     const CALL_TOOL_METHODS = array(
         'wp_rest_read'   => 'GET',
         'wp_rest_write'  => 'POST',
         'wp_rest_delete' => 'DELETE',
     );
-
-    
-
-
-
-
-
-
 
     public static function request_summary( string $tool_name, array $arguments ): ?string {
         if ( ! isset( self::CALL_TOOL_METHODS[ $tool_name ] ) ) {
@@ -68,24 +34,10 @@ final class Route_Gate {
         return $method . ' ' . $path;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function normalize_path( $route ): string {
         if ( ! is_string( $route ) || '' === trim( $route, ' ' ) ) {
             throw new \InvalidArgumentException( 'route is required: a REST path such as /redirection/v1/redirect.' );
         }
-        
-        
         $route = trim( $route, ' ' );
         if ( strlen( $route ) > self::MAX_ROUTE_LENGTH ) {
             throw new \InvalidArgumentException( 'route is longer than ' . self::MAX_ROUTE_LENGTH . ' characters.' );
@@ -100,18 +52,6 @@ final class Route_Gate {
         $route = rtrim( $route, '/' );
         return '' === $route ? '/' : $route;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function resolve( $server, string $method, string $path ): array {
         $routes  = self::candidate_routes( $server, $path );
@@ -148,26 +88,10 @@ final class Route_Gate {
         throw new \RuntimeException( sprintf( 'No REST route matches %s. Use wp_rest_routes to list the routes of a namespace.', $path ) );
     }
 
-    
-
-
-
-
-
-
-
     public static function namespace_of( $server, string $route ): string {
         $options = $server->get_route_options( $route );
         return is_array( $options ) && isset( $options['namespace'] ) && is_string( $options['namespace'] ) ? $options['namespace'] : '';
     }
-
-    
-
-
-
-
-
-
 
     private static function candidate_routes( $server, string $path ): array {
         $prefix = rtrim( ltrim( $path, '/' ), '/' ) . '/';
@@ -179,17 +103,6 @@ final class Route_Gate {
         }
         return empty( $sets ) ? (array) $server->get_routes() : array_merge( ...$sets );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function parameter_conflict( array $url_params, array $params ): ?string {
         foreach ( $url_params as $name => $value ) {
@@ -203,14 +116,6 @@ final class Route_Gate {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     public static function refusal( string $method, array $resolved, array $params ): ?string {
         $namespace = Namespace_State::normalize( $resolved['namespace'] );

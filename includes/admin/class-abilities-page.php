@@ -5,19 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
 class Abilities_Page {
-
-	
-
-
-
-
-
-
 
 	public static function ability_annotations( $ability ) {
 		if ( method_exists( $ability, 'get_meta_item' ) ) {
@@ -28,17 +16,6 @@ class Abilities_Page {
 		}
 		return array();
 	}
-
-	
-
-
-
-
-
-
-
-
-
 
 	public static function compute_enabled( array $current_enabled, array $rendered, array $checked ) {
 		$new = array_diff( $current_enabled, $rendered );

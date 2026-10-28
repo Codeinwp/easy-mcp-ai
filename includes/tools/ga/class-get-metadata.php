@@ -39,9 +39,6 @@ class Get_Metadata extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
-        
         if ( empty( $arguments['property_id'] ) ) {
             $property = 'properties/0';
         } else {

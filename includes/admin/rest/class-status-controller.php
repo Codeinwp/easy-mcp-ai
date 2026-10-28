@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Setup_State;
@@ -17,30 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Status_Controller extends Admin_Rest_Controller {
-
-    
-
-
 
     const REACHABILITY_ID_PREFIX = 'a';
 
-    
     private $results_provider;
 
-    
     private $extras;
-
-    
-
-
-
-
-
 
     public function __construct( callable $results_provider, array $extras = array() ) {
         $this->results_provider = $results_provider;
@@ -74,53 +52,22 @@ class Status_Controller extends Admin_Rest_Controller {
         return $this->has( $name ) ? call_user_func_array( $this->extras[ $name ], $args ) : null;
     }
 
-    
-
-
-
     public function get_status( $request ) {
         return $this->ok( $this->payload( call_user_func( $this->results_provider ) ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public function run_diagnostics( $request ) {
         $scope = 'connection' === $request->get_param( 'scope' ) ? 'connection' : 'all';
         return $this->ok( $this->payload( $this->call( 'deep_run', $scope ) ) );
     }
 
-    
-
-
-
     public function get_system_info( $request ) {
         return $this->ok( array( 'text' => (string) $this->call( 'system_info' ) ) );
     }
 
-    
-
-
-
     public function get_ai_prompt( $request ) {
         return $this->ok( array( 'text' => (string) $this->call( 'ai_prompt' ) ) );
     }
-
-    
-
-
-
-
-
-
 
     public function write_auth_rule( $request ) {
         return $this->htaccess_write(
@@ -129,14 +76,6 @@ class Status_Controller extends Admin_Rest_Controller {
             array( 'auth_rule_refused' => array( 'easy_mcp_ai_auth_rule_refused', self::network_refusal(), 403 ) )
         );
     }
-
-    
-
-
-
-
-
-
 
     public function write_plain_routes( $request ) {
         return $this->htaccess_write(
@@ -152,17 +91,6 @@ class Status_Controller extends Admin_Rest_Controller {
             )
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function htaccess_write( string $extra, string $prefix, array $refusals ) {
         $outcome = (string) $this->call( $extra );
@@ -180,7 +108,6 @@ class Status_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
     private static function network_refusal(): string {
         return \__( 'Not permitted: on a network only a super administrator can change .htaccess.', 'easy-mcp-ai' );
     }
@@ -212,7 +139,6 @@ class Status_Controller extends Admin_Rest_Controller {
                 'externalTestUrl' => Support_Text::external_test_url( $endpoint, \home_url() ),
                 'mailto'          => Support_Text::mailto( \home_url(), $version ),
             ),
-            
             true === \Easy_MCP_AI\Config::get( 'paused' ),
             Setup_State::is_complete(),
             \Easy_MCP_AI\Config::is_locked( 'paused' ) ? \Easy_MCP_AI\Config::constant_name( 'paused' ) : null,
@@ -222,24 +148,6 @@ class Status_Controller extends Admin_Rest_Controller {
             true === $this->call( 'connection_due' )
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function build_payload( array $results, $site_kind, $version, $last_run_at = null, array $support = array(), $paused = false, $setup_complete = false, $paused_locked = null, array $actions = array(), array $invalid_settings = array(), $paused_locked_source = '', $connection_checks_due = false ) {
         $checks   = array();
@@ -260,8 +168,6 @@ class Status_Controller extends Admin_Rest_Controller {
                 'fix'    => $r->fix(),
                 'note'   => (string) $r->detail(),
                 'action' => isset( $actions[ $r->id() ] ) ? $actions[ $r->id() ] : null,
-                
-                
                 'measuredAt' => null === $r->measured_at() ? null : gmdate( 'Y-m-d\TH:i:s\Z', (int) $r->measured_at() ),
             );
             $counts['total']++;
@@ -276,7 +182,6 @@ class Status_Controller extends Admin_Rest_Controller {
                     $counts['failed']++;
                     break;
                 default:
-                    
                     $counts['skipped']++;
             }
             if ( ! $r->is_problem() ) {
@@ -323,13 +228,6 @@ class Status_Controller extends Admin_Rest_Controller {
             ),
         );
     }
-
-    
-
-
-
-
-
 
     private static function most_severe( array $problems ) {
         if ( empty( $problems ) ) {

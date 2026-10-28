@@ -11,42 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Menu_Handler extends Command_Handler {
 
-    
     const LOCATION_FIELDS = array( 'location', 'description' );
 
     const NOT_RECORDED = "Menu locations are stored in the active theme's theme_mods option, which change history's option mode on this site does not record.";
 
-    
     public function location_list( Invocation $inv, Context $ctx ): void {
         $locations = self::registered_locations();
         $objects   = array();
@@ -69,7 +39,6 @@ final class Menu_Handler extends Command_Handler {
         }
     }
 
-    
     public function location_assign( Invocation $inv, Context $ctx ): void {
         $menu_arg = (string) $inv->args[0];
         $location = (string) $inv->args[1];
@@ -97,7 +66,6 @@ final class Menu_Handler extends Command_Handler {
         $ctx->out->success( "Assigned location {$location} to menu {$menu_arg}." );
     }
 
-    
     public function location_remove( Invocation $inv, Context $ctx ): void {
         $location = (string) $inv->args[1];
         $refusal  = null;
@@ -109,7 +77,6 @@ final class Menu_Handler extends Command_Handler {
             $ctx->out->error( 'Invalid menu.' );
         }
         $locations = self::locations();
-        
         if ( ( isset( $locations[ $location ] ) ? $locations[ $location ] : null ) !== $menu['term_id'] ) {
             $ctx->out->error( "Menu isn't assigned to location." );
         }
@@ -120,12 +87,6 @@ final class Menu_Handler extends Command_Handler {
         $this->history( $ctx );
         $ctx->out->success( 'Removed location from menu.' );
     }
-
-    
-
-
-
-
 
     public function describe_assign( Invocation $inv ): array {
         $menu_arg = (string) $inv->args[0];
@@ -143,11 +104,6 @@ final class Menu_Handler extends Command_Handler {
         return array( sprintf( "Menu location '%s': %s -> %s", $location, self::menu_label( $before ), self::menu_label( $menu['term_id'], $menu ) ) );
     }
 
-    
-
-
-
-
     public function describe_remove( Invocation $inv ): array {
         $menu_arg = (string) $inv->args[0];
         $location = (string) $inv->args[1];
@@ -164,35 +120,22 @@ final class Menu_Handler extends Command_Handler {
         return array( sprintf( "Menu location '%s': %s -> unassigned (0)", $location, self::menu_label( $before, $menu ) ) );
     }
 
-    
-    
-    
-
-    
     public static function live_registered_locations(): array {
         return (array) \get_registered_nav_menus();
     }
 
-    
     public static function live_locations(): array {
         return (array) \get_nav_menu_locations();
     }
-
-    
-
-
-
 
     public static function live_set_locations( array $locations ): bool {
         return (bool) \set_theme_mod( 'nav_menu_locations', $locations );
     }
 
-    
     public static function live_theme_mods_option(): string {
         return 'theme_mods_' . (string) \get_option( 'stylesheet' );
     }
 
-    
     public static function live_option_recordable( string $option ): ?bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Recorder' ) || ! method_exists( '\\Easy_MCP_AI\\History\\Change_Recorder', 'option_is_recordable' ) ) {
             return null;
@@ -200,26 +143,15 @@ final class Menu_Handler extends Command_Handler {
         return (bool) \Easy_MCP_AI\History\Change_Recorder::option_is_recordable( $option );
     }
 
-    
-    
-    
-
-    
     private static function registered_locations(): array {
         $locations = Menu_Adapter::wp( 'registered_locations', array(), array( __CLASS__, 'live_registered_locations' ) );
         return is_array( $locations ) ? $locations : array();
     }
 
-    
     private static function locations(): array {
         $locations = Menu_Adapter::wp( 'locations', array(), array( __CLASS__, 'live_locations' ) );
         return is_array( $locations ) ? $locations : array();
     }
-
-    
-
-
-
 
     private function protect( Context $ctx ): void {
         $option = (string) Menu_Adapter::wp( 'theme_mods_option', array(), array( __CLASS__, 'live_theme_mods_option' ) );
@@ -229,7 +161,6 @@ final class Menu_Handler extends Command_Handler {
         }
     }
 
-    
     private function history( Context $ctx ): void {
         $option     = (string) Menu_Adapter::wp( 'theme_mods_option', array(), array( __CLASS__, 'live_theme_mods_option' ) );
         $recordable = Menu_Adapter::wp( 'option_recordable', array( $option ), array( __CLASS__, 'live_option_recordable' ) );
@@ -237,14 +168,6 @@ final class Menu_Handler extends Command_Handler {
             $ctx->not_captured( self::NOT_RECORDED );
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function menu_label( $term_id, ?array $known = null ): string {
         if ( null === $term_id || 0 === $term_id || '0' === $term_id ) {

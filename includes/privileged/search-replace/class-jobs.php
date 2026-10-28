@@ -7,28 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 final class Jobs {
 
     const TOOL_NAME = 'wp_privileged_search_replace_run';
     const TICK_HOOK = 'easy_mcp_ai_search_replace_tick';
-    
-
-
-
-
-
     const RETENTION_DAYS = 1;
 
     public static function runner(): Runner {
@@ -44,11 +26,6 @@ final class Jobs {
             }
         );
     }
-
-    
-
-
-
 
     public static function site_context( int $user_id ): array {
         global $wpdb;
@@ -67,7 +44,6 @@ final class Jobs {
         );
     }
 
-    
     public static function network_user( int $user_id ): bool {
         if ( ! ( function_exists( 'is_multisite' ) && \is_multisite() ) ) {
             return true;
@@ -75,18 +51,11 @@ final class Jobs {
         return $user_id > 0 && \is_super_admin( $user_id ) && \user_can( $user_id, 'manage_network_options' );
     }
 
-    
     public static function schedule( string $id ): void {
         if ( ! \wp_next_scheduled( self::TICK_HOOK, array( $id ) ) ) {
             \wp_schedule_single_event( time(), self::TICK_HOOK, array( $id ) );
         }
     }
-
-    
-
-
-
-
 
     public static function guard( array $job ): ?string {
         $on = Privileged_Groups::switched_on_names();
@@ -109,10 +78,6 @@ final class Jobs {
         return null;
     }
 
-    
-
-
-
     public static function tick( $id ): void {
         if ( ! is_string( $id ) || ! Job_Store::valid_id( $id ) ) {
             return;
@@ -130,8 +95,6 @@ final class Jobs {
         }
         $previous = function_exists( 'get_current_user_id' ) ? (int) \get_current_user_id() : 0;
         try {
-            
-            
             $job = $store->get( $id, true );
             if ( null === $job || 'running' !== $job['status'] ) {
                 return;
@@ -153,13 +116,6 @@ final class Jobs {
         }
     }
 
-    
-
-
-
-
-
-
     public static function on_finish( array $job ): void {
         $store = new Job_Store();
         if ( $store->live_job() === $job['id'] ) {
@@ -168,13 +124,11 @@ final class Jobs {
         if ( ! empty( $job['dry_run'] ) ) {
             return;
         }
-        
-        
         if ( ! empty( $job['site_address'] ) ) {
             try {
                 \Easy_MCP_AI\Diagnostics\Diagnostics::invalidate();
             } catch ( \Throwable $e ) {
-                unset( $e ); 
+                unset( $e );
             }
         }
         try {
@@ -206,7 +160,6 @@ final class Jobs {
         }
     }
 
-    
     public static function cleanup(): void {
         ( new Job_Store() )->delete_finished_before( time() - self::RETENTION_DAYS * DAY_IN_SECONDS );
     }

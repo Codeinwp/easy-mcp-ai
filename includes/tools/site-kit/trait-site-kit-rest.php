@@ -8,25 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Site_Kit_Rest {
-
-    
-
-
-
 
     protected static $site_kit_ns = '/google-site-kit/v1';
 
@@ -34,26 +16,9 @@ trait Site_Kit_Rest {
         return 'sitekit';
     }
 
-    
-
-
-
-
     public function get_required_capability() {
         return 'edit_posts';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function require_site_kit(): void {
         if ( ! defined( 'GOOGLESITEKIT_VERSION' ) ) {
@@ -74,14 +39,6 @@ trait Site_Kit_Rest {
         }
     }
 
-    
-
-
-
-
-
-
-
     protected function site_kit_get( string $path, array $params = array() ) {
         $request = new \WP_REST_Request( 'GET', self::$site_kit_ns . $path );
         foreach ( $params as $key => $value ) {
@@ -93,13 +50,6 @@ trait Site_Kit_Rest {
         }
         return json_decode( (string) wp_json_encode( $response->get_data() ), true );
     }
-
-    
-
-
-
-
-
 
     protected static function site_kit_refusal( \WP_Error $error ): Detailed_Tool_Error {
         $code    = (string) $error->get_error_code();
@@ -141,15 +91,6 @@ trait Site_Kit_Rest {
         return new Detailed_Tool_Error( sprintf( 'Site Kit answered with an error (%s%s).', $code, $status > 0 ? ', HTTP ' . $status : '' ), ltrim( $said ) );
     }
 
-    
-
-
-
-
-
-
-
-
     protected static function date_argument( array $arguments, string $key ): ?string {
         if ( ! isset( $arguments[ $key ] ) || '' === $arguments[ $key ] ) {
             return null;
@@ -160,15 +101,6 @@ trait Site_Kit_Rest {
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
 
     protected static function date_range( array $arguments, string $start_key, string $end_key ): ?array {
         $start = self::date_argument( $arguments, $start_key );
@@ -184,14 +116,6 @@ trait Site_Kit_Rest {
         }
         return array( $start, $end );
     }
-
-    
-
-
-
-
-
-
 
     protected static function string_list( $value, string $key ): array {
         if ( null === $value ) {

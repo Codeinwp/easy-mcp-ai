@@ -5,60 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Shell_Lexer {
 
-    
     const EXCERPT_CHARS = 10;
-
-    
-
-
-
 
     const UNQUOTED_REFUSALS = array(
         "\0" => array( 'nul_byte', 'NUL byte' ),
@@ -76,32 +25,21 @@ final class Shell_Lexer {
         '}'  => array( 'brace_expansion', "brace expansion '}'" ),
     );
 
-    
     const TWO_BYTE_OPERATORS = array(
         '&&' => "operator '&&'",
         '||' => "operator '||'",
         '|&' => "pipe '|&'",
     );
 
-    
     const ONE_BYTE_OPERATORS = array(
         '&' => "background operator '&'",
         '|' => "pipe '|'",
     );
 
-    
-
-
-
-
-
     public static function split( string $line ): array {
         $words = array();
         $word  = '';
-        
-        
         $started = false;
-        
         $after_separator = false;
         $length          = strlen( $line );
         $i               = 0;
@@ -118,13 +56,10 @@ final class Shell_Lexer {
                 $after_separator = false;
                 ++$i;
             } elseif ( self::is_line_continuation( $line, $i ) ) {
-                
                 $i += 2;
             } else {
                 $i       = self::read_part( $line, $i, $word, $started, $after_separator );
                 $started = true;
-                
-                
                 $after_separator = ( '=' === $c || ':' === $c );
             }
         }
@@ -135,19 +70,9 @@ final class Shell_Lexer {
         return $words;
     }
 
-    
     private static function is_line_continuation( string $line, int $i ): bool {
         return '\\' === $line[ $i ] && "\n" === substr( $line, $i + 1, 1 );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function read_part( string $line, int $i, string &$word, bool $started, bool $after_separator ): int {
         $c = $line[ $i ];
@@ -168,12 +93,6 @@ final class Shell_Lexer {
         return $i + 1;
     }
 
-    
-
-
-
-
-
     private static function single_quoted( string $line, int $open, string &$word ): int {
         $close = strpos( $line, "'", $open + 1 );
         $part  = false === $close ? substr( $line, $open + 1 ) : substr( $line, $open + 1, $close - $open - 1 );
@@ -188,12 +107,6 @@ final class Shell_Lexer {
         return $close + 1;
     }
 
-    
-
-
-
-
-
     private static function escaped( string $line, int $i, string &$word ): int {
         if ( $i + 1 >= strlen( $line ) ) {
             throw self::dangling_escape( $line, $i );
@@ -205,12 +118,6 @@ final class Shell_Lexer {
         $word .= $next;
         return $i + 2;
     }
-
-    
-
-
-
-
 
     private static function double_quoted( string $line, int $open, string &$word ): int {
         $length = strlen( $line );
@@ -239,11 +146,6 @@ final class Shell_Lexer {
         throw self::unterminated( $line, $open, 'double' );
     }
 
-    
-
-
-
-
     private static function double_quoted_backslash( string $line, int $i, string &$word ): int {
         $next = substr( $line, $i + 1, 1 );
         if ( "\n" === $next ) {
@@ -256,12 +158,6 @@ final class Shell_Lexer {
         $word .= '\\';
         return $i + 1;
     }
-
-    
-
-
-
-
 
     private static function unquoted_feature( string $line, int $i, bool $started, bool $after_separator ): ?array {
         $c = $line[ $i ];
@@ -280,13 +176,6 @@ final class Shell_Lexer {
         return null;
     }
 
-    
-
-
-
-
-
-
     private static function operator_feature( string $line, int $i ): array {
         $c    = $line[ $i ];
         $pair = substr( $line, $i, 2 );
@@ -298,11 +187,6 @@ final class Shell_Lexer {
         }
         return array( 'shell_operator', self::ONE_BYTE_OPERATORS[ $c ] );
     }
-
-    
-
-
-
 
     private static function redirection_operator( string $line, int $i ): string {
         $length   = strlen( $line );
@@ -317,7 +201,6 @@ final class Shell_Lexer {
         return $operator;
     }
 
-    
     private static function refusal( string $code, string $feature, string $line, int $byte ): Cli_Parse_Error {
         return new Cli_Parse_Error(
             $code,
@@ -326,7 +209,6 @@ final class Shell_Lexer {
         );
     }
 
-    
     private static function nul_byte( string $line, int $byte ): Cli_Parse_Error {
         return new Cli_Parse_Error(
             'nul_byte',
@@ -334,11 +216,6 @@ final class Shell_Lexer {
             . ' (' . self::excerpt( $line, $byte ) . '). A NUL byte cannot be passed, quoted or not.'
         );
     }
-
-    
-
-
-
 
     private static function unterminated( string $line, int $byte, string $kind ): Cli_Parse_Error {
         $quote = 'single' === $kind ? "'" : '"';
@@ -349,7 +226,6 @@ final class Shell_Lexer {
         );
     }
 
-    
     private static function dangling_escape( string $line, int $byte ): Cli_Parse_Error {
         return new Cli_Parse_Error(
             'dangling_escape',
@@ -358,13 +234,11 @@ final class Shell_Lexer {
         );
     }
 
-    
     private static function char_index( string $line, int $byte ): int {
         $prefix = substr( $line, 0, $byte );
         return strlen( $prefix ) - (int) preg_match_all( '/[\x80-\xBF]/', $prefix ) + 1;
     }
 
-    
     private static function excerpt( string $line, int $byte ): string {
         $start = self::excerpt_start( $line, $byte );
         $end   = self::excerpt_end( $line, $byte );
@@ -376,7 +250,6 @@ final class Shell_Lexer {
         return ( $start > 0 ? '...' : '' ) . $text . ( $end < strlen( $line ) ? '...' : '' );
     }
 
-    
     private static function excerpt_start( string $line, int $byte ): int {
         $start = $byte;
         $count = 0;
@@ -389,7 +262,6 @@ final class Shell_Lexer {
         return $start;
     }
 
-    
     private static function excerpt_end( string $line, int $byte ): int {
         $length = strlen( $line );
         $end    = $byte;
@@ -404,13 +276,11 @@ final class Shell_Lexer {
         return $end;
     }
 
-    
     private static function is_continuation( string $b ): bool {
         $o = ord( $b );
         return $o >= 0x80 && $o <= 0xBF;
     }
 
-    
     private static function printable( string $b ): string {
         switch ( $b ) {
             case "\n":

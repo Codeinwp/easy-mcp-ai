@@ -5,28 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 final class Template_Type {
 
     const TEMPLATE      = 'template';
     const TEMPLATE_PART = 'template_part';
-
-    
-
-
-
-
-
 
     public static function resolve( array $arguments ) {
         if ( ! isset( $arguments['type'] ) || '' === $arguments['type'] ) {
@@ -39,32 +21,13 @@ final class Template_Type {
         return $type;
     }
 
-    
-
-
-
-
-
     public static function rest_base( $type ) {
         return self::TEMPLATE_PART === $type ? 'template-parts' : 'templates';
     }
 
-    
-
-
-
-
-
     public static function label( $type ) {
         return self::TEMPLATE_PART === $type ? 'Template parts' : 'Templates';
     }
-
-    
-
-
-
-
-
 
     public static function area_of( array $item ) {
         return isset( $item['area'] ) && is_string( $item['area'] ) ? $item['area'] : '';

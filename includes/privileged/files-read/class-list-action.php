@@ -5,11 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 final class List_Action extends Action {
 
     const ARGUMENTS = array( 'path', 'recursive', 'max_depth', 'glob' );
@@ -46,7 +41,6 @@ final class List_Action extends Action {
         );
     }
 
-    
     private static function glob_matches( string $glob, string $path, string $prefix ): bool {
         $subject = false !== strpos( $glob, '/' ) ? substr( $path, strlen( $prefix ) ) : basename( $path );
         $subject = strtolower( $subject );

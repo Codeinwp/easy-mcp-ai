@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,24 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Wp_Fastest_Cache extends Cache_Adapter {
 
@@ -116,20 +93,9 @@ final class Wp_Fastest_Cache extends Cache_Adapter {
         return $this->sent( sprintf( 'WP Fastest Cache cleared %d post(s).', count( $request->post_ids ) ) );
     }
 
-    
-
-
-
-
     private function has_url_api(): bool {
         return $this->calls()->function_exists( 'wpfc_clear_cache_by_url' );
     }
-
-    
-
-
-
-
 
     private function cloudflare_on(): bool {
         $raw  = $this->calls()->get_option( 'WpFastestCacheCDN' );
@@ -142,12 +108,6 @@ final class Wp_Fastest_Cache extends Cache_Adapter {
         }
         return false;
     }
-
-    
-
-
-
-
 
     private function varnish_on(): bool {
         $data = $this->calls()->get_option( 'WpFastestCacheVarnish' );

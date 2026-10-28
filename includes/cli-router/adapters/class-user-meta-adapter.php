@@ -9,48 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class User_Meta_Adapter extends Meta_Command {
 
     protected $meta_type = 'user';
 
-    
     const TOOLS = array(
         'list'   => array( 'wp_get_user_meta' ),
         'get'    => array( 'wp_get_user_meta' ),
@@ -59,20 +21,12 @@ final class User_Meta_Adapter extends Meta_Command {
         'update' => array( 'wp_get_user_meta', 'wp_update_user_meta' ),
     );
 
-    
     const MSG_CANNOT_READ = 'You do not have permission to read this user\'s meta.';
     const MSG_CANNOT_EDIT = 'You do not have permission to edit this user.';
 
     const WITHHELD = 'wp_get_user_meta left out %d meta %s it never shows: %s. WP-CLI would list %s.';
 
     const NOT_JSON = 'wp_cli_run cannot hand this value to wp_update_user_meta: it is not valid UTF-8, so it cannot travel as JSON.';
-
-    
-
-
-
-
-
 
     protected function resolve_args( array $args, string $subcommand ): array {
         if ( ! isset( self::TOOLS[ $subcommand ] ) ) {
@@ -99,24 +53,9 @@ final class User_Meta_Adapter extends Meta_Command {
         return $args;
     }
 
-    
-
-
-
-
-
-
-
     protected function check_object_id( $object_id, string $subcommand ) {
         return $object_id;
     }
-
-    
-
-
-
-
-
 
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         $arguments = array( 'user_id' => $object_id );
@@ -136,13 +75,6 @@ final class User_Meta_Adapter extends Meta_Command {
         return isset( $payload['meta'] ) && is_array( $payload['meta'] ) ? $payload['meta'] : array();
     }
 
-    
-
-
-
-
-
-
     private function warn_withheld( array $payload ): void {
         $withheld = isset( $payload['withheld_keys'] ) ? array_values( array_map( 'strval', (array) $payload['withheld_keys'] ) ) : array();
         $keys     = null !== $this->inv && ! empty( $this->inv->assoc['keys'] ) ? explode( ',', (string) $this->inv->assoc['keys'] ) : null;
@@ -156,12 +88,6 @@ final class User_Meta_Adapter extends Meta_Command {
         $count    = count( $withheld );
         $this->ctx->out->warning( sprintf( self::WITHHELD, $count, 1 === $count ? 'key' : 'keys', Self_Protection::omitted_names_text( $withheld ), 1 === $count ? 'it' : 'them' ) );
     }
-
-    
-
-
-
-
 
     protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool {
         $value     = \wp_unslash( $meta_value );
@@ -177,12 +103,6 @@ final class User_Meta_Adapter extends Meta_Command {
         }
         return ! empty( $result['payload']['updated'] );
     }
-
-    
-
-
-
-
 
     protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool {
         $arguments = array_merge(
@@ -200,12 +120,6 @@ final class User_Meta_Adapter extends Meta_Command {
         return ! empty( $result['payload']['updated'] );
     }
 
-    
-
-
-
-
-
     protected function delete_metadata( $object_id, string $meta_key, string $meta_value = '' ): bool {
         $arguments = array(
             'user_id' => $object_id,
@@ -221,7 +135,6 @@ final class User_Meta_Adapter extends Meta_Command {
         return ! empty( $result['payload']['deleted'] );
     }
 
-    
     protected function protect_key( string $key, bool $write ): ?string {
         $refusal = parent::protect_key( $key, $write );
         if ( null !== $refusal ) {
@@ -229,13 +142,6 @@ final class User_Meta_Adapter extends Meta_Command {
         }
         return Self_Protection::user_meta_key( $key );
     }
-
-    
-
-
-
-
-
 
     private function value_arguments( $value, bool $plain ): array {
         if ( $plain ) {

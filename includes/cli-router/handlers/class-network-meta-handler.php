@@ -10,29 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Network_Meta_Handler extends Meta_Command {
 
     protected $meta_type = 'site';
@@ -42,11 +19,6 @@ class Network_Meta_Handler extends Meta_Command {
     const OTHER_NETWORK = 'wp_cli_run reads and writes only the network this MCP connection belongs to (network %1$d); network %2$s is another network, whose super admins may differ.';
 
     const NOT_CAPTURED = 'Network meta writes go through the metadata API (wp_sitemeta), which change history does not record.';
-
-    
-
-
-
 
     public function preflight( Invocation $inv, Context $ctx ): void {
         if ( ! $this->is_multisite() ) {
@@ -74,15 +46,6 @@ class Network_Meta_Handler extends Meta_Command {
         parent::patch( $inv, $ctx );
     }
 
-    
-
-
-
-
-
-
-
-
     protected function check_object_id( $object_id, string $subcommand ) {
         $network = $this->current_network_id();
         if ( ! is_scalar( $object_id ) || (int) $object_id !== $network ) {
@@ -98,10 +61,6 @@ class Network_Meta_Handler extends Meta_Command {
         }
         return Self_Protection::option( $key, $write );
     }
-
-    
-    
-    
 
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         return \get_metadata( $this->meta_type, $object_id, $meta_key, $single );

@@ -42,17 +42,12 @@ class Create_Form extends Base_Tool {
 
     public function execute( array $arguments ) {
         $this->require_cf7();
-        
-        
         $template = \WPCF7_ContactForm::get_template();
         $data     = $this->rest_request( 'POST', self::$cf7_route, $this->save_body( $arguments, $template->get_properties() ) );
         $id       = is_array( $data ) && isset( $data['id'] ) ? (int) $data['id'] : 0;
         if ( $id < 1 ) {
             throw new \RuntimeException( 'Contact Form 7 answered without saving the form. Nothing was created.' );
         }
-        
-        
-        
         $form = current_user_can( self::cf7_capability( 'wpcf7_edit_contact_form' ), $id ) ? $this->read_form( $id ) : self::with_stored_names( $data, $id );
         return array(
             'created'       => true,
@@ -60,16 +55,6 @@ class Create_Form extends Base_Tool {
             'config_errors' => self::config_errors_of( $data ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function with_stored_names( array $data, int $id ): array {
         $stored = function_exists( 'wpcf7_contact_form' ) ? wpcf7_contact_form( $id ) : null;

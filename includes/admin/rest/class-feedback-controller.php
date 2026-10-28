@@ -1,15 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Feedback\Feedback_Queue;
@@ -22,11 +12,7 @@ class Feedback_Controller extends Admin_Rest_Controller {
 
     const ID_PATTERN = '(?P<id>[0-9a-f-]{36})';
 
-    
     private $queue_factory;
-
-    
-
 
     public function __construct( ?callable $queue_factory = null ) {
         $this->queue_factory = is_callable( $queue_factory ) ? $queue_factory : array( Feedback_Queue::class, 'create' );
@@ -42,10 +28,6 @@ class Feedback_Controller extends Admin_Rest_Controller {
         return call_user_func( $this->queue_factory );
     }
 
-    
-
-
-
     public function list_reports( $request ) {
         $reports = array();
         foreach ( $this->queue()->pending() as $row ) {
@@ -59,25 +41,13 @@ class Feedback_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
     public function sent( $request ) {
         return $this->decided( $this->queue()->mark_sent( (string) $request->get_param( 'id' ), \get_current_user_id(), 'admin' ) );
     }
 
-    
-
-
-
     public function deny( $request ) {
         return $this->decided( $this->queue()->deny( (string) $request->get_param( 'id' ), \get_current_user_id(), 'admin' ) );
     }
-
-    
-
-
 
     private function decided( array $outcome ) {
         if ( ! empty( $outcome['ok'] ) ) {
@@ -91,12 +61,6 @@ class Feedback_Controller extends Admin_Rest_Controller {
         $status = isset( $http[ $outcome['status'] ] ) ? $http[ $outcome['status'] ] : 400;
         return $this->fail( 'easy_mcp_ai_feedback_' . $outcome['status'], $outcome['message'], $status );
     }
-
-    
-
-
-
-
 
     public static function to_public( array $row ): array {
         $arguments = is_string( $row['arguments'] ?? null ) ? json_decode( $row['arguments'], true ) : null;

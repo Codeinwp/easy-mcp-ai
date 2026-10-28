@@ -1,15 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -31,8 +21,6 @@ return array(
         'cap'     => 'read',
         'network' => null,
         'write'   => false,
-        
-        
         'generic' => true,
         'params'  => array( 'field', 'fields', 'format' ),
     ),

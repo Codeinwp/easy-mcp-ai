@@ -8,38 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Easy_MCP_AI\Option_Lock;
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Yoast_Update_Settings extends Base_Tool {
 
 	const MAX_ITEMS = 50;
 
-	
 	const LOCK = 'easy_mcp_ai_yoast_settings_lock';
 
-	
 	const LOCK_TTL = 30;
 
-	
 	const LOCK_WAIT = 10;
 
 	public function get_name() {
@@ -55,7 +31,6 @@ class Yoast_Update_Settings extends Base_Tool {
 	}
 
 	public function get_required_capability() {
-		
 		return 'wpseo_manage_options';
 	}
 
@@ -118,8 +93,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		$defaults                = (array) $titles->get_defaults();
 		$planned                 = $this->planned_changes( $arguments, $titles, $social, $defaults );
 
-		
-		
 		$lock = self::lock();
 		try {
 			$before = array(
@@ -159,9 +132,6 @@ class Yoast_Update_Settings extends Base_Tool {
 				$unchanged[] = $change['label'];
 			}
 			if ( $now !== $sent ) {
-				
-				
-				
 				if ( $now === $was && in_array( $change['option'], $unsaved, true ) ) {
 					$not_saved[] = $change['label'];
 				} else {
@@ -180,18 +150,6 @@ class Yoast_Update_Settings extends Base_Tool {
 			'settings'           => Yoast_Site_Settings::read( $titles, $social ),
 		);
 	}
-
-	
-
-
-
-
-
-
-
-
-
-
 
 	private function planned_changes( array $arguments, object $titles, object $social, array $defaults ): array {
 		$allowed = array( 'separator', 'templates', 'social_images', 'default_social_image_id' );
@@ -228,11 +186,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		return $planned;
 	}
 
-	
-
-
-
-
 	private function separator_change( $value, object $titles ): array {
 		$separators = Yoast_Site_Settings::separators( $titles );
 		if ( ! is_string( $value ) || ! isset( $separators[ $value ] ) ) {
@@ -245,12 +198,6 @@ class Yoast_Update_Settings extends Base_Tool {
 			'check'  => 'separator',
 		);
 	}
-
-	
-
-
-
-
 
 	private function template_change( array $item, int $i, array $defaults ): array {
 		$type  = $this->content_type( $item['content_type'], "templates[$i]", $defaults );
@@ -273,12 +220,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
 	private function social_image_change( array $item, int $i, array $defaults ): array {
 		$type = $this->content_type( $item['content_type'], "social_images[$i]", $defaults );
 		$keys = Yoast_Site_Settings::image_keys( $type, $defaults );
@@ -293,14 +234,6 @@ class Yoast_Update_Settings extends Base_Tool {
 			'check'  => $keys[1],
 		);
 	}
-
-	
-
-
-
-
-
-
 
 	private function items( array $arguments, string $name, array $fields ): array {
 		if ( ! array_key_exists( $name, $arguments ) ) {
@@ -322,14 +255,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		return $list;
 	}
 
-	
-
-
-
-
-
-
-
 	private function content_type( $value, string $where, array $defaults ): string {
 		$types = Yoast_Site_Settings::content_types( $defaults );
 		if ( ! is_string( $value ) || ! in_array( $value, $types, true ) ) {
@@ -337,14 +262,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		}
 		return $value;
 	}
-
-	
-
-
-
-
-
-
 
 	private function image_id( $value, string $where ): int {
 		if ( ! is_int( $value ) || $value < 0 ) {
@@ -363,17 +280,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		return $value;
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
 	private function image_values( int $id, string $url_key, string $id_key, array $defaults ): array {
 		if ( 0 === $id ) {
 			return array(
@@ -391,12 +297,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
 	private function refuse_duplicates( array $planned ): void {
 		$labels = array_column( $planned, 'label' );
 		$twice  = array_unique( array_diff_assoc( $labels, array_unique( $labels ) ) );
@@ -404,15 +304,6 @@ class Yoast_Update_Settings extends Base_Tool {
 			throw new \InvalidArgumentException( sprintf( 'Each setting may be sent once; sent more than once: %s. Nothing was changed.', implode( ', ', $twice ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
-
-	
-
-
-
-
-
-
-
 
 	private function refuse_locked( array $planned, object $titles, object $social ): void {
 		$locked = array();
@@ -430,12 +321,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		}
 	}
 
-	
-
-
-
-
-
 	private static function lock(): string {
 		global $wpdb;
 		$deadline = microtime( true ) + static::LOCK_WAIT;
@@ -451,20 +336,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		} while ( microtime( true ) < $deadline );
 		throw new \RuntimeException( sprintf( 'Another wp_yoast_update_settings call has been saving for more than %d seconds, so nothing was changed. Call again.', static::LOCK_WAIT ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 	}
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
 
 	private static function renewed( string $lock, array $planned, array $written ): string {
 		$saved = array();
@@ -483,7 +354,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		if ( '' !== $renewed ) {
 			return $renewed;
 		}
-		
 		global $wpdb;
 		$error = (string) ( $wpdb->last_error ?? '' );
 		$cause = '' !== $error
@@ -492,29 +362,11 @@ class Yoast_Update_Settings extends Base_Tool {
 		throw new \RuntimeException( sprintf( '%s, so these were not saved: %s.%s Read the settings with wp_yoast_get_settings and send them again.', $cause, implode( ', ', $lost ), $saved ? ' Saved before that: ' . implode( ', ', $saved ) . '.' : '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 	}
 
-	
-
-
-
-
-
-
-
 	private static function fresh( string $name ): array {
 		wp_cache_delete( 'alloptions', 'options' );
 		wp_cache_delete( $name, 'options' );
 		return Yoast_Site_Settings::stored( $name );
 	}
-
-	
-
-
-
-
-
-
-
-
 
 	private function write( string $option, array $current, array $planned ): ?bool {
 		$next = $current;
@@ -527,11 +379,6 @@ class Yoast_Update_Settings extends Base_Tool {
 			return null;
 		}
 		global $wpdb;
-		
-		
-		
-		
-		
 		$wpdb->last_error = '';
 		if ( update_option( $option, $next ) ) {
 			return true;
@@ -545,14 +392,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- whether the row exists now, not as cached.
 		return null !== $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option ) );
 	}
-
-	
-
-
-
-
-
-
 
 	private function previews( array $planned, array $titles ): array {
 		if ( ! function_exists( 'wpseo_replace_vars' ) ) {
@@ -586,25 +425,9 @@ class Yoast_Update_Settings extends Base_Tool {
 		return $out;
 	}
 
-	
-
-
-
-
-
-
-
 	private static function value_of( array $stored, string $key ): string {
 		return isset( $stored[ $key ] ) && is_scalar( $stored[ $key ] ) ? (string) $stored[ $key ] : '';
 	}
-
-	
-
-
-
-
-
-
 
 	private static function values_of( array $stored, array $keys ): array {
 		$out = array();
@@ -613,12 +436,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		}
 		return $out;
 	}
-
-	
-
-
-
-
 
 	private function separator_keys(): array {
 		try {

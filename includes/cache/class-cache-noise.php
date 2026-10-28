@@ -1,24 +1,10 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
 
 final class Cache_Noise {
 

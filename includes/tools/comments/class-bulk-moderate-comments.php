@@ -7,25 +7,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 class Bulk_Moderate_Comments extends Base_Tool {
 
     use Comment_Moderation;
 
-    
     const MAX_IDS = 100;
 
-    
     const ACTIONS = array( 'approve', 'unapprove', 'spam', 'trash' );
 
     public function get_name() {
@@ -41,8 +28,6 @@ class Bulk_Moderate_Comments extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'moderate_comments';
     }
 
@@ -86,8 +71,6 @@ class Bulk_Moderate_Comments extends Base_Tool {
 
         $ids = $this->parse_comment_ids( $arguments['comment_ids'] );
 
-        
-        
         if ( 'trash' === $action ) {
             $this->refuse_trash_when_disabled();
         }
@@ -98,8 +81,6 @@ class Bulk_Moderate_Comments extends Base_Tool {
             try {
                 $comment    = $this->load_moderatable_comment( $id );
                 $did_change = $this->apply_comment_action( $comment, $action );
-                
-                
                 $current = get_comment( $id );
 
                 if ( $did_change ) {
@@ -125,18 +106,6 @@ class Bulk_Moderate_Comments extends Base_Tool {
             'results'   => $results,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function parse_comment_ids( $value ) {
         $raw = $this->parse_json_param( $value, 'comment_ids' );

@@ -11,7 +11,6 @@ class Create_Menu_Item extends Base_Tool {
 
     use Menu_Item_Refusal;
 
-    
     const IDS_IN_MESSAGE = 8;
 
     public function get_name() {
@@ -117,22 +116,16 @@ class Create_Menu_Item extends Base_Tool {
         $position = self::position_argument( $arguments );
         $shift    = 0 < $position && self::shift_requested( $arguments );
 
-        
-        
         $this->assert_menu_exists( $menu_id );
 
         if ( 'custom' === $params['type'] && ! $has_title ) {
             throw new \InvalidArgumentException( 'Missing required parameters: title (a custom link needs a title; it is optional only for post_type, taxonomy and post_type_archive items, which show the linked object\'s title).' );
         }
 
-        
         $orders               = ( 0 === $position || $shift ) ? self::stored_orders( $menu_id ) : array();
         $params['menu_order'] = 0 === $position ? self::end_position( $orders ) : $position;
         $to_shift             = $shift ? $this->items_to_shift( $menu_id, $orders, $position ) : array();
 
-        
-        
-        
         $data = $this->rest_request( 'POST', '/wp/v2/menu-items', $params );
 
         $result = array(
@@ -147,16 +140,6 @@ class Create_Menu_Item extends Base_Tool {
         }
         return $this->shift_items( $result, $to_shift, $position );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function link_params( array $arguments, int $menu_id, bool $has_title ): array {
         $params = array(
@@ -184,14 +167,6 @@ class Create_Menu_Item extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private function display_params( array $arguments ): array {
         $params = array();
         foreach ( array( 'description', 'attr_title' ) as $field ) {
@@ -200,10 +175,6 @@ class Create_Menu_Item extends Base_Tool {
             }
         }
         if ( isset( $arguments['target'] ) ) {
-            
-            
-            
-            
             $this->refuse_unless_one_of( 'target', $arguments['target'], array( '_blank', '_self', '' ), $arguments['target'], '"_blank" (new tab) or "_self" (same tab)' );
             $params['target'] = '_blank' === $arguments['target'] ? '_blank' : '';
         }
@@ -212,18 +183,6 @@ class Create_Menu_Item extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function position_argument( array $arguments ): int {
         if ( ! isset( $arguments['position'] ) ) {
@@ -236,7 +195,6 @@ class Create_Menu_Item extends Base_Tool {
         if ( is_string( $value ) && ctype_digit( $value ) ) {
             return (int) $value;
         }
-        
         if ( is_float( $value ) && $value >= 0 && $value < PHP_INT_MAX && floor( $value ) === $value ) {
             return (int) $value;
         }
@@ -244,45 +202,13 @@ class Create_Menu_Item extends Base_Tool {
         throw new \InvalidArgumentException( sprintf( 'Invalid position: must be 0 or a positive integer (0 or omitted adds the item at the end), got: %s', false === $shown ? gettype( $value ) : $shown ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
     private static function shift_requested( array $arguments ): bool {
         return ! isset( $arguments['shift_following'] ) || rest_sanitize_boolean( $arguments['shift_following'] );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function end_position( array $orders ): int {
-        
-        
         return max( 1, ( $orders ? max( $orders ) : 0 ) + 1 );
     }
-
-    
-
-
-
-
-
-
 
     private static function stored_orders( int $menu_id ): array {
         return array_map(
@@ -292,15 +218,6 @@ class Create_Menu_Item extends Base_Tool {
             List_Menu_Items::stored_items( $menu_id )
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private function shift_items( array $result, array $to_shift, int $position ): array {
         $shifted = array();
@@ -315,17 +232,6 @@ class Create_Menu_Item extends Base_Tool {
         $result['shifted'] = $shifted;
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function classes_argument( $value ): array {
         if ( is_string( $value ) ) {
@@ -344,13 +250,6 @@ class Create_Menu_Item extends Base_Tool {
         return $classes;
     }
 
-    
-
-
-
-
-
-
     private function assert_menu_exists( int $menu_id ): void {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/menus/' . $menu_id );
         $request->set_param( 'context', 'edit' );
@@ -364,27 +263,6 @@ class Create_Menu_Item extends Base_Tool {
             throw new \RuntimeException( sprintf( 'Menu %d could not be loaded: %s', $menu_id, self::rest_error_message( $error ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function items_to_shift( int $menu_id, array $orders, int $position ): array {
         $moving = array_filter(
@@ -444,19 +322,6 @@ class Create_Menu_Item extends Base_Tool {
         );
         return $rows;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function partial_shift_report( array $result, array $shifted, int $failed_id, string $error, array $remaining, int $position ): array {
         return array_merge(

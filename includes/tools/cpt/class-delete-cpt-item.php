@@ -22,7 +22,6 @@ class Delete_CPT_Item extends Base_Tool {
         return 'cpt';
     }
 
-    
     public function get_required_capability() {
         return 'read';
     }
@@ -58,13 +57,6 @@ class Delete_CPT_Item extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'DELETE' );
     }
@@ -94,8 +86,6 @@ class Delete_CPT_Item extends Base_Tool {
 
         $data = $response->get_data();
 
-        
-        
         $id = isset( $data['deleted'] ) ? ( $data['previous']['id'] ?? null ) : ( $data['id'] ?? null );
 
         return array(

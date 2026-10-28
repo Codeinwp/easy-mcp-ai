@@ -96,14 +96,12 @@ class Backlinks_Referring_Domains_Live extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['target'] ) || empty( $arguments['target'] ) ) {
 			throw new \RuntimeException(
 				'target is required.'
 			);
 		}
 
-		
 		if ( isset( $arguments['mode'] ) ) {
 			$mode = (string) $arguments['mode'];
 			if ( ! in_array( $mode, array( 'as_is', 'one_per_domain', 'one_per_anchor' ), true ) ) {
@@ -113,7 +111,6 @@ class Backlinks_Referring_Domains_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['limit'] ) ) {
 			$limit = (int) $arguments['limit'];
 			if ( $limit < 1 || $limit > 1000 ) {
@@ -123,7 +120,6 @@ class Backlinks_Referring_Domains_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['backlinks_status_type'] ) ) {
 			$backlinks_status_type = (string) $arguments['backlinks_status_type'];
 			if ( ! in_array( $backlinks_status_type, array( 'all', 'live', 'lost' ), true ) ) {
@@ -133,10 +129,8 @@ class Backlinks_Referring_Domains_Live extends Base_Tool {
 			}
 		}
 
-		
 		$task = array( 'target' => (string) $arguments['target'] );
 
-		
 		if ( isset( $arguments['mode'] ) ) {
 			$task['mode'] = (string) $arguments['mode'];
 		}
@@ -165,14 +159,12 @@ class Backlinks_Referring_Domains_Live extends Base_Tool {
 			$task['internal_list_limit'] = (int) $arguments['internal_list_limit'];
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/backlinks/referring_domains/live',
 			$task
 		);
 
-		
 		return array_merge(
 			$result['tasks'][0]['result'][0] ?? array(),
 			array( '_cost_usd' => $result['cost'] ?? 0 )

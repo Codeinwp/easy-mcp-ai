@@ -1,38 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -41,30 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Header_Probe {
 
-    
     const SECRET_OPTION = 'easy_mcp_ai_header_probe_secret';
 
-    
     const ROUTE = '/header-probe';
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function mcp_probe_headers( $secret ) {
         return array(
@@ -75,37 +21,15 @@ class Check_Header_Probe {
         );
     }
 
-    
     const TIMEOUT = 5;
 
-    
-
-
     public static function run() {
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $secret = '';
 
-        
-        
-        
-        
-        
-        
         try {
             $secret = self::arm();
 
             if ( '' === $secret ) {
-                
-                
-                
                 return array(
                     self::unknown( __( 'Could not prepare the connection test on this site.', 'easy-mcp-ai' ) ),
                     self::unknown_mcp_headers( __( 'Could not prepare the connection test on this site.', 'easy-mcp-ai' ) ),
@@ -118,20 +42,12 @@ class Check_Header_Probe {
             } catch ( \Throwable $e ) {
                 $body = null;
             }
-            
-            
-            
-            
-            
-            
             try {
                 $basic_body = self::send_probe( $secret, 'basic' );
             } catch ( \Throwable $e ) {
                 $basic_body = null;
             }
         } catch ( \Throwable $e ) {
-            
-            
             return array(
                 self::unknown( __( 'Could not prepare the connection test on this site.', 'easy-mcp-ai' ) ),
                 self::unknown_mcp_headers( __( 'Could not prepare the connection test on this site.', 'easy-mcp-ai' ) ),
@@ -141,49 +57,20 @@ class Check_Header_Probe {
             self::disarm();
         }
 
-        
-        
-        
-        
-        
-        
         if ( class_exists( '\Easy_MCP_AI\Diagnostics\Check_Conflicts' ) ) {
             try {
                 Check_Conflicts::record_rest_auth_observation( $body, $secret );
             } catch ( \Throwable $e ) {
-                
-                
                 unset( $e );
             }
         }
 
-        
-        
-        
-        
-        
         return array(
             self::evaluate( $body, $secret ),
             self::evaluate_mcp_headers( $body, $secret ),
             self::evaluate_basic( $basic_body, $secret ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_basic( $body, $secret ) {
         if ( ! is_array( $body ) || empty( $body['proof'] )
@@ -193,7 +80,6 @@ class Check_Header_Probe {
             );
         }
 
-        
         if ( ! array_key_exists( 'php_auth', $body ) ) {
             return self::unknown_basic( __( 'This site answered without the username-and-password result, so it was not measured.', 'easy-mcp-ai' ) );
         }
@@ -237,21 +123,9 @@ class Check_Header_Probe {
         return Diagnostic_Result::unknown( 'a13', Diagnostic_Result::TIER_WARNING, self::basic_label(), $detail );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_mcp_headers( $body, $secret ) {
         $label = __( 'AI session headers reach this site', 'easy-mcp-ai' );
 
-        
         if ( ! is_array( $body ) || ! isset( $body['proof'] )
             || ! hash_equals( self::expected_proof( $secret ), (string) $body['proof'] ) ) {
             return Diagnostic_Result::unknown(
@@ -262,11 +136,6 @@ class Check_Header_Probe {
             );
         }
 
-        
-        
-        
-        
-        
         if ( isset( $body['headers_collected'] ) && ! $body['headers_collected'] ) {
             return Diagnostic_Result::unknown(
                 'a11',
@@ -276,8 +145,6 @@ class Check_Header_Probe {
             );
         }
 
-        
-        
         if ( ! isset( $body['mcp_headers'] ) || ! is_array( $body['mcp_headers'] ) ) {
             return Diagnostic_Result::unknown(
                 'a11',
@@ -315,25 +182,9 @@ class Check_Header_Probe {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function expected_proof( $secret ) {
         return \wp_hash( 'easy_mcp_ai_header_probe|' . (string) $secret );
     }
-
-    
-
-
-
-
-
-
 
     public static function authorize_probe( $supplied ) {
         $expected = (string) \get_option( self::SECRET_OPTION, '' );
@@ -345,18 +196,7 @@ class Check_Header_Probe {
         return hash_equals( $expected, (string) $supplied );
     }
 
-    
-
-
-
-
-
-
     public static function probe_response( array $server, $headers, $secret, $rest_auth = null ) {
-        
-        
-        
-        
         $collected = is_array( $headers );
         $headers   = $collected ? $headers : array();
 
@@ -368,26 +208,12 @@ class Check_Header_Probe {
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
         $server_delivered = isset( $GLOBALS['easy_mcp_ai_server_had_auth_header'] )
             ? (bool) $GLOBALS['easy_mcp_ai_server_had_auth_header']
             : ! empty( $server['HTTP_AUTHORIZATION'] );
 
-        
-        
-        
         $php_auth = ! empty( $server['PHP_AUTH_USER'] ) || ! empty( $server['PHP_AUTH_PW'] );
 
-        
-        
-        
         $mcp = array();
         foreach ( self::mcp_probe_headers( $secret ) as $name => $expected ) {
             $mcp[ $name ] = false;
@@ -405,28 +231,12 @@ class Check_Header_Probe {
             'php_auth'          => $php_auth,
             'getallheaders'     => $found_in_headers,
             'headers_collected' => $collected,
-            
-            
-            
             'mcp_headers'       => $collected ? $mcp : null,
-            
-            
-            
-            
-            
-            
-            
             'rest_auth'         => is_array( $rest_auth ) ? $rest_auth : null,
         );
     }
 
-    
-
-
-
     public static function evaluate( $body, $secret ) {
-        
-        
         if ( ! is_array( $body ) || empty( $body['proof'] )
             || ! hash_equals( self::expected_proof( $secret ), (string) $body['proof'] ) ) {
             return self::unknown(
@@ -464,15 +274,9 @@ class Check_Header_Probe {
         );
     }
 
-    
-
-    
-
-
     private static function arm() {
         $secret = self::generate_secret();
 
-        
         \update_option( self::SECRET_OPTION, $secret, false );
 
         return hash_equals( (string) \get_option( self::SECRET_OPTION, '' ), $secret ) ? $secret : '';
@@ -482,35 +286,17 @@ class Check_Header_Probe {
         \delete_option( self::SECRET_OPTION );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function generate_secret() {
         if ( function_exists( 'random_bytes' ) ) {
             try {
                 return bin2hex( random_bytes( 32 ) );
             } catch ( \Throwable $e ) {
-                
-                
                 unset( $e );
             }
         }
 
         return (string) \wp_generate_password( 64, false, false );
     }
-
-    
-
 
     private static function send_probe( $secret, $scheme = 'bearer' ) {
         if ( ! function_exists( 'wp_remote_get' ) || ! function_exists( 'rest_url' ) ) {
@@ -532,9 +318,6 @@ class Check_Header_Probe {
                     array( 'Authorization' => self::probe_authorization( $secret, $scheme ) ),
                     self::mcp_probe_headers( $secret )
                 ),
-                
-                
-                
                 'sslverify'   => false,
             )
         );
@@ -547,25 +330,6 @@ class Check_Header_Probe {
 
         return is_array( $decoded ) ? $decoded : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function probe_authorization( $secret, $scheme = 'bearer' ) {
         if ( 'basic' === $scheme ) {
@@ -581,10 +345,6 @@ class Check_Header_Probe {
     private static function unknown( $reason ) {
         return Diagnostic_Result::unknown( 'a1', Diagnostic_Result::TIER_WARNING, self::label(), $reason );
     }
-
-    
-
-
 
     private static function unknown_mcp_headers( $reason ) {
         return Diagnostic_Result::unknown(

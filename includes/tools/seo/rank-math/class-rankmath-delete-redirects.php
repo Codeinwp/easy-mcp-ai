@@ -7,15 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
-
-
-
-
 class Rankmath_Delete_Redirects extends Base_Tool {
 
 	use Rank_Math_Redirects;
@@ -58,14 +49,6 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
-
-
 	public function describe( array $arguments ) {
 		if ( ! class_exists( '\\RankMath\\Redirections\\DB' ) ) {
 			return '';
@@ -92,14 +75,6 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		/* translators: 1: number of redirects, 2: list of redirects */
 		return sprintf( _n( 'Move %1$d Rank Math redirect to the trash: %2$s', 'Move %1$d Rank Math redirects to the trash: %2$s', $count, 'easy-mcp-ai' ), $count, $list );
 	}
-
-	
-
-
-
-
-
-
 
 	public function approval_refusal( array $arguments ): ?string {
 		$length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
@@ -144,8 +119,6 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 				)
 			);
 			if ( array() !== $left ) {
-				
-				
 				foreach ( $left as $id ) {
 					$this->restore_object_links( $id, $links[ $id ] );
 				}
@@ -183,11 +156,6 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
 	private function parse_ids( $value ): array {
 		if ( ! is_array( $value ) || array() === $value ) {
 			throw new \InvalidArgumentException( 'redirect_ids must be a non-empty array of redirect ids.' );
@@ -203,15 +171,6 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		return $ids;
 	}
 
-	
-
-
-
-
-
-
-
-
 	private static function summary_line( array $redirect ): string {
 		$sources = array();
 		foreach ( $redirect['sources'] as $source ) {
@@ -222,7 +181,6 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		return sprintf( '#%1$d %2$s → %3$s [%4$s]', $redirect['id'], implode( ', ', $sources ), $target, $redirect['status'] );
 	}
 
-	
 	private static function quoted( string $text ): string {
 		return (string) wp_json_encode( $text, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 	}

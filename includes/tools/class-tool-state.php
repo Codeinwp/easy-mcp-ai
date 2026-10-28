@@ -5,50 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Tool_State {
 
     const OVERRIDE_NAME  = 'EASY_MCP_AI_TOOLS';
     const ENABLED_OPTION = 'easy_mcp_ai_enabled_tools';
-    
     const STRICT_ENTRY = '*';
 
-    
     private static $parsed = null;
-
-    
-
-
-
-
 
     private static function override_value() {
         if ( defined( self::OVERRIDE_NAME ) ) {
@@ -61,12 +24,10 @@ final class Tool_State {
         return array( null, '' );
     }
 
-    
     public static function override_source() {
         return self::override_value()[1];
     }
 
-    
     private static function parsed() {
         $raw = self::override_value()[0];
         if ( null === self::$parsed || self::$parsed[0] !== $raw ) {
@@ -75,25 +36,15 @@ final class Tool_State {
         return self::$parsed[1];
     }
 
-    
     public static function overrides() {
         $map = self::parsed();
         unset( $map[ self::STRICT_ENTRY ] );
         return $map;
     }
 
-    
     public static function is_strict() {
         return array_key_exists( self::STRICT_ENTRY, self::parsed() );
     }
-
-    
-
-
-
-
-
-
 
     public static function override_of( $name ) {
         $overrides = self::overrides();
@@ -102,20 +53,6 @@ final class Tool_State {
         }
         return self::is_strict() ? false : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function parse( $raw ) {
         if ( is_string( $raw ) ) {
@@ -152,16 +89,9 @@ final class Tool_State {
         return is_string( $value ) && 'on' === strtolower( trim( $value ) );
     }
 
-    
     public static function disabled_list() {
         return array_values( array_filter( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() ), 'is_string' ) );
     }
-
-    
-
-
-
-
 
     public static function enabled_list() {
         if ( \Easy_MCP_AI\Config::is_locked( 'easy_mcp_ai_disabled_tools' ) ) {
@@ -170,7 +100,6 @@ final class Tool_State {
         return self::stored_enabled_list();
     }
 
-    
     public static function stored_enabled_list() {
         $stored = \get_option( self::ENABLED_OPTION, array() );
         if ( ! is_array( $stored ) ) {
@@ -184,13 +113,6 @@ final class Tool_State {
         }
         return $names;
     }
-
-    
-
-
-
-
-
 
     public static function resolve( $name, $default_off ) {
         $override = self::override_of( $name );
@@ -209,7 +131,6 @@ final class Tool_State {
         return array( false, 'default' );
     }
 
-    
     public static function resolve_tool( Base_Tool $tool ) {
         return self::resolve( (string) $tool->get_name(), (bool) $tool->is_disabled_by_default() );
     }
@@ -217,13 +138,6 @@ final class Tool_State {
     public static function is_enabled( Base_Tool $tool ) {
         return self::resolve_tool( $tool )[0];
     }
-
-    
-
-
-
-
-
 
     public static function off_names( $registry ) {
         $off = array();
@@ -239,37 +153,12 @@ final class Tool_State {
         return $off;
     }
 
-    
-
-
-
     public static function stored_off( $name, $default_off ) {
         if ( in_array( $name, self::disabled_list(), true ) ) {
             return true;
         }
         return $default_off && ! in_array( $name, self::enabled_list(), true );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function apply_choices( array $names, array $off, array $default_off, array $disabled, array $enabled ) {
         foreach ( $names as $name ) {

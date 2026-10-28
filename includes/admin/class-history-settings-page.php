@@ -5,27 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class History_Settings_Page {
 
     const VALID_MODES = array( 'allowlist', 'all_except_denylist' );
 
-    
-
-
-
-
-
     public static function sanitize_mode( $raw ) {
         return ( is_string( $raw ) && in_array( $raw, self::VALID_MODES, true ) ) ? $raw : 'all_except_denylist';
     }
-
-    
-
-
 
     public static function sanitize_db_retention( $raw ) {
         if ( ! is_numeric( $raw ) ) {

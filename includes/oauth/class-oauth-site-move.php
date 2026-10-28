@@ -1,39 +1,4 @@
 <?php
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\OAuth;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -42,50 +7,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class OAuth_Site_Move {
 
-    
     const OPTION = 'easy_mcp_ai_oauth_site_host';
 
-    
     const IDLE_DAYS = 30;
 
-    
     const BATCH = 500;
 
-    
     const ERROR_INCOMPLETE = 'site_move_revoke_incomplete';
-
-    
-
-    
-
-
 
     public static function current_resource(): string {
         return Token_Endpoint::canonicalize_resource_uri( (string) \rest_url( 'easy-mcp-ai/v1/mcp' ) );
     }
 
-    
     public static function recorded(): string {
         $stored = \get_option( self::OPTION, '' );
         return is_string( $stored ) ? Token_Endpoint::canonicalize_resource_uri( $stored ) : '';
     }
 
-    
     public static function record_current(): void {
         $current = self::current_resource();
         if ( '' !== $current ) {
-            \update_option( self::OPTION, $current, false ); 
+            \update_option( self::OPTION, $current, false );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     public static function ensure_recorded(): bool {
         if ( '' !== self::recorded() ) {
@@ -95,27 +39,11 @@ class OAuth_Site_Move {
         return false;
     }
 
-    
     public static function moved(): bool {
         $recorded = self::recorded();
         $current  = self::current_resource();
         return '' !== $recorded && '' !== $current && ! Token_Endpoint::resource_matches( $recorded, $current );
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function active_rows( bool $idle_only = false ) {
         global $wpdb;
@@ -127,7 +55,6 @@ class OAuth_Site_Move {
         $where = 'is_active = 1' . ( $idle_only ? ' AND ' . self::idle_predicate() : '' );
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- plugin-owned table; bounded by the active token count; the predicate is built from class constants.
         $rows = $wpdb->get_results( "SELECT id, client_id, wp_user_id, resource FROM `{$table}` WHERE {$where}", ARRAY_A );
-        
         if ( ! is_array( $rows ) || '' !== (string) $wpdb->last_error ) {
             return null;
         }
@@ -149,30 +76,14 @@ class OAuth_Site_Move {
         return $out;
     }
 
-    
-
-
-
     private static function is_foreign( string $resource, string $current ): bool {
         return '' !== $resource && ! Token_Endpoint::resource_matches( $resource, $current );
     }
-
-    
-
-
-
 
     public static function foreign_rows( bool $idle_only = false, $rows = false ) {
         $rows = false === $rows ? self::active_rows( $idle_only ) : $rows;
         return null === $rows ? null : array_values( array_filter( $rows, static function ( $r ) { return $r['foreign']; } ) );
     }
-
-    
-
-
-
-
-
 
     public static function summary( $rows = false ) {
         $foreign = self::foreign_rows( false, $rows );
@@ -191,25 +102,9 @@ class OAuth_Site_Move {
         return array( 'tokens' => count( $foreign ), 'clients' => count( $clients ), 'sites' => array_keys( $sites ) );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function flagged_grants( $rows = false ): array {
         return self::flagged( array( __CLASS__, 'pair_key' ), $rows );
     }
-
-    
-
-
-
-
-
 
     public static function flagged_clients( $rows = false ): array {
         return self::flagged( static function ( $r ) { return $r['client_id']; }, $rows );
@@ -218,7 +113,7 @@ class OAuth_Site_Move {
     private static function flagged( callable $key, $rows ): array {
         $local = array();
         $any   = array();
-        foreach ( (array) ( false === $rows ? self::active_rows() : $rows ) as $row ) { 
+        foreach ( (array) ( false === $rows ? self::active_rows() : $rows ) as $row ) {
             $k         = $key( $row );
             $any[ $k ] = true;
             if ( ! $row['foreign'] ) {
@@ -227,32 +122,6 @@ class OAuth_Site_Move {
         }
         return array_diff_key( $any, $local );
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function revoke_mismatching() {
         global $wpdb;
@@ -303,7 +172,6 @@ class OAuth_Site_Move {
             }
         }
 
-        
         foreach ( array_chunk( array_keys( $client_ids ), self::BATCH ) as $chunk ) {
             $cin = self::placeholders( $chunk, '%s' );
             $ok  = $wpdb->query(
@@ -327,7 +195,6 @@ class OAuth_Site_Move {
         return $result;
     }
 
-    
     private static function foreign_code_ids(): array {
         global $wpdb;
         $current = self::current_resource();
@@ -351,37 +218,15 @@ class OAuth_Site_Move {
         );
     }
 
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function sweep(): array {
         global $wpdb;
         $result = array( 'tokens' => 0, 'consents' => 0 );
         $rows   = self::foreign_rows( true );
         if ( empty( $rows ) ) {
-            return $result; 
+            return $result;
         }
         if ( ! self::deactivate_tokens( array_column( $rows, 'id' ), $result['tokens'] ) ) {
-            return $result; 
+            return $result;
         }
         $t     = self::tables();
         $pairs = array();
@@ -398,21 +243,14 @@ class OAuth_Site_Move {
                     $pair[1]
                 )
             );
-            $result['consents'] += (int) $deleted; 
+            $result['consents'] += (int) $deleted;
         }
         return $result;
     }
 
-    
     public static function idle_predicate(): string {
         return 'COALESCE(last_used_at, created_at) < DATE_SUB(UTC_TIMESTAMP(), INTERVAL ' . (int) self::IDLE_DAYS . ' DAY)';
     }
-
-    
-
-    
-
-
 
     public static function site_label( string $resource ): string {
         $canonical = Token_Endpoint::canonicalize_resource_uri( $resource );
@@ -427,7 +265,6 @@ class OAuth_Site_Move {
         return $label;
     }
 
-    
     private static function tables(): array {
         global $wpdb;
         $prefix = $wpdb->prefix . 'easy_mcp_ai_oauth_';
@@ -440,14 +277,9 @@ class OAuth_Site_Move {
         );
     }
 
-    
     private static function pair_key( array $row ): string {
         return $row['client_id'] . ':' . $row['wp_user_id'];
     }
-
-    
-
-
 
     private static function deactivate_tokens( array $ids, int &$count ): bool {
         global $wpdb;
@@ -464,7 +296,6 @@ class OAuth_Site_Move {
         return true;
     }
 
-    
     private static function placeholders( array $values, string $type ): string {
         return implode( ', ', array_fill( 0, count( $values ), $type ) );
     }

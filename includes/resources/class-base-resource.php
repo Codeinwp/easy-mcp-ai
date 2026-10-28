@@ -16,15 +16,6 @@ abstract class Base_Resource {
         return 'application/json';
     }
 
-    
-
-
-
-
-
-
-
-
     public function get_required_tool(): ?string {
         return null;
     }

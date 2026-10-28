@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,42 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Speedycache extends Cache_Adapter {
 
-    
     const DELETE = 'SpeedyCache\\Delete';
 
-    
     const UTIL = 'SpeedyCache\\Util';
 
-    
     const MIN_VERSION = '1.2.2';
 
-    
     const GLOB_CHARS = '?[]*\\';
 
     public function id(): string {
@@ -93,21 +60,9 @@ final class Speedycache extends Cache_Adapter {
         return true !== $calls->constant( 'SUBDOMAIN_INSTALL' ) || ( $request->include_cdn && $this->cdn_on() );
     }
 
-    
-
-
-
-
     public function noise_options(): array {
         return array( 'speedycache_html_size' );
     }
-
-    
-
-
-
-
-
 
     public function purge( Purge_Request $request ): Layer_Result {
         $version = $this->calls()->constant( 'SPEEDYCACHE_VERSION' );
@@ -167,13 +122,6 @@ final class Speedycache extends Cache_Adapter {
         return $this->sent( sprintf( 'SpeedyCache cleared %d post(s) with their related pages, and %d page(s).', count( $request->post_ids ), count( $request->urls ) ) );
     }
 
-    
-
-
-
-
-
-
     private function targets( array $urls ): array {
         $targets = array();
         foreach ( $urls as $url ) {
@@ -187,20 +135,10 @@ final class Speedycache extends Cache_Adapter {
         return array_values( array_unique( $targets ) );
     }
 
-    
-
-
-
-
     private function has_page_only_purge(): bool {
         $calls = $this->calls();
         return $calls->method_exists( self::DELETE, 'all_cache' ) && $calls->method_exists( self::DELETE, 'purge_varnish' );
     }
-
-    
-
-
-
 
     private function cdn_on(): bool {
         $core = $this->calls()->global_value( 'speedycache' );

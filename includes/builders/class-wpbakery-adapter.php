@@ -1,69 +1,23 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class WPBakery_Adapter extends Shortcode_Adapter {
 
-    
     const TESTED_VERSIONS = array( '6.0.5', '9.0.1' );
 
-    
     const LINK_TYPES = array( 'vc_link', 'link' );
-
-    
-
-
 
     const SETTINGS_TAGS = array( 'vc_basic_grid', 'vc_masonry_grid', 'vc_media_grid', 'vc_masonry_media_grid' );
 
-    
-
-
-
     const FIELD_KINDS = array( 'text', 'select', 'number', 'color', 'boolean' );
 
-    
     const STATUS_KEY = '_wpb_vc_js_status';
 
-    
     const CORE_TAGS = array(
         'vc_section', 'vc_row', 'vc_column', 'vc_row_inner', 'vc_column_inner',
         'vc_column_text', 'vc_custom_heading', 'vc_btn', 'vc_single_image', 'vc_cta',
@@ -73,16 +27,12 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         'vc_widget_sidebar', 'vc_basic_grid', 'vc_masonry_grid',
     );
 
-    
     const CODE_TAGS = array( 'vc_raw_html', 'vc_raw_js', 'vc_gmaps' );
 
-    
     const ENCODED_TYPES = array( 'textarea_raw_html', 'textarea_ace' );
 
-    
     const ENCODED_CONTENT_TAGS = array( 'vc_raw_html', 'vc_raw_js' );
 
-    
     const ROLES = array(
         'vc_column_text'    => array( 'text' => 'content' ),
         'vc_custom_heading' => array( 'text' => 'text', 'link' => 'link' ),
@@ -94,11 +44,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         'vc_tta_section'    => array( 'text' => 'title' ),
         'vc_text_separator' => array( 'text' => 'title' ),
     );
-
-    
-
-
-
 
     const PARAM_KINDS = array(
         'textfield'         => 'text',
@@ -124,17 +69,9 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         'el_id'             => 'text',
     );
 
-    
     private $map_reader;
 
-    
     private ?array $map = null;
-
-    
-
-
-
-
 
     public function __construct( ?callable $map_reader = null, ?callable $save_filter = null ) {
         parent::__construct( $save_filter );
@@ -186,11 +123,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return parent::element_refusal( $tag );
     }
 
-    
-
-
-
-
     protected function builder_access_refusal( object $post ): ?string {
         if ( ! function_exists( 'vc_user_access' ) || ! function_exists( 'vc_check_post_type' ) || ! function_exists( 'vc_user_access_check_shortcode_edit' ) ) {
             return 'WPBakery\'s Role Manager cannot be read on this site, so this layout can be read but not edited.';
@@ -208,11 +140,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return null;
     }
 
-    
-
-
-
-
     public function element_access_refusal( string $tag ): ?string {
         if ( ! function_exists( 'vc_user_access_check_shortcode_edit' ) ) {
             return null;
@@ -225,11 +152,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return $allowed ? null : sprintf( 'WPBakery\'s Role Manager does not let this account edit %s elements.', $tag );
     }
 
-    
-
-
-
-
     public function encode_attribute( string $tag, string $name, array $spec, string $value ): string {
         unset( $tag, $name );
         if ( 'textarea_safe' === ( $spec['param'] ?? '' ) && 1 === preg_match( '/"|http/', $value ) ) {
@@ -238,22 +160,9 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return self::to_safe( $value );
     }
 
-    
-
-
-
-
-
-
     public static function to_safe( string $value ): string {
         return str_replace( array( '"', '[', ']' ), array( '``', '`{`', '`}`' ), $value );
     }
-
-    
-
-
-
-
 
     public function link_attributes( string $tag, string $field, array $spec, array $decoded, string $url, ?bool $new_tab, ?bool $nofollow, array $fields ) {
         unset( $fields );
@@ -264,13 +173,9 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
             }
             return array( $field => self::to_safe( $url ) );
         }
-        
         $link        = isset( $decoded[ $field ] ) && is_array( $decoded[ $field ] ) ? $decoded[ $field ] : array();
         $link['url'] = $url;
         if ( null !== $new_tab ) {
-            
-            
-            
             $link['target'] = $new_tab ? '_blank' : '';
         }
         if ( null !== $nofollow ) {
@@ -278,15 +183,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         }
         return array( $field => self::build_link( $link ) );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function build_link( array $link ): string {
         $parts = array();
@@ -334,43 +230,18 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return $raw ? self::decode_code( $content ) : $content;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function decode_code( string $value ): string {
         $decoded = base64_decode( \wp_strip_all_tags( $value ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- WPBakery's own storage format.
-        
         if ( false === $decoded || 1 !== preg_match( '/^[^\x00-\x08\x0B\x0C\x0E-\x1F\x7F]*\z/u', $decoded ) ) {
             return $value;
         }
         return rawurldecode( $decoded );
     }
 
-    
-
-
-
-
-
-
     public static function parse_group( string $value ) {
         $rows = json_decode( urldecode( $value ), true );
         return is_array( $rows ) ? $rows : $value;
     }
-
-    
-
-
-
-
 
     public static function from_safe( string $value ): string {
         if ( 0 === strpos( $value, '#E-8_' ) ) {
@@ -379,18 +250,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         }
         return str_replace( array( '`{`', '`}`', '``' ), array( '[', ']', '"' ), $value );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function decode_link( string $tag, string $value, array $atts ): array {
         if ( '' === $value || self::is_packed_link( $value ) ) {
@@ -403,30 +262,13 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return $link;
     }
 
-    
-
-
-
-
-
-
-
     public static function is_packed_link( string $value ): bool {
         return 1 === preg_match( '/url:|target:|rel:|title:/', $value );
     }
 
-    
-
-
-
-
-
-
     public static function parse_link( string $value ): array {
         $link = array();
         foreach ( explode( '|', $value ) as $pair ) {
-            
-            
             $parts = explode( ':', $pair );
             if ( '' !== $parts[0] && isset( $parts[1] ) ) {
                 $link[ $parts[0] ] = trim( rawurldecode( $parts[1] ) );
@@ -463,8 +305,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
             }
             $field = array(
                 'name'  => (string) $param['param_name'],
-                
-                
                 'kind'  => 1 === preg_match( '/(?:^|_)custom_onclick(?:_code)?$/', (string) $param['param_name'] ) ? 'code' : ( self::PARAM_KINDS[ $param['type'] ] ?? 'other' ),
                 'label' => isset( $param['heading'] ) && is_string( $param['heading'] ) ? $param['heading'] : '',
                 'param' => (string) $param['type'],
@@ -472,19 +312,15 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
             if ( 'dropdown' === $param['type'] && isset( $param['value'] ) && is_array( $param['value'] ) ) {
                 $field['options'] = self::dropdown_values( $param['value'] );
             }
-            
             if ( 'button_group' === $param['type'] && isset( $param['value'] ) && is_array( $param['value'] ) ) {
                 $field['options'] = array_map( 'strval', array_keys( $param['value'] ) );
             }
-            
             if ( 'checkbox' === $param['type'] && isset( $param['value'] ) && is_array( $param['value'] ) && 1 === count( $param['value'] ) && is_scalar( reset( $param['value'] ) ) ) {
                 $field['on_value'] = (string) reset( $param['value'] );
             }
-            
             if ( 'number' === $param['type'] && ! empty( $param['settings']['units'] ) ) {
                 $field['units'] = self::css_units();
             }
-            
             if ( 'toggle' === $param['type'] ) {
                 $value = $param['value'] ?? 'true';
                 $value = is_array( $value ) ? reset( $value ) : $value;
@@ -500,25 +336,10 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return $fields;
     }
 
-    
-
-
-
-
-
     private static function css_units(): array {
         $units = function_exists( 'vc_get_shared' ) ? vc_get_shared( 'css-units' ) : null;
-        
         return is_array( $units ) && array() !== $units ? array_values( array_map( 'strval', $units ) ) : array( 'px', '%', 'in', 'cm', 'mm', 'em', 'rem', 'ex', 'pt', 'pc', 'vw', 'vh', 'vmin', 'vmax' );
     }
-
-    
-
-
-
-
-
-
 
     public static function dropdown_values( array $choices ): array {
         $values = array();
@@ -533,12 +354,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         return $values;
     }
 
-    
-
-
-
-
-
     private function param_types( string $tag ): array {
         $types = array();
         foreach ( (array) ( $this->map()[ $tag ]['params'] ?? array() ) as $param ) {
@@ -548,12 +363,6 @@ final class WPBakery_Adapter extends Shortcode_Adapter {
         }
         return $types;
     }
-
-    
-
-
-
-
 
     private function map(): array {
         if ( null !== $this->map ) {

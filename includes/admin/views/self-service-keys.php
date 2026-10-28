@@ -1,16 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -100,8 +89,6 @@ $headings        = array(
                         <div class="easy-mcp-key-tools wp-mcp-tool-list">
                             <?php
                             foreach ( $tools as $tool ) :
-                                
-                                
                                 $short_description = '';
                                 if ( ! empty( $tool['description'] ) ) {
                                     $full_description  = (string) $tool['description'];
@@ -151,7 +138,6 @@ $headings        = array(
         <?php
         foreach ( $tokens as $token ) :
             $form_id = 'easy-mcp-self-revoke-' . (int) $token['id'];
-            
             $this->forms[ $form_id ] = array(
                 'action' => 'easy_mcp_ai_self_revoke_key',
                 'nonce'  => 'easy_mcp_ai_self_revoke_key_' . $token['id'],
@@ -165,8 +151,6 @@ $headings        = array(
             } else {
                 $status = __( 'Active', 'easy-mcp-ai' );
             }
-            
-            
             $bound_elsewhere = \Easy_MCP_AI\Auth\Token_Manager::is_bound_elsewhere( $token );
             ?>
         <tr>

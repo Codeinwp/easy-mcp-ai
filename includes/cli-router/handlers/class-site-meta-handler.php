@@ -11,26 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Site_Meta_Handler extends Meta_Command {
 
     protected $meta_type = 'blog';
@@ -44,11 +24,6 @@ class Site_Meta_Handler extends Meta_Command {
     const PLUGIN_KEY = "Self-protection: the site meta key '%s' is in the namespace of the plugin that serves this MCP connection, and wp_cli_run never reads or writes that plugin's data.";
 
     const NOT_CAPTURED = 'Site meta (wp_blogmeta) writes: change history does not record them.';
-
-    
-
-
-
 
     public function preflight( Invocation $inv, Context $ctx ): void {
         if ( ! $this->is_multisite() ) {
@@ -79,15 +54,6 @@ class Site_Meta_Handler extends Meta_Command {
         parent::patch( $inv, $ctx );
     }
 
-    
-
-
-
-
-
-
-
-
     protected function check_object_id( $object_id, string $subcommand ) {
         $site = $this->site_row( $object_id );
         if ( ! $site ) {
@@ -110,10 +76,6 @@ class Site_Meta_Handler extends Meta_Command {
         }
         return null;
     }
-
-    
-    
-    
 
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         return \get_site_meta( (int) $object_id, $meta_key, $single );
@@ -147,12 +109,6 @@ class Site_Meta_Handler extends Meta_Command {
     protected function current_network_id(): int {
         return function_exists( 'get_current_network_id' ) ? (int) \get_current_network_id() : 1;
     }
-
-    
-
-
-
-
 
     protected function site_row( string $site_id ) {
         return Fetchers::of( 'site' )->get( $site_id );

@@ -14,7 +14,6 @@ class Update_Post_Blocks extends Base_Tool {
     const OPS = array( 'set_attributes', 'replace', 'insert', 'remove' );
     const AT  = array( 'before', 'after', 'append', 'prepend' );
 
-    
     const DELIMITER_ONLY_ATTRIBUTES = array( 'metadata', 'lock' );
 
     public function get_name() {
@@ -37,7 +36,7 @@ class Update_Post_Blocks extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
@@ -106,32 +105,13 @@ class Update_Post_Blocks extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         $this->precheck_post_type_route( $arguments, 'post_type', 'posts', 'post_id', ...self::sent_methods( $arguments ) );
     }
 
-    
-
-
-
-
-
     private static function is_dry_run( array $arguments ): bool {
         return ! empty( $arguments['dry_run'] ) && rest_sanitize_boolean( $arguments['dry_run'] );
     }
-
-    
-
-
-
-
 
     private static function sent_methods( array $arguments ): array {
         return self::is_dry_run( $arguments ) ? array( 'GET' ) : array( 'GET', 'POST' );
@@ -153,7 +133,6 @@ class Update_Post_Blocks extends Base_Tool {
 
         $this->refuse_builder_owned_write( $post_id, true );
 
-        
         $route = self::post_type_route( $post_type, $post_id, ...self::sent_methods( $arguments ) );
         $data  = $this->rest_request( 'GET', $route, array( 'context' => 'edit' ) );
         if ( ! isset( $data['content']['raw'] ) ) {
@@ -194,34 +173,15 @@ class Update_Post_Blocks extends Base_Tool {
             return $result;
         }
 
-        
-        
-        
         $saved = $this->rest_request( 'POST', $route, array( 'content' => $content ), 'id,modified' );
 
         $result['saved']    = true;
         $result['modified'] = isset( $saved['modified'] ) ? $saved['modified'] : '';
 
-        
-
-
-
-
-
         do_action( 'easy_mcp_ai_post_blocks_saved', $post_id, $changes );
 
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function apply_op( array &$root, array $op, $i, array &$warnings ) {
         $type = isset( $op['op'] ) && is_string( $op['op'] ) ? $op['op'] : '';
@@ -297,7 +257,6 @@ class Update_Post_Blocks extends Base_Tool {
             );
         }
 
-        
         $target = &$container['innerBlocks'][ $raw ];
         if ( empty( $target['blockName'] ) ) {
             throw new \InvalidArgumentException(
@@ -357,12 +316,6 @@ class Update_Post_Blocks extends Base_Tool {
                     )
                 );
             }
-            
-            
-            
-            
-            
-            
             if ( $has_markup && ! in_array( $key, self::DELIMITER_ONLY_ATTRIBUTES, true ) ) {
                 if ( ! $force ) {
                     throw new \InvalidArgumentException(
@@ -414,14 +367,6 @@ class Update_Post_Blocks extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private function resolve_op_blocks( array $op, $i ) {
         $has_content = isset( $op['content'] ) && is_string( $op['content'] ) && '' !== trim( $op['content'] );
         $has_pattern = isset( $op['pattern_slug'] ) && is_string( $op['pattern_slug'] ) && '' !== trim( $op['pattern_slug'] );
@@ -449,12 +394,6 @@ class Update_Post_Blocks extends Base_Tool {
         }
         return $this->parse_markup_for_insert( $pattern['content'], sprintf( 'ops[%d]: pattern "%s"', $i, $slug ) );
     }
-
-    
-
-
-
-
 
     private function names_of( array $blocks ) {
         $names = array();

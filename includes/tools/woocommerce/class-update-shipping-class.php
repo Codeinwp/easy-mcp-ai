@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Update_Shipping_Class extends Base_Tool {
 
     use Store_Setup;
@@ -80,7 +76,6 @@ class Update_Shipping_Class extends Base_Tool {
                     throw new \InvalidArgumentException( sprintf( 'Invalid %s: it cannot be empty.', $field ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
                 if ( 'name' === $field ) {
-                    
                     $this->refuse_backslash( $value, 'name' );
                 }
                 $params[ $field ] = 'slug' === $field ? sanitize_title( $value ) : sanitize_text_field( $value );

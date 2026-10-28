@@ -1,70 +1,37 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 final class Skills {
 
-    
     const BUNDLED_DIR = 'assets/skills';
 
-    
     const REQUIREMENT_KEYS = array( 'plugin', 'plugins', 'theme' );
 
-    
     private static $registry = null;
 
-    
     private static $catalog = null;
 
-    
     private static $bundled_dir = null;
 
-    
     public static function use_registry( ?\Easy_MCP_AI\Tools\Tool_Registry $registry ): void {
         self::$registry = $registry;
         self::$catalog  = null;
     }
 
-    
     public static function reset(): void {
         self::$catalog = null;
     }
 
-    
     public static function use_bundled_dir( ?string $dir ): void {
         self::$bundled_dir = $dir;
         self::$catalog     = null;
     }
 
-    
     public static function catalog(): array {
         if ( null !== self::$catalog ) {
             return self::$catalog;
@@ -101,16 +68,9 @@ final class Skills {
         return self::$catalog;
     }
 
-    
     public static function served(): Skill_Set {
         return self::catalog()['served'];
     }
-
-    
-
-
-
-
 
     public static function bundled(): ?Skill_Set {
         $dir  = null !== self::$bundled_dir ? self::$bundled_dir : ( defined( 'EASY_MCP_AI_PLUGIN_DIR' ) ? EASY_MCP_AI_PLUGIN_DIR . self::BUNDLED_DIR : '' );
@@ -128,9 +88,6 @@ final class Skills {
         }
         return Skill_Set::from_release( $result['release'], Skill_Set::SOURCE_BUNDLED );
     }
-
-    
-
 
     public static function requirements_met( array $skill ): bool {
         $requires = $skill['requires'];
@@ -169,15 +126,6 @@ final class Skills {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function version_satisfies( $constraint, ?string $version = null ): bool {
         if ( ! is_string( $constraint ) || ! preg_match( '/^\s*(>=|<=|>|<|==|=)?\s*(\d+(?:\.\d+){0,3})\s*$/', $constraint, $m ) ) {
             return false;
@@ -189,7 +137,6 @@ final class Skills {
         return version_compare( (string) $version, $m[2], $operator );
     }
 
-    
     private static function active_plugin_slugs(): array {
         $files = (array) \get_option( 'active_plugins', array() );
         if ( \is_multisite() ) {
@@ -205,7 +152,6 @@ final class Skills {
         return $slugs;
     }
 
-    
     private static function tool_names(): array {
         return null !== self::$registry ? (array) self::$registry->get_all_tool_names() : array();
     }

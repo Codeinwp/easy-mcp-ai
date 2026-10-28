@@ -5,31 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 abstract class Abstract_Google_Client {
 
-    
-    
-    
     const CIPHER_VERSION = "v2\x00";
     const CIPHER_PREFIX_LEN = 3;
 
-    
-
     abstract protected static function product_name(): string;
-
-    
 
     protected static function derive_key_v2(): string {
         return hash_hkdf( 'sha256', SECURE_AUTH_KEY . SECURE_AUTH_SALT, 32, static::HKDF_INFO );
@@ -42,9 +23,6 @@ abstract class Abstract_Google_Client {
         $ct  = openssl_encrypt( $plaintext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, '', 16 );
         return base64_encode( static::CIPHER_VERSION . $iv . $tag . $ct ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- AES-256-GCM ciphertext encoding for safe storage in wp_options.
     }
-
-    
-
 
     public static function decrypt( string $encoded ) {
         $raw = base64_decode( $encoded, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes AES-256-GCM ciphertext stored in wp_options.
@@ -70,28 +48,15 @@ abstract class Abstract_Google_Client {
         return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64URL encoding required by JWT (RFC 7515) for header/payload/signature segments.
     }
 
-    
-
     protected static function token_transient_key( string $client_email, string $scope = '' ): string {
-        
-        
         $key = static::TRANSIENT_TOKEN . '_' . md5( $client_email );
-        
-        
-        
-        
         if ( '' !== $scope && static::SCOPE !== $scope ) {
             $key .= '_' . md5( $scope );
         }
         return $key;
     }
 
-    
-
-
     public static function get_credentials(): array {
-        
-        
         $deployed = Provider_Credentials::google_key( static::PROVIDER );
         if ( null !== $deployed ) {
             return $deployed;
@@ -129,10 +94,6 @@ abstract class Abstract_Google_Client {
         return $creds;
     }
 
-    
-
-
-
     public static function get_access_token( string $scope = '' ): string {
         $scope         = '' === $scope ? static::SCOPE : $scope;
         $creds         = static::get_credentials();
@@ -150,9 +111,6 @@ abstract class Abstract_Google_Client {
         $now = time();
         $exp = $now + 3600;
 
-        
-        
-        
         $header  = static::base64url_encode( json_encode( array( 'alg' => 'RS256', 'typ' => 'JWT' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- See comment above.
         $payload = static::base64url_encode( json_encode( array( // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- See comment above.
             'iss'   => $creds['client_email'],

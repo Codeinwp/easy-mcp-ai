@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,30 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Spinupwp extends Cache_Adapter {
 
-    
     const CF_ADDON_FUNCTION = 'spinupwp_cf_auto_purge_service';
     const CF_ADDON_SETTING  = 'spinupwp_cf_purge_enabled';
 
@@ -93,11 +66,6 @@ final class Spinupwp extends Cache_Adapter {
         }
         return $this->sent( sprintf( 'SpinupWP cleared %d page(s).', count( $request->urls ) ) );
     }
-
-    
-
-
-
 
     private function cloudflare_addon_on(): bool {
         return $this->calls()->function_exists( self::CF_ADDON_FUNCTION ) && ! empty( $this->calls()->get_option( self::CF_ADDON_SETTING, false ) );

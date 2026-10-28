@@ -9,26 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class List_Disabled_Tools extends Base_Tool {
 
     const NAME = 'wp_list_disabled_tools';
@@ -36,26 +16,12 @@ class List_Disabled_Tools extends Base_Tool {
     const DEFAULT_LIMIT = 20;
     const MAX_LIMIT     = 50;
 
-    
     const QUERY_MAX = 200;
-
-    
-
-
-
-
-
-
-
-
-
 
     const NOTE = 'Nothing listed here can be called until it is switched on, and this tool cannot switch anything on. First check that no tool you have does the task another way (a plugin\'s own REST routes, for example). Otherwise tell the user what to switch on and where. Name a tool or an ability by its exact `name`, never by a description of what it does, because the screens list them by that name alone; name an integration or a provider by its `label`. For an item with `requires`, say that the user\'s WordPress account must hold that capability as well, or that an administrator has to do the task. Once something is switched on, a new chat or a reconnect reads the tool list again.';
 
-    
     const NOTHING_OFF = 'Nothing on this site is switched off. A tool you still cannot see is outside this connection\'s allowed tools or above the user\'s WordPress role.';
 
-    
     const STOP_WORDS = 'a an and the of to for in on at by with from or my me is are it this that all can you please how do does wp wordpress';
 
     public function get_name() {
@@ -139,13 +105,6 @@ class List_Disabled_Tools extends Base_Tool {
         return $result + self::page( $entries, $arguments, '' !== $query ? $query : $group );
     }
 
-    
-
-
-
-
-
-
     private static function summary( array $entries ): array {
         $groups = array();
         foreach ( $entries as $entry ) {
@@ -185,13 +144,6 @@ class List_Disabled_Tools extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function in_group( array $entries, string $group ): array {
         $kept  = array();
         $known = array();
@@ -207,24 +159,8 @@ class List_Disabled_Tools extends Base_Tool {
         return $kept;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function ranked( array $entries, string $query ): array {
         $wanted = array();
-        
         foreach ( array_diff( Feedback_Availability::words( $query ), Feedback_Availability::words( self::STOP_WORDS ) ) as $word ) {
             if ( strlen( $word ) > 1 && ! ctype_digit( $word ) ) {
                 $wanted[ $word ] = true;
@@ -263,24 +199,6 @@ class List_Disabled_Tools extends Base_Tool {
         }
         return $ranked;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function score( array $entry, array $wanted ): array {
         $name    = Feedback_Availability::words( str_replace( '_', ' ', $entry['name'] ) . ' ' . ( isset( $entry['slug'] ) ? $entry['slug'] : '' ) );
@@ -329,14 +247,6 @@ class List_Disabled_Tools extends Base_Tool {
         return array( $matched, $score, $covered );
     }
 
-    
-
-
-
-
-
-
-
     private static function page( array $entries, array $arguments, string $asked ): array {
         $total = count( $entries );
         if ( 0 === $total ) {
@@ -360,12 +270,6 @@ class List_Disabled_Tools extends Base_Tool {
         $page['note'] = array() === $items ? sprintf( 'No items at offset %d: there are %d.', $offset, $total ) : self::NOTE;
         return $page;
     }
-
-    
-
-
-
-
 
     private static function item( array $entry ): array {
         $item = array( 'kind' => $entry['kind'], 'name' => $entry['name'] );
@@ -397,7 +301,6 @@ class List_Disabled_Tools extends Base_Tool {
         return $item;
     }
 
-    
     protected function registry(): ?\Easy_MCP_AI\Tools\Tool_Registry {
         return class_exists( '\\Easy_MCP_AI\\Plugin' ) ? \Easy_MCP_AI\Plugin::instance()->get_tool_registry() : null;
     }

@@ -1,18 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Meta;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,65 +8,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 abstract class Meta_Field_Provider {
 
-    
-
-
-
-
-
     abstract public function get_group_slug();
-
-    
-
-
-
 
     abstract public function get_label();
 
-    
-
-
-
-
-
-
-
     abstract public function get_key_prefixes();
-
-    
-
-
-
 
     abstract public function is_active();
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     abstract public function get_fields();
-
-    
-
-
-
-
-
-
-
-
 
     public function can_edit_field( $key, $user_id, $post_id ) {
         $fields = $this->get_fields();
@@ -99,22 +36,9 @@ abstract class Meta_Field_Provider {
         return false;
     }
 
-    
-
-
-
-
-
     public function get_dedicated_tool() {
         return '';
     }
-
-    
-
-
-
-
-
 
     public function get_post_types() {
         $types = get_post_types(
@@ -127,13 +51,6 @@ abstract class Meta_Field_Provider {
         $types = is_array( $types ) ? array_values( $types ) : array();
         return array_values( array_diff( $types, array( 'attachment' ) ) );
     }
-
-    
-
-
-
-
-
 
     public function owns_key( $key ) {
         $key = (string) $key;
@@ -148,39 +65,11 @@ abstract class Meta_Field_Provider {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function sanitize( $key, $value ) {
         $fields = $this->get_fields();
         $field  = isset( $fields[ $key ] ) ? $fields[ $key ] : array();
         $spec   = isset( $field['sanitize'] ) ? $field['sanitize'] : 'text';
 
-        
-        
         if ( ! is_string( $spec ) || false !== strpos( $spec, '::' ) ) {
             if ( is_callable( $spec ) ) {
                 return call_user_func( $spec, $value, $key );
@@ -237,14 +126,6 @@ abstract class Meta_Field_Provider {
         }
     }
 
-    
-
-
-
-
-
-
-
     public static function clean_text( $value ) {
         $value = (string) self::scalar( $value );
         if ( '' === $value ) {
@@ -257,21 +138,12 @@ abstract class Meta_Field_Provider {
         return trim( (string) $value );
     }
 
-    
-
-
-
     private static function scalar( $value ) {
         if ( is_array( $value ) || is_object( $value ) ) {
             return '';
         }
         return $value;
     }
-
-    
-
-
-
 
     private static function is_truthy( $value, $on ) {
         if ( is_bool( $value ) ) {
@@ -280,11 +152,6 @@ abstract class Meta_Field_Provider {
         $v = strtolower( trim( (string) self::scalar( $value ) ) );
         return in_array( $v, array( '1', 'on', 'yes', 'true', strtolower( $on ) ), true );
     }
-
-    
-
-
-
 
     private static function clean_tokens( array $tokens, array $allowed ) {
         $out = array();

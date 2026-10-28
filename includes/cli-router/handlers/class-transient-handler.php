@@ -13,47 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Transient_Handler extends Command_Handler {
 
-    
     const ROW_CAP = 1000;
-
-    
-
-
-
-
 
     const NAMESPACE_REGEXP = '^_(site_)?transient_(timeout_)?_?easy[_-]mcp[_-]ai([_-]|$)';
 
@@ -63,30 +25,21 @@ class Transient_Handler extends Command_Handler {
     const SKIPPED        = 'Self-protection: wp_cli_run left out %1$d %2$s it never deletes: %3$s.';
     const NOTE_NO_PATH   = "WP-CLI exits 1 without output here: the transient '%s' has no value at that key path.";
 
-    
     const NOT_RECORDED = 'Transients: change history does not record transients, by design.';
     const RAW_SQL      = 'Raw SQL: change history records these deletions only while database capture is on.';
 
-    
-    
-    
-
-    
     public function preflight_read( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) $this->arg( $inv, 0 ), false, $ctx );
     }
 
-    
     public function preflight_write( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) $this->arg( $inv, 0 ), true, $ctx );
     }
 
-    
     public function preflight_patch( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) $this->arg( $inv, 1 ), true, $ctx );
     }
 
-    
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         $key = ! empty( $inv->args ) ? $this->arg( $inv, 0 ) : null;
         self::refuse_bulk_mix( $key, true === Read_Value::flag( $inv->assoc, 'all' ), true === Read_Value::flag( $inv->assoc, 'expired' ), $ctx );
@@ -94,12 +47,6 @@ class Transient_Handler extends Command_Handler {
             $this->guard( $key, true, $ctx );
         }
     }
-
-    
-
-
-
-
 
     private static function refuse_bulk_mix( ?string $key, bool $all, bool $expired, Context $ctx ): void {
         if ( $all && $expired ) {
@@ -111,11 +58,6 @@ class Transient_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $key = (string) $this->arg( $inv, 0 );
         $this->guard( $key, false, $ctx );
@@ -134,7 +76,6 @@ class Transient_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
     public function set( Invocation $inv, Context $ctx ): void {
         $args       = $inv->args;
         $key        = (string) $this->arg( $inv, 0 );
@@ -156,7 +97,6 @@ class Transient_Handler extends Command_Handler {
         }
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $args = $inv->args;
         $key  = ( ! empty( $args ) ) ? (string) $this->arg( $inv, 0 ) : null;
@@ -191,7 +131,6 @@ class Transient_Handler extends Command_Handler {
         }
     }
 
-    
     public function type( Invocation $inv, Context $ctx ): void {
         if ( $this->ext_object_cache() ) {
             $message = 'Transients are saved to the object cache.';
@@ -200,10 +139,6 @@ class Transient_Handler extends Command_Handler {
         }
         $ctx->out->line( $message );
     }
-
-    
-
-
 
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
@@ -229,14 +164,6 @@ class Transient_Handler extends Command_Handler {
         $formatter->display_items( $results );
     }
 
-    
-
-
-
-
-
-
-
     private static function list_where( object $db, array $s, string $pattern, string $exclude ): string {
         $column = $s['column'];
         $where  = $db->prepare(
@@ -254,19 +181,10 @@ class Transient_Handler extends Command_Handler {
             );
         }
         if ( null !== $s['site_id'] ) {
-            
             $where .= $db->prepare( ' AND `site_id` = %d', $s['site_id'] );
         }
         return $where;
     }
-
-    
-
-
-
-
-
-
 
     private function check_list_names( object $db, string $table, string $column, string $where, array $assoc_args, Context $ctx ): void {
         $names                  = (array) $db->get_col( "SELECT `{$column}` FROM {$table} {$where}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- every value in $where went through prepare(); the table name is quoted by ident().
@@ -278,16 +196,6 @@ class Transient_Handler extends Command_Handler {
             $ctx->out->warning( Option_Handler::omitted_warning( $omitted, 'transient', 'transients' ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function list_rows( object $db, string $table, array $s, string $where, array $assoc_args, Context $ctx ): array {
         $network        = Read_Value::flag( $assoc_args, 'network', false );
@@ -316,7 +224,6 @@ class Transient_Handler extends Command_Handler {
         return $results;
     }
 
-    
     public function pluck( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
         $key  = (string) $args[0];
@@ -345,7 +252,6 @@ class Transient_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
     public function patch( Invocation $inv, Context $ctx ): void {
         $args       = array_values( $inv->args );
         $action     = (string) $args[0];
@@ -359,8 +265,6 @@ class Transient_Handler extends Command_Handler {
         if ( 'delete' === $action ) {
             $patch_value = null;
         } else {
-            
-            
             if ( count( $key_path ) > 1 ) {
                 $patch_value = Read_Value::read( $ctx->out, array_pop( $key_path ), $inv->assoc );
             } else {
@@ -371,7 +275,6 @@ class Transient_Handler extends Command_Handler {
             }
         }
 
-        
         $old_value     = $this->get_transient( $key, $network );
         $current_value = $old_value;
         if ( is_object( $old_value ) ) {
@@ -399,11 +302,6 @@ class Transient_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function describe_set( Invocation $inv ): array {
         $key        = (string) $this->arg( $inv, 0 );
         $network    = (bool) Read_Value::flag( $inv->assoc, 'network' );
@@ -420,7 +318,6 @@ class Transient_Handler extends Command_Handler {
         );
     }
 
-    
     public function describe_patch( Invocation $inv ): array {
         $args    = array_values( $inv->args );
         $action  = (string) $args[0];
@@ -445,7 +342,6 @@ class Transient_Handler extends Command_Handler {
         );
     }
 
-    
     public function describe_delete( Invocation $inv ): array {
         $network = (bool) Read_Value::flag( $inv->assoc, 'network' );
         $where   = $network ? ( \is_multisite() ? "the network's sitemeta table" : 'the options table (site transients)' ) : 'the options table';
@@ -459,18 +355,9 @@ class Transient_Handler extends Command_Handler {
         return array( sprintf( "%s '%s': %s → delete", $network ? 'Site transient' : 'Transient', $key, $this->preview_current( $key, $network ) ) );
     }
 
-    
-    
-    
-
-    
     protected function get_transient( string $key, bool $network ) {
         return $network ? \get_site_transient( $key ) : \get_transient( $key );
     }
-
-    
-
-
 
     protected function set_transient( string $key, $value, $expiration, bool $network ): bool {
         return (bool) ( $network ? \set_site_transient( $key, $value, $expiration ) : \set_transient( $key, $value, $expiration ) );
@@ -484,22 +371,18 @@ class Transient_Handler extends Command_Handler {
         return (bool) \wp_using_ext_object_cache();
     }
 
-    
     protected function get_option( string $key ) {
         return \get_option( $key );
     }
 
-    
     protected function get_site_option( string $key ) {
         return \get_site_option( $key );
     }
 
-    
     protected function cache_get( string $key, string $group ) {
         return \wp_cache_get( $key, $group );
     }
 
-    
     protected function db(): object {
         global $wpdb;
         return $wpdb;
@@ -517,22 +400,9 @@ class Transient_Handler extends Command_Handler {
         return (string) \human_time_diff( $from, $to );
     }
 
-    
-
-
-
     protected function maybe_unserialize( $value ) {
         return \maybe_unserialize( $value );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     private function guard( string $key, bool $write, Context $ctx ): void {
         $refusal = Self_Protection::transient( $key, $write );
@@ -541,16 +411,10 @@ class Transient_Handler extends Command_Handler {
         }
     }
 
-    
     private function arg( Invocation $inv, int $index ): string {
         $args = array_values( $inv->args );
         return isset( $args[ $index ] ) ? $args[ $index ] : '';
     }
-
-    
-
-
-
 
     private function transient_expiration( string $name, bool $is_site_transient, bool $human_readable ) {
         if ( $is_site_transient ) {
@@ -580,12 +444,6 @@ class Transient_Handler extends Command_Handler {
         return $this->time_diff( $now, $expiration );
     }
 
-    
-
-
-
-
-
     private function timeout_row( string $key, bool $network ) {
         if ( $this->ext_object_cache() ) {
             return null;
@@ -597,11 +455,6 @@ class Transient_Handler extends Command_Handler {
         }
         return false === $value ? null : $value;
     }
-
-    
-
-
-
 
     private function preview_current( string $key, bool $network ): string {
         if ( $this->ext_object_cache() ) {
@@ -617,13 +470,6 @@ class Transient_Handler extends Command_Handler {
     private static function expiry_text( int $expiration ): string {
         return 0 === $expiration ? 'no expiry set' : sprintf( 'expires %d seconds after the write', $expiration );
     }
-
-    
-
-
-
-
-
 
     private function storage( bool $network ): array {
         $db = $this->db();
@@ -647,15 +493,6 @@ class Transient_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function network_scope( array $s, array $aliases = array( '' ) ): array {
         if ( null === $s['site_id'] ) {
             return array( '', array() );
@@ -668,13 +505,6 @@ class Transient_Handler extends Command_Handler {
         }
         return array( $sql, $values );
     }
-
-    
-
-
-
-
-
 
     private function protected_rows( array $s ): array {
         $db                       = $this->db();
@@ -695,14 +525,6 @@ class Transient_Handler extends Command_Handler {
         return $rows;
     }
 
-    
-
-
-
-
-
-
-
     private static function exclusion( string $column_ref, array $protected ): array {
         $sql    = " AND {$column_ref} NOT REGEXP %s";
         $values = array( self::NAMESPACE_REGEXP );
@@ -718,13 +540,6 @@ class Transient_Handler extends Command_Handler {
         }
         return array( $sql, $values );
     }
-
-    
-
-
-
-
-
 
     private static function count_transients( array $rows, string $prefix ): array {
         $timeout = $prefix . 'timeout_';
@@ -745,17 +560,11 @@ class Transient_Handler extends Command_Handler {
         return $counts;
     }
 
-    
-
-
-
-
     private static function skipped_warning( array $counts ): string {
         $total = array_sum( $counts );
         return sprintf( self::SKIPPED, $total, 1 === $total ? 'transient' : 'transients', Option_Handler::omission_summary( $counts ) );
     }
 
-    
     private function delete_all( bool $network, Context $ctx ): void {
         $db        = $this->db();
         $s         = $this->storage( $network );
@@ -766,8 +575,6 @@ class Transient_Handler extends Command_Handler {
         $ctx->not_captured( self::NOT_RECORDED );
         $ctx->not_captured( self::RAW_SQL );
 
-        
-        
         $count                          = 0;
         list( $excl_a, $values_a )      = self::exclusion( "a.`{$col}`", $protected );
         list( $scope_ab, $in_scope_ab ) = self::network_scope( $s, array( 'a', 'b' ) );
@@ -788,7 +595,7 @@ class Transient_Handler extends Command_Handler {
                 )
             )
         );
-        $count                   += (int) $deleted / 2; 
+        $count                   += (int) $deleted / 2;
         list( $excl, $values )    = self::exclusion( "`{$col}`", $protected );
         list( $scope, $in_scope ) = self::network_scope( $s );
         $count                   += (int) $db->query(
@@ -819,7 +626,6 @@ class Transient_Handler extends Command_Handler {
         }
     }
 
-    
     private function delete_expired( bool $network, Context $ctx ): void {
         $db        = $this->db();
         $s         = $this->storage( $network );
@@ -829,7 +635,6 @@ class Transient_Handler extends Command_Handler {
         $now       = $this->now();
         $protected = $this->protected_rows( $s );
 
-        
         $expired_protected = $protected ? $this->expired_protected( $db, $s, $protected, $now ) : array();
 
         $ctx->not_captured( self::NOT_RECORDED );
@@ -858,8 +663,6 @@ class Transient_Handler extends Command_Handler {
             )
         );
 
-        
-        
         $count = $count / 2;
 
         if ( $expired_protected ) {
@@ -882,15 +685,6 @@ class Transient_Handler extends Command_Handler {
             $ctx->out->warning( 'Transients are stored in an external object cache, and this command only deletes those stored in the database. You must flush the cache to delete all transients.' );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function expired_protected( object $db, array $s, array $protected, int $now ): array {
         $table                    = Option_Handler::ident( $s['table'] );

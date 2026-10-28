@@ -10,34 +10,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Posts extends Base_Tool {
 
-    
     const REST_ORDERBY = array( 'date', 'id', 'title', 'slug', 'modified', 'author', 'include', 'parent' );
 
-    
     const QUERY_ORDERBY = array( 'menu_order', 'comment_count', 'meta_value', 'meta_value_num', 'rand' );
 
-    
     const META_COMPARE = array( '=', '!=', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'EXISTS', 'NOT EXISTS', 'REGEXP', 'NOT REGEXP', 'RLIKE' );
 
-    
     const TAX_OPERATORS = array( 'IN', 'NOT IN', 'AND', 'EXISTS', 'NOT EXISTS' );
     const TAX_FIELDS    = array( 'term_id', 'slug', 'name', 'term_taxonomy_id' );
 
-    
     const DATE_KEYS    = array( 'year', 'month', 'monthnum', 'week', 'w', 'dayofyear', 'day', 'dayofweek', 'dayofweek_iso', 'hour', 'minute', 'second', 'after', 'before', 'inclusive', 'compare', 'column' );
     const DATE_COMPARE = array( '=', '!=', '>', '>=', '<', '<=', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN' );
     const DATE_COLUMNS = array( 'post_date', 'post_date_gmt', 'post_modified', 'post_modified_gmt' );
 
-    
     const MAX_QUERY_CLAUSES = 10;
     const MAX_QUERY_DEPTH   = 3;
-
-    
-
-
-
-
-
 
     const REST_FIELDS = 'id,title,status,date,modified,slug,excerpt,author,categories,tags,featured_media,link';
 
@@ -230,8 +217,6 @@ class List_Posts extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
         $query  = array();
         $params = array_merge( $this->status_and_paging_params( $arguments ), $this->filter_params( $arguments ) );
         self::apply_order( $arguments, $params, $query );
@@ -266,13 +251,6 @@ class List_Posts extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function status_and_paging_params( array $arguments ): array {
         $params = array();
         if ( ! empty( $arguments['status'] ) && isset( $arguments['statuses'] ) ) {
@@ -291,13 +269,6 @@ class List_Posts extends Base_Tool {
         $params['page']     = isset( $arguments['page'] ) ? absint( $arguments['page'] ) : 1;
         return $params;
     }
-
-    
-
-
-
-
-
 
     private function filter_params( array $arguments ): array {
         $params = array();
@@ -331,15 +302,6 @@ class List_Posts extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function apply_order( array $arguments, array &$params, array &$query ): void {
         if ( ! empty( $arguments['orderby'] ) ) {
             if ( in_array( $arguments['orderby'], self::QUERY_ORDERBY, true ) ) {
@@ -353,14 +315,6 @@ class List_Posts extends Base_Tool {
             $params['order'] = $arguments['order'];
         }
     }
-
-    
-
-
-
-
-
-
 
     private function wp_cli_params( array $arguments ): array {
         $params = array();
@@ -379,8 +333,6 @@ class List_Posts extends Base_Tool {
         }
 
         if ( isset( $arguments['sticky'] ) ) {
-            
-            
             $params['sticky'] = rest_sanitize_boolean( $arguments['sticky'] );
         }
 
@@ -388,44 +340,17 @@ class List_Posts extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_exclusion_with_include( array $params ): void {
         if ( isset( $params['include'] ) && ( isset( $params['exclude'] ) || ( isset( $params['sticky'] ) && false === $params['sticky'] ) ) ) {
             throw new \InvalidArgumentException( sprintf( '%s cannot be combined with include: WordPress ignores an exclusion when include is given. Leave those posts out of include instead.', isset( $params['exclude'] ) ? 'exclude' : 'sticky: false' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 
-    
-
-
-
-
-
-
     private function list_context( array $arguments ): string {
         $context = isset( $arguments['context'] ) && '' !== $arguments['context'] ? $arguments['context'] : 'view';
         $this->refuse_unless_one_of( 'context', $context, array( 'view', 'edit' ), $context, 'view or edit' );
         return $context;
     }
-
-    
-
-
-
-
-
-
 
     private static function raw_columns_arg( array $arguments, string $context ): bool {
         $raw_columns = isset( $arguments['raw_columns'] ) && rest_sanitize_boolean( $arguments['raw_columns'] );
@@ -434,15 +359,6 @@ class List_Posts extends Base_Tool {
         }
         return $raw_columns;
     }
-
-    
-
-
-
-
-
-
-
 
     private function query_vars( array $arguments ): array {
         $query = array();
@@ -473,13 +389,6 @@ class List_Posts extends Base_Tool {
         return $query;
     }
 
-    
-
-
-
-
-
-
     private function date_part_vars( array $arguments ): array {
         $query = array();
         foreach ( array( 'year' => array( 1, 9999 ), 'monthnum' => array( 1, 12 ), 'day' => array( 1, 31 ) ) as $key => $range ) {
@@ -494,18 +403,6 @@ class List_Posts extends Base_Tool {
         return $query;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function apply_meta_filters( array $arguments, array $params, array &$query ): void {
         $meta_keys = array();
         $query     = array_merge( $query, $this->single_meta_vars( $arguments, $meta_keys ) );
@@ -519,16 +416,6 @@ class List_Posts extends Base_Tool {
             $this->refuse_unreadable_meta_filter( array_values( array_unique( $meta_keys ) ), self::queried_statuses( $params ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function single_meta_vars( array $arguments, array &$meta_keys ): array {
         $query = array();
@@ -560,13 +447,6 @@ class List_Posts extends Base_Tool {
         return $query;
     }
 
-    
-
-
-
-
-
-
     private static function queried_statuses( array $params ): array {
         $statuses = array();
         foreach ( isset( $params['status'] ) ? (array) $params['status'] : array( 'publish' ) as $entry ) {
@@ -577,18 +457,8 @@ class List_Posts extends Base_Tool {
         return empty( $statuses ) ? array( 'publish' ) : array_values( array_unique( $statuses ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private function empty_page_or_refusal( \WP_REST_Response $response, array $params ): array {
         $error = $response->as_error();
-        
         if ( $this->is_invalid_page_error( $error ) ) {
             return array_merge(
                 array( 'posts' => array() ),
@@ -598,18 +468,6 @@ class List_Posts extends Base_Tool {
         throw new \RuntimeException( $error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function post_rows( array $posts, string $context, bool $raw_columns ): array {
         $result       = array();
         $author_names = self::author_names( $posts );
@@ -617,7 +475,6 @@ class List_Posts extends Base_Tool {
             if ( 'edit' === $context && ! current_user_can( 'edit_post', (int) $post['id'] ) ) {
                 continue;
             }
-            
             $object = get_post( (int) $post['id'] );
             $item = array(
                 'id'             => $post['id'],
@@ -627,8 +484,6 @@ class List_Posts extends Base_Tool {
                 'modified'       => $post['modified'],
                 'slug'           => $post['slug'],
                 'excerpt'        => wp_strip_all_tags( $post['excerpt']['rendered'] ),
-                
-                
                 'has_excerpt'    => is_object( $object ) && '' !== trim( (string) ( $object->post_excerpt ?? '' ) ),
                 'author'         => $post['author'],
                 'author_name'    => $author_names[ (int) $post['author'] ] ?? null,
@@ -639,20 +494,12 @@ class List_Posts extends Base_Tool {
                 'link'           => $post['link'],
             );
             if ( $raw_columns ) {
-                
                 $item['raw'] = is_object( $object ) ? get_object_vars( $object ) : null;
             }
             $result[] = $item;
         }
         return $result;
     }
-
-    
-
-
-
-
-
 
     private static function author_names( array $posts ): array {
         $ids = array();
@@ -672,18 +519,6 @@ class List_Posts extends Base_Tool {
         return $names;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function dispatch( \WP_REST_Request $request, array $query ): \WP_REST_Response {
         $filter = static function ( $args, $current ) use ( $request, $query ) {
             if ( $current !== $request || ! is_array( $args ) ) {
@@ -691,12 +526,9 @@ class List_Posts extends Base_Tool {
             }
             foreach ( $query as $key => $value ) {
                 if ( 'date_query' === $key ) {
-                    
-                    
                     $args['date_query']   = isset( $args['date_query'] ) && is_array( $args['date_query'] ) ? $args['date_query'] : array();
                     $args['date_query'][] = $value;
                 } elseif ( 'tax_query' === $key ) {
-                    
                     $args['tax_query'] = empty( $args['tax_query'] ) ? $value : array(
                         'relation' => 'AND',
                         $args['tax_query'],
@@ -706,7 +538,6 @@ class List_Posts extends Base_Tool {
                     $args[ $key ] = $value;
                 }
             }
-            
             return List_CPT_Items::with_tiebreak_marker( $args );
         };
         add_filter( 'rest_post_query', $filter, 10, 2 );
@@ -718,26 +549,6 @@ class List_Posts extends Base_Tool {
             remove_filter( 'rest_post_query', $filter, 10 );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_unreadable_meta_filter( array $keys, array $statuses ): void {
         $caps = self::post_caps();
@@ -751,11 +562,6 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    
-
-
-
-
     private static function post_caps(): array {
         $type = get_post_type_object( 'post' );
         $cap  = is_object( $type ) && isset( $type->cap ) ? (object) $type->cap : (object) array();
@@ -767,15 +573,6 @@ class List_Posts extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_protected_meta_filter( array $keys, array $caps ): void {
         foreach ( $keys as $key ) {
             if ( is_protected_meta( $key, 'post' ) && ! ( current_user_can( $caps['edit_others'] ) && current_user_can( $caps['edit_publish'] ) && current_user_can( $caps['edit_private'] ) ) ) {
@@ -783,15 +580,6 @@ class List_Posts extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function caps_to_read_others_in( string $status, array $caps ): array {
         $object = function_exists( 'get_post_status_object' ) ? get_post_status_object( $status ) : null;
@@ -807,27 +595,6 @@ class List_Posts extends Base_Tool {
         return array( $caps['edit_others'] );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function refuse_unstored_meta_key( string $key, string $label ): void {
         if ( '0' === $key ) {
             throw new \InvalidArgumentException( sprintf( 'Invalid %s "0": WordPress drops a meta key of "0" and would compare the value with every meta key.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -837,29 +604,11 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function parse_query_structure( $value, string $kind, array &$meta_keys = array() ): array {
         $query = $this->parse_json_param( $value, $kind );
         if ( array() === $query ) {
             throw new \InvalidArgumentException( sprintf( '%s must hold at least one clause.', $kind ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
-        
         if ( $this->is_first_order_clause( $query, $kind ) ) {
             throw new \InvalidArgumentException( sprintf( '%1$s must be a list of clauses, e.g. [{...}], not a single clause object.', $kind ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -867,17 +616,6 @@ class List_Posts extends Base_Tool {
         $this->check_query_group( $query, $kind, 1, $count, $meta_keys );
         return $query;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function check_query_group( array $group, string $kind, int $depth, int &$count, array &$meta_keys ): void {
         if ( $depth > self::MAX_QUERY_DEPTH ) {
@@ -904,17 +642,8 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function is_first_order_clause( array $entry, string $kind ): bool {
         if ( 'meta_query' === $kind ) {
-            
-            
             return array_key_exists( 'key', $entry ) || array_key_exists( 'value', $entry ) || array_key_exists( 'compare', $entry ) || array_key_exists( 'compare_key', $entry ) || array_key_exists( 'type', $entry ) || array_key_exists( 'type_key', $entry );
         }
         if ( 'tax_query' === $kind ) {
@@ -922,15 +651,6 @@ class List_Posts extends Base_Tool {
         }
         return (bool) array_intersect( self::DATE_KEYS, array_keys( $entry ) );
     }
-
-    
-
-
-
-
-
-
-
 
     private function check_query_clause( array $clause, string $kind, array &$meta_keys ): void {
         $allowed = array(
@@ -956,15 +676,6 @@ class List_Posts extends Base_Tool {
         $this->check_date_clause( $clause );
     }
 
-    
-
-
-
-
-
-
-
-
     private function check_meta_clause( array $clause, array &$meta_keys ): void {
         if ( ! isset( $clause['key'] ) || ! is_string( $clause['key'] ) || '' === $clause['key'] ) {
             throw new \InvalidArgumentException( 'meta_query: every clause needs key, one meta key as a string; a clause without it compares the value with every key.' );
@@ -982,14 +693,6 @@ class List_Posts extends Base_Tool {
             $this->refuse_non_scalar_values( $clause['value'], 'meta_query.value' );
         }
     }
-
-    
-
-
-
-
-
-
 
     private function check_tax_clause( array $clause ): void {
         $taxonomy   = isset( $clause['taxonomy'] ) && is_string( $clause['taxonomy'] ) ? $clause['taxonomy'] : '';
@@ -1010,14 +713,6 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private function check_date_clause( array $clause ): void {
         if ( isset( $clause['column'] ) ) {
             $this->refuse_unless_one_of( 'date_query.column', $clause['column'], self::DATE_COLUMNS, $clause['column'], implode( ', ', self::DATE_COLUMNS ) );
@@ -1036,15 +731,6 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private function check_date_edge( array $clause, string $edge ): void {
         if ( ! isset( $clause[ $edge ] ) ) {
             return;
@@ -1060,14 +746,6 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private function refuse_non_scalar_values( $value, string $label ): void {
         $values = is_array( $value ) ? $value : array( $value );
         foreach ( $values as $one ) {
@@ -1076,15 +754,6 @@ class List_Posts extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function parse_id_list( $value, string $label ): array {
         $list = is_scalar( $value ) && ! is_string( $value ) ? array( $value ) : $this->parse_json_param( $value, $label );
@@ -1104,14 +773,6 @@ class List_Posts extends Base_Tool {
         return array_values( array_unique( $out ) );
     }
 
-    
-
-
-
-
-
-
-
     private function parse_string_list( $value, string $label ): array {
         if ( is_string( $value ) ) {
             $decoded = json_decode( $value, true );
@@ -1129,14 +790,6 @@ class List_Posts extends Base_Tool {
         }
         return array_values( array_unique( $out ) );
     }
-
-    
-
-
-
-
-
-
 
     private function parse_non_negative_int( $value, string $label ): int {
         if ( is_int( $value ) && $value >= 0 ) {

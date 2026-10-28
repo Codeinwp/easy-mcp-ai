@@ -1,13 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,16 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Blocker_Copy {
 
-    
-
-
-
-
     const ORDER = array( 'a8', 'a9', 'a12', 'a7', 'a10', 'c1', 'f8', 'b1', 'd1' );
-
-    
-
-
 
     public static function sort( array $results ) {
         $rank = array_flip( self::ORDER );
@@ -38,10 +21,6 @@ class Blocker_Copy {
         } );
         return array_column( $keyed, 1 );
     }
-
-    
-
-
 
     public static function for_result( Diagnostic_Result $r ) {
         $evidence = (array) $r->evidence();
@@ -79,8 +58,6 @@ class Blocker_Copy {
                 break;
             case 'a10':
                 if ( ! empty( $evidence['trailing_slash'] ) ) {
-                    
-                    
                     $copy = array(
                         __( 'Your server adds a trailing slash to /.well-known/', 'easy-mcp-ai' ),
                         __( 'your server adds a trailing slash to /.well-known/', 'easy-mcp-ai' ),

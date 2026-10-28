@@ -11,26 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Handler extends Command_Handler {
 
     const MSG_READ_CAP = "Sorry, you are not allowed to do this: wp_cli_run needs the read_post capability for post %d.";
 
-    
     public function exists( Invocation $inv, Context $ctx ): void {
         $arg  = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
         $post = Fetchers::of( 'post' )->get( $arg );
@@ -42,13 +26,10 @@ final class Post_Handler extends Command_Handler {
         }
     }
 
-    
     public function url_to_id( Invocation $inv, Context $ctx ): void {
         $url     = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
         $post_id = \url_to_postid( $url );
 
-        
-        
         $post = $post_id ? \get_post( $post_id ) : null;
 
         if ( null === $post ) {
@@ -58,12 +39,6 @@ final class Post_Handler extends Command_Handler {
 
         Values::print_value( $ctx->out, $post_id, $inv->assoc );
     }
-
-    
-
-
-
-
 
     private function require_read( Context $ctx, object $post ): void {
         if ( ! \current_user_can( 'read_post', (int) $post->ID ) ) {

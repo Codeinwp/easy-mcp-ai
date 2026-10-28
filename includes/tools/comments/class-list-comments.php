@@ -9,21 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Comments extends Base_Tool {
 
-    
-
-
-
-
-
-
     const STATUSES = array( 'approve', 'hold', 'spam', 'trash', 'all', 'any', 'post-trashed' );
 
-    
     const ORDERBY = array( 'date', 'date_gmt', 'id', 'include', 'post', 'parent', 'type' );
-
-    
-
-
 
     const META_COMPARE = array( '=', '!=', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'EXISTS', 'NOT EXISTS', 'REGEXP', 'NOT REGEXP', 'RLIKE' );
 
@@ -40,8 +28,6 @@ class List_Comments extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'moderate_comments';
     }
 
@@ -252,13 +238,6 @@ class List_Comments extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function post_param( array $arguments ): array {
         $params = array();
         if ( isset( $arguments['post_id'] ) ) {
@@ -275,14 +254,6 @@ class List_Comments extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private function single_status_param( array $arguments, ?array $statuses ): array {
         if ( empty( $arguments['status'] ) ) {
             return array();
@@ -293,12 +264,6 @@ class List_Comments extends Base_Tool {
         return array( 'status' => $this->list_status( $arguments['status'] ) );
     }
 
-    
-
-
-
-
-
     private function paging_params( array $arguments ): array {
         return array(
             'per_page' => isset( $arguments['per_page'] ) ? min( 100, max( 1, absint( $arguments['per_page'] ) ) ) : 10,
@@ -306,27 +271,12 @@ class List_Comments extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function offset_arg( array $arguments ): ?int {
         if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
             return $this->int_arg( $arguments['offset'], 'offset', 0 );
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private function basic_filter_params( array $arguments ): array {
         $params = array();
@@ -352,17 +302,6 @@ class List_Comments extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function cli_filter_params( array $arguments ): array {
         $params       = array();
         $author_email = $this->string_arg( $arguments, 'author_email' );
@@ -382,13 +321,6 @@ class List_Comments extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
     private function sort_params( array $arguments ): array {
         $params = array();
         if ( isset( $arguments['orderby'] ) && '' !== $arguments['orderby'] ) {
@@ -403,24 +335,6 @@ class List_Comments extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function apply_statuses( array $statuses, array &$params, array &$query_vars ): void {
         if ( 1 === count( $statuses ) ) {
             $params['status'] = $statuses[0];
@@ -430,17 +344,6 @@ class List_Comments extends Base_Tool {
         $params['status']     = $non_approve ? $non_approve[0] : 'approve';
         $query_vars['status'] = $statuses;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function empty_page_or_refusal( \WP_REST_Response $response, array $params, ?int $offset ): array {
         $error = $response->as_error();
@@ -455,13 +358,6 @@ class List_Comments extends Base_Tool {
         }
         throw new \RuntimeException( $error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
 
     private function comment_row( array $comment, bool $details ): array {
         $row = array(
@@ -479,18 +375,6 @@ class List_Comments extends Base_Tool {
         }
         return $row;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function dispatch( \WP_REST_Request $request, array $query_vars ): \WP_REST_Response {
         if ( empty( $query_vars ) ) {
@@ -511,17 +395,6 @@ class List_Comments extends Base_Tool {
             remove_filter( 'rest_comment_query', $filter, 10 );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function query_vars( array $arguments ): array {
         $vars = array();
@@ -545,14 +418,6 @@ class List_Comments extends Base_Tool {
         return array_merge( $vars, $this->meta_vars( $arguments ) );
     }
 
-    
-
-
-
-
-
-
-
     private function post_filter_vars( array $arguments ): array {
         $vars = array();
         foreach ( array( 'post_type', 'post_status' ) as $key ) {
@@ -562,9 +427,6 @@ class List_Comments extends Base_Tool {
             }
         }
 
-        
-        
-        
         foreach ( array( 'post_author', 'post_parent' ) as $key ) {
             if ( isset( $arguments[ $key ] ) && '' !== $arguments[ $key ] ) {
                 $vars[ $key ] = $this->int_arg( $arguments[ $key ], $key, 1 );
@@ -578,27 +440,11 @@ class List_Comments extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function meta_vars( array $arguments ): array {
         $key     = $this->string_arg( $arguments, 'meta_key' );
         $value   = $this->string_arg( $arguments, 'meta_value' );
         $compare = $this->string_arg( $arguments, 'meta_compare' );
 
-        
-        
         if ( null !== $compare ) {
             $compare = strtoupper( $compare );
             $this->refuse_unless_one_of( 'meta_compare', $compare, self::META_COMPARE, $arguments['meta_compare'], implode( ', ', self::META_COMPARE ) );
@@ -623,23 +469,6 @@ class List_Comments extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function refuse_unreadable_meta_key( string $key ): void {
         if ( '0' === $key || ! preg_match( '/^[\x21-\x7E]+\z/', $key ) ) {
             throw new \InvalidArgumentException( 'Invalid meta_key: use the key in plain printable ASCII with no spaces, as WordPress stores it.' );
@@ -648,16 +477,6 @@ class List_Comments extends Base_Tool {
             throw new \InvalidArgumentException( sprintf( 'Filtering by the protected meta key %s requires the manage_options capability.', $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function details( array $item ): array {
         $out = array();
@@ -680,15 +499,6 @@ class List_Comments extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private function with_offset( array $result, ?int $offset ): array {
         if ( null !== $offset ) {
             $result['offset'] = $offset;
@@ -696,32 +506,11 @@ class List_Comments extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function list_status( $status ): string {
         $key = is_scalar( $status ) ? sanitize_key( (string) $status ) : '';
-        
-        
         $this->refuse_unless_one_of( 'status', $key, self::STATUSES, $status, 'approve, hold, spam, trash or all' );
         return $key;
     }
-
-    
-
-
-
-
-
 
     private function list_statuses( array $arguments ): ?array {
         if ( ! isset( $arguments['statuses'] ) || '' === $arguments['statuses'] || array() === $arguments['statuses'] ) {
@@ -737,16 +526,6 @@ class List_Comments extends Base_Tool {
         return $out ? $out : null;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function list_type( string $type ): string {
         $lower = strtolower( $type );
         if ( 'all' === $lower ) {
@@ -758,16 +537,6 @@ class List_Comments extends Base_Tool {
         }
         return $key;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function key_list( string $value, string $label ): array {
         $out = array();
@@ -787,14 +556,6 @@ class List_Comments extends Base_Tool {
         return array_values( array_unique( $out ) );
     }
 
-    
-
-
-
-
-
-
-
     private function string_arg( array $arguments, string $key ): ?string {
         if ( ! isset( $arguments[ $key ] ) || '' === $arguments[ $key ] ) {
             return null;
@@ -804,16 +565,6 @@ class List_Comments extends Base_Tool {
         }
         return (string) $arguments[ $key ];
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function int_arg( $value, string $label, ?int $min ): int {
         if ( is_int( $value ) ) {
@@ -828,15 +579,6 @@ class List_Comments extends Base_Tool {
         }
         return $int;
     }
-
-    
-
-
-
-
-
-
-
 
     private function id_list( array $arguments, string $key, int $min ): ?array {
         if ( ! isset( $arguments[ $key ] ) || '' === $arguments[ $key ] || array() === $arguments[ $key ] ) {

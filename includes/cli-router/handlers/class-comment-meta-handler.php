@@ -11,40 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Comment_Meta_Handler extends Meta_Command {
 
-    
     protected $meta_type = 'comment';
 
-    
     const WRITE_CAPS = array(
         'add'    => 'add_comment_meta',
         'update' => 'edit_comment_meta',
@@ -52,7 +22,6 @@ class Comment_Meta_Handler extends Meta_Command {
         'delete' => 'delete_comment_meta',
     );
 
-    
     const NOT_CAPTURED_META = 'comment meta: change history\'s meta capture (easy_mcp_ai_change_log_capture_meta) is off';
 
     const BAD_ID = "wp_cli_run refuses '%s' as a comment ID: it is not a whole number in digits, and WP-CLI would convert it to a different ID rather than refuse it. Pass the ID as digits only.";
@@ -66,17 +35,6 @@ class Comment_Meta_Handler extends Meta_Command {
     const KEY_UNREGISTERED = "Protected meta keys need the manage_options capability when nothing has registered them, and nothing registers '%s' for comments.";
 
     const KEYS_DENIED_ALL = 'Sorry, you are not allowed to delete every meta key of comment %d: WordPress refused delete_comment_meta for %s. Nothing was deleted.';
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     public function preflight( Invocation $inv, Context $ctx ): void {
         $this->inv = $inv;
@@ -100,12 +58,6 @@ class Comment_Meta_Handler extends Meta_Command {
         }
     }
 
-    
-
-
-
-
-
     private function preflight_set( Invocation $inv, string $sub ): void {
         $out  = $this->ctx->out;
         $args = $inv->args;
@@ -114,12 +66,6 @@ class Comment_Meta_Handler extends Meta_Command {
         Read_Value::read( $out, $value, $inv->assoc );
         $this->check_object_id( isset( $args[0] ) ? $args[0] : '', $sub );
     }
-
-    
-
-
-
-
 
     private function preflight_delete( Invocation $inv ): void {
         $args = $inv->args;
@@ -131,13 +77,6 @@ class Comment_Meta_Handler extends Meta_Command {
         }
         $this->check_object_id( isset( $args[0] ) ? $args[0] : '', 'delete' );
     }
-
-    
-
-
-
-
-
 
     private function refuse_delete_args( array $args, bool $all, string $key ): void {
         $out = $this->ctx->out;
@@ -152,12 +91,6 @@ class Comment_Meta_Handler extends Meta_Command {
         }
     }
 
-    
-
-
-
-
-
     private function preflight_read( Invocation $inv ): void {
         $args = $inv->args;
         $raw  = isset( $args[0] ) && is_scalar( $args[0] ) ? (string) $args[0] : '';
@@ -165,12 +98,6 @@ class Comment_Meta_Handler extends Meta_Command {
             $this->ctx->out->error( sprintf( self::BAD_ID, $raw ) );
         }
     }
-
-    
-
-
-
-
 
     private function preflight_patch( Invocation $inv ): void {
         $out  = $this->ctx->out;
@@ -185,10 +112,6 @@ class Comment_Meta_Handler extends Meta_Command {
             Read_Value::read( $out, array_pop( $key_path ), $inv->assoc );
         }
     }
-
-    
-    
-    
 
     public function add( Invocation $inv, Context $ctx ): void {
         $this->note_history( $ctx );
@@ -210,18 +133,6 @@ class Comment_Meta_Handler extends Meta_Command {
         parent::delete( $inv, $ctx );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     protected function check_object_id( $object_id, string $subcommand ) {
         $out = $this->ctx->out;
         $raw = is_scalar( $object_id ) ? (string) $object_id : '';
@@ -230,7 +141,6 @@ class Comment_Meta_Handler extends Meta_Command {
         }
         $comment = (int) $raw > 0 ? Fetchers::of( 'comment' )->get( $raw ) : false;
         if ( ! $comment ) {
-            
             $out->error( sprintf( Fetchers::MESSAGES['comment'], $raw ) );
         }
         $id = (int) $comment->comment_ID;
@@ -243,49 +153,21 @@ class Comment_Meta_Handler extends Meta_Command {
         return $comment->comment_ID;
     }
 
-    
-
-
-
-
-
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         return \get_comment_meta( (int) $object_id, $meta_key, $single );
     }
-
-    
-
-
-
-
 
     protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool {
         return (bool) \add_comment_meta( (int) $object_id, $meta_key, $meta_value, false );
     }
 
-    
-
-
-
-
-
     protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool {
         return (bool) \update_comment_meta( (int) $object_id, $meta_key, $meta_value );
     }
 
-    
-
-
-
-
-
     protected function delete_metadata( $object_id, string $meta_key, $meta_value = '' ): bool {
         return (bool) \delete_comment_meta( (int) $object_id, $meta_key, $meta_value );
     }
-
-    
-
-
 
     protected function protect_key( string $key, bool $write ): ?string {
         $refusal = parent::protect_key( $key, $write );
@@ -298,26 +180,12 @@ class Comment_Meta_Handler extends Meta_Command {
         return null;
     }
 
-    
-    
-    
-
-    
-
-
-
-
     private function refuse_key( string $key ): void {
         $refusal = $this->protect_key( $key, true );
         if ( null !== $refusal ) {
             $this->ctx->out->error( $refusal );
         }
     }
-
-    
-
-
-
 
     private function check_write_keys( string $subcommand, int $id ): void {
         $cap  = self::WRITE_CAPS[ $subcommand ];
@@ -333,18 +201,11 @@ class Comment_Meta_Handler extends Meta_Command {
         }
     }
 
-    
-
-
-
-
-
     private function check_delete_all_keys( string $cap, int $id ): void {
         $denied = array();
         $all    = $this->get_metadata( $id );
         foreach ( is_array( $all ) ? array_keys( $all ) : array() as $key ) {
             $key = (string) $key;
-            
             if ( null === parent::protect_key( $key, true ) && null !== $this->key_refusal( $cap, $id, $key ) ) {
                 $denied[] = $key;
             }
@@ -354,11 +215,6 @@ class Comment_Meta_Handler extends Meta_Command {
             $this->ctx->out->error( sprintf( self::KEYS_DENIED_ALL, $id, "'" . implode( "', '", $denied ) . "'" ) );
         }
     }
-
-    
-
-
-
 
     private function key_refusal( string $cap, int $id, string $key ): ?string {
         if ( \current_user_can( $cap, $id, $key ) ) {
@@ -370,11 +226,6 @@ class Comment_Meta_Handler extends Meta_Command {
         }
         return sprintf( self::KEY_DENIED, $cap, $key, $id );
     }
-
-    
-
-
-
 
     private function key_is_claimed( string $key ): bool {
         if ( function_exists( 'get_registered_meta_keys' ) ) {
@@ -388,7 +239,6 @@ class Comment_Meta_Handler extends Meta_Command {
         return function_exists( 'has_filter' ) && ( \has_filter( "auth_comment_meta_{$key}_for_comment" ) || \has_filter( "auth_comment_meta_{$key}" ) );
     }
 
-    
     private function note_history( Context $ctx ): void {
         $on = true;
         if ( class_exists( '\\Easy_MCP_AI\\Config' ) ) {

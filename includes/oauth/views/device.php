@@ -1,23 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -87,26 +69,6 @@ $easy_mcp_ai_stage = isset( $stage ) ? (string) $stage : 'enter';
         </form>
 
         <?php
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         ?>
         <script nonce="<?php echo esc_attr( isset( $script_nonce ) ? $script_nonce : '' ); ?>">
 (function () {

@@ -73,7 +73,6 @@ class List_Groups extends Base_Tool {
         $params = array(
             'per_page'        => isset( $arguments['per_page'] ) ? min( 100, max( 1, absint( $arguments['per_page'] ) ) ) : 20,
             'page'            => $page,
-            
             'populate_extras' => true,
         );
 

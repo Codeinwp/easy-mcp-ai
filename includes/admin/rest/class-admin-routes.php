@@ -1,11 +1,5 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Support_Text;
@@ -17,15 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Admin_Routes {
 
-    
     private $tool_registry;
 
-    
     private static $checks_registered = false;
-
-    
-
-
 
     public function __construct( $tool_registry = null ) {
         $this->tool_registry = $tool_registry;
@@ -84,17 +72,9 @@ class Admin_Routes {
 
         ( new External_Data_Controller( new \Easy_MCP_AI\Admin\External_Data_Service() ) )->register_routes();
 
-        
         ( new Feedback_Controller() )->register_routes();
-        
         ( new Rest_Namespaces_Controller() )->register_routes();
     }
-
-    
-
-
-
-
 
     public function tool_groups() {
         if ( ! $this->tool_registry ) {
@@ -102,14 +82,6 @@ class Admin_Routes {
         }
         return ( new \Easy_MCP_AI\Admin\Tool_Groups( $this->tool_registry ) )->build();
     }
-
-    
-
-
-
-
-
-
 
     public function diagnostics_results() {
         if ( ! Diagnostics::is_stale() ) {
@@ -119,43 +91,21 @@ class Admin_Routes {
         return \Easy_MCP_AI\Diagnostics\Diagnostics_Notices::with_live( Diagnostics::run() );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function diagnostics_run_deep( $scope = 'all' ) {
         $this->register_checks();
         return Diagnostics::run( true, 'connection' === $scope ? Diagnostics::CONNECTION_GROUPS : null );
     }
 
-    
     public function diagnostics_connection_due() {
         return Diagnostics::connection_checks_due();
     }
 
-    
     public function diagnostics_last_run() {
         return Diagnostics::last_run_at();
     }
 
-    
-
-
-
-
-
-
-
-
     public function diagnostics_check_action( $result ) {
         if ( 'a1' === $result->id() ) {
-            
             $offer = \Easy_MCP_AI\Diagnostics\Htaccess_Auth_Rule::offer_now( $result );
             if ( \Easy_MCP_AI\Diagnostics\Htaccess_Auth_Rule::OFFER_NONE === $offer['offer'] ) {
                 return null;
@@ -189,13 +139,11 @@ class Admin_Routes {
         return null;
     }
 
-    
     public function write_auth_rule() {
         $this->register_checks();
         return \Easy_MCP_AI\Admin\Admin_Page::write_auth_rule();
     }
 
-    
     public function write_plain_routes(): string {
         $this->register_checks();
         return \Easy_MCP_AI\Admin\Admin_Page::write_plain_routes();
@@ -207,12 +155,6 @@ class Admin_Routes {
             Diagnostics::register_core_checks( $this->tool_registry );
         }
     }
-
-    
-
-
-
-
 
     public function system_info_text() {
         global $wpdb;
@@ -238,7 +180,6 @@ class Admin_Routes {
                     'Google Analytics'      => \Easy_MCP_AI\Provider_Credentials::is_configured( 'ga' ),
                     'DataForSEO'            => \Easy_MCP_AI\Provider_Credentials::is_configured( 'dfs' ),
                     'SEMrush'               => \Easy_MCP_AI\Provider_Credentials::is_configured( 'semrush' ),
-                    
                     'Ahrefs (DR)'           => \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' )
                         && (bool) \get_option( 'easy_mcp_ai_ahrefs_enabled', false ),
                 ),
@@ -252,7 +193,6 @@ class Admin_Routes {
         );
     }
 
-    
     public function ai_prompt_text() {
         return Support_Text::ai_prompt(
             \home_url(),

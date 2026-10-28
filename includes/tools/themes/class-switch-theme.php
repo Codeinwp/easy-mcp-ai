@@ -7,16 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 class Switch_Theme extends Base_Tool {
 
     public function get_name() {
@@ -66,7 +56,6 @@ class Switch_Theme extends Base_Tool {
         $changed  = $previous->get_stylesheet() !== $theme->get_stylesheet();
 
         if ( $changed ) {
-            
             switch_theme( $theme->get_stylesheet() );
         }
 
@@ -86,21 +75,11 @@ class Switch_Theme extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function parse_stylesheet( array $arguments ): string {
         $stylesheet = isset( $arguments['stylesheet'] ) && is_string( $arguments['stylesheet'] ) ? trim( $arguments['stylesheet'] ) : '';
         if ( '' === $stylesheet ) {
             throw new \InvalidArgumentException( 'Missing required parameters: stylesheet' );
         }
-        
-        
-        
         if ( 0 !== validate_file( $stylesheet ) ) {
             throw new \InvalidArgumentException(
                 sprintf( 'Invalid stylesheet "%s". Pass a theme folder name as returned by wp_list_themes.', $stylesheet ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -109,16 +88,7 @@ class Switch_Theme extends Base_Tool {
         return $stylesheet;
     }
 
-    
-
-
-
-
-
-
     private function assert_activatable( $theme, string $stylesheet ) {
-        
-        
         if ( ! $theme->exists() ) {
             throw new \RuntimeException(
                 sprintf( 'Theme "%s" is not installed. Use wp_list_themes to see installed themes.', $stylesheet ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -130,11 +100,6 @@ class Switch_Theme extends Base_Tool {
             );
         }
 
-        
-        
-        
-        
-        
         $errors = $theme->errors();
         if ( $errors ) {
             throw new \RuntimeException(
@@ -142,11 +107,6 @@ class Switch_Theme extends Base_Tool {
             );
         }
 
-        
-        
-        
-        
-        
         $requirements = validate_theme_requirements( $stylesheet );
         if ( is_wp_error( $requirements ) ) {
             throw new \RuntimeException( wp_strip_all_tags( $requirements->get_error_message() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

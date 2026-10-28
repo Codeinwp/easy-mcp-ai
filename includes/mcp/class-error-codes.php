@@ -12,18 +12,14 @@ class Error_Codes {
     const INVALID_PARAMS   = -32602;
     const INTERNAL_ERROR   = -32603;
     const UNAUTHORIZED        = -32001;
-    
     const RESOURCE_NOT_FOUND  = -32002;
     const RATE_LIMITED        = -32003;
     const SESSION_EXPIRED     = -32004;
     const NOT_INITIALIZED     = -32005;
     const FORBIDDEN           = -32007;
-    
-    
     const PAUSED              = -32008;
 
     const HEADER_MISMATCH = -32020;
-    
     const MISSING_CLIENT_CAPABILITY = -32021;
     const UNSUPPORTED_PROTOCOL_VERSION = -32022;
 

@@ -9,7 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Menus extends Base_Tool {
 
-    
     const PER_PAGE = 100;
 
     public function get_name() {
@@ -76,9 +75,6 @@ class List_Menus extends Base_Tool {
                     'name'        => $menu['name'],
                     'slug'        => $menu['slug'],
                     'description' => $menu['description'],
-                    
-                    
-                    
                     'locations'   => isset( $menu['locations'] ) && is_array( $menu['locations'] ) ? array_values( $menu['locations'] ) : array(),
                 ),
                 self::term_fields( (int) $menu['id'] )
@@ -90,18 +86,6 @@ class List_Menus extends Base_Tool {
             $this->pagination_meta( $response, $page, self::PER_PAGE, count( $menus ) )
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function term_fields( int $term_id ): array {
         $term = get_term( $term_id, 'nav_menu' );

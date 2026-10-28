@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Tools;
 
 use Easy_MCP_AI\Admin\Plugin_Integration_Registry;
@@ -17,30 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Switched_Off_Inventory {
 
     const TOOL        = 'tool';
@@ -48,28 +19,17 @@ final class Switched_Off_Inventory {
     const ABILITY     = 'ability';
     const PROVIDER    = 'provider';
 
-    
     const OFF = 'off';
 
-    
     const PATTERN = 'pattern';
 
-    
     const GROUP_OFF = 'group_off';
 
-    
     const NOT_ENABLED = 'not_enabled';
 
-    
     const NOT_CONNECTED = 'not_connected';
 
-    
     const SUMMARY_MAX = 160;
-
-    
-
-
-
 
     const PROVIDERS = array(
         'ga'        => array( 'Google Analytics', 'Visitors, sessions, page views and conversions from Google Analytics 4.' ),
@@ -80,13 +40,6 @@ final class Switched_Off_Inventory {
         'ahrefs'    => array( 'Ahrefs', 'Domain rating from Ahrefs.' ),
     );
 
-    
-
-
-
-
-
-
     public static function all( ?object $registry ): array {
         return array_merge(
             self::integrations(),
@@ -96,11 +49,6 @@ final class Switched_Off_Inventory {
             self::tools( $registry )
         );
     }
-
-    
-
-
-
 
     public static function integrations(): array {
         $entries = array();
@@ -121,12 +69,6 @@ final class Switched_Off_Inventory {
         return $entries;
     }
 
-    
-
-
-
-
-
     public static function integration_tools(): array {
         $entries = array();
         foreach ( self::groups_off() as $group ) {
@@ -141,18 +83,12 @@ final class Switched_Off_Inventory {
                     'group_label' => (string) $group['name'],
                     'access'      => 'read' === $tool['type'] ? 'read' : 'write',
                     'state'       => self::GROUP_OFF,
-                    
                     'where'       => false === Tool_State::override_of( $name ) ? Tool_Status::CONFIGURATION_PLACE : self::integration_place(),
                 );
             }
         }
         return $entries;
     }
-
-    
-
-
-
 
     public static function abilities(): array {
         if ( ! function_exists( 'wp_get_abilities' ) ) {
@@ -181,11 +117,6 @@ final class Switched_Off_Inventory {
         return $entries;
     }
 
-    
-
-
-
-
     public static function providers(): array {
         $entries = array();
         foreach ( self::PROVIDERS as $key => $spec ) {
@@ -206,13 +137,6 @@ final class Switched_Off_Inventory {
         }
         return $entries;
     }
-
-    
-
-
-
-
-
 
     public static function tools( ?object $registry ): array {
         if ( null === $registry || ! method_exists( $registry, 'get_all_tool_names' ) || ! method_exists( $registry, 'get_tool' ) ) {
@@ -239,11 +163,6 @@ final class Switched_Off_Inventory {
         return $entries;
     }
 
-    
-
-
-
-
     private static function groups_off(): array {
         $enabled = array_filter( (array) \get_option( 'easy_mcp_ai_enabled_plugin_groups', array() ), 'is_string' );
         $groups  = array();
@@ -255,18 +174,9 @@ final class Switched_Off_Inventory {
         return $groups;
     }
 
-    
-
-
-
     private static function integration_place(): string {
         return Tool_Status::place( Tool_Status::ABILITIES_PATH, Config::is_locked( 'easy_mcp_ai_disabled_tools' ) );
     }
-
-    
-
-
-
 
     private static function ability_entry( string $slug, object $ability ): array {
         $name        = Dynamic_Tool_Registrar::build_tool_name( $slug );
@@ -284,8 +194,6 @@ final class Switched_Off_Inventory {
             'group_label' => 'core' === $namespace ? 'WordPress abilities' : ucfirst( $namespace ) . ' abilities',
             'access'      => ! empty( $annotations['readonly'] ) ? 'read' : 'write',
             'state'       => self::NOT_ENABLED,
-            
-            
             'where'       => Tool_Status::place( $path, null !== Tool_State::override_of( $name ) ),
             'slug'        => $slug,
         );
@@ -294,12 +202,6 @@ final class Switched_Off_Inventory {
         }
         return $entry;
     }
-
-    
-
-
-
-
 
     private static function read( object $ability, string $getter ): string {
         if ( ! method_exists( $ability, $getter ) ) {
@@ -312,11 +214,6 @@ final class Switched_Off_Inventory {
         }
         return is_scalar( $value ) ? (string) $value : '';
     }
-
-    
-
-
-
 
     private static function ability_annotations( object $ability ): array {
         try {
@@ -331,13 +228,6 @@ final class Switched_Off_Inventory {
         }
         return array();
     }
-
-    
-
-
-
-
-
 
     private static function tool_entry( Base_Tool $tool, string $name, string $state, string $where ): array {
         $annotations         = (array) $tool->get_annotations();
@@ -372,23 +262,12 @@ final class Switched_Off_Inventory {
         return $entry;
     }
 
-    
-
-
-
-
     private static function required_capability( Base_Tool $tool, string $name ): string {
         if ( class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' ) && null !== \Easy_MCP_AI\Privileged\Privileged_Groups::group_of_tool( $name ) ) {
             return '';
         }
         return (string) Server::effective_required_capability( $tool->get_category(), $tool->get_required_capability() );
     }
-
-    
-
-
-
-
 
     private static function tool_group( Base_Tool $tool, string $name ): array {
         $category = (string) $tool->get_category();
@@ -406,14 +285,8 @@ final class Switched_Off_Inventory {
         return array( 'tools:' . $category, ucfirst( str_replace( '_', ' ', $category ) ) . ' tools' );
     }
 
-    
-
-
-
     private static function summary( string $text ): string {
         $text = trim( (string) preg_replace( '/\s+/', ' ', \wp_strip_all_tags( $text ) ) );
-        
-        
         if ( preg_match( '/^(.{20,}?(?<!e\.g|i\.e)[.!?])\s+[A-Z]/su', $text, $first ) ) {
             $text = $first[1];
         }

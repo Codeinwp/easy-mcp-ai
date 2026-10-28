@@ -5,43 +5,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Approval_Page {
 
     const QUERY_VAR = 'easy_mcp_ai_approve';
 
-    
     private $gate;
 
-    
     private $feedback_queue;
 
     public function __construct( Approval_Gate $gate, ?\Easy_MCP_AI\Feedback\Feedback_Queue $feedback_queue = null ) {
         $this->gate           = $gate;
         $this->feedback_queue = $feedback_queue;
     }
-
-    
-
-
-
-
 
     public function handle( $method, array $query, array $post ) {
         $approval_id = isset( $query[ self::QUERY_VAR ] ) ? (string) $query[ self::QUERY_VAR ] : '';
@@ -63,8 +38,6 @@ class Approval_Page {
         if ( ! $row || ! Approval_Gate::row_signature_valid( $row ) ) {
             return $this->page( 404, __( 'Approval not found', 'easy-mcp-ai' ), __( 'This approval does not exist. It may have been cleaned up, or the link was altered.', 'easy-mcp-ai' ) );
         }
-        
-        
         if ( self::is_feedback_row( $row ) ) {
             return $this->handle_feedback( (string) $method, $row, $post );
         }
@@ -103,7 +76,6 @@ class Approval_Page {
         return $this->page( 200, __( 'Denied', 'easy-mcp-ai' ), __( 'Denied. Nothing was changed. Your assistant will be told the operation was refused.', 'easy-mcp-ai' ), $row );
     }
 
-    
     private static function is_feedback_row( array $row ): bool {
         return isset( $row['tool_name'] ) && '_feedback_report' === $row['tool_name'];
     }
@@ -114,18 +86,6 @@ class Approval_Page {
         }
         return $this->feedback_queue;
     }
-
-    
-
-
-
-
-
-
-    
-
-
-
 
     private function handle_feedback( string $method, array $row, array $post ): array {
         if ( ! \Easy_MCP_AI\Feedback\Feedback_Queue::may_decide( $row ) ) {
@@ -149,14 +109,6 @@ class Approval_Page {
         return $this->handle_feedback_post( $row, $post );
     }
 
-    
-
-
-
-
-
-
-
     private function handle_feedback_post( array $row, array $post ): array {
         $nonce = isset( $post['_wpnonce'] ) ? (string) $post['_wpnonce'] : '';
         if ( ! \wp_verify_nonce( $nonce, self::nonce_action( $row['approval_id'] ) ) ) {
@@ -179,14 +131,6 @@ class Approval_Page {
         }
         return $this->feedback_result( 409, __( 'Already decided', 'easy-mcp-ai' ), $outcome['message'], 'warn' );
     }
-
-    
-
-
-
-
-
-
 
     private function render_feedback_form( array $row, string $notice = '', int $status = 200 ): array {
         $id      = $row['approval_id'];
@@ -231,13 +175,6 @@ class Approval_Page {
         return $this->console_page( $status, sprintf( __( 'Send this to the %s team?', 'easy-mcp-ai' ), $brand ), $html );
     }
 
-    
-
-
-
-
-
-
     private function feedback_result( int $status, string $title, string $message, string $tone ): array {
         $html  = '<div class="emcp-body"><div class="emcp-notice emcp-notice--' . \esc_attr( $tone ) . '">';
         $html .= '<p class="emcp-notice__title">' . \esc_html( $title ) . '</p>';
@@ -245,14 +182,6 @@ class Approval_Page {
         $html .= '</div></div>';
         return $this->console_page( $status, $title, $html );
     }
-
-    
-
-
-
-
-
-
 
     private function console_page( int $status, string $title, string $inner ): array {
         $html  = '<!DOCTYPE html><html lang="' . \esc_attr( \get_locale() ) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">';
@@ -267,11 +196,6 @@ class Approval_Page {
         return array( 'status' => $status, 'html' => $html );
     }
 
-    
-
-
-
-
     private static function feedback_send_script(): string {
         $url = \wp_json_encode( \Easy_MCP_AI\Feedback\Feedback_Queue::ENDPOINT, JSON_UNESCAPED_SLASHES );
         return '(function(){var f=document.getElementById("emcp-feedback-form"),b=document.getElementById("emcp-feedback-send"),e=document.getElementById("emcp-feedback-error");'
@@ -285,11 +209,6 @@ class Approval_Page {
     public static function nonce_action( $approval_id ) {
         return 'easy_mcp_ai_approve_' . $approval_id;
     }
-
-    
-
-
-
 
     private function status_title( array $row ) {
         return Approval_Gate::STATUS_EXPIRED === $row['status']
@@ -309,13 +228,6 @@ class Approval_Page {
                 return __( 'This request has expired. Ask your assistant to run the operation again.', 'easy-mcp-ai' );
         }
     }
-
-    
-
-
-
-
-
 
     private static function report_html( string $text ): string {
         return htmlspecialchars( $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
@@ -346,11 +258,6 @@ class Approval_Page {
         $body .= '</form>';
         return $this->page( $status, __( 'Approve this operation?', 'easy-mcp-ai' ), $body, $row, true );
     }
-
-    
-
-
-
 
     private function credential_label( array $row ) {
         if ( 'oauth' === $row['auth_source'] ) {
@@ -397,7 +304,6 @@ class Approval_Page {
         }
     }
 
-    
     private function expires_label( array $row ) {
         $expires = (int) strtotime( (string) $row['expires_at'] . ' UTC' );
         $now     = $this->gate->now();
@@ -407,9 +313,6 @@ class Approval_Page {
         /* translators: %s: a human time span such as "12 mins" */
         return sprintf( __( 'in %s', 'easy-mcp-ai' ), \human_time_diff( $now, $expires ) );
     }
-
-    
-
 
     private function page( $status, $title, $body, $row = null, $raw = false ) {
         $brand = \Easy_MCP_AI\Config::brand( 'Easy MCP AI' );

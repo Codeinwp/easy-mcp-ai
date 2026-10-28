@@ -7,62 +7,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 abstract class Base_Tool {
 
-    
-
-
-
     const EXISTING_TITLE_LABEL_LENGTH = 60;
-
-
-    
-
-
-
-
-
-
-
-
-
 
     const EXTERNAL_DATA_CATEGORIES = array( 'ga', 'gsc', 'dfs', 'semrush', 'seranking' );
 
-    
-
-
-
-
-
     const REST_ERROR_WITHOUT_MESSAGE = 1;
-
-    
-
-
-
-
-
-
-
 
     const RESPONSE_NOISE_KEYS = array( 'yoast_head', 'yoast_head_json', 'aioseo_head', 'aioseo_head_json', 'aioseo_breadcrumb', 'aioseo_breadcrumb_json', '_links' );
 
-    
-
-
-
-
-
     const RESPONSE_NOISE_PROTECTED_KEYS = array( 'id', 'meta', 'meta_data', 'acf', 'aioseo_meta_data' );
-
-    
-
-
-
-
-
-
-
-
 
     protected static $already_invalidated = array();
 
@@ -72,8 +25,6 @@ abstract class Base_Tool {
     abstract public function execute( array $arguments );
 
     public function get_required_capability() {
-        
-        
         return 'manage_options';
     }
 
@@ -110,20 +61,9 @@ abstract class Base_Tool {
             }
         }
 
-        
         $rest = substr( $name, 3 );
         return ucwords( str_replace( '_', ' ', $rest ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function get_redacted_arguments() {
         return array();
@@ -142,135 +82,38 @@ abstract class Base_Tool {
         return 'general';
     }
 
-    
-
-
-
-
-
-
-
-
     public function get_covers(): string {
         return '';
     }
-
-    
-
-
-
-
-
-
-
 
     public function get_match_phrases(): string {
         return '';
     }
 
-    
-
-
-
-
-
-
-
     public function is_disabled_by_default() {
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function get_approval_policy( array $arguments ) {
         return 'inherit';
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function is_composite( array $arguments = array() ) {
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public function is_read_only_call( array $arguments ) {
         $annotations = $this->get_annotations();
         return ! empty( $annotations['readOnlyHint'] );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public function redact_for_record( array $arguments ) {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public function describe( array $arguments ) {
         return self::generic_description( $this, $arguments );
     }
-
-    
-
-
-
 
     public static function generic_description( $tool, array $arguments ) {
         $title = method_exists( $tool, 'get_title' ) ? (string) $tool->get_title() : (string) $tool->get_name();
@@ -300,21 +143,8 @@ abstract class Base_Tool {
         return strlen( $text ) > 600 ? substr( $text, 0, 597 ) . '…' : $text;
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function peek( $route, $fields, array $params = array() ) {
         try {
-            
-            
-            
             $data = $this->rest_request( 'GET', $route, $params, $fields );
         } catch ( \Throwable $e ) {
             return null;
@@ -322,7 +152,6 @@ abstract class Base_Tool {
         return is_array( $data ) ? $data : null;
     }
 
-    
     protected static function rest_title( $data, $key = 'title' ) {
         $value = isset( $data[ $key ] ) ? $data[ $key ] : '';
         if ( is_array( $value ) ) {
@@ -331,16 +160,6 @@ abstract class Base_Tool {
         $value = trim( \wp_strip_all_tags( (string) $value ) );
         return '' === $value ? __( '(no title)', 'easy-mcp-ai' ) : $value;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function get_output_schema() {
         return null;
@@ -363,10 +182,6 @@ abstract class Base_Tool {
         $ui = $this->get_ui_meta();
         if ( ! empty( $ui ) ) {
             $definition['_meta'] = array( 'ui' => $ui );
-            
-            
-            
-            
             if ( isset( $ui['resourceUri'] ) ) {
                 $definition['_meta']['ui/resourceUri'] = $ui['resourceUri'];
             }
@@ -374,35 +189,12 @@ abstract class Base_Tool {
         return $definition;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function get_ui_meta() {
         if ( ! \Easy_MCP_AI\Config::get( 'approval_required' ) || ! \Easy_MCP_AI\Approvals\Approval_Gate::is_destructive_by_annotation( $this ) ) {
             return array();
         }
         return array( 'resourceUri' => 'ui://easy-mcp-ai/approval' );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function parse_required_id( $value, string $label = 'ID' ): int {
         if ( is_int( $value ) ) {
@@ -418,36 +210,13 @@ abstract class Base_Tool {
         return $id;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function normalize_counts( $counts ) {
         $out = array();
         foreach ( (array) $counts as $key => $value ) {
-            
-            
             $out[ (string) $key ] = is_scalar( $value ) ? (int) $value : 0;
         }
         return $out;
     }
-
-    
-
-
-
 
     protected static function text_arg( array $arguments, string $key ): string {
         return isset( $arguments[ $key ] ) && is_string( $arguments[ $key ] ) ? trim( $arguments[ $key ] ) : '';
@@ -464,20 +233,6 @@ abstract class Base_Tool {
             throw new \InvalidArgumentException( sprintf( 'Missing required parameters: %s', implode( ', ', $missing ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_unless_one_of( string $label, $checked, array $allowed, $shown, string $hint ): void {
         if ( ! in_array( $checked, $allowed, true ) ) {
@@ -500,14 +255,6 @@ abstract class Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     protected function validate_title_length( $title ) {
         if ( null === $title ) {
             return;
@@ -520,24 +267,11 @@ abstract class Base_Tool {
         }
     }
 
-    
-
-
-
-
     protected function maybe_force_draft( array &$params ) {
         if ( \Easy_MCP_AI\Config::get( 'easy_mcp_ai_force_draft_on_create', false ) ) {
             $params['status'] = 'draft';
         }
     }
-
-    
-
-
-
-
-
-
 
     protected function validate_assignable_roles( array $roles ) {
         foreach ( $roles as $role ) {
@@ -550,16 +284,6 @@ abstract class Base_Tool {
         }
         return $roles;
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function validate_rest_route_segment( $value, $label = 'value' ) {
         $value = is_string( $value ) ? trim( $value ) : '';
@@ -577,40 +301,12 @@ abstract class Base_Tool {
         return $value;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function resolve_post_type_rest_base( $value, string $label ): string {
         $value = $this->validate_rest_route_segment( $value, $label );
         $base = Post_Type_Rest_Base::resolve( $value );
         Post_Type_Rest_Base::require_served_type( $base );
         return $base;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected static function post_type_route( string $base, ?int $id, string ...$methods ): string {
         $route = '/wp/v2/' . $base . ( null === $id ? '' : '/' . $id );
@@ -619,26 +315,6 @@ abstract class Base_Tool {
         }
         return $route;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function precheck_post_type_route( array $arguments, string $key, string $default, ?string $id_key, string ...$methods ): void {
         $given = '' === $default
@@ -662,22 +338,6 @@ abstract class Base_Tool {
         self::post_type_route( $base, $id, ...$methods );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_other_type( int $post_id, string $expected_type, string $verb ): void {
         $post = get_post( $post_id );
         if ( ! is_object( $post ) || $expected_type === $post->post_type || ! get_post_type_object( $post->post_type ) || ! current_user_can( 'read_post', $post_id ) ) {
@@ -689,18 +349,6 @@ abstract class Base_Tool {
         throw new \InvalidArgumentException( Post_Type_Tool_Hint::other_type( $post, $expected_type, $verb, $this->get_name() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function precheck_other_type( array $arguments, string $id_key, string $expected_type, string $verb ): void {
         try {
             $post_id = $this->parse_required_id( $arguments[ $id_key ] ?? null, $id_key );
@@ -709,23 +357,6 @@ abstract class Base_Tool {
         }
         $this->refuse_other_type( $post_id, $expected_type, $verb );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_builder_owned_write( int $post_id, bool $content, array $meta = array() ): void {
         $post = get_post( $post_id );
@@ -744,18 +375,6 @@ abstract class Base_Tool {
             throw new \InvalidArgumentException( sprintf( 'Post %d is built with %s: writing %s directly leaves the page showing its old layout. Edit the layout with wp_update_page_layout.', $post_id, $adapter->label(), implode( ', ', $layout ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_builder_owned_product_writes( array $items ): void {
         foreach ( $items as $item ) {
@@ -780,20 +399,6 @@ abstract class Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function rest_taxonomies_for( $object_type ) {
         $map = array();
         foreach ( (array) get_object_taxonomies( $object_type, 'objects' ) as $key => $tax ) {
@@ -806,17 +411,6 @@ abstract class Base_Tool {
         return $map;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     protected function item_taxonomy_terms( array $item, array $map ) {
         $terms = array();
         foreach ( $map as $slug => $rest_base ) {
@@ -825,21 +419,6 @@ abstract class Base_Tool {
         }
         return empty( $terms ) ? new \stdClass() : $terms;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function parse_taxonomy_filter( $value, $label, array $map ) {
         $filters = $this->parse_json_param( $value, $label );
@@ -867,21 +446,6 @@ abstract class Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_non_rest_taxonomy( $taxonomy, $tax_obj ) {
         if ( ! empty( $tax_obj->show_in_rest ) ) {
             return;
@@ -893,18 +457,6 @@ abstract class Base_Tool {
         throw new \InvalidArgumentException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected static function image_filename_from_bytes( string $filename, string $path ): ?string {
         if ( ! function_exists( 'wp_get_image_mime' ) ) {
             return null;
@@ -912,17 +464,6 @@ abstract class Base_Tool {
         $mime = wp_get_image_mime( $path );
         return is_string( $mime ) ? self::image_filename_for_type( $filename, $mime ) : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected static function image_filename_for_type( string $filename, string $mime ): ?string {
         $mime = strtolower( trim( $mime ) );
@@ -938,30 +479,11 @@ abstract class Base_Tool {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_missing_post( $post_id ) {
         if ( ! get_post( $post_id ) ) {
             throw new \InvalidArgumentException( sprintf( 'Post %d not found.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
 
     protected function resolve_post_rest_base( $post_id ) {
         $post = get_post( $post_id );
@@ -981,15 +503,7 @@ abstract class Base_Tool {
             : $post->post_type;
     }
 
-    
-
-
-
-
-
-
     protected function discover_global_styles_id() {
-        
         $stylesheet = get_stylesheet();
         $request    = new \WP_REST_Request( 'GET', '/wp/v2/global-styles/themes/' . $stylesheet );
         $response   = rest_do_request( $request );
@@ -1001,7 +515,6 @@ abstract class Base_Tool {
             }
         }
 
-        
         if ( class_exists( 'WP_Theme_JSON_Resolver' )
              && method_exists( 'WP_Theme_JSON_Resolver', 'get_user_global_styles_post_id' ) ) {
             $id = \WP_Theme_JSON_Resolver::get_user_global_styles_post_id();
@@ -1014,37 +527,6 @@ abstract class Base_Tool {
             'Could not discover global styles. This requires WordPress 6.1 or later with an active block theme.'
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function fetch_style_variations() {
         $stylesheet = get_stylesheet();
@@ -1088,20 +570,6 @@ abstract class Base_Tool {
         return $this->disambiguate_style_variation_slugs( $variations );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function style_variation_scope( array $settings, array $styles ) {
         $touched = array();
         $this->collect_style_variation_categories( $settings, $touched );
@@ -1131,23 +599,6 @@ abstract class Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function disambiguate_style_variation_slugs( array $variations ) {
         $scopes_per_slug = array();
         foreach ( $variations as $variation ) {
@@ -1172,40 +623,11 @@ abstract class Base_Tool {
         return $variations;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_webhook_api_version( array $arguments ): void {
         if ( array_key_exists( 'api_version', $arguments ) ) {
             throw new \InvalidArgumentException( '"api_version" cannot be set: the WooCommerce REST API ignores it. A new webhook gets the /wc/v3 route default and an update keeps the stored version. Send the call again without it.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function validate_webhook_url( $url ) {
         $url    = is_string( $url ) ? trim( $url ) : '';
@@ -1221,19 +643,15 @@ abstract class Base_Tool {
         }
 
         $host = $parsed['host'];
-        
         if ( '[' === $host[0] ) {
             $host = trim( $host, '[]' );
         }
 
-        
-        
         if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
             $resolved_ip = $host;
         } else {
             $resolved_ip = gethostbyname( $host );
             if ( $resolved_ip === $host ) {
-                
                 throw new \InvalidArgumentException(
                     'Webhook delivery URL hostname could not be resolved.' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 );
@@ -1255,30 +673,6 @@ abstract class Base_Tool {
         return esc_url_raw( $url );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function invalidate_post_cache( $post_id, array $context = array() ) {
         $post_id = (int) $post_id;
         if ( $post_id <= 0 ) {
@@ -1290,10 +684,6 @@ abstract class Base_Tool {
         }
         self::$already_invalidated[ $post_id ] = true;
 
-        
-        
-        
-        
         if ( function_exists( 'clean_post_cache' ) ) {
             clean_post_cache( $post_id );
         }
@@ -1306,63 +696,16 @@ abstract class Base_Tool {
             )
         );
 
-        
-
-
-
-
-
         do_action( 'easy_mcp_ai_post_changed', $post_id, $context );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function clear_page_cache( array $post_ids, array $urls = array() ): void {
-        
-
-
-
-
-
-
-
         do_action( 'easy_mcp_ai_clear_page_cache', $post_ids, $urls );
     }
-
-    
-
-
-
-
 
     public static function reset_cache_invalidation_state() {
         self::$already_invalidated = array();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function pagination_meta( $response, $page, $per_page, $count = 0 ) {
         $headers  = ( is_object( $response ) && method_exists( $response, 'get_headers' ) ) ? $response->get_headers() : array();
@@ -1380,37 +723,9 @@ abstract class Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function is_invalid_page_error( $error ) {
         return \is_wp_error( $error ) && false !== strpos( (string) $error->get_error_code(), 'invalid_page_number' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function build_search_snippet( $content, $query, $length = 200 ) {
         $length  = max( 20, min( 1000, (int) $length ) );
@@ -1418,18 +733,10 @@ abstract class Base_Tool {
         if ( '' === $content ) {
             return '';
         }
-        
-        
-        
         $cap = 20000;
         if ( strlen( $content ) > $cap ) {
             $window = min( $cap, $length + 4000 );
-            
-            
             $raw_needle = trim( (string) $query );
-            
-            
-            
             $use_mb  = function_exists( 'mb_stripos' ) && function_exists( 'mb_substr' );
             $raw_pos = false;
             if ( '' !== $raw_needle ) {
@@ -1443,14 +750,10 @@ abstract class Base_Tool {
                 : substr( $content, $raw_start, $window );
         }
 
-        
-        
         $text = function_exists( 'strip_shortcodes' ) ? strip_shortcodes( $content ) : $content;
         $text = preg_replace( '/<!--.*?-->/s', ' ', $text );
         $text = wp_strip_all_tags( (string) $text );
         $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
-        
-        
         $collapsed = preg_replace( '/\s+/u', ' ', $text );
         if ( null === $collapsed ) {
             $collapsed = preg_replace( '/\s+/', ' ', $text );
@@ -1462,7 +765,6 @@ abstract class Base_Tool {
 
         $have_mb = function_exists( 'mb_stripos' ) && function_exists( 'mb_substr' ) && function_exists( 'mb_strlen' );
 
-        
         $pos    = false;
         $needle = trim( (string) $query );
         if ( '' !== $needle ) {
@@ -1475,7 +777,7 @@ abstract class Base_Tool {
             }
         }
         if ( false === $pos ) {
-            $pos = 0; 
+            $pos = 0;
         }
 
         $total = $have_mb ? mb_strlen( $text, 'UTF-8' ) : strlen( $text );
@@ -1490,22 +792,10 @@ abstract class Base_Tool {
         $snippet = $have_mb ? mb_substr( $text, $start, $length, 'UTF-8' ) : substr( $text, $start, $length );
         $snippet = trim( (string) $snippet );
 
-        $prefix = $start > 0 ? "\xE2\x80\xA6" : '';                       
-        $suffix = ( $start + $length ) < $total ? "\xE2\x80\xA6" : '';    
+        $prefix = $start > 0 ? "\xE2\x80\xA6" : '';
+        $suffix = ( $start + $length ) < $total ? "\xE2\x80\xA6" : '';
         return $prefix . $snippet . $suffix;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function apply_meta_argument( array $arguments, array &$params ) {
         if ( ! isset( $arguments['meta'] ) ) {
@@ -1521,26 +811,6 @@ abstract class Base_Tool {
         $params['meta'] = $meta;
         return true;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function ignored_meta_report( array $sent, $persisted, string $object_type = 'post', string $post_type = '' ): array {
         $registered = self::takes_meta( $object_type, $post_type ) ? self::rest_meta_names( $object_type, $post_type ) : array();
@@ -1582,22 +852,6 @@ abstract class Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function takes_meta( string $object_type, string $post_type ): bool {
         if ( 'comment' === $object_type ) {
             return true;
@@ -1605,14 +859,6 @@ abstract class Base_Tool {
         $fields = self::rest_item_fields( get_post_type_object( $post_type ) );
         return null !== $fields && in_array( 'meta', $fields, true );
     }
-
-    
-
-
-
-
-
-
 
     public static function rest_item_fields( ?object $post_type_object ): ?array {
         if ( ! is_object( $post_type_object ) || ! method_exists( $post_type_object, 'get_rest_controller' ) ) {
@@ -1629,39 +875,10 @@ abstract class Base_Tool {
         return array_map( 'strval', array_keys( $schema['properties'] ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function rest_meta_names( string $object_type, string $post_type ): array {
         $fields = 'comment' === $object_type ? new \WP_REST_Comment_Meta_Fields() : new \WP_REST_Post_Meta_Fields( $post_type );
         return $fields->get_field_schema()['properties'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function acf_field_hint( array $keys ): string {
         if ( ! function_exists( 'acf_get_field' ) ) {
@@ -1682,23 +899,6 @@ abstract class Base_Tool {
         return sprintf( 'ACF fields are not saved through meta: %s. Write them with wp_acf_update_fields (post_id, post_type, and fields as { field name: value }).', implode( ', ', $fields ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function require_compat_shim( string $id, array $arguments ): void {
         $registry = '\\Easy_MCP_AI\\Compat\\Compat_Registry';
         if ( class_exists( $registry ) && $registry::is_armed( $id, $this, $arguments ) ) {
@@ -1706,22 +906,6 @@ abstract class Base_Tool {
         }
         throw new \RuntimeException( 'This tool cannot run safely right now: its data-protection step did not start, so nothing was changed. Please report this to the site administrator.' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function find_posts_by_title( string $post_type, string $title, int $limit = 5 ): array {
         if ( '' === trim( $title ) ) {
@@ -1744,24 +928,6 @@ abstract class Base_Tool {
         );
         return array_values( array_filter( array_map( 'absint', (array) $query->posts ) ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_existing_title( string $post_type, string $name, array $meta_keys, string $noun, string $usage, string $list_tool ): void {
         $existing = $this->find_posts_by_title( $post_type, $name, 1 );
@@ -1792,27 +958,9 @@ abstract class Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     protected function allows_duplicate( array $arguments ): bool {
         return ! empty( $arguments['allow_duplicate'] ) && (bool) rest_sanitize_boolean( $arguments['allow_duplicate'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function strip_response_noise( $reply ) {
         if ( ! is_array( $reply ) ) {
@@ -1831,14 +979,6 @@ abstract class Base_Tool {
         return array_values( $reply ) === $reply ? array_map( $strip_row, $reply ) : $strip_row( $reply );
     }
 
-    
-
-
-
-
-
-
-
     protected static function response_noise_keys(): array {
         $keys = apply_filters( 'easy_mcp_ai_response_noise_keys', self::RESPONSE_NOISE_KEYS );
         if ( ! is_array( $keys ) ) {
@@ -1853,14 +993,6 @@ abstract class Base_Tool {
         return array_values( array_diff( $keys, self::RESPONSE_NOISE_PROTECTED_KEYS ) );
     }
 
-    
-
-
-
-
-
-
-
     private static function is_batch_reply( array $reply ): bool {
         return ! empty( $reply ) && array() === array_diff( array_keys( $reply ), array( 'create', 'update', 'delete' ) );
     }
@@ -1868,16 +1000,6 @@ abstract class Base_Tool {
     protected function rest_request( $method, $route, $params = array(), $fields = null ) {
         return $this->dispatch_rest_request( self::build_rest_request( $method, $route, $params, $fields ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected static function build_rest_request( $method, $route, $params = array(), $fields = null ) {
         $request = new \WP_REST_Request( $method, $route );
@@ -1889,57 +1011,19 @@ abstract class Base_Tool {
                 $request->set_param( $key, $value );
             }
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( null !== $fields ) {
             $request->set_param( '_fields', $fields );
         }
         return $request;
     }
 
-    
-
-
-
-
-
-
     protected function dispatch_rest_request( \WP_REST_Request $request ) {
         return $this->dispatch_rest_response( $request )->get_data();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     protected function rest_response( $method, $route, $params = array() ) {
         return $this->dispatch_rest_response( self::build_rest_request( $method, $route, $params ) );
     }
-
-    
-
-
-
-
-
-
 
     private function dispatch_rest_response( \WP_REST_Request $request ) {
         $method   = $request->get_method();
@@ -1955,35 +1039,10 @@ abstract class Base_Tool {
         return $response;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected static function rest_status_message( $method, $route, $response ) {
         $status = (int) $response->get_status();
         return sprintf( '%s %s answered HTTP %s with no error message.', $method, $route, trim( $status . ' ' . get_status_header_desc( $status ) ) );
     }
-
-    
-
-
-
-
-
-
 
     protected static function rest_error_message_or_empty( $response ) {
         $data = $response->get_data();
@@ -1993,19 +1052,6 @@ abstract class Base_Tool {
         $error = $response->as_error();
         return $error ? trim( (string) self::rest_error_message( $error ) ) : '';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     protected static function rest_error_message( $error ) {
         $message = $error->get_error_message();

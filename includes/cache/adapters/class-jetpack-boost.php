@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,31 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Jetpack_Boost extends Cache_Adapter {
 
     const BOOST_CACHE = 'Automattic\\Jetpack_Boost\\Modules\\Optimizations\\Page_Cache\\Pre_WordPress\\Boost_Cache';
@@ -48,7 +18,6 @@ final class Jetpack_Boost extends Cache_Adapter {
     const ACTION_URL    = 'jetpack_boost_clear_page_cache_url';
     const ACTION_POST   = 'jetpack_boost_clear_page_cache_post';
 
-    
     const SAFE_HOME_VERSION = '3.13.1';
 
     public function id(): string {
@@ -127,13 +96,6 @@ final class Jetpack_Boost extends Cache_Adapter {
         return $this->report( $detail, $posts + $pages, array_merge( $left, $more ) );
     }
 
-    
-
-
-
-
-
-
     private function send_urls( array $urls ): array {
         $calls = $this->calls();
         $sent  = 0;
@@ -156,15 +118,6 @@ final class Jetpack_Boost extends Cache_Adapter {
         return array( $sent, $left );
     }
 
-    
-
-
-
-
-
-
-
-
     private function report( string $detail, int $sent, array $left ): Layer_Result {
         if ( array() === $left ) {
             return $this->sent( $detail );
@@ -176,14 +129,6 @@ final class Jetpack_Boost extends Cache_Adapter {
         return $this->sent( $detail . $note )->with( array( 'needs' => 'scope=site' ) );
     }
 
-    
-
-
-
-
-
-
-
     private function post_widens( int $post_id ): bool {
         $link = $this->calls()->call( 'get_permalink', array( $post_id ) );
         if ( ! is_string( $link ) || '' === $link || false !== strpos( $link, '?' ) || $this->is_stripped( $link ) ) {
@@ -191,13 +136,6 @@ final class Jetpack_Boost extends Cache_Adapter {
         }
         return $this->is_home_url( $link ) && ! $this->is_safe_version();
     }
-
-    
-
-
-
-
-
 
     private function home_is_narrow(): bool {
         $calls = $this->calls();
@@ -212,24 +150,10 @@ final class Jetpack_Boost extends Cache_Adapter {
         return is_string( $link ) && '' !== $link && false === strpos( $link, '?' ) && ! $this->is_stripped( $link ) && ! $this->is_home_url( $link );
     }
 
-    
-
-
-
-
-
-
-
     private function is_stripped( string $url ): bool {
         $path = $this->path_of( $url );
         return preg_replace( '/[ <>\'"\r\n\t()]/', '', $path ) !== $path;
     }
-
-    
-
-
-
-
 
     private function is_safe_version(): bool {
         $version = $this->calls()->constant( 'JETPACK_BOOST_VERSION' );

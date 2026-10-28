@@ -39,17 +39,6 @@ class Site_Stats_Resource extends Base_Resource {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function type_counts( $post_type, array $in_total, array $outside ) {
         $counts   = wp_count_posts( $post_type );
         $type     = get_post_type_object( $post_type );

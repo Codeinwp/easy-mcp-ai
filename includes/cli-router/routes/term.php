@@ -1,46 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -81,8 +40,6 @@ return array(
         'tools'   => array( 'wp_list_terms', 'wp_get_term' ),
         'write'   => false,
         'params'  => array( 'taxonomy', 'field', 'fields', 'format' ),
-        
-        
         'generic' => true,
     ),
     'term meta add'    => array(

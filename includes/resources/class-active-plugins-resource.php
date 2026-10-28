@@ -19,7 +19,6 @@ class Active_Plugins_Resource extends Base_Resource {
         return 'List of all active WordPress plugins with name, version, and description.';
     }
 
-    
     public function get_required_tool(): string {
         return 'wp_list_plugins';
     }
@@ -29,8 +28,6 @@ class Active_Plugins_Resource extends Base_Resource {
             return array( 'plugins' => array() );
         }
 
-        
-        
         if ( ! function_exists( 'get_plugins' ) ) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }

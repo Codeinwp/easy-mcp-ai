@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -220,8 +217,6 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 			$updated[] = 'primary_term';
 		}
 
-		
-		
 		if ( array() !== $updated ) {
 			$this->clear_page_cache( array( $post_id ) );
 		}
@@ -232,17 +227,6 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 			'fields'         => self::stored_fields( $post_id, $arguments, $meta_map ),
 		);
 	}
-
-	
-
-
-
-
-
-
-
-
-
 
 	private static function stored_fields( int $post_id, array $arguments, array $text_keys ): array {
 		$keys = array_merge(
@@ -255,10 +239,8 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 			)
 		);
 		if ( isset( $arguments['primary_term'], $arguments['taxonomy'] ) ) {
-			
 			$keys['primary_term'] = 'rank_math_primary_' . trim( (string) $arguments['taxonomy'] );
 		}
-		
 		$meta_id = (int) ( wp_is_post_revision( $post_id ) ?: $post_id );
 		$fields  = array();
 		foreach ( $keys as $field => $meta_key ) {

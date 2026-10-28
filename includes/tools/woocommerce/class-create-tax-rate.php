@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class Create_Tax_Rate extends Base_Tool {
 
     use Store_Setup;

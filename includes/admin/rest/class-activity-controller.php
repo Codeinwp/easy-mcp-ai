@@ -1,12 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\History\Change_Log_Repository;
@@ -21,33 +14,21 @@ class Activity_Controller extends Admin_Rest_Controller {
     const PER_PAGE_DEFAULT = 25;
     const PER_PAGE_MAX     = 100;
 
-    
     const AUDIT_STATUSES = array( 'ok', 'error', 'refused', 'auth_failure', 'pending' );
 
     const AUDIT_SOURCES = array( 'legacy', 'oauth', 'unknown' );
 
     const CHANGE_ACTIONS = array( 'create', 'update', 'delete' );
 
-    
     const OBJECT_TYPES_TRANSIENT = 'easy_mcp_ai_change_log_object_types';
 
-    
     private $db;
 
-    
     private $changes;
 
-    
     private $audit;
 
-    
     private $cleanup;
-
-    
-
-
-
-
 
     public function __construct( $db, $changes, $audit, callable $cleanup ) {
         $this->db      = $db;
@@ -64,12 +45,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         $this->register_route( '/activity/changes/(?P<id>\d+)', \WP_REST_Server::READABLE, array( $this, 'get_change' ) );
     }
 
-    
-
-    
-
-
-
     public function get_audit( $request ) {
         $paging = self::paging( $request );
         if ( \is_wp_error( $paging ) ) {
@@ -80,7 +55,6 @@ class Activity_Controller extends Admin_Rest_Controller {
             return $filters;
         }
 
-        
         if ( isset( $filters['id'] ) ) {
             $row   = $this->audit->find( $filters['id'] );
             $rows  = ( $row && 1 === $paging['page'] ) ? array( $row ) : array();
@@ -107,7 +81,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
     private function audit_filter_options() {
         $users = array();
         foreach ( array_filter( array_map( 'intval', $this->audit->distinct( 'wp_user_id' ) ) ) as $user_id ) {
@@ -116,22 +89,11 @@ class Activity_Controller extends Admin_Rest_Controller {
         return array( 'users' => $users );
     }
 
-    
-
-
-
     public function cleanup_audit( $request ) {
         $retention = self::audit_retention_days();
         $more      = call_user_func( $this->cleanup, $this->db->prefix . 'easy_mcp_ai_audit_log', $retention );
         return $this->ok( array( 'retentionDays' => $retention, 'more' => (bool) $more ) );
     }
-
-    
-
-
-
-
-
 
     public static function audit_filters( array $params ) {
         $filters = array();
@@ -196,12 +158,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         return $filters;
     }
 
-    
-
-
-
-
-
     public static function parse_client( $client ) {
         if ( preg_match( '/^token:(\d+)$/', $client, $m ) && (int) $m[1] > 0 ) {
             return array( 'auth_source' => 'legacy', 'token_id' => (int) $m[1] );
@@ -212,14 +168,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         return null;
     }
 
-    
-
-
-
-
-
-
-
     public static function audit_row( array $row, $count ) {
         $credential = \Easy_MCP_AI\Audit_Log_Repository::credential_label( $row );
         $status     = strtolower( (string) ( $row['result_status'] ?? 'success' ) );
@@ -229,8 +177,6 @@ class Activity_Controller extends Admin_Rest_Controller {
             $arguments = is_array( $decoded ) ? $decoded : null;
         }
         $error = null;
-        
-        
         if ( 'error' === $status && isset( $row['error_message'] ) && is_string( $row['error_message'] ) && '' !== $row['error_message'] ) {
             $error = $row['error_message'];
         } elseif ( 'auth_failure' === $status && is_array( $arguments ) && isset( $arguments['reason'] ) && is_string( $arguments['reason'] ) ) {
@@ -243,13 +189,11 @@ class Activity_Controller extends Admin_Rest_Controller {
             'client'       => array(
                 'kind' => 'oauth' === $credential['source'] ? 'oauth' : 'token',
                 'name' => (string) $credential['label'],
-                
                 'id'   => 'oauth' === $credential['source'] && ! empty( $row['client_name'] ) && ! empty( $row['oauth_client_id'] ) ? (string) $row['oauth_client_id'] : null,
             ),
             'source'       => $credential['source'],
             'user'         => self::user_summary( (int) ( $row['wp_user_id'] ?? 0 ), $row['user_login'] ?? null ),
             'toolName'     => (string) ( $row['tool_name'] ?? '' ),
-            
             'request'      => is_array( $arguments ) ? Route_Gate::request_summary( (string) ( $row['tool_name'] ?? '' ), $arguments ) : null,
             'changesCount' => (int) $count,
             'arguments'    => $arguments,
@@ -259,12 +203,6 @@ class Activity_Controller extends Admin_Rest_Controller {
             'durationMs'   => isset( $row['duration_ms'] ) && null !== $row['duration_ms'] ? (int) $row['duration_ms'] : null,
         );
     }
-
-    
-
-    
-
-
 
     public function get_changes( $request ) {
         $paging = self::paging( $request );
@@ -291,19 +229,11 @@ class Activity_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
-
-
-
     public function cleanup_changes( $request ) {
         $retention = \Easy_MCP_AI\Plugin::change_log_retention_days();
         $more      = call_user_func( $this->cleanup, $this->changes->table(), $retention );
         return $this->ok( array( 'retentionDays' => $retention, 'more' => (bool) $more ) );
     }
-
-    
-
-
 
     public function get_change( $request ) {
         $row = $this->find_change( $request );
@@ -312,12 +242,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         }
         return $this->ok( $this->change_detail( $row ) );
     }
-
-    
-
-
-
-
 
     public static function change_filters( array $params ) {
         $filters = array();
@@ -365,12 +289,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         return $filters;
     }
 
-    
-
-
-
-
-
     public static function capture_kind( $mode ) {
         $mode = is_string( $mode ) ? trim( $mode ) : '';
         if ( 'db_row' === $mode || 'db_sql' === $mode ) {
@@ -381,13 +299,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         }
         return 'standard';
     }
-
-    
-
-
-
-
-
 
     private function change_rows( array $rows ) {
         if ( ! $rows ) {
@@ -452,13 +363,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
-
     private function change_detail( array $row ) {
         $row     = $this->changes->find( (int) $row['id'] ) ?: $row;
         $summary = $this->change_row( $row, $this->audit_statuses( array( $row['audit_id'] ?? 0 ) ) );
@@ -472,15 +376,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function fields_of( array $row ) {
         $before = self::decode_side( $row['before_value'] ?? null );
         $after  = self::decode_side( $row['after_value'] ?? null );
@@ -489,7 +384,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         }
         $before = is_array( $before ) ? $before : ( null === $before ? array() : array( 'value' => $before ) );
         $after  = is_array( $after ) ? $after : ( null === $after ? array() : array( 'value' => $after ) );
-        
         if ( self::is_list( $before ) || self::is_list( $after ) ) {
             $before = $before ? array( 'value' => $before ) : array();
             $after  = $after ? array( 'value' => $after ) : array();
@@ -532,14 +426,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         return is_array( $decoded ) ? array_values( array_map( 'strval', $decoded ) ) : array();
     }
 
-    
-
-    
-
-
-
-
-
     public static function paging( $request ) {
         $page     = $request->get_param( 'page' );
         $per_page = $request->get_param( 'per_page' );
@@ -558,12 +444,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
     public static function coerce_datetime( $raw ) {
         $raw = str_replace( 'T', ' ', trim( (string) $raw ) );
         if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw ) ) {
@@ -575,16 +455,9 @@ class Activity_Controller extends Admin_Rest_Controller {
         if ( ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $raw ) ) {
             return '';
         }
-        
         $parsed = \DateTime::createFromFormat( 'Y-m-d H:i:s', $raw, new \DateTimeZone( 'UTC' ) );
         return ( $parsed && $parsed->format( 'Y-m-d H:i:s' ) === $raw ) ? $raw : '';
     }
-
-    
-
-
-
-
 
     public static function audit_retention_days() {
         $stored = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_retention', 30 );
@@ -632,9 +505,6 @@ class Activity_Controller extends Admin_Rest_Controller {
         return array( 'id' => (int) $user_id, 'displayName' => $name );
     }
 
-    
-
-    
     private function change_counts( array $audit_ids ) {
         $ids = array_values( array_unique( array_filter( array_map( 'intval', $audit_ids ) ) ) );
         if ( ! $ids ) {
@@ -676,7 +546,7 @@ class Activity_Controller extends Admin_Rest_Controller {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- plugin-owned table, no user input; cached above.
         $types = $this->db->get_col( "SELECT DISTINCT object_type FROM `{$table}` ORDER BY object_type ASC" );
         $types = is_array( $types ) ? array_values( array_filter( array_map( 'strval', $types ), 'strlen' ) ) : array();
-        \set_transient( self::OBJECT_TYPES_TRANSIENT, $types, 300 ); 
+        \set_transient( self::OBJECT_TYPES_TRANSIENT, $types, 300 );
         return $types;
     }
 }

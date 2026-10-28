@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,20 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Facetwp extends Cache_Adapter {
 
@@ -74,11 +55,6 @@ final class Facetwp extends Cache_Adapter {
         }
         return $this->sent( sprintf( 'FacetWP re-indexed %d post(s).', count( $ids ) ) );
     }
-
-    
-
-
-
 
     private function indexer(): ?object {
         $calls = $this->calls();

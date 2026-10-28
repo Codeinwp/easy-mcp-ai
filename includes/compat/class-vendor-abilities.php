@@ -1,70 +1,32 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Compat;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 abstract class Vendor_Abilities {
 
-    
     const GROUP = '';
 
-    
     const PREFIX = '';
 
-    
     const VENDOR = '';
 
-    
     const ENABLE_PENDING_OPTION = '';
 
-    
     const ENABLED_ABILITIES_OPTION = 'easy_mcp_ai_enabled_abilities';
-
-    
-
-
-
 
     const TICK_LOCK = 'easy_mcp_ai_abilities_tick_lock';
 
-    
     const TICK_LOCK_TTL = 30;
 
-    
     private static $failed = array();
 
-    
     public static function group_enabled(): bool {
         return \Easy_MCP_AI\Meta\Meta_Exposure::is_group_enabled( static::GROUP );
     }
-
-    
-
-
-
-
-
-
 
     public static function group_changed( $old, $new ): void {
         $was = is_array( $old ) && in_array( static::GROUP, $old, true );
@@ -75,14 +37,6 @@ abstract class Vendor_Abilities {
             delete_option( static::ENABLE_PENDING_OPTION );
         }
     }
-
-    
-
-
-
-
-
-
 
     public static function enable_pending(): void {
         if ( ! get_option( static::ENABLE_PENDING_OPTION ) || ! static::group_enabled() || ! function_exists( 'wp_get_abilities' ) ) {
@@ -104,8 +58,6 @@ abstract class Vendor_Abilities {
                 $enabled = self::stored_enabled();
                 update_option( self::ENABLED_ABILITIES_OPTION, array_values( array_unique( array_merge( $enabled, $names ) ) ) );
             };
-            
-            
             if ( class_exists( '\\Easy_MCP_AI\\MCP\\Option_Guard' ) ) {
                 \Easy_MCP_AI\MCP\Option_Guard::while_suspended( $write );
                 return;
@@ -116,12 +68,6 @@ abstract class Vendor_Abilities {
         }
     }
 
-    
-
-
-
-
-
     private static function stored_enabled(): array {
         \wp_cache_delete( self::ENABLED_ABILITIES_OPTION, 'options' );
         \wp_cache_delete( 'notoptions', 'options' );
@@ -129,15 +75,6 @@ abstract class Vendor_Abilities {
         $enabled = get_option( self::ENABLED_ABILITIES_OPTION, array() );
         return is_array( $enabled ) ? $enabled : array();
     }
-
-    
-
-
-
-
-
-
-
 
     private static function lock(): string {
         global $wpdb;
@@ -161,13 +98,6 @@ abstract class Vendor_Abilities {
         return 1 === $won ? $token : '';
     }
 
-    
-
-
-
-
-
-
     private static function unlock( string $token ): void {
         global $wpdb;
         if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) ) {
@@ -182,22 +112,18 @@ abstract class Vendor_Abilities {
         \wp_cache_delete( 'notoptions', 'options' );
     }
 
-    
     public static function reset(): void {
         unset( self::$failed[ static::class ] );
     }
 
-    
     protected static function active(): bool {
         return ! isset( self::$failed[ static::class ] ) && static::group_enabled();
     }
 
-    
     protected static function any_registered(): bool {
         return array() !== static::registered_names();
     }
 
-    
     protected static function registered_names(): array {
         $names = array();
         foreach ( (array) wp_get_abilities() as $ability ) {
@@ -209,14 +135,6 @@ abstract class Vendor_Abilities {
         return $names;
     }
 
-    
-
-
-
-
-
-
-
     protected static function run( callable $registration, string $what ): void {
         try {
             $registration();
@@ -225,14 +143,6 @@ abstract class Vendor_Abilities {
             error_log( sprintf( 'Easy MCP AI: %s %s failed, %s abilities not registered: %s', static::VENDOR, $what, static::VENDOR, $e->getMessage() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional: a vendor change must be visible
         }
     }
-
-    
-
-
-
-
-
-
 
     protected static function has_method( string $class, string $method, bool $static ): bool {
         if ( ! class_exists( $class ) || ! method_exists( $class, $method ) ) {

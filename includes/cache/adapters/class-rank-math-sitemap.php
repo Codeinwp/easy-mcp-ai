@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -16,36 +11,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Rank_Math_Sitemap extends Cache_Adapter {
 
     const CACHE  = 'RankMath\\Sitemap\\Cache';
     const MAP    = 'RankMath\\Sitemap\\Sitemap';
     const ROUTER = 'RankMath\\Sitemap\\Router';
 
-    
     const INDEX = '1';
 
-    
     const VETO = 'rank_math/pre_clear_cache';
 
     public function id(): string {
@@ -96,12 +69,6 @@ final class Rank_Math_Sitemap extends Cache_Adapter {
         return $this->purge_types( array() !== $types ? $types : $this->url_types( $request->urls ) );
     }
 
-    
-
-
-
-
-
     private function purge_types( array $types ): Layer_Result {
         if ( array() === $types ) {
             return $this->skip( 'no_url_api', 'Rank Math caches only its XML sitemaps, and nothing in this request is one of them (one of its sitemap URLs, or an existing post).', array( 'needs' => 'scope=site' ) );
@@ -118,13 +85,6 @@ final class Rank_Math_Sitemap extends Cache_Adapter {
         );
         return $this->sent( sprintf( 'Rank Math cleared the %s sitemap cache.', implode( ', ', $names ) ) );
     }
-
-    
-
-
-
-
-
 
     private function invalidate( array $types ): bool {
         $calls = $this->calls();
@@ -145,13 +105,6 @@ final class Rank_Math_Sitemap extends Cache_Adapter {
         return true;
     }
 
-    
-
-
-
-
-
-
     private function post_types( array $post_ids ): array {
         $types = array();
         foreach ( $post_ids as $post_id ) {
@@ -162,14 +115,6 @@ final class Rank_Math_Sitemap extends Cache_Adapter {
         }
         return array_values( array_unique( $types ) );
     }
-
-    
-
-
-
-
-
-
 
     private function url_types( array $urls ): array {
         $calls = $this->calls();

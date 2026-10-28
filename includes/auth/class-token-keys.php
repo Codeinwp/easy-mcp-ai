@@ -5,57 +5,26 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Token_Keys {
-
-    
-
-
-
-
-
-
 
     const ID_LENGTH   = 6;
     const ID_FRAGMENT = '[a-f0-9]{6}';
 
-    
     const REASON_SHORT     = 'short';
     const REASON_DUPLICATE = 'duplicate';
     const REASON_MALFORMED = 'malformed';
 
     const MIN_KEY_BYTES = 32;
 
-    
     const FILTER   = 'easy_mcp_ai_token_keys';
     const CONSTANT = 'EASY_MCP_AI_TOKEN_KEYS';
 
-    
     private static $resolved = null;
 
-    
     public static function reset() {
         self::$resolved = null;
     }
 
-    
     private static function resolve() {
         if ( null !== self::$resolved ) {
             return self::$resolved;
@@ -89,17 +58,6 @@ class Token_Keys {
     private static function has_value( $value ) {
         return ( is_string( $value ) && '' !== trim( $value ) ) || ( is_array( $value ) && array() !== $value );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function parse( $raw ) {
         $entries = array();
@@ -139,15 +97,10 @@ class Token_Keys {
         return array( 'keys' => $keys, 'current' => $current, 'errors' => $errors );
     }
 
-    
-
-
-
     public static function id_for( $secret ) {
         return substr( hash_hmac( 'sha256', 'easy-mcp-ai-key-id', (string) $secret ), 0, self::ID_LENGTH );
     }
 
-    
     public static function current_id() {
         return self::resolve()['current'];
     }
@@ -160,20 +113,13 @@ class Token_Keys {
         return isset( self::resolve()['keys'][ (string) $id ] );
     }
 
-    
     public static function source() {
         return self::resolve()['source'];
     }
 
-    
     public static function errors() {
         return self::resolve()['errors'];
     }
-
-    
-
-
-
 
     public static function hash( $raw, $id = '' ) {
         if ( '' === (string) $id ) {
@@ -186,15 +132,9 @@ class Token_Keys {
         return hash_hmac( 'sha256', (string) $raw, $keys[ $id ] );
     }
 
-    
     public static function hash_current( $raw ) {
         return self::hash( $raw, self::current_id() );
     }
-
-    
-
-
-
 
     public static function parse_id( $raw, $prefix ) {
         if ( ! is_string( $raw ) ) {
@@ -206,19 +146,11 @@ class Token_Keys {
         return $m[1];
     }
 
-    
-
-
-
-
-
-
     public static function signing_key() {
         $resolved = self::resolve();
         return '' !== $resolved['current'] ? $resolved['keys'][ $resolved['current'] ] : \wp_salt( 'auth' );
     }
 
-    
     public static function mint_prefix( $prefix ) {
         $current = self::current_id();
         return '' === $current ? (string) $prefix : $prefix . $current . '_';

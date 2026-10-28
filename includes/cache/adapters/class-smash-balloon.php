@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,36 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Smash_Balloon extends Cache_Adapter {
 
-    
     const PRODUCTS = array(
         'instagram' => array( 'Instagram Feed', 'SBIVER' ),
         'facebook'  => array( 'Custom Facebook Feed', 'CFFVER' ),
@@ -99,11 +66,6 @@ final class Smash_Balloon extends Cache_Adapter {
         return $this->sent( trim( sprintf( 'Smash Balloon cleared the stored feeds of %s. %s', implode( ', ', $cleared ), implode( ' ', $left ) ) ) );
     }
 
-    
-
-
-
-
     private function present(): array {
         $found = array();
         foreach ( self::PRODUCTS as $key => $product ) {
@@ -114,22 +76,9 @@ final class Smash_Balloon extends Cache_Adapter {
         return $found;
     }
 
-    
-
-
-
-
-
-
     private function selected( string $key, Purge_Request $request ): bool {
         return 'twitter' !== $key || ( is_array( $request->caches ) && in_array( $this->id(), $request->caches, true ) );
     }
-
-    
-
-
-
-
 
     private function clear( string $key ): string {
         $calls   = $this->calls();
@@ -163,11 +112,6 @@ final class Smash_Balloon extends Cache_Adapter {
         }
     }
 
-    
-
-
-
-
     private function clear_instagram(): bool {
         $calls = $this->calls();
         $all   = $calls->function_exists( 'sbi_clear_all_feed_caches' );
@@ -192,11 +136,6 @@ final class Smash_Balloon extends Cache_Adapter {
         }
         return true;
     }
-
-    
-
-
-
 
     private function youtube_cascade(): array {
         $calls  = $this->calls();

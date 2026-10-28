@@ -5,11 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 final class Outline_Action extends Action {
 
     const ARGUMENTS = array( 'path' );
@@ -44,14 +39,8 @@ final class Outline_Action extends Action {
         return $meta + self::fit_outline( $outline );
     }
 
-    
-
-
-
-
-
     private static function fit_outline( array $outline ): array {
-        $budget = self::RESPONSE_BUDGET - 1024; 
+        $budget = self::RESPONSE_BUDGET - 1024;
         while ( strlen( self::json( $outline ) ) > $budget ) {
             $longest = '';
             $size    = 0;

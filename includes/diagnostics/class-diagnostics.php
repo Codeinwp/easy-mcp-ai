@@ -1,42 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -45,130 +8,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Diagnostics {
 
-    
-
-
-
-
-
     const CACHE_OPTION = 'easy_mcp_ai_diagnostics_last_run';
 
-    
     const STALE_AFTER = DAY_IN_SECONDS;
-
-    
-
-
-
-
 
     const CONNECTION_GROUPS = array( 'a1', 'a9', 'a10' );
 
-    
     private static $checks = array();
 
-    
     private static $results = null;
-
-    
-
-
-
-
-
-
-
-
 
     public static function register( $cb, $id = '', $deep_only = false ) {
         self::$checks[] = array( 'cb' => $cb, 'id' => (string) $id, 'deep_only' => (bool) $deep_only );
     }
 
-    
-
-
-
-
-
-
-
     public static function has_registered_checks() {
         return ! empty( self::$checks );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function register_core_checks( $tool_registry = null ) {
         self::register( array( Check_Transport::class, 'run' ), 'a' );
         self::register( array( Check_Notices::class, 'run' ), 'a' );
         self::register( array( Check_Session::class, 'run' ), 'b' );
         self::register( array( Check_Schema::class, 'run' ), 'c' );
-        
-        
-        
-        
-        
-        
-        
         self::register( function () use ( $tool_registry ) {
             return Check_Tool_Visibility::run( $tool_registry );
         }, 'd' );
-        
-        
-        
-        
-        
-        
         self::register( array( Check_Header_Probe::class, 'run' ), 'a1', true );
         self::register( array( Check_Conflicts::class, 'run' ), 'e' );
         self::register( array( Check_Config::class, 'run' ), 'f' );
         self::register( array( Check_Environment::class, 'run' ), 'g' );
-        
-        
-        
-        
-        
-        
         self::register( array( Check_Edge_Block::class, 'run' ), 'a9', true );
-        
-        
-        
-        
-        
         self::register( array( Check_Discovery::class, 'run' ), 'a10', true );
         self::register( array( Check_Observability::class, 'run' ), 'h', true );
         self::register( array( Check_Multisite::class, 'run' ), 'i', true );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function run( $deep = false, $groups = null ) {
         $results  = array();
@@ -179,10 +53,6 @@ class Diagnostics {
             $deep_only = ! empty( $check['deep_only'] );
             $group     = '' !== $check['id'] ? $check['id'] : 'unknown';
 
-            
-            
-            
-            
             if ( self::is_kept( $deep_only, $group, $deep, $groups ) ) {
                 foreach ( self::kept_or_placeholder( $group, $previous ) as $kept ) {
                     $results[] = $kept;
@@ -193,8 +63,6 @@ class Diagnostics {
             try {
                 $produced = call_user_func( $check['cb'] );
             } catch ( \Throwable $e ) {
-                
-                
                 $failed = Diagnostic_Result::unknown(
                     $group,
                     Diagnostic_Result::TIER_INFO,
@@ -219,27 +87,8 @@ class Diagnostics {
         self::$results = $results;
         self::persist( $results, self::invalidated_at( $previous ) );
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         return self::redact_cross_tenant( $results );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function is_kept( $deep_only, $group, $deep, $groups ) {
         if ( ! $deep_only ) {
@@ -248,40 +97,13 @@ class Diagnostics {
         return ! $deep || ( null !== $groups && ! in_array( $group, (array) $groups, true ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function stamp( Diagnostic_Result $result, $deep_only, $group, $now ) {
         return $deep_only ? $result->with_measurement( $group, $now ) : $result;
     }
 
-    
-
-
-
-
-
     private static function invalidated_at( array $report ) {
         return isset( $report['invalidated_at'] ) ? (int) $report['invalidated_at'] : 0;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function deferred_placeholder( $group, $detail, array $evidence, $measured_at ) {
         return Diagnostic_Result::unknown(
@@ -293,25 +115,10 @@ class Diagnostics {
         )->with_measurement( $group, $measured_at );
     }
 
-    
-
-
-
-
     private static function stored_report() {
         $cache = \get_option( self::CACHE_OPTION, array() );
         return is_array( $cache ) ? $cache : array();
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function kept_or_placeholder( $group, array $previous ) {
         $kept = array();
@@ -337,12 +144,7 @@ class Diagnostics {
 
         $invalidated_at = self::invalidated_at( $previous );
         $measured_at    = (int) $kept[0]->measured_at();
-        
-        
-        
         if ( $invalidated_at > 0 && $measured_at <= $invalidated_at ) {
-            
-            
             return array(
                 self::deferred_placeholder(
                     $group,
@@ -355,14 +157,6 @@ class Diagnostics {
 
         return $kept;
     }
-
-    
-
-
-
-
-
-
 
     public static function connection_checks_due() {
         $report         = self::stored_report();
@@ -386,28 +180,7 @@ class Diagnostics {
         return false;
     }
 
-    
-
-
-
-
-
     public static function maybe_run() {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( function_exists( 'current_user_can' ) && ! \current_user_can( 'manage_options' ) ) {
             return self::cached();
         }
@@ -418,33 +191,14 @@ class Diagnostics {
         return self::cached();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function redact_message( $message ) {
         $message = (string) $message;
 
-        
-        
         $message = preg_replace( '#(?:/[^/\s:()"\']+){2,}/([^/\s:()"\']+)#', '…/$1', $message );
         $message = preg_replace( '#[A-Za-z]:\\\\(?:[^\\\\\s:()"\']+\\\\)+([^\\\\\s:()"\']+)#', '…\\\\$1', $message );
 
         return $message;
     }
-
-    
-
-
 
     public static function cached() {
         if ( null !== self::$results ) {
@@ -465,48 +219,12 @@ class Diagnostics {
         return self::redact_cross_tenant( $results );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function redact_cross_tenant( array $results ) {
-        
-        
         $is_multisite = function_exists( 'is_multisite' ) && \is_multisite();
         if ( ! $is_multisite ) {
             return $results;
         }
 
-        
-        
         $have_gate = class_exists( __NAMESPACE__ . '\\Check_Multisite' );
         $may_read  = $have_gate ? Check_Multisite::may_read_network() : false;
 
@@ -517,44 +235,15 @@ class Diagnostics {
         return self::withhold_network_rows( $results, $have_gate ? true : null );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function must_withhold_network( $is_multisite, $gate_available, $may_read ) {
         if ( ! $is_multisite ) {
-            return false; 
+            return false;
         }
         if ( ! $gate_available ) {
-            return true;  
+            return true;
         }
         return ! $may_read;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function withhold_network_rows( array $results, $have_gate ) {
         $out = array();
@@ -567,7 +256,7 @@ class Diagnostics {
             $out[] = ( true === $have_gate )
                 ? Check_Multisite::evaluate_per_site_tables(
                     true,
-                    null, 
+                    null,
                     0,
                     0,
                     Check_Multisite::REASON_NOT_PERMITTED
@@ -584,7 +273,6 @@ class Diagnostics {
         return $out;
     }
 
-    
     public static function last_run_at() {
         $cache = \get_option( self::CACHE_OPTION, array() );
         if ( ! is_array( $cache ) || ! isset( $cache['generated_at'] ) ) {
@@ -601,22 +289,6 @@ class Diagnostics {
         return ( time() - $at ) >= self::STALE_AFTER;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function invalidate() {
         $cache = \get_option( self::CACHE_OPTION, array() );
         if ( ! is_array( $cache ) || empty( $cache ) ) {
@@ -624,29 +296,15 @@ class Diagnostics {
         }
 
         $cache['generated_at'] = 0;
-        
-        
         $cache['invalidated_at'] = time();
         \update_option( self::CACHE_OPTION, $cache, false );
     }
-
-    
-
-
-
-
-
-
 
     const INVALIDATING_OPTIONS = array(
         'permalink_structure',
         'siteurl',
         'home',
     );
-
-    
-
-
 
     public static function register_invalidation() {
         foreach ( self::INVALIDATING_OPTIONS as $option ) {
@@ -655,24 +313,11 @@ class Diagnostics {
         }
     }
 
-    
-
-
-
-
     public static function blockers() {
         return array_values( array_filter( self::cached(), function ( $r ) {
             return $r->renders_in_notice();
         } ) );
     }
-
-    
-    
-
-
-
-
-
 
     public static function summary() {
         $counts = array( 'total' => 0, 'pass' => 0, 'warn' => 0, 'fail' => 0, 'unknown' => 0, 'deferred' => 0 );
@@ -701,23 +346,7 @@ class Diagnostics {
         return $counts;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function persist( array $results, $invalidated_at = 0 ) {
-        
-        
-        
-        
-        
-        
         $saved_since   = self::invalidated_at( self::stored_report() );
         $changed_since = $saved_since > (int) $invalidated_at;
         $payload       = array(
@@ -729,23 +358,17 @@ class Diagnostics {
             $payload['invalidated_at'] = $invalidated_at;
         }
 
-        
-        
         \update_option( self::CACHE_OPTION, $payload, false );
 
         $stored = \get_option( self::CACHE_OPTION, array() );
         return is_array( $stored ) && isset( $stored['generated_at'] ) && $stored['generated_at'] === $payload['generated_at'];
     }
 
-    
-
-    
     public static function reset_for_tests() {
         self::$checks  = array();
         self::$results = null;
     }
 
-    
     public static function reset_for_tests_preserving_registry() {
         self::$results = null;
     }

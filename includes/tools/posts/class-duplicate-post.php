@@ -9,26 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Duplicate_Post extends Base_Tool {
-
-    
-
 
     const REFUSED_TYPES = array(
         'attachment'          => 'a media item',
@@ -45,11 +26,6 @@ class Duplicate_Post extends Base_Tool {
         'product_variation'   => 'a WooCommerce product variation',
     );
 
-    
-
-
-
-
     const SKIPPED_META = array(
         '_edit_lock',
         '_edit_last',
@@ -65,17 +41,10 @@ class Duplicate_Post extends Base_Tool {
         '_elementor_page_assets',
     );
 
-    
-
-
-
     const SKIPPED_META_PREFIXES = array(
         '_wp_trash_meta_',
         '_dp_',
     );
-
-    
-
 
     const STATUSES = array( 'draft', 'pending', 'private', 'publish' );
 
@@ -128,14 +97,6 @@ class Duplicate_Post extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         try {
             $post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
@@ -158,11 +119,9 @@ class Duplicate_Post extends Base_Tool {
         try {
             $meta = self::copy_meta( (int) $source->ID, $new_id );
         } catch ( \Throwable $e ) {
-            
             throw new Detailed_Tool_Error( sprintf( 'Post %d was created as a draft copy, but copying its meta failed: delete it, or finish it by hand.', $new_id ), 'The error was: ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( array() !== $meta['failed'] ) {
-            
             throw new Detailed_Tool_Error( sprintf( 'Post %1$d was created as a draft copy, but WordPress refused %2$d of its meta keys: delete it, or finish it by hand.', $new_id, count( $meta['failed'] ) ), self::refused_meta_details( $meta['failed'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
@@ -191,16 +150,6 @@ class Duplicate_Post extends Base_Tool {
         return array_merge( $reply, $fields['skipped'] );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function checked_source( int $post_id, array $arguments ): array {
         $post = get_post( $post_id );
         if ( ! is_object( $post ) || ! get_post_type_object( $post->post_type ) || ! current_user_can( 'read_post', $post_id ) ) {
@@ -218,8 +167,6 @@ class Duplicate_Post extends Base_Tool {
         $rest_base = $this->resolve_post_rest_base( $post_id );
         $served    = Post_Type_Rest_Base::served_type( $rest_base );
         if ( null === $served || $served[0] !== $post->post_type ) {
-            
-            
             throw new \InvalidArgumentException( sprintf( 'Post %1$d has post type "%2$s", which the REST API does not serve at /wp/v2/%3$s, so this tool cannot create its copy.', $post_id, $post->post_type, $rest_base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         self::post_type_route( $rest_base, null, 'POST' );
@@ -229,31 +176,12 @@ class Duplicate_Post extends Base_Tool {
         return array( $post, $rest_base, self::checked_status( $arguments, get_post_type_object( $post->post_type ) ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function caller_may_create_custom_items(): ?bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) ) {
             return null;
         }
         return \Easy_MCP_AI\MCP\Server::current_call_may_use( 'wp_create_cpt_item' );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function refused_meta_details( array $failed ): string {
         $head  = 'Refused by a plugin or the database: ';
@@ -276,23 +204,6 @@ class Duplicate_Post extends Base_Tool {
         return $head . $list( $shown ) . $tail;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_other_created_type( int $new_id, string $post_type ): void {
         $created_type = (string) get_post_type( $new_id );
         if ( $created_type === $post_type ) {
@@ -306,15 +217,6 @@ class Duplicate_Post extends Base_Tool {
         throw new Detailed_Tool_Error( $what . ' It was deleted again.', $details . ' and deletion.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
     private static function checked_status( array $arguments, object $post_type_object ): string {
         $status = isset( $arguments['status'] ) && '' !== $arguments['status'] ? (string) $arguments['status'] : 'draft';
         if ( ! in_array( $status, self::STATUSES, true ) ) {
@@ -325,17 +227,6 @@ class Duplicate_Post extends Base_Tool {
         }
         return $status;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function copied_fields( object $source, array $arguments ): array {
         $title = $source->post_title;
@@ -375,9 +266,6 @@ class Duplicate_Post extends Base_Tool {
         $item_fields = self::rest_item_fields( get_post_type_object( $source->post_type ) );
         $columns     = array();
         if ( null !== $item_fields ) {
-            
-            
-            
             foreach ( array( 'menu_order' => 'menu_order', 'parent' => 'post_parent' ) as $field => $column ) {
                 if ( ! in_array( $field, $item_fields, true ) && 0 !== $params[ $field ] ) {
                     $columns[ $column ] = $params[ $field ];
@@ -397,20 +285,6 @@ class Duplicate_Post extends Base_Tool {
             'skipped' => $skipped,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function create_copy( string $route, string $post_type, array $fields ): array {
         if ( array() === $fields['columns'] ) {
@@ -436,16 +310,6 @@ class Duplicate_Post extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function columns_not_stored( object $source, int $new_id ): array {
         $copy  = get_post( $new_id );
         $unset = array();
@@ -456,14 +320,6 @@ class Duplicate_Post extends Base_Tool {
         }
         return $unset;
     }
-
-    
-
-
-
-
-
-
 
     private function copied_terms( object $source ): array {
         $rest_bases = $this->rest_taxonomies_for( $source->post_type );
@@ -476,7 +332,6 @@ class Duplicate_Post extends Base_Tool {
             $args = array( 'fields' => 'ids' );
             $tax  = get_taxonomy( $taxonomy );
             if ( is_object( $tax ) && ! empty( $tax->sort ) ) {
-                
                 $args['orderby'] = 'term_order';
             }
             $ids = wp_get_object_terms( (int) $source->ID, $taxonomy, $args );
@@ -494,23 +349,6 @@ class Duplicate_Post extends Base_Tool {
             'skipped' => $skipped,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function copy_meta( int $source_id, int $copy_id ): array {
         $all     = get_post_meta( $source_id );
@@ -530,7 +368,6 @@ class Duplicate_Post extends Base_Tool {
             self::delete_exact_meta( $copy_id, (string) $key );
             $refused = 0;
             foreach ( $values as $value ) {
-                
                 if ( ! add_post_meta( $copy_id, wp_slash( (string) $key ), self::slash_strings( $value ) ) ) {
                     ++$refused;
                 }
@@ -546,14 +383,6 @@ class Duplicate_Post extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function delete_exact_meta( int $post_id, string $key ): void {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- meta IDs of one post, read once for this delete.
@@ -564,18 +393,6 @@ class Duplicate_Post extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function holds_unloadable_object( $value ): bool {
         if ( $value instanceof \__PHP_Incomplete_Class ) {
@@ -594,12 +411,6 @@ class Duplicate_Post extends Base_Tool {
         return false;
     }
 
-    
-
-
-
-
-
     public static function is_skipped_meta( string $key ): bool {
         if ( in_array( $key, self::SKIPPED_META, true ) ) {
             return true;
@@ -612,15 +423,6 @@ class Duplicate_Post extends Base_Tool {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function slash_strings( $value ) {
         return map_deep(
             $value,
@@ -629,15 +431,6 @@ class Duplicate_Post extends Base_Tool {
             }
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private function apply_status( string $route, string $status ): array {
         $params = array( 'status' => $status );

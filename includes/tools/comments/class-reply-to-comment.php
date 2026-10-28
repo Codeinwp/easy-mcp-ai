@@ -7,37 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Reply_To_Comment extends Base_Tool {
 
     use Comment_Moderation;
@@ -55,8 +24,6 @@ class Reply_To_Comment extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'moderate_comments';
     }
 
@@ -100,16 +67,10 @@ class Reply_To_Comment extends Base_Tool {
         $approve_parent = ! empty( $arguments['approve_parent'] ) && rest_sanitize_boolean( $arguments['approve_parent'] );
         $will_approve   = $approve_parent && '0' === (string) $parent->comment_approved;
 
-        
         if ( $will_approve && ! current_user_can( 'edit_comment', (int) $parent->comment_ID ) ) {
             throw new \RuntimeException( sprintf( 'Sorry, you are not allowed to approve comment %d.', $parent_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
-        
         $params = array(
             'post'    => (int) $parent->comment_post_ID,
             'parent'  => $parent_id,
@@ -130,15 +91,6 @@ class Reply_To_Comment extends Base_Tool {
         return $approve_parent ? array_merge( $out, $approval ) : $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private function parse_reply_content( $value ) {
         $content = is_string( $value ) ? trim( $value ) : '';
         if ( '' === $content ) {
@@ -146,16 +98,6 @@ class Reply_To_Comment extends Base_Tool {
         }
         return $content;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function load_reply_parent( $parent_id ) {
         $parent = get_comment( $parent_id );
@@ -177,19 +119,10 @@ class Reply_To_Comment extends Base_Tool {
             throw new \RuntimeException( 'You cannot reply to a comment on a draft post.' );
         }
 
-        
-        
-        
-        
         if ( isset( $parent->comment_type ) && 'note' === $parent->comment_type ) {
             throw new \RuntimeException( sprintf( 'Comment %d is a block editor note, not a comment, and cannot be replied to with this tool.', $parent_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
-        
         $parent_status = (string) $parent->comment_approved;
         if ( 'spam' === $parent_status || 'trash' === $parent_status ) {
             throw new \RuntimeException( sprintf( 'Comment %d is in %s. Restore it before replying.', $parent_id, $parent_status ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -197,19 +130,6 @@ class Reply_To_Comment extends Base_Tool {
 
         return $parent;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function approve_parent_after_reply( $parent ) {
         try {

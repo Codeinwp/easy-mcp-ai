@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -79,8 +76,6 @@ class Seopress_Update_Title_Desc extends Base_Tool {
 		}
 
 		$this->rest_request( 'PUT', '/seopress/v1/posts/' . $post_id . '/title-description-metas', $body );
-		
-		
 		if ( array() !== $body ) {
 			$this->clear_page_cache( array( $post_id ) );
 		}

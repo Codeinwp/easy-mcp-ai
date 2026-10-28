@@ -42,15 +42,6 @@ class Update_Fields extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         try {
             $post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );

@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,25 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Wp_Super_Cache extends Cache_Adapter {
 
@@ -62,7 +38,6 @@ final class Wp_Super_Cache extends Cache_Adapter {
             && $calls->function_exists( 'wpsc_delete_url_cache' )
             && $calls->function_exists( 'wp_cache_post_edit' );
     }
-
 
     public function reaches_network( Purge_Request $request ): bool {
         $calls = $this->calls();

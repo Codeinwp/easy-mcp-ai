@@ -5,13 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 class Dynamic_Tool extends Base_Tool {
 
     private $name;
@@ -23,19 +16,6 @@ class Dynamic_Tool extends Base_Tool {
     private $executor;
     private $annotations_override;
     private $task_contract;
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public function __construct( array $config ) {
         $this->validate_required( $config, array( 'name', 'description', 'executor' ) );
@@ -68,27 +48,6 @@ class Dynamic_Tool extends Base_Tool {
         }
         return parent::get_annotations();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function get_definition() {
         $definition = parent::get_definition();

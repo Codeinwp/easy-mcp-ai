@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -54,13 +51,6 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 				'fields'    => array(
 					'type'                 => 'object',
 					'description'          => 'AIOSEO fields to update, keyed by friendly field-map keys (NOT column names). Freeform passthrough to the aioseo_meta_data REST field; patch semantics (only supplied keys are written, others preserved). Robots flags are FLAT top-level keys (e.g. {"noindex":true}), NOT nested under a "robots" object; the key is "noindex" (no underscore). Setting any robots flag auto-injects default:false (AIOSEO ignores per-post robots while robots_default is on). canonical_url may not persist on the AIOSEO free plan. Keys not listed below are still accepted and forwarded unchanged.',
-					
-					
-					
-					
-					
-					
-					
 					'properties'           => array(
 						'title'                    => array( 'type' => 'string', 'description' => 'SEO title.' ),
 						'description'              => array( 'type' => 'string', 'description' => 'Meta description.' ),
@@ -99,13 +89,6 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
-
 	public function precheck( array $arguments ): void {
 		$this->precheck_post_type_route( $arguments, 'post_type', 'posts', 'post_id', 'POST' );
 	}
@@ -117,9 +100,6 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 
 		$aioseo_instance = aioseo();
 
-		
-		
-		
 		$rest_in_core = ( defined( 'AIOSEO_VERSION' ) && version_compare( AIOSEO_VERSION, '4.9.8', '>=' ) )
 			|| ( $aioseo_instance && isset( $aioseo_instance->version ) && version_compare( (string) $aioseo_instance->version, '4.9.8', '>=' ) );
 
@@ -129,7 +109,6 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 			&& $aioseo_instance->addons->isAddonActive( 'aioseo-rest-api' );
 
 		if ( ! $rest_in_core && ! $addon_active ) {
-			
 			$plan = 'free';
 			if ( $aioseo_instance && isset( $aioseo_instance->license ) ) {
 				$license = $aioseo_instance->license;
@@ -152,19 +131,12 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 		$this->validate_required( $arguments, array( 'post_id', 'fields' ) );
 
 		$post_id = $this->parse_required_id( $arguments['post_id'], 'post_id' );
-		
-		
-		
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
 		}
 		$post_type = ! empty( $arguments['post_type'] ) ? $this->resolve_post_type_rest_base( $arguments['post_type'], 'post_type' ) : 'posts';
 		$fields    = $this->parse_json_param( $arguments['fields'], 'fields' );
 
-		
-		
-		
-		
 		if ( is_array( $fields ) && ! array_key_exists( 'default', $fields ) ) {
 			$robots_flags = array( 'noindex', 'nofollow', 'noarchive', 'nosnippet', 'noimageindex', 'notranslate', 'noodp', 'maxSnippet', 'maxVideoPreview', 'maxImagePreview' );
 			foreach ( $robots_flags as $robots_flag ) {

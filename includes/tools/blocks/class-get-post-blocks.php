@@ -77,7 +77,6 @@ class Get_Post_Blocks extends Base_Tool {
             ? $this->parse_block_path( $arguments['path'] )
             : array();
 
-        
         $data = $this->rest_request( 'GET', self::post_type_route( $post_type, $post_id, 'GET' ), array( 'context' => 'edit' ) );
         if ( ! isset( $data['content']['raw'] ) ) {
             throw new \RuntimeException( 'The post content could not be read in edit context.' );
@@ -100,8 +99,6 @@ class Get_Post_Blocks extends Base_Tool {
             $container  = &$this->resolve_container( $root, $segments, $path_label );
             $raw        = $this->raw_index_at( $container['innerBlocks'], end( $segments ), $path_label, count( $segments ) - 1 );
             $parent     = array_slice( $segments, 0, -1 );
-            
-            
             $subtree = $this->build_block_tree( array( $container['innerBlocks'][ $raw ] ), $parent, 1, $depth );
             $subtree[0]['path'] = $path_label;
             $this->rebase_child_paths( $subtree[0], $path_label );
@@ -114,14 +111,6 @@ class Get_Post_Blocks extends Base_Tool {
             'blocks'      => $blocks,
         );
     }
-
-    
-
-
-
-
-
-
 
     private function rebase_child_paths( array &$item, $prefix ) {
         if ( empty( $item['children'] ) || ! is_array( $item['children'] ) ) {

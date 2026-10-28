@@ -14,85 +14,24 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Term_Adapter extends Command_Handler {
 
-    
     const FIELDS = array( 'term_id', 'term_taxonomy_id', 'name', 'slug', 'description', 'parent', 'count' );
 
-    
     const ROW_CAP = 1000;
 
-    
     const PAGE = 100;
 
-    
     const TERM_MISSING = "Term doesn't exist.";
 
-    
     const INVALID_TAXONOMY = 'Invalid taxonomy.';
 
-    
     const MISSING_PARENT = 'Parent term does not exist.';
 
-    
     const EMPTY_NAME = 'A name is required for this term.';
 
-    
     const MISSING_ERRORS = array( 'Term not found.', 'Term does not exist.' );
 
-    
     const QUERY_ARGS = array(
         'search'            => 'text',
         'parent'            => 'id0',
@@ -118,10 +57,8 @@ final class Term_Adapter extends Command_Handler {
         'term_id'           => 'term_id',
     );
 
-    
     const ORDERBY = array( 'id', 'name', 'slug', 'count', 'include', 'term_id', 'term_group', 'description', 'parent', 'term_taxonomy_id', 'none', 'meta_value', 'meta_value_num' );
 
-    
     const QUERY_REFUSED = array(
         'get'                    => 'it changes which terms WordPress returns in ways wp_list_terms does not offer',
         'hierarchical'           => 'it changes which terms WordPress returns in ways wp_list_terms does not offer',
@@ -192,11 +129,6 @@ final class Term_Adapter extends Command_Handler {
 
     const MIGRATE_PAUSES = "'wp term migrate' runs %s, which needs a person's approval on this site, and wp_cli_run does not start a migration it could not finish in one run (the term would be left in both taxonomies). Run its steps one by one instead: `term create`, `post term add` for each post, then `term delete`.";
 
-    
-    
-    
-
-    
     public function create( Invocation $inv, Context $ctx ): void {
         $args     = array_values( $inv->args );
         $taxonomy = (string) $args[0];
@@ -223,14 +155,6 @@ final class Term_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_create( Context $ctx, string $taxonomy, string $name, ?int $parent ): void {
         if ( null !== $parent && $parent > 0 && ! \term_exists( $parent ) ) {
             $ctx->out->error( self::MISSING_PARENT );
@@ -242,15 +166,6 @@ final class Term_Adapter extends Command_Handler {
             $ctx->out->error( self::EMPTY_NAME );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function create_arguments( string $taxonomy, string $name, ?string $slug, ?string $description, ?int $parent ): array {
         $arguments = array(
@@ -270,11 +185,6 @@ final class Term_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-    
-    
-
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $args     = array_values( $inv->args );
         $taxonomy = (string) $args[0];
@@ -300,11 +210,6 @@ final class Term_Adapter extends Command_Handler {
         $formatter->display_item( $term );
     }
 
-    
-    
-    
-
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $taxonomies = array_map( 'strval', array_values( $inv->args ) );
 
@@ -317,7 +222,6 @@ final class Term_Adapter extends Command_Handler {
 
         $assoc_args = $inv->assoc;
         $formatter  = new Formatter( $ctx->out, $assoc_args, self::FIELDS, 'term' );
-        
         $query = $assoc_args;
 
         if ( array_key_exists( 'term_id', $query ) ) {
@@ -340,14 +244,6 @@ final class Term_Adapter extends Command_Handler {
         $formatter->display_items( $terms );
     }
 
-    
-
-
-
-
-
-
-
     private function list_one( Invocation $inv, Context $ctx, array $taxonomies, array $query ): array {
         $raw = $query['term_id'];
         unset( $query['term_id'] );
@@ -369,7 +265,6 @@ final class Term_Adapter extends Command_Handler {
         if ( empty( $raw ) ) {
             $ctx->out->error( sprintf( self::TERM_ID_EMPTY, "'" . $raw . "'" ) );
         }
-        
         $id = (int) $raw;
         $result = $id > 0 ? $ctx->delegate(
             'wp_get_term',
@@ -383,8 +278,6 @@ final class Term_Adapter extends Command_Handler {
         );
         if ( ! $result['ok'] ) {
             if ( null !== self::missing( (string) $result['error'] ) ) {
-                
-                
                 $ctx->note( sprintf( self::TERM_ID_NONE, $raw, $taxonomies[0] ) );
                 return array();
             }
@@ -392,13 +285,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return array( self::term_object( $result['payload'], $taxonomies[0] ) );
     }
-
-    
-
-
-
-
-
 
     private function list_many( Invocation $inv, Context $ctx, array $taxonomies, array $query, Formatter $formatter ): ?array {
         self::refuse_taxonomy_args( $ctx, $taxonomies );
@@ -422,16 +308,6 @@ final class Term_Adapter extends Command_Handler {
         return $this->merged_terms( $ctx, $taxonomies, $filters, $offset, $number );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_taxonomy_args( Context $ctx, array $taxonomies ): void {
         foreach ( $taxonomies as $taxonomy ) {
             $tax = \get_taxonomy( $taxonomy );
@@ -440,15 +316,6 @@ final class Term_Adapter extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function list_window( Context $ctx, array $query ): array {
         $number = isset( $query['number'] ) ? (int) $query['number'] : 0;
@@ -461,16 +328,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return array( $number, $offset );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function count_terms( Context $ctx, array $taxonomies, array $filters ): int {
         $total = 0;
@@ -485,15 +342,6 @@ final class Term_Adapter extends Command_Handler {
         return $total;
     }
 
-    
-
-
-
-
-
-
-
-
     private function merged_terms( Context $ctx, array $taxonomies, array $filters, int $offset, int $number ): array {
         $terms = array();
         foreach ( $taxonomies as $taxonomy ) {
@@ -507,13 +355,6 @@ final class Term_Adapter extends Command_Handler {
         $terms = self::sort_by_term_id( $terms, isset( $filters['order'] ) && 'desc' === $filters['order'] );
         return $number > 0 ? array_slice( $terms, $offset, $number ) : $terms;
     }
-
-    
-
-
-
-
-
 
     private static function sort_by_term_id( array $terms, bool $desc ): array {
         $index = array();
@@ -532,16 +373,6 @@ final class Term_Adapter extends Command_Handler {
         return $terms;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function query_filters( Context $ctx, array $taxonomies, array $query ): array {
         $errors  = array();
         $filters = array( 'hide_empty' => false );
@@ -555,15 +386,6 @@ final class Term_Adapter extends Command_Handler {
         return $filters;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function query_filter( string $key, $value, array &$errors ): array {
         if ( ! isset( self::QUERY_ARGS[ $key ] ) ) {
             $errors[] = sprintf( self::PARAM_REFUSED, $key, isset( self::QUERY_REFUSED[ $key ] ) ? self::QUERY_REFUSED[ $key ] : 'it is not a get_terms() argument wp_list_terms takes, and WordPress would ignore it' );
@@ -571,8 +393,6 @@ final class Term_Adapter extends Command_Handler {
         }
         $kind = self::QUERY_ARGS[ $key ];
         if ( 'bool' === $kind ) {
-            
-            
             return array( $key => (bool) $value );
         }
         if ( true === $value || false === $value ) {
@@ -581,13 +401,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return self::query_value( $key, $kind, (string) $value, $errors );
     }
-
-    
-
-
-
-
-
 
     private static function query_value( string $key, string $kind, string $value, array &$errors ): array {
         switch ( $kind ) {
@@ -610,15 +423,6 @@ final class Term_Adapter extends Command_Handler {
         return self::query_text( $key, $value, $errors );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function query_id( string $key, string $kind, string $value, array &$errors ): array {
         if ( ! ctype_digit( $value ) ) {
             $errors[] = ' ' . sprintf( self::NOT_AN_ID, $key, $value, "'" . $value . "'", (int) $value );
@@ -629,13 +433,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return array( $key => (int) $value );
     }
-
-    
-
-
-
-
-
 
     private static function query_ids( string $key, string $value, array &$errors ): array {
         if ( '' === trim( $value ) ) {
@@ -653,13 +450,6 @@ final class Term_Adapter extends Command_Handler {
         return array( $key => array_values( array_unique( $ids ) ) );
     }
 
-    
-
-
-
-
-
-
     private static function query_orderby( string $value, array &$errors ): array {
         $lower = strtolower( $value );
         if ( ! in_array( $lower, self::ORDERBY, true ) ) {
@@ -669,12 +459,6 @@ final class Term_Adapter extends Command_Handler {
         return array( 'orderby' => $lower );
     }
 
-    
-
-
-
-
-
     private static function query_order( string $value, array &$errors ): array {
         $upper = strtoupper( $value );
         if ( 'ASC' !== $upper && 'DESC' !== $upper ) {
@@ -683,14 +467,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return array( 'order' => strtolower( $upper ) );
     }
-
-    
-
-
-
-
-
-
 
     private static function query_text( string $key, string $value, array &$errors ): array {
         if ( 'search' === $key && function_exists( 'sanitize_text_field' ) && \sanitize_text_field( $value ) !== $value ) {
@@ -702,15 +478,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return array( $key => $value );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function query_conflicts( array $taxonomies, array $filters ): array {
         $errors = array();
@@ -729,24 +496,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return $errors;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function fetch( Context $ctx, string $taxonomy, array $filters, int $offset, int $number, bool $total_only, ?string $over_cap = null ): array {
         $per_page = $total_only ? 1 : self::PAGE;
@@ -768,15 +517,6 @@ final class Term_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function fetch_rows( Context $ctx, string $taxonomy, array $filters, array $payload, int $page, int $skip, int $number, ?string $over_cap ): array {
         $rows        = array();
         $undercounts = ! empty( $filters['hide_empty'] ) && \is_taxonomy_hierarchical( $taxonomy );
@@ -793,15 +533,6 @@ final class Term_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function take_rows( Context $ctx, array &$rows, array $page_rows, int $number, ?string $over_cap ): bool {
         foreach ( $page_rows as $row ) {
             $rows[] = (array) $row;
@@ -815,17 +546,9 @@ final class Term_Adapter extends Command_Handler {
         return false;
     }
 
-    
     private static function over_cap( ?string $over_cap, int $count ): string {
         return null !== $over_cap ? $over_cap : sprintf( self::OVER_ROW_CAP, self::ROW_CAP, $count );
     }
-
-    
-
-
-
-
-
 
     private function fetch_page( Context $ctx, string $taxonomy, array $filters, int $per_page, int $page ): array {
         $arguments = array_merge(
@@ -844,43 +567,17 @@ final class Term_Adapter extends Command_Handler {
         return $result['payload'];
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_update( Invocation $inv, Context $ctx ): void {
         self::require_term_ids( $inv, $ctx, array_slice( array_values( $inv->args ), 1, 1 ) );
     }
-
-    
-
-
-
 
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         self::require_term_ids( $inv, $ctx, array_slice( array_values( $inv->args ), 1 ) );
     }
 
-    
-
-
-
-
     public function preflight_migrate( Invocation $inv, Context $ctx ): void {
         self::require_term_ids( $inv, $ctx, array_slice( array_values( $inv->args ), 0, 1 ) );
     }
-
-    
-
-
-
-
 
     private static function require_term_ids( Invocation $inv, Context $ctx, array $refs ): void {
         if ( 'id' === (string) Read_Value::flag( $inv->assoc, 'by', 'id' ) ) {
@@ -888,11 +585,6 @@ final class Term_Adapter extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $args     = array_values( $inv->args );
         $taxonomy = (string) $args[0];
@@ -917,20 +609,11 @@ final class Term_Adapter extends Command_Handler {
         if ( ! $result['ok'] ) {
             $ctx->out->error( self::term_error( (string) $result['error'] ) );
         }
-        
-        
         if ( ! array_key_exists( 'changed', $result['payload'] ) || ! empty( $result['payload']['changed'] ) ) {
             $ctx->mark_changed();
         }
         $ctx->out->success( 'Term updated.' );
     }
-
-    
-
-
-
-
-
 
     private function update_fields( Invocation $inv, Context $ctx ): array {
         $fields = array();
@@ -958,20 +641,6 @@ final class Term_Adapter extends Command_Handler {
         return $fields;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
     public function plan_delete( Invocation $inv ): array {
         $args     = array_values( $inv->args );
         $taxonomy = (string) array_shift( $args );
@@ -981,7 +650,7 @@ final class Term_Adapter extends Command_Handler {
         $plan = array();
         foreach ( $args as $ref ) {
             if ( ! Ids::is_digits( $ref ) ) {
-                return array(); 
+                return array();
             }
             $id = (int) $ref;
             if ( $id > 0 && ! self::is_default_term( $id, $taxonomy ) ) {
@@ -994,7 +663,6 @@ final class Term_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $args     = array_values( $inv->args );
         $taxonomy = (string) array_shift( $args );
@@ -1020,21 +688,12 @@ final class Term_Adapter extends Command_Handler {
         $batch->report();
     }
 
-    
-
-
-
-
-
-
     private static function delete_one( Context $ctx, Batch $batch, string $taxonomy, string $by, bool $known, string $ref ): string {
         list( $id, $label ) = self::delete_target( $taxonomy, $by, $known, $ref );
         if ( $id <= 0 ) {
             return self::delete_missing( $ctx, $taxonomy, $label );
         }
         if ( self::is_default_term( $id, $taxonomy ) ) {
-            
-            
             $ctx->out->warning( sprintf( self::DELETE_DEFAULT, $taxonomy, $id, $taxonomy ) );
             return Batch::FAILURE;
         }
@@ -1047,7 +706,7 @@ final class Term_Adapter extends Command_Handler {
             return Batch::SUCCESS;
         }
         if ( Batch::is_rate_limited( $result ) ) {
-            return Batch::FAILURE; 
+            return Batch::FAILURE;
         }
         if ( null !== self::missing( (string) $result['error'] ) ) {
             return self::delete_missing( $ctx, $taxonomy, $label );
@@ -1055,14 +714,6 @@ final class Term_Adapter extends Command_Handler {
         $ctx->out->warning( (string) $result['error'] );
         return Batch::FAILURE;
     }
-
-    
-
-
-
-
-
-
 
     private static function delete_target( string $taxonomy, string $by, bool $known, string $ref ): array {
         if ( 'slug' !== $by ) {
@@ -1075,20 +726,12 @@ final class Term_Adapter extends Command_Handler {
         return array( (int) $term->term_id, (string) (int) $term->term_id );
     }
 
-    
     private static function delete_arguments( int $id, string $taxonomy ): array {
         return array(
             'term_id'  => $id,
             'taxonomy' => $taxonomy,
         );
     }
-
-    
-
-
-
-
-
 
     private static function is_default_term( int $id, string $taxonomy ): bool {
         if ( ! function_exists( 'get_option' ) ) {
@@ -1097,7 +740,6 @@ final class Term_Adapter extends Command_Handler {
         return (int) \get_option( 'default_' . $taxonomy ) === $id || (int) \get_option( 'default_term_' . $taxonomy ) === $id;
     }
 
-    
     private static function delete_missing( Context $ctx, string $taxonomy, string $label ): string {
         $message = "{$taxonomy} {$label} doesn't exist.";
         $ctx->out->warning( $message );
@@ -1105,11 +747,6 @@ final class Term_Adapter extends Command_Handler {
         return Batch::SKIP;
     }
 
-    
-    
-    
-
-    
     public function migrate( Invocation $inv, Context $ctx ): void {
         $ref  = (string) array_values( $inv->args )[0];
         $by   = (string) Read_Value::flag( $inv->assoc, 'by', 'id' );
@@ -1149,7 +786,7 @@ final class Term_Adapter extends Command_Handler {
             static function ( int $post_id, Batch $batch ) use ( $ctx, $to, $new_id, $slug ): string {
                 $result = $batch->delegate( 'wp_add_post_terms', self::assign_arguments( $post_id, $to, $new_id ) );
                 if ( Batch::is_rate_limited( $result ) ) {
-                    return Batch::FAILURE; 
+                    return Batch::FAILURE;
                 }
                 if ( ! $result['ok'] ) {
                     $ctx->out->error( "Failed to assign the term '{$slug}' to the post {$post_id}. Reason: " . $result['error'] );
@@ -1171,14 +808,6 @@ final class Term_Adapter extends Command_Handler {
         $ctx->out->success( "Migrated the term '{$slug}' from taxonomy '{$from_tax->name}' to taxonomy '{$to}' for {$post_count} " . ( 1 === $post_count ? 'post' : 'posts' ) . '.' );
     }
 
-    
-
-
-
-
-
-
-
     private static function migrate_source( Context $ctx, string $by, string $ref, string $from ): array {
         $missing  = "Taxonomy term '{$ref}' for taxonomy '{$from}' doesn't exist.";
         $from_tax = '' !== $from ? \get_taxonomy( $from ) : false;
@@ -1194,16 +823,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return array( $from_tax, $term );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function migrate_destination( Context $ctx, string $from, string $to, object $from_tax, int $term_id ): object {
         if ( '' === $to || ! \taxonomy_exists( $to ) ) {
@@ -1222,12 +841,6 @@ final class Term_Adapter extends Command_Handler {
         return $to_tax;
     }
 
-    
-
-
-
-
-
     private static function objects_in_term( Context $ctx, int $term_id, string $taxonomy ): array {
         $post_ids = \get_objects_in_term( $term_id, $taxonomy );
         if ( function_exists( 'is_wp_error' ) && \is_wp_error( $post_ids ) ) {
@@ -1235,18 +848,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return is_array( $post_ids ) ? array_values( $post_ids ) : array();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function migrate_targets( Context $ctx, Invocation $inv, array $post_ids, object $from_tax, string $to, object $to_tax ): array {
         $targets = array();
@@ -1266,12 +867,7 @@ final class Term_Adapter extends Command_Handler {
             if ( ! \current_user_can( 'edit_post', (int) $post_id ) ) {
                 $ctx->out->error( sprintf( self::MIGRATE_EDIT_POST, $post_id ) );
             }
-            
-            
-            
             $type = (string) \get_post_type( $post_id );
-            
-            
             $post   = 'attachment' === $type ? \get_post( (int) $post_id ) : null;
             $covers = $post
                 ? in_array( $to, (array) \get_object_taxonomies( $post, 'names' ), true )
@@ -1282,15 +878,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return $targets;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function refuse_pausing_steps( Context $ctx, array $create, array $targets, string $to, array $delete ): void {
         $steps = array( array( 'wp_create_term', $create ) );
@@ -1305,7 +892,6 @@ final class Term_Adapter extends Command_Handler {
         }
     }
 
-    
     private static function assign_arguments( int $post_id, string $taxonomy, int $term_id ): array {
         return array(
             'post_id'  => $post_id,
@@ -1316,15 +902,6 @@ final class Term_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function would_pause( string $tool, array $arguments ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) || ! \Easy_MCP_AI\Approvals\Approval_Gate::enabled() ) {
             return false;
@@ -1333,7 +910,6 @@ final class Term_Adapter extends Command_Handler {
         return null === $object || \Easy_MCP_AI\Approvals\Approval_Gate::requires_approval( $object, $arguments );
     }
 
-    
     private static function registered_tool( string $tool ): ?object {
         if ( ! class_exists( '\\Easy_MCP_AI\\Plugin', false ) || ! method_exists( '\\Easy_MCP_AI\\Plugin', 'instance' ) ) {
             return null;
@@ -1342,21 +918,6 @@ final class Term_Adapter extends Command_Handler {
         $object   = is_object( $registry ) && method_exists( $registry, 'get_tool' ) ? $registry->get_tool( $tool ) : null;
         return is_object( $object ) ? $object : null;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
 
     private function resolve_term( Invocation $inv, Context $ctx, string $tool, string $taxonomy, string $ref, string $tax_cap, ?string $object_cap ): int {
         if ( 'slug' !== (string) Read_Value::flag( $inv->assoc, 'by', 'id' ) ) {
@@ -1384,10 +945,6 @@ final class Term_Adapter extends Command_Handler {
         return (int) $term->term_id;
     }
 
-    
-
-
-
     private static function taxonomy_flag( Invocation $inv, string $key ): string {
         $value = Read_Value::flag( $inv->assoc, $key );
         if ( is_string( $value ) ) {
@@ -1395,10 +952,6 @@ final class Term_Adapter extends Command_Handler {
         }
         return true === $value ? '1' : '';
     }
-
-    
-
-
 
     private function text_arg( Invocation $inv, Context $ctx, string $key ): ?string {
         if ( ! array_key_exists( $key, $inv->assoc ) ) {
@@ -1411,7 +964,6 @@ final class Term_Adapter extends Command_Handler {
         return (string) $value;
     }
 
-    
     private function id_arg( Invocation $inv, Context $ctx, string $key ): ?int {
         $value = $this->text_arg( $inv, $ctx, $key );
         if ( null === $value ) {
@@ -1423,26 +975,17 @@ final class Term_Adapter extends Command_Handler {
         return (int) $value;
     }
 
-    
     private static function term_error( string $error ): string {
         $missing = self::missing( $error );
         return null !== $missing ? $missing : $error;
     }
 
-    
     private static function missing( string $error ): ?string {
         if ( in_array( $error, self::MISSING_ERRORS, true ) || 0 === strpos( $error, 'Unknown taxonomy: ' ) ) {
             return self::TERM_MISSING;
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     private static function term_object( array $payload, string $taxonomy ): \stdClass {
         return (object) array(
@@ -1459,13 +1002,6 @@ final class Term_Adapter extends Command_Handler {
             'url'              => $payload['url'] ?? null,
         );
     }
-
-    
-
-
-
-
-
 
     private static function term_objects( array $rows, string $taxonomy ): array {
         $terms = array();

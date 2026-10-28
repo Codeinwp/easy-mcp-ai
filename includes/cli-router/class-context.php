@@ -5,109 +5,41 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Context {
 
-    
     const SELF_CALL = 'wp_cli_run does not call itself here: only a command its route splits into parts runs wp_cli_run, for its own part, and a part cannot split again. Run the commands one at a time.';
 
-    
     const UNPLANNED = 'wp_cli_run stopped before calling %1$s: the preview a person approved listed %2$s, and an approval covers only the calls its preview showed. What this command reads changed after the preview was made (an earlier call of the same command can do that). Nothing after this point ran; run the command again to see and approve what is left.';
 
-    
     public $out;
 
-    
     private $dispatcher;
 
-    
     private $may_use;
 
-    
     private $tool_status;
 
-    
     private $skip_inner_approval;
 
-    
     private $approved_calls = null;
 
-    
     private $planned_calls = array();
 
-    
     private $changed = false;
 
-    
     private $calls = array();
 
-    
     private $pending_approval = null;
 
-    
     private $not_run = array();
 
-    
     private $notes = array();
 
-    
     private $not_captured = array();
 
-    
     private $redacted = array();
 
-    
     private $missing_target = null;
-
-    
-
-
-
 
     public function __construct( Output $out, ?callable $dispatcher = null, ?callable $may_use = null, bool $skip_inner_approval = false, ?callable $tool_status = null ) {
         $this->out                 = $out;
@@ -117,31 +49,9 @@ final class Context {
         $this->tool_status         = $tool_status ? $tool_status : array( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_tool_status' );
     }
 
-    
-
-
-
-
-
-
     public static function call_uncounted( string $tool, array $arguments, ?string $approval = null ): ?array {
         return \Easy_MCP_AI\MCP\Server::call_as_current_caller( $tool, $arguments, $approval, false );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function delegate( string $tool, array $arguments ): array {
         if ( 'wp_cli_run' === $tool && ! Router::in_split_frame() ) {
@@ -164,13 +74,6 @@ final class Context {
         return self::delegated( is_array( $dispatched['response'] ?? null ) ? $dispatched['response'] : array(), $audit_id, $kind );
     }
 
-    
-
-
-
-
-
-
     private function pause( string $tool, array $dispatched ): void {
         $approval_id            = isset( $dispatched['approval']['approval_id'] ) ? (string) $dispatched['approval']['approval_id'] : null;
         $this->pending_approval = array(
@@ -180,13 +83,6 @@ final class Context {
         );
         $this->out->error( $tool . " needs a person's approval on this site. Approve it, then run the same command again." );
     }
-
-    
-
-
-
-
-
 
     private static function delegated( array $response, ?int $audit_id, string $kind ): array {
         $error = self::error_of( $response );
@@ -200,12 +96,6 @@ final class Context {
         );
     }
 
-    
-
-
-
-
-
     public function approved_plan( array $plan ): void {
         $counts = array();
         foreach ( $plan as $call ) {
@@ -215,14 +105,6 @@ final class Context {
         $this->approved_calls = $counts;
         $this->planned_calls  = $counts;
     }
-
-    
-
-
-
-
-
-
 
     private function approval_mode( string $tool ): ?string {
         if ( ! $this->skip_inner_approval || ! $this->approved_calls ) {
@@ -237,15 +119,8 @@ final class Context {
             ? 'no call to ' . $tool
             : sprintf( '%d %s to %s, all made', $planned, 1 === $planned ? 'call' : 'calls', $tool );
         $this->out->error( sprintf( self::UNPLANNED, $tool, $listed ) );
-        return null; 
+        return null;
     }
-
-    
-
-
-
-
-
 
     public function merge_part( Context $part ): void {
         foreach ( $part->notes as $note ) {
@@ -266,11 +141,6 @@ final class Context {
         $this->merge_outcome( $part );
     }
 
-    
-
-
-
-
     private function merge_outcome( Context $part ): void {
         if ( $part->changed ) {
             $this->changed = true;
@@ -283,21 +153,9 @@ final class Context {
         }
     }
 
-    
-
-
-
-
     public function may_use( string $tool ): bool {
         return true === call_user_func( $this->may_use, $tool );
     }
-
-    
-
-
-
-
-
 
     public function tool_status( string $tool ): ?array {
         if ( ! is_callable( $this->tool_status ) ) {
@@ -307,70 +165,43 @@ final class Context {
         return is_array( $status ) && isset( $status['status'] ) ? $status : null;
     }
 
-    
     public function mark_changed(): void {
         $this->changed = true;
     }
 
-    
     public function changed(): bool {
         return $this->changed;
     }
 
-    
     public function not_run( string $item ): void {
         $this->not_run[] = $item;
     }
 
-    
     public function note( string $text ): void {
         $this->notes[] = $text;
     }
 
-    
     public function not_captured( string $phrase ): void {
         if ( ! in_array( $phrase, $this->not_captured, true ) ) {
             $this->not_captured[] = $phrase;
         }
     }
 
-    
     public function redacted( string $field ): void {
         if ( ! in_array( $field, $this->redacted, true ) ) {
             $this->redacted[] = $field;
         }
     }
 
-    
-
-
-
-
-
-
     public function fail_missing_target( string $message ): void {
         $this->missing_target = $message;
     }
-
-    
-
-
-
-
-
 
     public function require_cap( string $cap, int ...$args ): void {
         if ( ! \current_user_can( $cap, ...$args ) ) {
             $this->out->error( sprintf( 'Sorry, you are not allowed to do this: wp_cli_run needs the %s capability for this command.', $cap ) );
         }
     }
-
-    
-
-
-
-
-
 
     public function require_network( string $network_cap ): void {
         if ( ! \is_multisite() ) {
@@ -381,51 +212,37 @@ final class Context {
         }
     }
 
-    
     public function user_id(): int {
         return (int) \get_current_user_id();
     }
 
-    
     public function calls(): array {
         return $this->calls;
     }
 
-    
     public function pending_approval(): ?array {
         return $this->pending_approval;
     }
 
-    
     public function not_run_items(): array {
         return $this->not_run;
     }
 
-    
     public function notes(): array {
         return $this->notes;
     }
 
-    
     public function not_captured_phrases(): array {
         return $this->not_captured;
     }
 
-    
     public function redacted_fields(): array {
         return $this->redacted;
     }
 
-    
     public function missing_target(): ?string {
         return $this->missing_target;
     }
-
-    
-
-
-
-
 
     public static function error_of( array $response ): ?string {
         if ( isset( $response['error'] ) ) {
@@ -439,22 +256,10 @@ final class Context {
         return null;
     }
 
-    
-
-
-
-
-
     public static function details_of( array $response ): ?string {
         $text = $response['result']['content'][1]['text'] ?? null;
         return is_string( $text ) ? $text : null;
     }
-
-    
-
-
-
-
 
     public static function payload_of( array $response ): array {
         $result = $response['result'] ?? array();

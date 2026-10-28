@@ -11,43 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Option_Adapter extends Command_Handler {
 
     const TOOL = 'wp_update_site_settings';
@@ -56,11 +19,6 @@ final class Option_Adapter extends Command_Handler {
     const NOT_TEXT = "wp_cli_run cannot store a JSON array or object in '%s': wp_update_site_settings stores this setting as text or a number.";
     const NOT_MINE = "wp_cli_run cannot hand '%s' to wp_update_site_settings: it is not one of that tool's settings.";
 
-    
-
-
-
-
     public function preflight_update( Invocation $inv, Context $ctx ): void {
         if ( null !== Read_Value::flag( $inv->assoc, 'autoload' ) ) {
             $args = array_values( $inv->args );
@@ -68,7 +26,6 @@ final class Option_Adapter extends Command_Handler {
         }
     }
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $args     = array_values( $inv->args );
         $key      = isset( $args[0] ) ? (string) $args[0] : '';
@@ -87,15 +44,9 @@ final class Option_Adapter extends Command_Handler {
             $ctx->out->error( sprintf( self::NOT_TEXT, $key ) );
         }
 
-        
         $value  = 'posts_per_page' === $argument ? (int) $value : ( is_bool( $value ) ? ( $value ? '1' : '' ) : (string) $value );
         self::report( $ctx, $key, $ctx->delegate( self::TOOL, array( $argument => $value ) ) );
     }
-
-    
-
-
-
 
     private static function report( Context $ctx, string $key, array $result ): void {
         if ( ! $result['ok'] ) {

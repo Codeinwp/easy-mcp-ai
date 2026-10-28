@@ -9,55 +9,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Cap_Handler extends Role_Handler {
 
-    
     const CAP_FIELDS = array( 'name' );
 
-    
     const MSG_NONE_SET = "None of the capabilities named is set on the '%s' role, so nothing was removed.";
 
-    
     const NOTE_NOT_SET = "Not set on the '%s' role, so not removed: %s.";
 
-    
-    
-    
-
-    
     public function list_caps( Invocation $inv, Context $ctx ): void {
         $role_obj = self::get_role_or_error( $ctx, (string) $inv->args[0] );
 
@@ -95,11 +54,6 @@ final class Cap_Handler extends Role_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function preflight_add( Invocation $inv, Context $ctx ): void {
         $ctx->require_cap( 'manage_options' );
         $args  = array_values( $inv->args );
@@ -122,7 +76,6 @@ final class Cap_Handler extends Role_Handler {
         }
     }
 
-    
     public function add( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED );
         self::persistence_check( $ctx );
@@ -160,7 +113,6 @@ final class Cap_Handler extends Role_Handler {
         $ctx->out->success( "Added {$count} {$capability} to '{$role}' role{$grant_qualification}." );
     }
 
-    
     public function describe_add( Invocation $inv ): array {
         $args     = array_values( $inv->args );
         $role     = (string) array_shift( $args );
@@ -182,11 +134,6 @@ final class Cap_Handler extends Role_Handler {
         return $lines;
     }
 
-    
-    
-    
-
-    
     public function preflight_remove( Invocation $inv, Context $ctx ): void {
         $ctx->require_cap( 'manage_options' );
         $args = array_values( $inv->args );
@@ -203,7 +150,6 @@ final class Cap_Handler extends Role_Handler {
         }
     }
 
-    
     public function remove( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED );
         self::persistence_check( $ctx );
@@ -254,7 +200,6 @@ final class Cap_Handler extends Role_Handler {
         $ctx->out->success( "Removed {$count} {$capability} from '{$role}' role." );
     }
 
-    
     public function describe_remove( Invocation $inv ): array {
         $args     = array_values( $inv->args );
         $role     = (string) array_shift( $args );
@@ -270,16 +215,6 @@ final class Cap_Handler extends Role_Handler {
         return $lines;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     private static function get_role_or_error( Context $ctx, string $role ): object {
         $role_obj = self::roles()->get_role( $role );
 
@@ -290,13 +225,6 @@ final class Cap_Handler extends Role_Handler {
         return $role_obj;
     }
 
-    
-
-
-
-
-
-
     private static function grant_of( array $assoc ): bool {
         $grant = true;
         if ( isset( $assoc['grant'] ) ) {
@@ -305,21 +233,9 @@ final class Cap_Handler extends Role_Handler {
         return $grant;
     }
 
-    
-
-
-
     private static function pluralize_capability( int $count ): string {
         return 1 === $count ? 'capability' : 'capabilities';
     }
-
-    
-
-
-
-
-
-
 
     private static function add_caps( object $role_obj, array $args, bool $grant ): int {
         $count = 0;
@@ -338,11 +254,6 @@ final class Cap_Handler extends Role_Handler {
         }
         return $count;
     }
-
-    
-
-
-
 
     private static function cap_state( object $role_obj, string $cap ): string {
         $caps = (array) $role_obj->capabilities;

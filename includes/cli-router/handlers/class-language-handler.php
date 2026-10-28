@@ -15,67 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Language_Handler extends Command_Handler {
 
-    
     const OBJ_FIELDS = array(
         'core'    => array( 'language', 'english_name', 'native_name', 'status', 'update', 'updated' ),
         'plugins' => array( 'plugin', 'language', 'english_name', 'native_name', 'status', 'update', 'updated' ),
         'themes'  => array( 'theme', 'language', 'english_name', 'native_name', 'status', 'update', 'updated' ),
     );
 
-    
     const INSTALL_CAP = 20;
 
-    
     const UNINSTALL_CAP = 50;
 
-    
     const OBJECT_CAP = 20;
 
-    
     const ROW_CAP = 1000;
 
     const REASON_FILE_MODS   = "File modifications are disabled on this site (DISALLOW_FILE_MODS in wp-config.php, or a file_mod_allowed filter): WordPress then withholds the %s capability from every user, administrators included, so wp_cli_run does not run 'wp %s'.";
@@ -89,37 +42,13 @@ class Language_Handler extends Command_Handler {
     const NOTE_UPDATE_CHECK  = "WordPress's update check ran and may have refreshed the %s site transient, a cache WordPress refreshes on its own.";
     const NOTE_UNCHANGED     = "Nothing changed: the site language stayed '%s'. WP-CLI prints the same Success line.";
 
-    
     const NOT_CAPTURED_FILES = 'Language files: change history does not record files; installed, updated or deleted translations cannot be restored from it.';
 
-    
-    
-    
-
-    
     public function preflight_core_install( Invocation $inv, Context $ctx ): void {
         $this->require_language_files( $inv, $ctx, 'install_languages' );
     }
 
-    
-    
-    
-
-    
     const ACTIVATE_TOOL = 'wp_update_site_settings';
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public function split_activate( Invocation $inv, Context $ctx ): ?array {
         if ( ! Read_Value::flag( $inv->assoc, 'activate' ) ) {
@@ -131,7 +60,6 @@ class Language_Handler extends Command_Handler {
         }
         if ( class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) && method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' )
             && false === \Easy_MCP_AI\MCP\Server::current_call_may_use( self::ACTIVATE_TOOL ) ) {
-            
             $ctx->out->error( Fetchers::tool_unavailable( $ctx, $inv->command . ' --activate', self::ACTIVATE_TOOL ) );
         }
         $code   = (string) reset( $codes );
@@ -155,38 +83,14 @@ class Language_Handler extends Command_Handler {
         return $parts;
     }
 
-    
-
-
-
-
-
-
-
     public function render_install( Invocation $inv, Context $ctx, array $result, array &$state ): bool {
         return $this->render_install_part( $ctx, $result, $state, null );
     }
-
-    
-
-
-
-
-
 
     public function render_install_active( Invocation $inv, Context $ctx, array $result, array &$state ): bool {
         $code = (string) array_values( $inv->args )[0];
         return $this->render_install_part( $ctx, $result, $state, 'en_US' === $code ? '' : $code );
     }
-
-    
-
-
-
-
-
-
-
 
     public function render_activate( Invocation $inv, Context $ctx, array $result, array &$state ): bool {
         if ( empty( $result['ok'] ) ) {
@@ -204,17 +108,6 @@ class Language_Handler extends Command_Handler {
         $ctx->out->out( isset( $state['summary'] ) ? (string) $state['summary'] : '' );
         return true;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function render_install_part( Context $ctx, array $result, array &$state, ?string $active_code ): bool {
         $part = isset( $result['part'] ) ? $result['part'] : null;
@@ -240,12 +133,6 @@ class Language_Handler extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
     private static function render_stored_install( Context $ctx, array $result ): bool {
         if ( empty( $result['ok'] ) ) {
             return false;
@@ -257,12 +144,6 @@ class Language_Handler extends Command_Handler {
         }
         return true;
     }
-
-    
-
-
-
-
 
     private static function split_summary( string $stdout ): array {
         $summary = '';
@@ -276,7 +157,6 @@ class Language_Handler extends Command_Handler {
         return array( $stdout, $summary );
     }
 
-    
     private static function shell_word( string $word ): string {
         if ( '' !== $word && preg_match( '#^[A-Za-z0-9_\-.,:/@%+=]+\z#', $word ) ) {
             return $word;
@@ -284,22 +164,18 @@ class Language_Handler extends Command_Handler {
         return "'" . str_replace( "'", "'\\''", $word ) . "'";
     }
 
-    
     public function is_dry_run( Invocation $inv ): bool {
         return (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
     }
 
-    
     public function preflight_core_uninstall( Invocation $inv, Context $ctx ): void {
         $this->require_language_files( $inv, $ctx, 'install_languages' );
     }
 
-    
     public function preflight_core_update( Invocation $inv, Context $ctx ): void {
         $this->require_language_files( $inv, $ctx, 'update_languages' );
     }
 
-    
     public function preflight_object_install( Invocation $inv, Context $ctx ): void {
         $this->require_language_files( $inv, $ctx, 'install_languages' );
         $type = self::type_of( $inv );
@@ -311,28 +187,20 @@ class Language_Handler extends Command_Handler {
         $this->enforce_pack_cap( $inv, $ctx, $type, 'downloads', self::INSTALL_CAP );
     }
 
-    
     public function preflight_object_uninstall( Invocation $inv, Context $ctx ): void {
         $this->require_language_files( $inv, $ctx, 'install_languages' );
         $this->enforce_pack_cap( $inv, $ctx, self::type_of( $inv ), 'deletes', self::UNINSTALL_CAP );
     }
 
-    
     public function preflight_object_update( Invocation $inv, Context $ctx ): void {
         $this->require_language_files( $inv, $ctx, 'update_languages' );
         $this->enforce_object_cap( $inv, $ctx );
     }
 
-    
     public function preflight_object_list( Invocation $inv, Context $ctx ): void {
         $this->enforce_object_cap( $inv, $ctx );
     }
 
-    
-    
-    
-
-    
     public function core_list( Invocation $inv, Context $ctx ): void {
         $assoc_args   = $inv->assoc;
         $translations = $this->get_all_languages( 'core', null, $ctx );
@@ -377,14 +245,12 @@ class Language_Handler extends Command_Handler {
         $this->display_list( $inv, $ctx, 'core', $translations );
     }
 
-    
     public function core_is_installed( Invocation $inv, Context $ctx ): void {
         list( $language_code ) = array_values( $inv->args );
         $available             = $this->get_installed_languages( 'core' );
         $ctx->out->halt( in_array( (string) $language_code, $available, true ) ? 0 : 1 );
     }
 
-    
     public function core_install( Invocation $inv, Context $ctx ): void {
         $language_codes = array_map( 'strval', array_values( $inv->args ) );
         $count          = count( $language_codes );
@@ -411,7 +277,6 @@ class Language_Handler extends Command_Handler {
                     $ctx->out->warning( self::error_to_string( $response ) );
                     $ctx->out->log( "Language '{$language_code}' not installed." );
 
-                    
                     if ( 'not_found' === $response['code'] ) {
                         ++$skips;
                         ++$missing;
@@ -424,13 +289,11 @@ class Language_Handler extends Command_Handler {
                 }
             }
 
-            
         }
 
         $this->finish_install( $ctx, $count, $successes, $errors, $skips, $missing, 'WordPress core' );
     }
 
-    
     public function core_uninstall( Invocation $inv, Context $ctx ): void {
         $dir   = (string) $this->wp( 'lang_dir' );
         $files = $this->language_files( $dir, $ctx );
@@ -457,13 +320,6 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private function language_files( string $dir, Context $ctx ): array {
         $files = $this->wp( 'dir_entries', array( $dir ) );
         if ( ! $files ) {
@@ -471,13 +327,6 @@ class Language_Handler extends Command_Handler {
         }
         return (array) $files;
     }
-
-    
-
-
-
-
-
 
     private function delete_core_pack( string $language_code, array $files, string $dir, Context $ctx ): bool {
         $files_to_remove = array(
@@ -495,7 +344,6 @@ class Language_Handler extends Command_Handler {
             "continents-cities-$language_code.l10n.php",
         );
 
-        
         $this->wp( 'filesystem_init' );
         $deleted = false;
         foreach ( $files as $file ) {
@@ -520,16 +368,10 @@ class Language_Handler extends Command_Handler {
         return $deleted;
     }
 
-    
     public function core_update( Invocation $inv, Context $ctx ): void {
         $this->update( 'core', array(), $inv, $ctx );
     }
 
-    
-    
-    
-
-    
     public function object_list( Invocation $inv, Context $ctx ): void {
         $type       = self::type_of( $inv );
         $noun       = self::noun( $type );
@@ -567,14 +409,6 @@ class Language_Handler extends Command_Handler {
         $this->display_list( $inv, $ctx, $type, self::matching_rows( $rows, $assoc_args ) );
     }
 
-    
-
-
-
-
-
-
-
     private function object_rows( string $type, string $object, array $updates, string $current_locale, Context $ctx ): array {
         $noun                   = self::noun( $type );
         $installed_translations = $this->get_installed_languages( $type, $object );
@@ -603,14 +437,6 @@ class Language_Handler extends Command_Handler {
         return $rows;
     }
 
-    
-
-
-
-
-
-
-
     private static function matching_rows( array $rows, array $assoc_args ): array {
         $translations = array();
         foreach ( $rows as $translation ) {
@@ -625,7 +451,6 @@ class Language_Handler extends Command_Handler {
         return $translations;
     }
 
-    
     public function object_is_installed( Invocation $inv, Context $ctx ): void {
         $args           = array_map( 'strval', array_values( $inv->args ) );
         $object         = array_shift( $args );
@@ -642,7 +467,6 @@ class Language_Handler extends Command_Handler {
         $ctx->out->halt( 0 );
     }
 
-    
     public function object_install( Invocation $inv, Context $ctx ): void {
         $type  = self::type_of( $inv );
         $noun  = self::noun( $type );
@@ -661,7 +485,6 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
     public function object_uninstall( Invocation $inv, Context $ctx ): void {
         $type       = self::type_of( $inv );
         $noun       = self::noun( $type );
@@ -697,13 +520,11 @@ class Language_Handler extends Command_Handler {
         );
         $job['files']   = $this->language_files( $job['dir'], $ctx );
 
-        
         $this->wp( 'filesystem_init' );
 
         $count = count( $objects ) * count( $language_codes );
 
         $results = array();
-        
         $tally = array(
             'successes'   => 0,
             'errors'      => 0,
@@ -726,23 +547,9 @@ class Language_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'language', 'uninstall', $count, $tally['successes'], $tally['errors'], $tally['skips'] );
 
         if ( $count > 0 && $tally['not_present'] === $count ) {
-            
-            
-            
             $ctx->fail_missing_target( sprintf( self::MISSING_INSTALLED, $noun . 's' ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function uninstall_pair( string $object, string $language_code, array $available, array $job, array &$tally, Context $ctx ): object {
         $result = array(
@@ -767,8 +574,6 @@ class Language_Handler extends Command_Handler {
         list( $to_remove, $removed ) = $this->delete_object_pack( $object, $language_code, $job, $ctx );
 
         if ( 0 === $to_remove ) {
-            
-            
             ++$tally['not_present'];
         }
 
@@ -777,16 +582,6 @@ class Language_Handler extends Command_Handler {
 
         return (object) $result;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function delete_object_pack( string $object, string $language_code, array $job, Context $ctx ): array {
         $files_to_remove = array(
@@ -824,11 +619,6 @@ class Language_Handler extends Command_Handler {
         return array( $count_files_to_remove, $count_files_removed );
     }
 
-    
-
-
-
-
     private static function uninstall_outcome( int $to_remove, int $removed, string $language_code, string $object, string $noun, Context $ctx ): array {
         if ( $to_remove === $removed ) {
             $ctx->out->log( "Language '{$language_code}' for '{$object}' uninstalled." );
@@ -838,7 +628,7 @@ class Language_Handler extends Command_Handler {
             $ctx->out->log( "Language '{$language_code}' for '{$object}' partially uninstalled." );
             return array( 'partial uninstall', 'errors' );
         }
-        if ( $to_remove > 0 ) { 
+        if ( $to_remove > 0 ) {
             $ctx->out->log( "Couldn't uninstall language '{$language_code}' from {$noun} {$object}." );
             return array( 'failed to uninstall', 'errors' );
         }
@@ -846,7 +636,6 @@ class Language_Handler extends Command_Handler {
         return array( 'already uninstalled', 'skips' );
     }
 
-    
     public function object_update( Invocation $inv, Context $ctx ): void {
         $type = self::type_of( $inv );
         $noun = self::noun( $type );
@@ -869,11 +658,6 @@ class Language_Handler extends Command_Handler {
         $this->update( $type, $args, $inv, $ctx );
     }
 
-    
-    
-    
-
-    
     public function describe_core_install( Invocation $inv ): array {
         $available = $this->get_installed_languages( 'core' );
         $lines     = array();
@@ -885,7 +669,6 @@ class Language_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     public function describe_core_uninstall( Invocation $inv ): array {
         $available = $this->get_installed_languages( 'core' );
         $locale    = (string) $this->wp( 'locale' );
@@ -902,12 +685,10 @@ class Language_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     public function describe_core_update( Invocation $inv ): array {
         return array( self::describe_update_line( 'WordPress core', $this->get_installed_languages( 'core' ), (bool) Read_Value::flag( $inv->assoc, 'dry-run' ) ) );
     }
 
-    
     public function describe_object_install( Invocation $inv ): array {
         $type  = self::type_of( $inv );
         $lines = array();
@@ -919,7 +700,6 @@ class Language_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     public function describe_object_uninstall( Invocation $inv ): array {
         $type   = self::type_of( $inv );
         $locale = (string) $this->wp( 'locale' );
@@ -938,7 +718,6 @@ class Language_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     public function describe_object_update( Invocation $inv ): array {
         $type    = self::type_of( $inv );
         $dry_run = (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
@@ -950,7 +729,6 @@ class Language_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     private static function describe_update_line( string $label, array $installed, bool $dry_run ): string {
         $codes = array_values( array_diff( $installed, array( 'en_US' ) ) );
         sort( $codes );
@@ -959,16 +737,6 @@ class Language_Handler extends Command_Handler {
         }
         return sprintf( 'Language packs for %s: %s → %s', $label, implode( ', ', $codes ), $dry_run ? 'dry run, nothing written' : 'replaced where wordpress.org offers a newer pack' );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     private function update( string $type, array $args, Invocation $inv, Context $ctx ): void {
         $dry_run = (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
@@ -981,7 +749,7 @@ class Language_Handler extends Command_Handler {
         }
 
         if ( empty( $args ) ) {
-            $args = array( null ); 
+            $args = array( null );
         }
 
         $results       = array();
@@ -1001,7 +769,6 @@ class Language_Handler extends Command_Handler {
             }
         }
 
-        
         if ( $dry_run ) {
             $this->print_dry_run( $updates, $ctx );
 
@@ -1011,22 +778,11 @@ class Language_Handler extends Command_Handler {
         self::report_updates( $results, $num_to_update, $ctx );
     }
 
-    
-
-
-
-
-
-
-
-
     private function updates_for( string $type, ?string $slug, array $updates, Context $ctx ): ?array {
-        
         $all_languages = $this->get_all_languages( $type, $slug, $ctx );
 
         $updates_per_type = array();
 
-        
         foreach ( $updates as $update ) {
             if ( null !== $slug && $update->slug !== $slug ) {
                 continue;
@@ -1044,15 +800,8 @@ class Language_Handler extends Command_Handler {
         return isset( $updates_per_type[ $obj_type ] ) ? $updates_per_type[ $obj_type ] : null;
     }
 
-    
-
-
-
-
-
-
     private function label_update( object $update, array $all_languages ): void {
-        $name = 'WordPress'; 
+        $name = 'WordPress';
 
         if ( 'plugin' === $update->type ) {
             $plugin_data = $this->wp( 'plugin_data', array( (string) $update->slug ) );
@@ -1062,7 +811,6 @@ class Language_Handler extends Command_Handler {
             $name       = isset( $theme_data['Name'] ) ? $theme_data['Name'] : null;
         }
 
-        
         $translation = self::list_filter( $all_languages, array( 'language' => $update->language ) );
         $translation = (object) reset( $translation );
 
@@ -1075,16 +823,8 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private function apply_updates( array $available_updates, Context $ctx ): array {
         $results = array();
-        
         foreach ( $available_updates as $update ) {
             $language = property_exists( $update, 'Language' ) ? $update->Language : ''; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- WP-CLI's column names.
             $ctx->out->line( "Updating '{$language}' translation for {$update->Name} {$update->Version}..." ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- WP-CLI's column names.
@@ -1102,11 +842,6 @@ class Language_Handler extends Command_Handler {
         return $results;
     }
 
-    
-
-
-
-
     private function print_dry_run( array $updates, Context $ctx ): void {
         $update_count = count( $updates );
 
@@ -1120,13 +855,6 @@ class Language_Handler extends Command_Handler {
 
         $this->format_items( $ctx, 'table', $updates, array( 'Type', 'Name', 'Version', 'Language' ) );
     }
-
-    
-
-
-
-
-
 
     private static function report_updates( array $results, int $num_to_update, Context $ctx ): void {
         $num_updated = count( array_filter( $results ) );
@@ -1142,13 +870,6 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private function get_translation_updates( string $type, Context $ctx ): array {
         $available = $this->get_installed_languages( $type );
         $updates   = array();
@@ -1159,11 +880,6 @@ class Language_Handler extends Command_Handler {
         return $updates;
     }
 
-    
-
-
-
-
     private function get_installed_languages( string $type, string $slug = 'default' ): array {
         $available   = (array) $this->wp( 'installed_translations', array( $type ) );
         $available   = ! empty( $available[ $slug ] ) ? array_map( 'strval', array_keys( (array) $available[ $slug ] ) ) : array();
@@ -1171,13 +887,6 @@ class Language_Handler extends Command_Handler {
 
         return $available;
     }
-
-    
-
-
-
-
-
 
     private function get_all_languages( string $type, ?string $slug, Context $ctx ): array {
         $args = array(
@@ -1216,12 +925,6 @@ class Language_Handler extends Command_Handler {
         return $translations;
     }
 
-    
-
-
-
-
-
     private function object_version( string $type, string $slug, string $wp_version ): string {
         if ( 'plugins' === $type ) {
             $plugin_data = $this->wp( 'plugin_data', array( $slug ) );
@@ -1237,12 +940,6 @@ class Language_Handler extends Command_Handler {
         return $wp_version;
     }
 
-    
-
-
-
-
-
     private function download_language_pack( string $type, string $download, ?string $slug, Context $ctx ) {
         $translation_to_load = self::find_language( $this->get_all_languages( $type, $slug, $ctx ), $download );
 
@@ -1253,7 +950,6 @@ class Language_Handler extends Command_Handler {
         $translation         = $translation_to_load;
         $translation['type'] = rtrim( $type, 's' );
 
-        
         if ( ! isset( $translation['slug'] ) ) {
             $translation['slug'] = $slug;
         }
@@ -1275,12 +971,6 @@ class Language_Handler extends Command_Handler {
         return (string) $translation['language'];
     }
 
-    
-
-
-
-
-
     private static function find_language( array $translations, string $download ): ?array {
         foreach ( $translations as $translation ) {
             if ( $translation['language'] === $download ) {
@@ -1289,11 +979,6 @@ class Language_Handler extends Command_Handler {
         }
         return null;
     }
-
-    
-
-
-
 
     private function install_one( string $type, array $args, Context $ctx ): void {
         $object         = (string) array_shift( $args );
@@ -1318,7 +1003,6 @@ class Language_Handler extends Command_Handler {
                     $ctx->out->warning( self::error_to_string( $response ) );
                     $ctx->out->log( "Language '{$language_code}' not installed." );
 
-                    
                     if ( 'not_found' === $response['code'] ) {
                         ++$skips;
                         ++$missing;
@@ -1334,12 +1018,6 @@ class Language_Handler extends Command_Handler {
 
         $this->finish_install( $ctx, $count, $successes, $errors, $skips, $missing, self::noun( $type ) . " '{$object}'" );
     }
-
-    
-
-
-
-
 
     private function install_many( string $type, array $args, array $assoc_args, Context $ctx ): void {
         $language_codes = $args;
@@ -1409,24 +1087,13 @@ class Language_Handler extends Command_Handler {
         $this->finish_install( $ctx, $count, $successes, $errors, $skips, $missing, 'installed ' . self::noun( $type ) . 's' );
     }
 
-    
-
-
-
-
-
     private static function batch_format( array $assoc_args, Context $ctx ): string {
         $format = empty( $assoc_args['format'] ) ? 'table' : $assoc_args['format'];
         if ( in_array( $format, array( 'json', 'csv' ), true ) ) {
-            
             $ctx->out->set_quiet( true );
         }
         return (string) $format;
     }
-
-    
-
-
 
     private function finish_install( Context $ctx, int $count, int $successes, int $errors, int $skips, int $missing, string $what ): void {
         Values::report_batch( $ctx->out, 'language', 'install', $count, $successes, $errors, $skips );
@@ -1434,12 +1101,6 @@ class Language_Handler extends Command_Handler {
             $ctx->fail_missing_target( sprintf( self::MISSING_PACK, $what ) );
         }
     }
-
-    
-
-
-
-
 
     private function display_list( Invocation $inv, Context $ctx, string $type, array $translations ): void {
         $assoc_args = $inv->assoc;
@@ -1449,12 +1110,6 @@ class Language_Handler extends Command_Handler {
         $formatter = new Formatter( $ctx->out, $assoc_args, self::OBJ_FIELDS[ $type ], $type );
         $formatter->display_items( $translations );
     }
-
-    
-
-
-
-
 
     private function refuse_unknown_filters( Invocation $inv, Context $ctx, array $rows ): void {
         if ( ! $rows ) {
@@ -1477,12 +1132,6 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private function format_items( Context $ctx, string $format, array $items, array $fields ): void {
         $assoc_args = array(
             'format' => $format,
@@ -1491,12 +1140,6 @@ class Language_Handler extends Command_Handler {
         $formatter  = new Formatter( $ctx->out, $assoc_args );
         $formatter->display_items( $items );
     }
-
-    
-
-
-
-
 
     private function require_language_files( Invocation $inv, Context $ctx, string $cap ): void {
         if ( function_exists( 'wp_is_file_mod_allowed' ) && ! \wp_is_file_mod_allowed( 'can_install_language_pack' ) ) {
@@ -1509,7 +1152,6 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
     private function enforce_pack_cap( Invocation $inv, Context $ctx, string $type, string $verb, int $cap ): void {
         $args = array_values( $inv->args );
         if ( Read_Value::flag( $inv->assoc, 'all', false ) ) {
@@ -1525,7 +1167,6 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
     private function enforce_object_cap( Invocation $inv, Context $ctx ): void {
         $type  = self::type_of( $inv );
         $count = Read_Value::flag( $inv->assoc, 'all', false ) ? count( $this->all_object_names( $type ) ) : count( $inv->args );
@@ -1533,11 +1174,6 @@ class Language_Handler extends Command_Handler {
             $ctx->out->error( sprintf( self::REASON_OBJECTS_CAP, self::OBJECT_CAP, self::noun( $type ) . 's', $inv->command, $count ) );
         }
     }
-
-    
-
-
-
 
     private function pairs( Invocation $inv, string $type ): array {
         $args = array_map( 'strval', array_values( $inv->args ) );
@@ -1555,7 +1191,6 @@ class Language_Handler extends Command_Handler {
         return $pairs;
     }
 
-    
     private function all_object_names( string $type ): array {
         $names = array();
         foreach ( array_keys( (array) $this->wp( 'all_objects', array( $type ) ) ) as $path ) {
@@ -1564,7 +1199,6 @@ class Language_Handler extends Command_Handler {
         return $names;
     }
 
-    
     private static function object_name( string $type, string $path ): string {
         if ( 'themes' === $type ) {
             return basename( $path );
@@ -1575,7 +1209,6 @@ class Language_Handler extends Command_Handler {
         return dirname( $path );
     }
 
-    
     private static function type_of( Invocation $inv ): string {
         return 0 === strpos( $inv->command, 'language theme ' ) ? 'themes' : 'plugins';
     }
@@ -1583,14 +1216,6 @@ class Language_Handler extends Command_Handler {
     private static function noun( string $type ): string {
         return 'themes' === $type ? 'theme' : 'plugin';
     }
-
-    
-
-
-
-
-
-
 
     private static function list_filter( array $list, array $args ): array {
         $out = array();
@@ -1616,13 +1241,9 @@ class Language_Handler extends Command_Handler {
         return $out;
     }
 
-    
     private static function pluralize( string $noun, int $count ): string {
         return 1 === $count ? $noun : $noun . 's';
     }
-
-    
-
 
     private static function wp_error( string $code, string $message ): array {
         return array(
@@ -1632,11 +1253,6 @@ class Language_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
     public static function wp_error_array( \WP_Error $error ): array {
         $data = $error->get_error_data();
         return array(
@@ -1645,13 +1261,6 @@ class Language_Handler extends Command_Handler {
             'data'     => ( is_scalar( $data ) || is_array( $data ) || null === $data ) ? $data : json_decode( (string) json_encode( $data ), true ), // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- plain-data copy.
         );
     }
-
-    
-
-
-
-
-
 
     public static function error_to_string( array $error ): string {
         $data = $error['data'] ?? null;
@@ -1663,12 +1272,6 @@ class Language_Handler extends Command_Handler {
         }
         return '';
     }
-
-    
-
-
-
-
 
     public static function print_feedback( Context $ctx, array $feedback ): void {
         foreach ( $feedback as $entry ) {
@@ -1683,33 +1286,15 @@ class Language_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function new_skin( \ArrayObject $sink ): \WP_Upgrader_Skin {
         return new class( $sink ) extends \WP_Upgrader_Skin {
 
-            
             public $language_update;
 
-            
             public $api;
 
-            
             private \ArrayObject $sink;
 
-            
             public function __construct( \ArrayObject $sink ) {
                 parent::__construct();
                 $this->sink = $sink;
@@ -1723,7 +1308,6 @@ class Language_Handler extends Command_Handler {
 
             public function bulk_footer() {}
 
-            
             public function error( $error ) {
                 if ( ! $error ) {
                     return;
@@ -1733,10 +1317,6 @@ class Language_Handler extends Command_Handler {
                 }
                 $this->sink[] = array( 'warning', is_string( $error ) ? $error : ( \is_wp_error( $error ) ? Language_Handler::error_to_string( Language_Handler::wp_error_array( $error ) ) : '' ) );
             }
-
-            
-
-
 
             public function feedback( $feedback, ...$args ) {
                 $string = $feedback;
@@ -1756,35 +1336,10 @@ class Language_Handler extends Command_Handler {
         };
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function wp( string $call, array $args = array() ) {
         return $this->{'call_' . $call}( ...$args );
     }
 
-    
     protected function call_installed_translations( string $type ): array {
         return (array) \wp_get_installed_translations( $type );
     }
@@ -1793,13 +1348,11 @@ class Language_Handler extends Command_Handler {
         return (string) \get_locale();
     }
 
-    
     protected function call_wp_version_value(): string {
         require ABSPATH . WPINC . '/version.php';
         return isset( $wp_version ) ? (string) $wp_version : '';
     }
 
-    
     protected function call_plugin_data( string $slug ): ?array {
         self::load_plugin_functions();
         $plugins     = \get_plugins( '/' . $slug );
@@ -1813,7 +1366,6 @@ class Language_Handler extends Command_Handler {
         );
     }
 
-    
     protected function call_theme_data( string $slug ): array {
         $theme = \wp_get_theme( $slug );
         return array(
@@ -1821,12 +1373,6 @@ class Language_Handler extends Command_Handler {
             'Version' => isset( $theme['Version'] ) ? $theme['Version'] : null,
         );
     }
-
-    
-
-
-
-
 
     protected function call_translations_api( string $type, array $args ): array {
         if ( ! function_exists( 'translations_api' ) ) {
@@ -1838,12 +1384,6 @@ class Language_Handler extends Command_Handler {
         }
         return is_array( $response ) ? $response : array();
     }
-
-    
-
-
-
-
 
     protected function call_translation_updates( string $type, array $available ): array {
         if ( ! function_exists( 'wp_update_plugins' ) ) {
@@ -1858,7 +1398,6 @@ class Language_Handler extends Command_Handler {
                 self::load_plugin_functions();
                 \add_filter( 'plugins_update_check_locales', $func );
                 \wp_clean_plugins_cache();
-                
                 \wp_update_plugins();
                 \remove_filter( 'plugins_update_check_locales', $func );
                 $transient = 'update_plugins';
@@ -1866,14 +1405,12 @@ class Language_Handler extends Command_Handler {
             case 'themes':
                 \add_filter( 'themes_update_check_locales', $func );
                 \wp_clean_themes_cache();
-                
                 \wp_update_themes();
                 \remove_filter( 'themes_update_check_locales', $func );
                 $transient = 'update_themes';
                 break;
             default:
                 \delete_site_transient( 'update_core' );
-                
                 \wp_version_check();
                 $transient = 'update_core';
                 break;
@@ -1889,12 +1426,6 @@ class Language_Handler extends Command_Handler {
         }
         return $updates;
     }
-
-    
-
-
-
-
 
     protected function call_all_objects( string $type ): array {
         $out = array();
@@ -1912,7 +1443,6 @@ class Language_Handler extends Command_Handler {
         return $out;
     }
 
-    
     protected function call_object_exists( string $type, string $name ): bool {
         return (bool) Fetchers::of( self::noun( $type ) )->get( $name );
     }
@@ -1921,16 +1451,7 @@ class Language_Handler extends Command_Handler {
         return (string) WP_LANG_DIR;
     }
 
-    
-
-
-
-
-
-
     protected function call_dir_entries( string $dir ) {
-        
-        
         $files = is_dir( $dir ) ? scandir( $dir ) : false;
         if ( ! $files ) {
             return false;
@@ -1945,7 +1466,6 @@ class Language_Handler extends Command_Handler {
         return $out;
     }
 
-    
     protected function call_filesystem_init(): bool {
         if ( ! function_exists( 'WP_Filesystem' ) ) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -1953,32 +1473,17 @@ class Language_Handler extends Command_Handler {
         return (bool) \WP_Filesystem();
     }
 
-    
     protected function call_delete_file( string $path ): bool {
         global $wp_filesystem;
         return is_object( $wp_filesystem ) && (bool) $wp_filesystem->delete( $path );
     }
 
-    
     protected function call_filesystem_method(): string {
         if ( ! function_exists( 'get_filesystem_method' ) ) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
         }
         return (string) \get_filesystem_method( array(), WP_LANG_DIR );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     protected function call_upgrade_language_pack( array $translation, array $upgrade_args ): array {
         if ( ! function_exists( 'request_filesystem_credentials' ) ) {

@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
 class Yoast_Get_Term_Seo extends Base_Tool {
 
 	public function get_name() {
@@ -26,8 +22,6 @@ class Yoast_Get_Term_Seo extends Base_Tool {
 	}
 
 	public function get_required_capability() {
-		
-		
 		return 'read';
 	}
 

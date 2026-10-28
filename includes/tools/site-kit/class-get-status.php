@@ -8,20 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class Get_Status extends Base_Tool {
 
     use Site_Kit_Rest;
 
-    
     const MODULES = array(
         'analytics-4'    => array(
             'label' => 'Google Analytics 4',
@@ -71,12 +61,6 @@ class Get_Status extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private function listed_modules(): array {
         try {
             $list = $this->site_kit_get( '/core/modules/data/list' );
@@ -91,14 +75,6 @@ class Get_Status extends Base_Tool {
         }
         return $by_slug;
     }
-
-    
-
-
-
-
-
-
 
     private function module_status( string $slug, array $module, ?array $listed ): array {
         $row = array(
@@ -121,14 +97,6 @@ class Get_Status extends Base_Tool {
         return $row;
     }
 
-    
-
-
-
-
-
-
-
     private function module_settings( string $slug ): array {
         try {
             $settings = $this->site_kit_get( '/modules/' . $slug . '/data/settings' );
@@ -137,14 +105,6 @@ class Get_Status extends Base_Tool {
         }
         return is_array( $settings ) ? $settings : array();
     }
-
-    
-
-
-
-
-
-
 
     private function access( string $slug, ?array $listed, array $settings ): array {
         if ( null !== $listed && empty( $listed['active'] ) ) {
@@ -173,14 +133,6 @@ class Get_Status extends Base_Tool {
         }
         return array( 'none', 'Site Kit does not share this module with your role, and you have not connected your own Google account in Site Kit. An administrator can share it under Site Kit › Settings › Admin Settings › Dashboard sharing.' );
     }
-
-    
-
-
-
-
-
-
 
     private static function owner_id( ?array $listed, array $settings ): int {
         if ( isset( $listed['owner']['id'] ) && is_numeric( $listed['owner']['id'] ) ) {

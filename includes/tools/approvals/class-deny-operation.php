@@ -5,10 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Deny_Operation extends Approve_Operation {
 
     public function get_name() {

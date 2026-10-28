@@ -5,105 +5,29 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Replacer {
 
-    
     const MAX_DEPTH = 64;
 
-    
     private $old;
-    
     private $new;
-    
     private $old_json;
-    
     private $new_json;
 
-    
     private $occurrences = 0;
-    
     private $classes = array();
-    
     private $too_deep = false;
-    
     private $unsafe = false;
-    
     private $objects_left = 0;
-    
     private $seen_objects = array();
-    
     private $seen_references = array();
 
-    
     private $pattern = null;
-    
     private $regex_limit = -1;
-    
     private $recurse_objects = true;
-    
     private $logging = false;
-    
     private $regex_error = false;
-    
     private $log_data = array();
-
-    
-
-
 
     public function __construct( string $old, string $new, array $options = array() ) {
         $this->old             = $old;
@@ -122,59 +46,25 @@ final class Replacer {
         $this->old_json = $old_json !== $old ? $old_json : null;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function pattern( string $old, string $delimiter, string $flags ): string {
         return $delimiter . $old . $delimiter . $flags;
     }
 
-    
-
-
-
-
     public function is_regex(): bool {
         return null !== $this->pattern;
     }
-
-    
-
-
-
 
     public static function json_inner( string $value ): string {
         $encoded = json_encode( $value ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- the exact default-flag form PHP and WP-CLI produce.
         return false !== $encoded ? substr( $encoded, 1, -1 ) : $value;
     }
 
-    
-
-
-
-
     public function needles(): array {
         if ( null !== $this->pattern ) {
-            
-            
-            
             return array( '' );
         }
         return null === $this->old_json ? array( $this->old ) : array( $this->old, $this->old_json );
     }
-
-    
-
-
-
-
-
 
     public function first_match( string $value ): ?int {
         if ( null !== $this->pattern ) {
@@ -191,19 +81,6 @@ final class Replacer {
         return $pos;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public function replace( string $value ): array {
         $this->reset_cell();
 
@@ -218,11 +95,6 @@ final class Replacer {
         return $this->result( $out, $out === $value ? 'unchanged' : 'changed' );
     }
 
-    
-
-
-
-
     private function reset_cell(): void {
         $this->occurrences     = 0;
         $this->classes         = array();
@@ -234,14 +106,6 @@ final class Replacer {
         $this->regex_error     = false;
         $this->log_data        = array();
     }
-
-    
-
-
-
-
-
-
 
     private function replace_serialized( string $value ): array {
         $data = self::unserialize( $value );
@@ -263,14 +127,6 @@ final class Replacer {
         return $this->result( $out, $this->classes ? 'partial' : 'changed' );
     }
 
-    
-
-
-
-
-
-
-
     private function walk_refusal( string $value ): ?string {
         if ( $this->too_deep ) {
             return 'too_deep';
@@ -284,26 +140,10 @@ final class Replacer {
         return null;
     }
 
-    
-
-
-
-
-
-
-
     private static function reads_back_as( string $out, $data ): bool {
         $back = self::unserialize( $out );
         return ( false !== $back || self::is_serialized_false( $out ) ) && gettype( $back ) === gettype( $data );
     }
-
-    
-
-
-
-
-
-
 
     private function walk( $data, int $depth ) {
         if ( $depth > self::MAX_DEPTH ) {
@@ -322,34 +162,15 @@ final class Replacer {
         return $data;
     }
 
-    
-
-
-
-
-
-
-
     private function walk_string( string $data, int $depth ): string {
         if ( self::looks_serialized( $data ) ) {
             $inner = self::unserialize( $data );
             if ( false !== $inner || self::is_serialized_false( $data ) ) {
                 return $this->walk_nested_serialized( $data, $inner, $depth );
             }
-            
         }
         return $this->replace_string( $data );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function walk_nested_serialized( string $data, $inner, int $depth ): string {
         $before  = $this->occurrences;
@@ -364,13 +185,6 @@ final class Replacer {
         }
         return serialize( $walked ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- a value serialized twice keeps its outer layer.
     }
-
-    
-
-
-
-
-
 
     private function walk_array( array $data, int $depth ): array {
         foreach ( array_keys( $data ) as $key ) {
@@ -387,15 +201,6 @@ final class Replacer {
         return $data;
     }
 
-    
-
-
-
-
-
-
-
-
     private function walk_object( object $data, int $depth ): object {
         if ( $data instanceof \__PHP_Incomplete_Class ) {
             $props = (array) $data;
@@ -406,20 +211,9 @@ final class Replacer {
         if ( $data instanceof \stdClass ) {
             return $this->walk_stdclass( $data, $depth );
         }
-        
-        
         $this->note_class( get_class( $data ) );
         return $data;
     }
-
-    
-
-
-
-
-
-
-
 
     private function walk_stdclass( \stdClass $data, int $depth ): \stdClass {
         if ( ! $this->recurse_objects ) {
@@ -436,14 +230,6 @@ final class Replacer {
         }
         return $data;
     }
-
-    
-
-
-
-
-
-
 
     private function replace_string( string $value ): string {
         if ( null !== $this->pattern ) {
@@ -462,15 +248,6 @@ final class Replacer {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
 
     private function replace_pattern( string $value ): string {
         $count = 0;
@@ -493,14 +270,8 @@ final class Replacer {
         }
     }
 
-    
-
-
-
     private function result( string $value, string $status ): array {
         if ( 'partial_unchanged' === $status ) {
-            
-            
             $status = 'partial';
             $out    = array( 'value' => $value, 'status' => $status, 'occurrences' => 0, 'classes' => $this->classes );
         } else {
@@ -516,19 +287,6 @@ final class Replacer {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public function log_bits( string $old_data, int $before, int $after ): array {
         $search = null !== $this->pattern ? $this->pattern : $this->literal_log_pattern();
@@ -547,17 +305,6 @@ final class Replacer {
             $after
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function log_replace( string $search, string $old_data, array $old_matches ): ?array {
         $i           = 0;
@@ -587,15 +334,6 @@ final class Replacer {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function log_replacement( array $matches ): string {
         if ( null === $this->pattern ) {
             return $matches[0] === $this->old ? $this->new : $this->new_json;
@@ -611,26 +349,12 @@ final class Replacer {
         return str_replace( '\\\\', '\\', (string) $replacement );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function log_excerpts( array $data, array $matches, int $count, int $before, int $after ): array {
         $bits        = array( array(), array() );
         $append_next = false;
         $last        = array( 0, 0 );
         for ( $i = 0; $i < $count; $i++ ) {
             $context = array( array( '', '' ), array( '', '' ) );
-            
             if ( $before && $matches[0][ $i ][1] && ! $append_next ) {
                 foreach ( array( 0, 1 ) as $side ) {
                     $context[ $side ][0] = self::safe_substr( (string) substr( $data[ $side ], $last[ $side ], $matches[ $side ][ $i ][1] - $last[ $side ] ), -$before, null );
@@ -653,17 +377,6 @@ final class Replacer {
         return $bits;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function log_after_context( array $data, array $matches, int $i, int $count, int $after ): array {
         $old_end_offset = $matches[0][ $i ][1] + strlen( $matches[0][ $i ][0] );
         $new_end_offset = $matches[1][ $i ][1] + strlen( $matches[1][ $i ][0] );
@@ -679,11 +392,6 @@ final class Replacer {
         return array( $old_after, $new_after, false );
     }
 
-    
-
-
-
-
     private function literal_log_pattern(): string {
         $parts = array( preg_quote( $this->old, '/' ) );
         if ( null !== $this->old_json ) {
@@ -691,15 +399,6 @@ final class Replacer {
         }
         return '/' . implode( '|', $parts ) . '/';
     }
-
-    
-
-
-
-
-
-
-
 
     private static function safe_substr( string $str, int $start, ?int $length ): string {
         $len = self::safe_strlen( $str );
@@ -714,15 +413,6 @@ final class Replacer {
         }
         return self::substr_graphemes( $str, $start, $length );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function substr_graphemes( string $str, int $start, int $length ): string {
         if ( function_exists( 'grapheme_substr' ) ) {
@@ -741,12 +431,6 @@ final class Replacer {
         return (string) substr( $str, $start, $length );
     }
 
-    
-
-
-
-
-
     private static function safe_strlen( string $str ): int {
         if ( function_exists( 'grapheme_strlen' ) ) {
             $len = grapheme_strlen( $str );
@@ -761,11 +445,6 @@ final class Replacer {
         return function_exists( 'mb_strlen' ) ? (int) mb_strlen( $str, 'UTF-8' ) : strlen( $str );
     }
 
-    
-
-
-
-
     public static function looks_serialized( string $value ): bool {
         if ( function_exists( 'is_serialized' ) && \is_serialized( $value ) ) {
             return true;
@@ -773,15 +452,10 @@ final class Replacer {
         return (bool) preg_match( '/^C:\d+:"[^"]+":\d+:\{/', ltrim( $value ) );
     }
 
-    
     private static function unserialize( string $value ) {
         // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize, WordPress.PHP.NoSilencedErrors.Discouraged -- allowed_classes restricts objects to stdClass; a corrupt value must not emit a notice into the response.
         return @unserialize( trim( $value ), array( 'allowed_classes' => array( 'stdClass' ) ) );
     }
-
-    
-
-
 
     private static function round_trips( string $value ): bool {
         $data = self::unserialize( $value );

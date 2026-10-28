@@ -12,45 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Embed_Adapter extends Command_Handler {
 
     const TOOL = 'wp_delete_post_meta';
-
-    
-
-
-
-
 
     public function preflight_clear( Invocation $inv, Context $ctx ): void {
         Ids::require_digits( $ctx, (string) $inv->args[0], 'a post ID' );
     }
 
-    
     public function cache_clear( Invocation $inv, Context $ctx ): void {
         $post_id = (string) $inv->args[0];
 
@@ -101,23 +70,10 @@ class Embed_Adapter extends Command_Handler {
         $ctx->out->success( 'Cleared oEmbed cache.' );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     protected function call( string $name, array $args, callable $real ) {
         return $real();
     }
 
-    
     protected function post_exists( string $post_id ): bool {
         return (bool) $this->call(
             __FUNCTION__,
@@ -128,7 +84,6 @@ class Embed_Adapter extends Command_Handler {
         );
     }
 
-    
     protected function user_can( string $cap, int ...$args ): bool {
         return (bool) $this->call(
             __FUNCTION__,
@@ -139,7 +94,6 @@ class Embed_Adapter extends Command_Handler {
         );
     }
 
-    
     protected function oembed_keys( string $post_id ): array {
         return (array) $this->call(
             __FUNCTION__,

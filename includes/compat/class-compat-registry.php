@@ -1,35 +1,12 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Compat;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Compat_Registry {
-
-    
-
-
 
     const SHIMS = array(
         'buddypress-loggedin-user' => 'Easy_MCP_AI\\Compat\\Shims\\Buddypress_Loggedin_User',
@@ -40,16 +17,9 @@ final class Compat_Registry {
         'sitekit-user-binding'     => 'Easy_MCP_AI\\Compat\\Shims\\Sitekit_User_Binding',
     );
 
-    
     private static $shims = null;
 
-    
     private static $armed = array();
-
-    
-
-
-
 
     public static function all_shims() {
         if ( null === self::$shims ) {
@@ -58,24 +28,9 @@ final class Compat_Registry {
         return self::$shims;
     }
 
-    
-
-
-
-
     public static function mark() {
         return count( self::$armed );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function arm_for( $tool, array $arguments = array() ) {
         $armed = array();
@@ -83,18 +38,6 @@ final class Compat_Registry {
             if ( ! $shim->applies_to( $tool ) ) {
                 continue;
             }
-            
-
-
-
-
-
-
-
-
-
-
-
             if ( ! $shim->is_required() && false === apply_filters( 'easy_mcp_ai_compat_shim_enabled', true, $id, $tool ) ) {
                 continue;
             }
@@ -113,20 +56,6 @@ final class Compat_Registry {
         return $armed;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function is_armed( string $id, ?object $tool = null, ?array $arguments = null ): bool {
         for ( $i = count( self::$armed ) - 1; $i >= 0; $i-- ) {
             $arming = self::$armed[ $i ];
@@ -137,15 +66,6 @@ final class Compat_Registry {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function release( $mark ): void {
         $mark = max( 0, (int) $mark );
@@ -158,9 +78,6 @@ final class Compat_Registry {
             }
         }
     }
-
-    
-
 
     public static function reset(): void {
         self::release( 0 );

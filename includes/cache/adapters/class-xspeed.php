@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,41 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Xspeed extends Cache_Adapter {
 
-    
     const CAUSE = 'easy-mcp-ai';
 
-    
     const MAX_DEFERRED_URLS = 100;
 
     const RUNNER = 'XSpeed\\Purge_Runner';
@@ -94,12 +58,6 @@ final class Xspeed extends Cache_Adapter {
         return Purge_Request::SCOPE_SITE === $request->scope && $this->calls()->is_multisite();
     }
 
-    
-
-
-
-
-
     public function noise_options(): array {
         return array( 'xspeed_activity_log', 'xspeed_stats', 'xspeed_cloudflare_health' );
     }
@@ -137,23 +95,10 @@ final class Xspeed extends Cache_Adapter {
         return $this->sent( sprintf( 'xSpeed Cache cleared %d page(s).', count( $request->urls ) ) );
     }
 
-    
-
-
-
-
     private function edge_ready(): bool {
         $calls = $this->calls();
         return $calls->method_exists( self::RUNNER, 'cloudflare_enabled' ) && true === $calls->call( array( self::RUNNER, 'cloudflare_enabled' ) );
     }
-
-    
-
-
-
-
-
-
 
     private function edge_listens( string $hook, string $method ): bool {
         $calls = $this->calls();
@@ -163,11 +108,6 @@ final class Xspeed extends Cache_Adapter {
         $module = $calls->call( array( self::MODULES, 'get' ), array( 'cloudflare' ) );
         return is_object( $module ) && false !== $calls->has_action( $hook, array( $module, $method ) ) && $this->edge_ready();
     }
-
-    
-
-
-
 
     private function max_deferred_urls(): int {
         $max = (int) $this->calls()->apply_filters( 'xspeed_cloudflare_max_deferred_purge_urls', self::MAX_DEFERRED_URLS );

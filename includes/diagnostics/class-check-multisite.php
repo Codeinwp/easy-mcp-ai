@@ -1,26 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,39 +8,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Multisite {
 
-    
     const MAX_SITES_EXAMINED = 25;
 
-    
     const REASON_UNREADABLE    = 'unreadable';
     const REASON_NOT_PERMITTED = 'not_permitted';
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function may_read_network() {
         if ( ! function_exists( 'is_multisite' ) || ! \is_multisite() ) {
-            return true; 
+            return true;
         }
 
         return function_exists( 'is_super_admin' ) && \is_super_admin();
     }
-
-    
-
 
     public static function run() {
         $is_multisite = function_exists( 'is_multisite' ) && \is_multisite();
@@ -73,8 +31,6 @@ class Check_Multisite {
             );
         }
 
-        
-        
         $i2 = self::evaluate_discovery_origin( true, self::rtrim_slash( \home_url() ), self::rtrim_slash( \network_home_url() ) );
 
         if ( ! self::may_read_network() ) {
@@ -92,34 +48,16 @@ class Check_Multisite {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function evaluate_per_site_tables( $is_multisite, $missing, $examined, $total, $reason = self::REASON_UNREADABLE ) {
         $label = __( 'Every site on the network is set up', 'easy-mcp-ai' );
 
         if ( $is_multisite && ! is_array( $missing ) ) {
-            
-            
-            
-            
             $permitted = ( self::REASON_NOT_PERMITTED === $reason );
 
             $detail = $permitted
                 ? __( 'Only a network administrator can check the other sites on this network. Everything else on this page applies to this site alone.', 'easy-mcp-ai' )
                 : __( 'Could not examine the sites on this network.', 'easy-mcp-ai' );
 
-            
-            
-            
-            
-            
-            
             $evidence = $permitted ? array( 'not_permitted' => true ) : array();
 
             return Diagnostic_Result::unknown( 'i1', Diagnostic_Result::TIER_WARNING, $label, $detail, $evidence );
@@ -130,12 +68,6 @@ class Check_Multisite {
             return Diagnostic_Result::pass( 'i1', Diagnostic_Result::TIER_WARNING, $label, __( 'Not a multisite network.', 'easy-mcp-ai' ), array( 'multisite' => false ) );
         }
 
-        
-        
-        
-        
-        
-        
         $examined = (int) $examined;
         $total    = (int) $total;
 
@@ -187,11 +119,6 @@ class Check_Multisite {
         );
     }
 
-    
-
-
-
-
     public static function evaluate_discovery_origin( $is_multisite, $site_home, $network_home ) {
         $label = __( 'AI clients can find this site\'s settings', 'easy-mcp-ai' );
 
@@ -219,28 +146,10 @@ class Check_Multisite {
         return Diagnostic_Result::pass( 'i2', Diagnostic_Result::TIER_WARNING, $label, '', $evidence );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function sits_under_a_sub_path( $site_home, $network_home ) {
         $site_host    = strtolower( (string) \wp_parse_url( (string) $site_home, PHP_URL_HOST ) );
         $network_host = strtolower( (string) \wp_parse_url( (string) $network_home, PHP_URL_HOST ) );
 
-        
         if ( '' === $site_host || '' === $network_host || $site_host !== $network_host ) {
             return false;
         }
@@ -251,31 +160,19 @@ class Check_Multisite {
         return $site_path !== $network_path;
     }
 
-    
-
     private static function rtrim_slash( $url ) {
         return rtrim( (string) $url, '/' );
     }
 
-    
-
-
     private static function probe_sites() {
         global $wpdb;
 
-        
-        
         $empty = array( 'missing' => null, 'examined' => 0, 'total' => 0 );
 
         if ( ! function_exists( 'get_sites' ) || ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) || ! method_exists( $wpdb, 'get_blog_prefix' ) ) {
             return $empty;
         }
 
-        
-        
-        
-        
-        
         $total = (int) \get_sites( array( 'count' => true ) );
         if ( $total <= 0 && function_exists( 'get_blog_count' ) ) {
             $total = (int) \get_blog_count();
@@ -302,11 +199,6 @@ class Check_Multisite {
             $found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
             // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
-            
-            
-            
-            
-            
             if ( null === $found && property_exists( $wpdb, 'last_error' ) && '' !== (string) $wpdb->last_error ) {
                 return $empty;
             }
@@ -322,8 +214,6 @@ class Check_Multisite {
         return array(
             'missing'  => $missing,
             'examined' => $examined,
-            
-            
             'total'    => $total,
         );
     }

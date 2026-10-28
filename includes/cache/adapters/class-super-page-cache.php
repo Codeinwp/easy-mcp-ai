@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,39 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Super_Page_Cache extends Cache_Adapter {
 
     const CONTROLLER = 'SPC\\Modules\\Cache_Controller';
@@ -56,10 +18,8 @@ final class Super_Page_Cache extends Cache_Adapter {
     const LOADER     = 'SPC\\Loader';
     const VARNISH    = 'SPC\\Services\\Varnish';
 
-    
     const MIN_VERSION = '5.3.0';
 
-    
     const CHUNK = 30;
 
     public function id(): string {
@@ -73,12 +33,6 @@ final class Super_Page_Cache extends Cache_Adapter {
     public function kind(): string {
         return self::KIND_PAGE;
     }
-
-    
-
-
-
-
 
     public function tier(): int {
         return self::TIER_CDN;
@@ -128,12 +82,6 @@ final class Super_Page_Cache extends Cache_Adapter {
             || $this->varnish_on();
     }
 
-    
-
-
-
-
-
     public function noise_options(): array {
         return array( 'swcfpc_fc_ttl_registry', 'swcfpc_preloader_lock' );
     }
@@ -168,12 +116,6 @@ final class Super_Page_Cache extends Cache_Adapter {
         return $this->send_urls( $urls );
     }
 
-    
-
-
-
-
-
     private function send_urls( array $urls ): Layer_Result {
         $missing = $this->api_missing();
         if ( null !== $missing ) {
@@ -196,11 +138,6 @@ final class Super_Page_Cache extends Cache_Adapter {
         return $this->sent( $failed > 0 ? $detail . ' ' . $refused : $detail );
     }
 
-    
-
-
-
-
     private function api_missing(): ?Layer_Result {
         $version = $this->calls()->constant( 'SWCFPC_VERSION' );
         if ( ! is_string( $version ) || version_compare( $version, self::MIN_VERSION, '<' ) ) {
@@ -214,23 +151,9 @@ final class Super_Page_Cache extends Cache_Adapter {
         return null;
     }
 
-    
-
-
-
-
-
-
-
     private function uses_facade( Purge_Request $request ): bool {
         return $this->cloudflare_on() && ( $request->include_cdn || $this->on( 'cf_purge_only_html' ) );
     }
-
-    
-
-
-
-
 
     private function purge_local(): Layer_Result {
         $calls  = $this->calls();
@@ -255,11 +178,6 @@ final class Super_Page_Cache extends Cache_Adapter {
         return $this->sent( sprintf( 'Super Page Cache cleared %s.%s', implode( ' and ', $done ), $note ) );
     }
 
-    
-
-
-
-
     private function disk_module(): ?object {
         $calls = $this->calls();
         if ( ! $calls->method_exists( self::LOADER, 'get' ) ) {
@@ -273,39 +191,17 @@ final class Super_Page_Cache extends Cache_Adapter {
         return is_object( $module ) && $calls->method_exists( $module, 'fallback_cache_purge_all' ) ? $module : null;
     }
 
-    
-
-
-
-
     private function varnish_on(): bool {
         return $this->on( 'cf_varnish_support' ) && $this->on( 'cf_varnish_auto_purge' );
     }
-
-    
-
-
-
-
-
 
     private function chunk_size(): int {
         return $this->on( 'cf_spinupwp_purge_on_flush' ) && $this->calls()->function_exists( 'spinupwp_purge_site' ) ? 1 : self::CHUNK;
     }
 
-    
-
-
-
-
     private function siteground_on(): bool {
         return $this->on( 'cf_siteground_purge_on_flush' ) && is_object( $this->calls()->global_value( 'sg_cachepress_supercacher' ) );
     }
-
-    
-
-
-
 
     private function cloudflare_on(): bool {
         $store = $this->store();
@@ -313,11 +209,6 @@ final class Super_Page_Cache extends Cache_Adapter {
             && $this->ask( $store, 'is_cloudflare_connected' )
             && ! $this->ask( $store, 'has_unreadable_active_cloudflare_credentials' );
     }
-
-    
-
-
-
 
     private function store(): ?object {
         $calls = $this->calls();
@@ -328,12 +219,6 @@ final class Super_Page_Cache extends Cache_Adapter {
         return is_object( $store ) ? $store : null;
     }
 
-    
-
-
-
-
-
     private function on( string $key ): bool {
         $store = $this->store();
         if ( null === $store || ! $this->calls()->method_exists( $store, 'get' ) ) {
@@ -342,13 +227,6 @@ final class Super_Page_Cache extends Cache_Adapter {
         $value = $this->calls()->call( array( $store, 'get' ), array( $key, 0 ) );
         return is_scalar( $value ) && (int) $value > 0;
     }
-
-    
-
-
-
-
-
 
     private function ask( object $store, string $method ): bool {
         return $this->calls()->method_exists( $store, $method ) && true === (bool) $this->calls()->call( array( $store, $method ) );

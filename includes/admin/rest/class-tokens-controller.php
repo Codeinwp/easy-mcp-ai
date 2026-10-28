@@ -1,27 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Access_Presets;
@@ -33,28 +11,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Tokens_Controller extends Admin_Rest_Controller {
 
-    
     const TOKENS_LIMIT = 200;
 
-    
     const USERS_LIMIT = 200;
 
-    
     const DESCRIPTION_MAX = 160;
 
-    
     private $token_manager;
 
-    
     private $presets;
 
-    
     private $tool_registry;
-
-    
-
-
-
 
     public function __construct( $token_manager, Access_Presets $presets, $tool_registry = null ) {
         $this->token_manager = $token_manager;
@@ -72,12 +39,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         $this->register_delete_route( '/tokens/(?P<id>\d+)', array( $this, 'delete_token' ), self::id_args() );
     }
 
-    
-
-    
-
-
-
     public function get_tokens( $request ) {
         $rows  = (array) $this->token_manager->get_all_tokens( self::TOKENS_LIMIT );
         $total = (int) $this->token_manager->count_tokens();
@@ -94,22 +55,10 @@ class Tokens_Controller extends Admin_Rest_Controller {
             'total'     => $total,
             'truncated' => count( $rows ) >= self::TOKENS_LIMIT && $total > self::TOKENS_LIMIT,
             'limit'     => self::TOKENS_LIMIT,
-            
-            
             'siteHost'  => \Easy_MCP_AI\Site_Host::current(),
-            
-            
             'approvalRequired' => self::approval_required(),
         ) );
     }
-
-    
-
-
-
-
-
-
 
     public function get_tool_catalogue( $request ) {
         $by_category = $this->tool_registry && method_exists( $this->tool_registry, 'get_tools_by_category' )
@@ -118,15 +67,11 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $this->ok(
             array(
                 'categories'   => self::catalogue( $by_category ),
-                
-                
-                
                 'privilegedOn' => $this->privileged_on(),
             )
         );
     }
 
-    
     private function privileged_on() {
         $on = array();
         if ( ! $this->tool_registry || ! method_exists( $this->tool_registry, 'get_all_tool_names' ) || ! method_exists( $this->tool_registry, 'get_tool' ) ) {
@@ -142,13 +87,7 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $on;
     }
 
-    
-
-
-
     public static function catalogue( array $by_category ) {
-        
-        
         $categories = array();
         foreach ( $by_category as $key => $defs ) {
             $tools = array();
@@ -175,16 +114,12 @@ class Tokens_Controller extends Admin_Rest_Controller {
                     ? \__( 'Privileged: runs code, reads server files or rewrites the database', 'easy-mcp-ai' )
                     : ucfirst( str_replace( array( '-', '_' ), ' ', (string) $key ) ),
                 'tools'      => $tools,
-                
-                
-                
                 'privileged' => $privileged,
             );
         }
         return $categories;
     }
 
-    
     public static function short_description( $text ) {
         $text = trim( (string) $text );
         if ( '' === $text ) {
@@ -198,12 +133,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         }
         return $text;
     }
-
-    
-
-    
-
-
 
     public function create_token( $request ) {
         $name = \sanitize_text_field( (string) $request->get_param( 'name' ) );
@@ -239,21 +168,15 @@ class Tokens_Controller extends Admin_Rest_Controller {
             return $this->fail( 'easy_mcp_ai_token_create_failed', \__( "Couldn't create the token. Try again.", 'easy-mcp-ai' ), 500 );
         }
         if ( $unattended ) {
-            
             $this->token_manager->update_token( (int) $result['id'], array( 'unattended' => 1 ) );
         }
 
         $row = $this->token_manager->get_token_by_id( (int) $result['id'] );
-        
         return $this->ok( array(
             'token'    => $this->shape( is_array( $row ) ? $row : array( 'id' => $result['id'], 'name' => $name, 'token_prefix' => $result['prefix'], 'wp_user_id' => $user_id, 'allowed_tools' => $allowed, 'expires_at' => $expires_at, 'is_active' => 1 ) ),
             'rawToken' => (string) $result['raw_token'],
         ), 201 );
     }
-
-    
-
-
 
     public function update_token( $request ) {
         $row = $this->find( $request );
@@ -314,10 +237,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'token' => $this->shape( is_array( $fresh ) ? $fresh : array_merge( $row, $data ) ) ) );
     }
 
-    
-
-
-
     public function revoke_token( $request ) {
         $row = $this->find( $request );
         if ( \is_wp_error( $row ) ) {
@@ -327,15 +246,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         $fresh = $this->token_manager->get_token_by_id( (int) $row['id'] );
         return $this->ok( array( 'token' => $this->shape( is_array( $fresh ) ? $fresh : array_merge( $row, array( 'is_active' => 0 ) ) ) ) );
     }
-
-    
-
-
-
-
-
-
-
 
     public function rebind_token( $request ) {
         $row = $this->find( $request );
@@ -357,10 +267,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'token' => $this->shape( is_array( $fresh ) ? $fresh : $row ) ) );
     }
 
-    
-
-
-
     public function delete_token( $request ) {
         $row = $this->find( $request );
         if ( \is_wp_error( $row ) ) {
@@ -370,14 +276,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'deleted' => true, 'id' => (int) $row['id'] ) );
     }
 
-    
-
-    
-
-
-
-
-
     private function find( $request ) {
         $id  = \absint( $request->get_param( 'id' ) );
         $row = $id ? $this->token_manager->get_token_by_id( $id ) : null;
@@ -386,15 +284,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         }
         return $row;
     }
-
-    
-
-
-
-
-
-
-
 
     private function resolve_allowed_tools( $request ) {
         $preset = (string) $request->get_param( 'preset' );
@@ -438,15 +327,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $tools;
     }
 
-    
-
-
-
-
-
-
-
-
     private function resolve_expiry( $request, $stored = null ) {
         $preset = $request->get_param( 'expiresPreset' );
         $custom = $request->get_param( 'expiresAt' );
@@ -461,19 +341,9 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $result;
     }
 
-    
     public static function approval_required() {
         return true === \Easy_MCP_AI\Config::get( 'approval_required' );
     }
-
-    
-
-
-
-
-
-
-
 
     private function resolve_unattended( $request ) {
         $raw = $request->get_param( 'unattended' );
@@ -508,21 +378,9 @@ class Tokens_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function min_capability() {
         return Connect_Policy::admin_key_capability();
     }
-
-    
-
-
 
     public static function is_assignable_user( $user_id ) {
         if ( ! $user_id ) {
@@ -530,15 +388,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         }
         return Connect_Policy::user_can_connect( $user_id, Connect_Policy::CHANNEL_ADMIN_KEY );
     }
-
-    
-
-    
-
-
-
-
-
 
     public function shape( array $row, array $names = array() ) {
         $allowed = isset( $row['allowed_tools'] ) ? $row['allowed_tools'] : array();
@@ -566,27 +415,14 @@ class Tokens_Controller extends Admin_Rest_Controller {
             'lastUsedAt'   => Dashboard_Controller::iso8601( $row['last_used_at'] ?? null ),
             'expiresAt'    => Dashboard_Controller::iso8601( $row['expires_at'] ?? null ),
             'isActive'     => ! empty( $row['is_active'] ),
-            
             'unattended'   => ! empty( $row['unattended'] ),
             'status'       => self::status( $row ),
-            
-            
             'boundElsewhere' => \Easy_MCP_AI\Auth\Token_Manager::is_bound_elsewhere( $row ),
-            
-            
             'selfService'  => ! empty( $row['created_by'] ) && (int) $row['created_by'] === $user_id
                 && ! \user_can( $user_id, self::CAPABILITY ),
             'createdAt'    => Dashboard_Controller::iso8601( $row['created_at'] ?? null ),
         );
     }
-
-    
-
-
-
-
-
-
 
     public static function status( array $row, $now = null ) {
         if ( empty( $row['is_active'] ) ) {
@@ -601,15 +437,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return 'active';
     }
 
-    
-
-
-
-
-
-
-
-
     private static function assignable_users_query(): array {
         $capability = self::min_capability();
         if ( Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_ADMIN_KEY ) ) {
@@ -623,12 +450,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $query;
     }
 
-    
-
-
-
-
-
     public static function assignable_users() {
         $users = (array) \get_users( self::assignable_users_query() + array(
             'number'  => self::USERS_LIMIT,
@@ -637,10 +458,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         ) );
         $out = array();
         foreach ( $users as $user ) {
-            
-            
-            
-            
             if ( ! is_object( $user ) || empty( $user->ID ) || ! Connect_Policy::user_can_connect( $user, Connect_Policy::CHANNEL_ADMIN_KEY ) ) {
                 continue;
             }
@@ -655,10 +472,6 @@ class Tokens_Controller extends Admin_Rest_Controller {
         } );
         return array_slice( $out, 0, self::USERS_LIMIT );
     }
-
-    
-
-
 
     private function display_names( array $ids ) {
         $ids = array_values( array_unique( array_map( 'intval', $ids ) ) );

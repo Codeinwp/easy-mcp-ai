@@ -1,35 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -71,8 +41,6 @@ return array(
         'write'   => true,
         'params'    => array( 'id', 'force', 'defer-term-counting' ),
         'plan'      => 'plan_delete',
-        
-        
         'bulk'      => 999,
         'preflight' => 'preflight_delete',
     ),
@@ -239,9 +207,6 @@ return array(
         'tools'          => array( 'wp_update_post', 'wp_update_page', 'wp_update_cpt_item' ),
         'write'          => true,
         'generic'        => true,
-        
-        
-        
         'params'         => array( 'id', 'file', 'post_author', 'post_date', 'post_date_gmt', 'post_content', 'post_title', 'post_excerpt', 'post_status', 'post_type', 'comment_status', 'ping_status', 'post_password', 'post_name', 'post_parent', 'menu_order', 'post_category', 'tags_input', 'meta_input', 'defer-term-counting' ),
         'refused_params' => $easy_mcp_ai_post_fields_refused,
         'plan'           => 'plan_update',

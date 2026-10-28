@@ -10,10 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Update_Page extends Base_Tool {
-    
-
-
-
     const ECHOED_FIELDS = array( 'slug', 'date', 'date_gmt', 'author', 'parent', 'menu_order', 'template', 'featured_media', 'comment_status', 'ping_status' );
 
     public function get_name() {
@@ -32,7 +28,6 @@ class Update_Page extends Base_Tool {
         return 'edit_pages';
     }
 
-    
     public function get_redacted_arguments() {
         return array( 'password' );
     }
@@ -41,7 +36,7 @@ class Update_Page extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
@@ -138,7 +133,6 @@ class Update_Page extends Base_Tool {
         );
     }
 
-    
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'page_id', 'page', 'update' );
     }
@@ -165,10 +159,6 @@ class Update_Page extends Base_Tool {
 
         $this->refuse_builder_owned_write( $page_id, array_key_exists( 'content', $params ), (array) ( $params['meta'] ?? array() ) );
 
-        
-        
-        
-        
         $echoed = Update_Post::echoed_fields( $params, self::ECHOED_FIELDS );
         $data   = $this->rest_request( 'PUT', '/wp/v2/pages/' . $page_id, $params, implode( ',', array_merge( array( 'id', 'title', 'status', 'modified', 'link' ), $echoed, $meta_sent ? array( 'meta' ) : array() ) ) );
 
@@ -186,18 +176,6 @@ class Update_Page extends Base_Tool {
         return Update_Post::with_updated( $result, $data, $echoed, $params, $page_id );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function content_params( array $arguments ): array {
         $params = array();
         if ( isset( $arguments['title'] ) && '' !== $arguments['title'] ) {
@@ -205,10 +183,6 @@ class Update_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['content'] ) && '' !== $arguments['content'] ) {
-            
-            
-            
-            
             $params['content'] = $arguments['content'];
         }
 
@@ -230,13 +204,6 @@ class Update_Page extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
     private static function detail_params( array $arguments ): array {
         $params = array();
         if ( ! empty( $arguments['slug'] ) ) {
@@ -248,11 +215,6 @@ class Update_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['excerpt'] ) && '' !== $arguments['excerpt'] ) {
-            
-            
-            
-            
-            
             $params['excerpt'] = $arguments['excerpt'];
         }
 
@@ -273,22 +235,6 @@ class Update_Page extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function cli_params( array $arguments ): array {
         $params = array();

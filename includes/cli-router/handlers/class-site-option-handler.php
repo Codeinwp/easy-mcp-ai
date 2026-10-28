@@ -15,39 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Site_Option_Handler extends Command_Handler {
 
     const NOT_MULTISITE = 'This is not a multisite installation.';
 
-    
     const ROW_CAP = 1000;
 
     const MASK = '[REDACTED]';
@@ -60,21 +31,11 @@ class Site_Option_Handler extends Command_Handler {
 
     const NOT_CAPTURED = 'Network options are recorded by change history only while its meta capture setting is on (the default), and a deleted network option is recorded without its previous value.';
 
-    
-
-
-
-
     public function preflight( Invocation $inv, Context $ctx ): void {
         if ( ! $this->is_multisite() ) {
             $ctx->out->error( self::NOT_MULTISITE );
         }
     }
-
-    
-
-
-
 
     public function get( Invocation $inv, Context $ctx ): void {
         list( $key ) = array_values( $inv->args );
@@ -94,11 +55,6 @@ class Site_Option_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
-
-
-
-
     public function add( Invocation $inv, Context $ctx ): void {
         $args = $inv->args;
         $key  = (string) $args[0];
@@ -115,11 +71,6 @@ class Site_Option_Handler extends Command_Handler {
             $ctx->out->success( "Added '{$key}' site option." );
         }
     }
-
-    
-
-
-
 
     public function update( Invocation $inv, Context $ctx ): void {
         $args = $inv->args;
@@ -143,11 +94,6 @@ class Site_Option_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     public function delete( Invocation $inv, Context $ctx ): void {
         list( $key ) = array_values( $inv->args );
         $key         = (string) $key;
@@ -162,11 +108,6 @@ class Site_Option_Handler extends Command_Handler {
             $ctx->out->success( "Deleted '{$key}' site option." );
         }
     }
-
-    
-
-
-
 
     public function pluck( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
@@ -196,11 +137,6 @@ class Site_Option_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
-
-
-
-
     public function patch( Invocation $inv, Context $ctx ): void {
         $args   = array_values( $inv->args );
         $action = (string) $args[0];
@@ -211,16 +147,12 @@ class Site_Option_Handler extends Command_Handler {
         if ( 'delete' === $action ) {
             $patch_value = null;
         } else {
-            
-            
-            
             if ( count( $key_path ) < 2 ) {
                 $ctx->out->error( Meta_Command::PATCH_NO_VALUE );
             }
             $patch_value = Read_Value::read( $ctx->out, array_pop( $key_path ), $inv->assoc );
         }
 
-        
         $old_value     = $this->sanitize_option( $key, $this->get_site_option( $key ) );
         $current_value = $old_value;
         if ( is_object( $current_value ) ) {
@@ -247,12 +179,6 @@ class Site_Option_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $pattern    = isset( $assoc_args['search'] ) ? $this->search_pattern( (string) $assoc_args['search'] ) : '%';
@@ -264,7 +190,6 @@ class Site_Option_Handler extends Command_Handler {
             $fields = array( 'size_bytes' );
         }
 
-        
         $network = $this->current_network_id();
         $this->refuse_other_network( $assoc_args, $network, $ctx );
 
@@ -285,20 +210,11 @@ class Site_Option_Handler extends Command_Handler {
         $formatter->display_items( $kept );
     }
 
-    
     private function search_pattern( string $search ): string {
         $pattern = $this->esc_like( $search );
-        
         $pattern = str_replace( '*', '%', $pattern );
         return str_replace( '?', '_', $pattern );
     }
-
-    
-
-
-
-
-
 
     private function refuse_other_network( array $assoc_args, int $network, Context $ctx ): void {
         $site_id = Read_Value::flag( $assoc_args, 'site_id' );
@@ -306,16 +222,6 @@ class Site_Option_Handler extends Command_Handler {
             $ctx->out->error( sprintf( self::OTHER_NETWORK, $network, is_scalar( $site_id ) ? (string) $site_id : '' ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function printable_rows( array $results, bool $prints, Context $ctx ): array {
         $kept    = array();
@@ -340,12 +246,6 @@ class Site_Option_Handler extends Command_Handler {
         return $kept;
     }
 
-    
-
-
-
-
-
     private static function print_total_bytes( array $kept, Output $out ): void {
         $sum = null;
         foreach ( $kept as $row ) {
@@ -353,12 +253,6 @@ class Site_Option_Handler extends Command_Handler {
         }
         $out->line( null === $sum ? '' : (string) $sum );
     }
-
-    
-
-
-
-
 
     public function describe( Invocation $inv ): array {
         $sub  = (string) $inv->leaf['name'];
@@ -379,12 +273,6 @@ class Site_Option_Handler extends Command_Handler {
         return array( sprintf( "Site option '%s': %s → %s%s", $key, $current, 'add' === $sub ? 'add ' : '', $this->preview( $key, $new ) ) );
     }
 
-    
-
-
-
-
-
     private function describe_patch( array $args ): array {
         $key    = isset( $args[1] ) ? (string) $args[1] : '';
         $path   = array_slice( $args, 2 );
@@ -393,26 +281,12 @@ class Site_Option_Handler extends Command_Handler {
         return array( sprintf( "Site option '%s': %s → %s", $key, $this->preview( $key, $this->get_site_option( $key ), true ), $effect ) );
     }
 
-    
-    
-    
-
-    
-
-
-
-
     private function guard( string $key, bool $write, Context $ctx ): void {
         $refusal = Self_Protection::option( $key, $write );
         if ( null !== $refusal ) {
             $ctx->out->error( $refusal );
         }
     }
-
-    
-
-
-
 
     private function preview( string $key, $value, bool $stored = false ): string {
         if ( self::key_is_secret( $key ) ) {
@@ -425,17 +299,9 @@ class Site_Option_Handler extends Command_Handler {
         return strlen( $text ) > 120 ? \Easy_MCP_AI\Cli_Router\Envelope::cut( $text, 117 ) . '...' : $text;
     }
 
-    
-
-
-
     public static function key_is_secret( string $key ): bool {
         return Option_Handler::key_is_secret( $key );
     }
-
-    
-    
-    
 
     protected function is_multisite(): bool {
         return function_exists( 'is_multisite' ) && \is_multisite();
@@ -445,17 +311,14 @@ class Site_Option_Handler extends Command_Handler {
         return function_exists( 'get_current_network_id' ) ? (int) \get_current_network_id() : 1;
     }
 
-    
     protected function get_site_option( string $key ) {
         return \get_site_option( $key );
     }
 
-    
     protected function add_site_option( string $key, $value ): bool {
         return (bool) \add_site_option( $key, $value );
     }
 
-    
     protected function update_site_option( string $key, $value ): bool {
         return (bool) \update_site_option( $key, $value );
     }
@@ -464,26 +327,14 @@ class Site_Option_Handler extends Command_Handler {
         return (bool) \delete_site_option( $key );
     }
 
-    
-
-
-
     protected function sanitize_option( string $key, $value ) {
         return \sanitize_option( $key, $value );
     }
 
-    
     protected function esc_like( string $text ): string {
         global $wpdb;
         return (string) $wpdb->esc_like( $text );
     }
-
-    
-
-
-
-
-
 
     protected function sitemeta_rows( string $pattern, int $network ): array {
         global $wpdb;

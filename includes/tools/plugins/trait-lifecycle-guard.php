@@ -5,37 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 trait Lifecycle_Guard {
-
-    
-
-
-
-
 
     protected function load_plugin_admin_functions() {
         if ( ! function_exists( 'activate_plugin' ) || ! function_exists( 'is_plugin_active_for_network' ) || ! function_exists( 'validate_plugin' ) ) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
     }
-
-    
-
-
-
-
-
 
     protected function load_upgrader() {
         if ( ! function_exists( 'request_filesystem_credentials' ) || ! function_exists( 'show_message' ) ) {
@@ -45,17 +21,6 @@ trait Lifecycle_Guard {
             require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function parse_plugin_argument( array $arguments ) {
         $raw = isset( $arguments['plugin'] ) ? $arguments['plugin'] : '';
@@ -71,36 +36,14 @@ trait Lifecycle_Guard {
         return $plugin;
     }
 
-    
-
-
-
     protected function parse_network_wide( array $arguments ) {
         return isset( $arguments['network_wide'] ) && rest_sanitize_boolean( $arguments['network_wide'] );
     }
-
-    
-
-
-
-
-
-
 
     protected function is_own_plugin( $plugin ) {
         $own = defined( 'EASY_MCP_AI_PLUGIN_BASENAME' ) ? (string) EASY_MCP_AI_PLUGIN_BASENAME : '';
         return '' !== $own && $plugin === $own;
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function assert_network_wide_allowed() {
         if ( ! is_multisite() ) {
@@ -111,16 +54,6 @@ trait Lifecycle_Guard {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function assert_network_update_allowed( $network_cap ) {
         if ( is_multisite() && ( ! is_super_admin() || ! current_user_can( $network_cap ) ) ) {
             throw new \RuntimeException(
@@ -128,16 +61,6 @@ trait Lifecycle_Guard {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function assert_file_mods_allowed( $what ) {
         if ( ! wp_is_file_mod_allowed( 'capability_update_core' ) ) {
@@ -147,19 +70,6 @@ trait Lifecycle_Guard {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     protected function assert_filesystem_available( string $context ) {
         if ( 'direct' === get_filesystem_method( array(), $context ) ) {
             return;
@@ -168,40 +78,15 @@ trait Lifecycle_Guard {
         $stored = request_filesystem_credentials( self_admin_url(), '', false, $context );
         ob_end_clean();
         if ( ! $stored ) {
-            
-            
             throw new \RuntimeException( 'Filesystem credentials required: WordPress cannot write here directly and no FTP/SSH credentials are stored (FTP_HOST, FTP_USER, FTP_PASS in wp-config.php). wp-admin would prompt; MCP cannot.' );
         }
     }
-
-    
-
-
-
 
     protected function raise_time_limit() {
         if ( function_exists( 'set_time_limit' ) ) {
             @set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- may be disabled by the host; a failure only leaves the default limit.
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function interpret_upgrade_result( $result, \WP_Ajax_Upgrader_Skin $skin, $upgrader, $key, $failed ) {
         if ( is_wp_error( $skin->result ) ) {
@@ -223,13 +108,6 @@ trait Lifecycle_Guard {
         throw new \RuntimeException( $failed ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
     private function filesystem_error_message() {
         global $wp_filesystem;
         if ( is_object( $wp_filesystem ) && isset( $wp_filesystem->errors ) && is_wp_error( $wp_filesystem->errors ) && $wp_filesystem->errors->has_errors() ) {
@@ -238,41 +116,7 @@ trait Lifecycle_Guard {
         return 'Unable to connect to the filesystem. Please confirm your credentials.';
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function redact_urls( $text ) {
-        
-        
-        
-        
         $redacted = preg_replace_callback(
             '~(?:\b([a-z][a-z0-9+.\-]*):)?//(?:[^\s/?#<>"\']*@)?([a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?|\[[0-9a-f:.]+\])(:\d+)?(?:(?!&\#\d+;)[^\s<>"\'])*~i',
             function ( $m ) {
@@ -284,15 +128,6 @@ trait Lifecycle_Guard {
         );
         return null === $redacted ? '[message withheld: it could not be checked for credentials]' : $redacted;
     }
-
-    
-
-
-
-
-
-
-
 
     protected function upgrade_messages( \WP_Ajax_Upgrader_Skin $skin ) {
         $messages = method_exists( $skin, 'get_upgrade_messages' ) ? (array) $skin->get_upgrade_messages() : array();
@@ -307,14 +142,6 @@ trait Lifecycle_Guard {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
     protected function update_field( $entry, $field ) {
         if ( is_object( $entry ) && isset( $entry->$field ) ) {
             return $entry->$field;
@@ -325,26 +152,9 @@ trait Lifecycle_Guard {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
     protected function update_response( $transient ): array {
         return ( is_object( $transient ) && isset( $transient->response ) && is_array( $transient->response ) ) ? $transient->response : array();
     }
-
-    
-
-
-
-
-
-
 
     protected function is_active_in_scope( string $plugin, bool $network_wide ): bool {
         return $network_wide ? is_plugin_active_for_network( $plugin ) : is_plugin_active( $plugin );

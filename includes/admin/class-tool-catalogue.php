@@ -1,14 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,25 +8,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Tool_Catalogue {
 
-    
     const PLUGIN_REST_APIS = array( 'plugin_rest' );
 
-    
     private $tool_registry;
-
-    
-
 
     public function __construct( $tool_registry ) {
         $this->tool_registry = $tool_registry;
     }
 
-    
     private $external_service;
-
-    
-
-
 
     public function set_external_service( External_Data_Service $service ) {
         $this->external_service = $service;
@@ -47,15 +28,6 @@ class Tool_Catalogue {
         }
         return $this->external_service;
     }
-
-    
-
-    
-
-
-
-
-
 
     public function sections( array $groups ) {
         return array(
@@ -69,10 +41,8 @@ class Tool_Catalogue {
         );
     }
 
-    
     private $off_names;
 
-    
     private function disabled_tools() {
         if ( null === $this->off_names ) {
             $this->off_names = \Easy_MCP_AI\Tools\Tool_State::off_names( $this->tool_registry );
@@ -80,18 +50,9 @@ class Tool_Catalogue {
         return $this->off_names;
     }
 
-    
     private static function override_of( $name ) {
         return \Easy_MCP_AI\Tools\Tool_State::override_of( $name );
     }
-
-    
-
-
-
-
-
-
 
     private static function not_overridden( array $names ) {
         return array_values( array_filter( $names, static function ( $name ) {
@@ -99,12 +60,10 @@ class Tool_Catalogue {
         } ) );
     }
 
-    
     private function allowed_patterns() {
         return (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() );
     }
 
-    
     private static function is_active( $name, array $disabled, array $patterns ) {
         if ( in_array( $name, $disabled, true ) ) {
             return false;
@@ -112,12 +71,10 @@ class Tool_Catalogue {
         return \Easy_MCP_AI\MCP\Server::matches_tool_patterns( $name, $patterns );
     }
 
-    
     private function by_category() {
         return (array) $this->tool_registry->get_tools_by_category();
     }
 
-    
     private function capability_of( $name ) {
         if ( ! method_exists( $this->tool_registry, 'get_tool' ) ) {
             return '';
@@ -126,18 +83,9 @@ class Tool_Catalogue {
         return $tool && method_exists( $tool, 'get_required_capability' ) ? (string) $tool->get_required_capability() : '';
     }
 
-    
     private static function access_of( array $definition ) {
         return ! empty( $definition['annotations']['readOnlyHint'] ) ? 'read' : 'write';
     }
-
-    
-
-
-
-
-
-
 
     private function detail( array $definition, $provenance, $enabled ) {
         $name = (string) ( $definition['name'] ?? '' );
@@ -153,7 +101,6 @@ class Tool_Catalogue {
         );
     }
 
-    
     private static function counts( array $items ) {
         $counts = array( 'enabled' => 0, 'total' => count( $items ), 'read' => 0, 'write' => 0 );
         foreach ( $items as $item ) {
@@ -165,7 +112,6 @@ class Tool_Catalogue {
         return $counts;
     }
 
-    
     private static function active_names( array $items, array $disabled, array $patterns ) {
         $names = array();
         foreach ( $items as $item ) {
@@ -176,7 +122,6 @@ class Tool_Catalogue {
         return $names;
     }
 
-    
     private function core_tool_names() {
         $names = array();
         foreach ( $this->by_category() as $category => $definitions ) {
@@ -190,7 +135,6 @@ class Tool_Catalogue {
         return $names;
     }
 
-    
     private function core_rows() {
         $disabled    = $this->disabled_tools();
         $patterns    = $this->allowed_patterns();
@@ -220,14 +164,6 @@ class Tool_Catalogue {
         return $rows;
     }
 
-    
-
-
-
-
-
-
-
     private static function covers( string $category ): array {
         if ( 'builders' !== $category ) {
             return array();
@@ -240,7 +176,6 @@ class Tool_Catalogue {
         );
     }
 
-    
     private function plugin_rows() {
         $disabled        = $this->disabled_tools();
         $patterns        = $this->allowed_patterns();
@@ -263,22 +198,16 @@ class Tool_Catalogue {
                     'access'             => 'read' === $tool['type'] ? 'read' : 'write',
                     'requiredCapability' => $this->capability_of( $tool['name'] ),
                     'provenance'         => 'plugin',
-                    
-                    
                     'enabled'            => $enabled && ( null !== $override ? $override : ! in_array( $tool['name'], $disabled_plugin, true ) ),
                     'pluginRestApi'      => in_array( $tool['api'], self::PLUGIN_REST_APIS, true ),
                     'api'                => (string) $tool['api'],
                     'override'           => $override,
                 );
             }
-            
-            
             $tools = array_values( array_intersect( self::active_names( $items, $disabled, $patterns ), $registered ) );
             if ( ! $installed ) {
                 $status = 'not_installed';
             } elseif ( empty( $group['tools'] ) ) {
-                
-                
                 $status = $enabled ? 'active' : 'no_tools';
             } elseif ( empty( $tools ) ) {
                 $status = 'no_tools';
@@ -299,8 +228,6 @@ class Tool_Catalogue {
                 'tools'       => $tools,
                 'items'       => $items,
             );
-            
-            
             if ( ! empty( $group['abilities'] ) && is_string( $group['abilities'] ) ) {
                 $rows[ count( $rows ) - 1 ]['abilities'] = $group['abilities'];
             }
@@ -308,7 +235,6 @@ class Tool_Catalogue {
         return $rows;
     }
 
-    
     private function external_rows( array $groups ) {
         $disabled    = $this->disabled_tools();
         $patterns    = $this->allowed_patterns();
@@ -336,11 +262,6 @@ class Tool_Catalogue {
         return $rows;
     }
 
-    
-
-
-
-
     private function ability_rows() {
         if ( ! function_exists( 'wp_get_abilities' ) ) {
             return array();
@@ -364,8 +285,6 @@ class Tool_Catalogue {
                 'access'             => ! empty( $annotations['readonly'] ) ? 'read' : 'write',
                 'requiredCapability' => $this->capability_of( $name ),
                 'provenance'         => 'ability',
-                
-                
                 'enabled'            => in_array( $slug, $enabled, true ) && false !== $override,
                 'pluginRestApi'      => false,
                 'override'           => $override,
@@ -385,16 +304,6 @@ class Tool_Catalogue {
         }
         return $rows;
     }
-
-    
-
-    
-
-
-
-
-
-
 
     public function apply( array $body ) {
         $writes = array();
@@ -419,12 +328,10 @@ class Tool_Catalogue {
         return true;
     }
 
-    
     private static function invalid( $field, $message ) {
         return new \WP_Error( 'easy_mcp_ai_invalid_param', $message, array( 'status' => 400, 'field' => $field ) );
     }
 
-    
     private static function locked_error() {
         if ( ! \Easy_MCP_AI\Config::is_locked( 'easy_mcp_ai_disabled_tools' ) ) {
             return null;
@@ -435,14 +342,6 @@ class Tool_Catalogue {
             array( 'status' => 409, 'field' => 'core.disabled' )
         );
     }
-
-    
-
-
-
-
-
-
 
     private function plan_plugins( array $spec ) {
         if ( empty( $spec ) ) {
@@ -520,13 +419,6 @@ class Tool_Catalogue {
         };
     }
 
-    
-
-
-
-
-
-
     private function plan_abilities( array $spec ) {
         if ( empty( $spec ) ) {
             return null;
@@ -554,8 +446,6 @@ class Tool_Catalogue {
             foreach ( $groups[ $key ] as $item ) {
                 $slug_by_name[ $item['name'] ] = $item['slug'];
                 $rendered[]                    = $item['slug'];
-                
-                
                 $checked[ $item['slug'] ]      = in_array( $item['slug'], $current, true );
             }
             if ( array_key_exists( 'enabled', $changes ) ) {
@@ -589,16 +479,6 @@ class Tool_Catalogue {
             \update_option( 'easy_mcp_ai_enabled_abilities', Abilities_Page::compute_enabled( $current, $rendered, $checked_slugs ) );
         };
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function plan_external( array $spec ) {
         if ( empty( $spec ) ) {
@@ -660,17 +540,6 @@ class Tool_Catalogue {
         };
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function plan_core( array $spec ) {
         if ( ! array_key_exists( 'disabled', $spec ) ) {
             return null;
@@ -703,13 +572,6 @@ class Tool_Catalogue {
         };
     }
 
-    
-
-
-
-
-
-
     public static function defaults_of( $registry, array $names ) {
         if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Base_Tool' ) ) {
             return array_fill_keys( $names, false );
@@ -721,17 +583,6 @@ class Tool_Catalogue {
         }
         return $defaults;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function store_choices( array $names, array $off, array $defaults ) {
         $global  = (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() );

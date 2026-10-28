@@ -5,98 +5,21 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Self_Protection {
 
-    
     const LABEL = 'Self-protection: ';
-
-    
-
-
-
-
 
     const NAMESPACE_PATTERN = '/^_?easy[_-]mcp[_-]ai(?:[_-]|\z)/';
 
-    
     const TRANSIENT_STORAGE_PREFIXES = array( '_site_transient_', '_transient_' );
 
-    
     const SDK_OPTION_SUFFIXES = array( 'install', 'logger_flag', 'review_flag', 'translate_flag', 'welcome_upsell_flag', 'crash_data', 'ran_migrations', 'migrated_version' );
 
-    
     const SDK_TRANSIENT_SUFFIXES = array( 'crash_backoff' );
 
-    
     const SDK_CRON_SUFFIXES = array( 'log_activity', 'crash_flush' );
 
-    
     const SPECIAL_OPTIONS = array( 'alloptions', 'notoptions' );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const CORE_WRITE_OPTIONS = array(
         'siteurl'                 => 'changing the WordPress address moves the REST endpoint this MCP connection uses. Use `search-replace` (it rewrites every stored URL and writes siteurl and home last), or Settings › General in wp-admin',
@@ -120,29 +43,13 @@ final class Self_Protection {
         'active_sitewide_plugins' => 'it lists the network-activated plugins. Use `plugin activate --network` and `plugin deactivate --network`',
     );
 
-    
     const ROLE_OPTION_REASON = 'it holds every role and its capabilities. Use `role create`, `role delete`, `role reset`, `cap add` and `cap remove`';
-
-    
-
-
-
-
 
     const UPDATE_TRANSIENTS = array(
         'update_core'    => 'WordPress fills it from WordPress.org, and the package it names is what a core update installs. Use `core check-update` to refresh it and `core update` to install',
         'update_plugins' => 'WordPress fills it from WordPress.org, and the package each entry names is what a plugin update installs. Use `plugin list` to refresh it and `plugin update` to install',
         'update_themes'  => 'WordPress fills it from WordPress.org, and the package each entry names is what a theme update installs. Use `theme list` to refresh it and `theme update` to install',
     );
-
-    
-
-
-
-
-
-
-
 
     const SECRET_OPTIONS = array(
         'auth_key'                => 'a secret key that signs login cookies',
@@ -159,13 +66,6 @@ final class Self_Protection {
         'recovery_keys'           => 'the keys of the recovery-mode links WordPress emails after a fatal error',
     );
 
-    
-
-
-
-
-
-
     const CACHE_GROUPS = array(
         'easy_mcp_ai'    => 'it holds the validated API-key rows of the plugin that serves this MCP connection and its rate-limit and lockout counters. They expire on their own; the plugin\'s Connections and Settings screens in wp-admin change what they hold',
         'options'        => 'it holds every option, this plugin\'s settings and credentials included. Use `option get` and `option update`, which apply their own checks',
@@ -179,28 +79,22 @@ final class Self_Protection {
         'user_meta'      => 'it holds every user\'s meta, session tokens and application passwords included. Use `user meta get` and `user meta list`',
     );
 
-    
     const USER_META_KEYS = array(
         'session_tokens'         => 'it holds every login session of the user. Use `user session list` and `user session destroy`',
         '_application_passwords' => 'it holds the application passwords of the user. Use `user application-password list`, `user application-password update` and `user application-password delete`',
     );
 
-    
     const HISTORY_CAPABILITY = 'easy_mcp_ai_view_all_history';
 
-    
     const PRIVILEGED_CAPABILITIES = array( 'easy_mcp_ai_read_files', 'easy_mcp_ai_run_wp_cli', 'easy_mcp_ai_execute_php', 'easy_mcp_ai_search_replace' );
 
-    
     const OWN_COMMAND = 'easy-mcp-ai';
 
-    
     const OWN_SUBCOMMANDS = array(
         'config export'     => "'easy-mcp-ai config export' prints the settings of the plugin that serves this MCP connection, which wp_cli_run never reads. Run it with the real wp binary on the server, or read the settings on the plugin's Settings screen in wp-admin.",
         'privileged status' => "'easy-mcp-ai privileged status' reports the privileged-tool switches of the plugin that serves this MCP connection, which wp_cli_run never reads. Run it with the real wp binary on the server, or see Settings › Advanced in wp-admin.",
     );
 
-    
     const REASON_PLUGIN_OPTION       = "'%s' belongs to the plugin that serves this MCP connection, and wp_cli_run never reads or writes that plugin's settings or state. Change them on the plugin's screens in wp-admin.";
     const REASON_PLUGIN_TRANSIENT    = "the transient '%s' belongs to the plugin that serves this MCP connection (MCP sessions, rate-limit and lockout counters, one-time keys), and wp_cli_run never reads or writes it. It expires on its own; the plugin's Connections and Settings screens in wp-admin change what it holds.";
     const REASON_PLUGIN_TRANSIENT_AT = "'%s' stores a transient of the plugin that serves this MCP connection (MCP sessions, rate-limit and lockout counters, one-time keys), and wp_cli_run never reads or writes it. It expires on its own; the plugin's Connections and Settings screens in wp-admin change what it holds.";
@@ -228,15 +122,7 @@ final class Self_Protection {
     const REASON_OWN_COMMAND         = "'easy-mcp-ai' commands belong to the plugin that serves this MCP connection and are not available through wp_cli_run. Run them with the real wp binary on the server.";
     const REASON_CURRENT_SITE        = 'site %d is the site this MCP request runs on; deleting, archiving, deactivating or marking it as spam would drop or lock out the plugin\'s tables and API keys in the middle of the request. Do it from Network Admin › Sites in wp-admin, or through a connection on another site of the network.';
 
-    
     private static $basename_override = null;
-
-    
-
-
-
-
-
 
     public static function option( string $name, bool $write ): ?string {
         $name = trim( $name );
@@ -257,12 +143,6 @@ final class Self_Protection {
         return self::core_option( $name, $lc, $write );
     }
 
-    
-
-
-
-
-
     private static function transient_row( string $name, string $lc, bool $write ): ?string {
         foreach ( self::TRANSIENT_STORAGE_PREFIXES as $prefix ) {
             if ( 0 === strpos( $lc, $prefix ) ) {
@@ -278,11 +158,6 @@ final class Self_Protection {
         }
         return null;
     }
-
-    
-
-
-
 
     private static function core_option( string $name, string $lc, bool $write ): ?string {
         if ( in_array( $lc, self::SPECIAL_OPTIONS, true ) ) {
@@ -303,15 +178,6 @@ final class Self_Protection {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function transient( string $name, bool $write = true ): ?string {
         $name = trim( $name );
         if ( '' === $name ) {
@@ -330,14 +196,6 @@ final class Self_Protection {
         return self::LABEL . sprintf( self::REASON_UPDATE_TRANSIENT, $name, self::UPDATE_TRANSIENTS[ $match[1] ] );
     }
 
-    
-
-
-
-
-
-
-
     public static function cache_group( string $group ): ?string {
         $group = trim( $group );
         if ( '' === $group ) {
@@ -354,7 +212,6 @@ final class Self_Protection {
         return null;
     }
 
-    
     public static function cron_hook( string $hook ): ?string {
         $hook = trim( $hook );
         if ( '' === $hook ) {
@@ -369,23 +226,6 @@ final class Self_Protection {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function plugin( string $plugin ): ?string {
         $own = self::plugin_path( self::basename() );
@@ -412,13 +252,6 @@ final class Self_Protection {
         return null;
     }
 
-    
-
-
-
-
-
-
     private static function is_own_path( string $path, string $own ): bool {
         $slash   = strpos( $own, '/' );
         $own_dir = false === $slash ? null : substr( $own, 0, $slash );
@@ -426,7 +259,6 @@ final class Self_Protection {
         return $path === $own || $path . '.php' === $own || ( null !== $own_dir && $first === $own_dir );
     }
 
-    
     public static function user_meta_key( string $key ): ?string {
         $key = trim( $key );
         if ( '' === $key ) {
@@ -445,7 +277,6 @@ final class Self_Protection {
         return null;
     }
 
-    
     public static function capability( string $cap ): ?string {
         $cap = trim( $cap );
         if ( '' === $cap ) {
@@ -467,12 +298,6 @@ final class Self_Protection {
         return null;
     }
 
-    
-
-
-
-
-
     public static function own_command( string $command ): ?string {
         $words = preg_split( '/\s+/', trim( $command ), -1, PREG_SPLIT_NO_EMPTY );
         if ( ! is_array( $words ) || ! $words ) {
@@ -490,14 +315,6 @@ final class Self_Protection {
         }
         return self::LABEL . self::REASON_OWN_COMMAND;
     }
-
-    
-
-
-
-
-
-
 
     public static function is_plugin_name( string $name ): bool {
         $lc = strtolower( trim( $name ) );
@@ -521,14 +338,6 @@ final class Self_Protection {
         return false;
     }
 
-    
-
-
-
-
-
-
-
     public static function omitted_names_text( array $names ): string {
         $named  = array();
         $plugin = 0;
@@ -550,7 +359,6 @@ final class Self_Protection {
         return implode( '; ', $parts );
     }
 
-    
     public static function current_site( int $blog_id ): ?string {
         $current = function_exists( 'get_current_blog_id' ) ? (int) \get_current_blog_id() : 1;
         if ( $blog_id === $current ) {
@@ -559,20 +367,10 @@ final class Self_Protection {
         return null;
     }
 
-    
-
-
-
-
     public static function override_basename_for_tests( ?string $basename ): void {
         self::$basename_override = $basename;
     }
 
-    
-    
-    
-
-    
     private static function basename(): string {
         if ( null !== self::$basename_override ) {
             return self::$basename_override;
@@ -580,21 +378,9 @@ final class Self_Protection {
         return defined( 'EASY_MCP_AI_PLUGIN_BASENAME' ) ? (string) EASY_MCP_AI_PLUGIN_BASENAME : '';
     }
 
-    
-
-
-
     private static function is_printable( string $name, bool $allow_space ): bool {
         return 1 === preg_match( $allow_space ? '/^[\x20-\x7E]+\z/' : '/^[\x21-\x7E]+\z/', $name );
     }
-
-    
-
-
-
-
-
-
 
     private static function transient_match( string $lc, bool $write ): ?array {
         $base = 0 === strpos( $lc, 'timeout_' ) ? (string) substr( $lc, strlen( 'timeout_' ) ) : $lc;
@@ -606,11 +392,6 @@ final class Self_Protection {
         }
         return null;
     }
-
-    
-
-
-
 
     private static function is_role_option( string $lc ): bool {
         global $wpdb;
@@ -634,16 +415,6 @@ final class Self_Protection {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function sdk_names( string $kind ): array {
         $basename = str_replace( '\\', '/', self::basename() );
@@ -671,21 +442,10 @@ final class Self_Protection {
         return $names;
     }
 
-    
-
-
-
-
-
-
     private static function plugin_path( string $raw ): ?string {
         $path = self::resolve_dots( self::map_symlinks( self::normalise_path( $raw ) ) );
         return null === $path ? null : self::relative_to_plugin_dirs( $path );
     }
-
-    
-
-
 
     private static function map_symlinks( string $path ): string {
         global $wp_plugin_paths;
@@ -701,10 +461,6 @@ final class Self_Protection {
         }
         return $path;
     }
-
-    
-
-
 
     private static function resolve_dots( string $path ): ?string {
         $absolute = 0 === strpos( $path, '/' ) || 1 === preg_match( '#^[a-z]:/#', $path );
@@ -725,7 +481,6 @@ final class Self_Protection {
         return implode( '/', $segments );
     }
 
-    
     private static function relative_to_plugin_dirs( string $path ): string {
         foreach ( array( 'WP_PLUGIN_DIR', 'WPMU_PLUGIN_DIR' ) as $constant ) {
             if ( ! defined( $constant ) ) {
@@ -739,7 +494,6 @@ final class Self_Protection {
         return $path;
     }
 
-    
     private static function normalise_path( string $path ): string {
         return (string) preg_replace( '#/+#', '/', strtolower( str_replace( '\\', '/', $path ) ) );
     }

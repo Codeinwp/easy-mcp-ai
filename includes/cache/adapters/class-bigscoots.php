@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,46 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Bigscoots extends Cache_Adapter {
 
-    
     const VENDOR = 'BigScoots_Cache';
 
-    
     const SUPPRESS = array( 'bs_cache_disable_clear_opcache', 'bs_cache_disable_clear_object_cache' );
 
-    
     const FULL_PURGE_TYPES = array( 'wp_template', 'wp_template_part', 'wp_navigation', 'wp_global_styles' );
 
-    
     const POST_STATUSES = array( 'publish', 'private' );
 
     public function id(): string {
@@ -80,7 +43,6 @@ final class Bigscoots extends Cache_Adapter {
     public function is_present(): bool {
         return $this->calls()->class_exists( self::VENDOR );
     }
-
 
     public function reaches_network( Purge_Request $request ): bool {
         return Purge_Request::SCOPE_SITE === $request->scope && $this->calls()->is_multisite();
@@ -121,14 +83,6 @@ final class Bigscoots extends Cache_Adapter {
         return $this->answer( $results, sprintf( 'BigScoots Cache cleared %d post(s) with their related pages, and exactly %d URL(s).', count( $posts ), count( $request->urls ) ) );
     }
 
-    
-
-
-
-
-
-
-
     private function post_purge_ids( Purge_Request $request ): array {
         $types = $this->calls()->apply_filters( 'bs_cache_full_purge_post_types', self::FULL_PURGE_TYPES );
         $types = is_array( $types ) ? $types : self::FULL_PURGE_TYPES;
@@ -141,12 +95,6 @@ final class Bigscoots extends Cache_Adapter {
         }
         return $ids;
     }
-
-    
-
-
-
-
 
     private function clear( array $args ) {
         $calls = $this->calls();
@@ -164,14 +112,6 @@ final class Bigscoots extends Cache_Adapter {
             }
         }
     }
-
-    
-
-
-
-
-
-
 
     private function answer( array $results, string $detail ): Layer_Result {
         $refusals = array();

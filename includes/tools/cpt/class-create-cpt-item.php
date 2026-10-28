@@ -11,27 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Create_CPT_Item extends Base_Tool {
 
-    
-
-
-
-
     const INTERNAL_STATUSES = array( 'trash', 'auto-draft', 'inherit' );
 
-    
     const BUILTIN_CREATE_TOOLS = array(
         'post'       => 'wp_create_post',
         'page'       => 'wp_create_page',
         'attachment' => 'wp_upload_media',
     );
 
-    
     const CORE_STATUSES = array( 'publish', 'draft', 'pending', 'private', 'future' );
-
-    
-
-
-
 
     const MISSING_FIELD_REASONS = array(
         'title'          => 'it does not support "title"',
@@ -58,20 +46,9 @@ class Create_CPT_Item extends Base_Tool {
         return 'cpt';
     }
 
-    
-
-
-
-
-
-
     public function get_required_capability() {
         return 'read';
     }
-
-    
-
-
 
     public function get_redacted_arguments() {
         return array( 'password' );
@@ -176,16 +153,6 @@ class Create_CPT_Item extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         self::post_type_route( $this->checked_custom_type( $arguments )[0], null, 'POST' );
     }
@@ -214,14 +181,6 @@ class Create_CPT_Item extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
     private function checked_custom_type( array $arguments ): array {
         if ( self::allows_empty_title( $arguments ) ) {
             $this->validate_required( $arguments, array( 'rest_base' ) );
@@ -238,18 +197,6 @@ class Create_CPT_Item extends Base_Tool {
         return array( $rest_base, $post_type, $post_type_object );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function custom_post_type_for( string $rest_base, string $sent ): array {
         $served = Post_Type_Rest_Base::require_served_type( $rest_base );
         if ( Post_Type_Rest_Base::is_builtin( $served[0] ) ) {
@@ -258,14 +205,6 @@ class Create_CPT_Item extends Base_Tool {
         return $served;
     }
 
-    
-
-
-
-
-
-
-
     private static function builtin_refusal( string $post_type, string $sent ): string {
         $tool = isset( self::BUILTIN_CREATE_TOOLS[ $post_type ] ) ? self::BUILTIN_CREATE_TOOLS[ $post_type ] : '';
         if ( '' !== $tool && Post_Type_Tool_Hint::may_use( $tool ) ) {
@@ -273,13 +212,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         return sprintf( '"%1$s" is the built-in %2$s type, which this tool does not create: it creates custom post types only.', $sent, $post_type );
     }
-
-    
-
-
-
-
-
 
     private static function content_params( array $arguments ): array {
         $params = array(
@@ -290,18 +222,9 @@ class Create_CPT_Item extends Base_Tool {
         }
 
         if ( isset( $arguments['content'] ) ) {
-            
-            
-            
-            
             $params['content'] = $arguments['content'];
         }
         if ( isset( $arguments['excerpt'] ) ) {
-            
-            
-            
-            
-            
             $params['excerpt'] = $arguments['excerpt'];
         }
         if ( ! empty( $arguments['slug'] ) ) {
@@ -309,19 +232,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function apply_checked_fields( array $arguments, array &$params, string $post_type, object $post_type_object ): bool {
         $sent = self::apply_post_fields( $arguments, $params );
@@ -340,30 +250,11 @@ class Create_CPT_Item extends Base_Tool {
         return $meta_sent;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_future_without_date( array $params ): void {
         if ( 'future' === $params['status'] && empty( $params['date'] ) && empty( $params['date_gmt'] ) ) {
             throw new \InvalidArgumentException( 'The "date" or "date_gmt" field is required when status is "future".' );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function create_item( string $rest_base, array $params ): array {
         $request = new \WP_REST_Request( 'POST', self::post_type_route( $rest_base, null, 'POST' ) );
@@ -386,49 +277,13 @@ class Create_CPT_Item extends Base_Tool {
         return $response->get_data();
     }
 
-    
-    
-    
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     public static function has_text( array $arguments, string $key ): bool {
         return isset( $arguments[ $key ] ) && '' !== $arguments[ $key ];
     }
 
-    
-
-
-
-
-
-
     public static function allows_empty_title( array $arguments ): bool {
         return isset( $arguments['allow_empty_title'] ) && (bool) rest_sanitize_boolean( $arguments['allow_empty_title'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function require_title_content_or_excerpt( array $arguments ): void {
         if ( self::has_text( $arguments, 'title' ) ) {
@@ -441,17 +296,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         throw new \InvalidArgumentException( 'Missing required parameters: title, content or excerpt (with allow_empty_title, at least one must be non-empty).' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function status_enum(): array {
         $statuses   = self::CORE_STATUSES;
@@ -467,20 +311,6 @@ class Create_CPT_Item extends Base_Tool {
         return array_values( array_unique( array_merge( $statuses, $extra ) ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function apply_post_fields( array $arguments, array &$params ): array {
         $fields = array_merge(
             self::date_fields( $arguments ),
@@ -494,13 +324,6 @@ class Create_CPT_Item extends Base_Tool {
         return array_keys( $fields );
     }
 
-    
-
-
-
-
-
-
     private static function date_fields( array $arguments ): array {
         self::refuse_both_dates( $arguments );
         $fields = array();
@@ -512,13 +335,6 @@ class Create_CPT_Item extends Base_Tool {
         return $fields;
     }
 
-    
-
-
-
-
-
-
     private static function order_fields( array $arguments ): array {
         $fields = array();
         if ( isset( $arguments['parent'] ) ) {
@@ -529,13 +345,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         return $fields;
     }
-
-    
-
-
-
-
-
 
     private static function discussion_fields( array $arguments ): array {
         $fields = array();
@@ -552,23 +361,12 @@ class Create_CPT_Item extends Base_Tool {
         return $fields;
     }
 
-    
-
-
-
-
-
-
     private static function display_fields( array $arguments ): array {
         $fields = array();
         if ( isset( $arguments['password'] ) ) {
             if ( ! is_string( $arguments['password'] ) ) {
                 throw new \InvalidArgumentException( 'Invalid password: must be a string.' );
             }
-            
-            
-            
-            
             $fields['password'] = $arguments['password'];
         }
         if ( isset( $arguments['featured_media'] ) ) {
@@ -583,30 +381,11 @@ class Create_CPT_Item extends Base_Tool {
         return $fields;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function refuse_both_dates( array $arguments ): void {
         if ( ! empty( $arguments['date'] ) && ! empty( $arguments['date_gmt'] ) ) {
             throw new \InvalidArgumentException( 'Send either date or date_gmt, not both: WordPress uses date and ignores date_gmt when both are given. Nothing was written.' );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     public static function clear_fields( array $arguments ): array {
         if ( ! isset( $arguments['clear'] ) ) {
@@ -634,14 +413,6 @@ class Create_CPT_Item extends Base_Tool {
         return array_keys( $fields );
     }
 
-    
-
-
-
-
-
-
-
     public static function parse_non_negative_int( $value, string $label ): int {
         $int = self::parse_int( $value, $label );
         if ( $int < 0 ) {
@@ -649,14 +420,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         return $int;
     }
-
-    
-
-
-
-
-
-
 
     public static function parse_int( $value, string $label ): int {
         if ( is_int( $value ) ) {
@@ -671,13 +434,6 @@ class Create_CPT_Item extends Base_Tool {
         throw new \InvalidArgumentException( sprintf( 'Invalid %1$s: must be a whole number, got: %2$s', $label, (string) wp_json_encode( $value ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
     public static function rest_taxonomies( string $post_type ): array {
         $map = array();
         foreach ( (array) get_object_taxonomies( $post_type, 'objects' ) as $key => $tax ) {
@@ -689,23 +445,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         return $map;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function tax_input_params( $value, string $post_type, array $params ): array {
         $value = self::tax_input_object( $value );
@@ -733,14 +472,6 @@ class Create_CPT_Item extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
     private static function tax_input_object( $value ): array {
         if ( is_string( $value ) ) {
             $decoded = json_decode( $value, true );
@@ -751,15 +482,6 @@ class Create_CPT_Item extends Base_Tool {
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function existing_term_ids( $ids, string $taxonomy ): array {
         if ( is_scalar( $ids ) ) {
@@ -783,20 +505,6 @@ class Create_CPT_Item extends Base_Tool {
         return array_values( $clean );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function refuse_unsupported_fields( array $fields, ?object $post_type_object, string $post_type, string $prefix = '' ): void {
         if ( empty( $fields ) ) {
             return;
@@ -814,14 +522,6 @@ class Create_CPT_Item extends Base_Tool {
             throw new \InvalidArgumentException( sprintf( '%1$s: post type "%2$s" does not accept it (%3$s), so WordPress would ignore it. Nothing was written.', $label, $post_type, $why ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
 
     public static function post_type_for_rest_base( string $rest_base ): array {
         return Post_Type_Rest_Base::require_served_type( $rest_base );

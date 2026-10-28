@@ -78,15 +78,6 @@ class Get_User_Meta extends Base_Tool {
         return self::all_meta( $user_id );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_unreadable_key( string $key ): void {
         if ( self::is_auth_protected( $key ) ) {
             throw new \RuntimeException( 'Auth-sensitive meta keys are not readable via this tool.' );
@@ -98,13 +89,6 @@ class Get_User_Meta extends Base_Tool {
             throw new \RuntimeException( 'This meta key cannot be read via MCP.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
 
     private static function all_meta( int $user_id ): array {
         $all      = get_user_meta( $user_id );
@@ -122,23 +106,6 @@ class Get_User_Meta extends Base_Tool {
             'withheld_keys' => $withheld,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function is_key_readable( string $key ): bool {
         if ( '' === $key || self::is_auth_protected( $key ) || self::is_privilege_key( $key ) || self::is_blocked_by_filter( $key ) ) {

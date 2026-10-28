@@ -5,18 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 final class Outliner {
 
     const MAX_BYTES = 1048576;
-    
     const MAX_ITEMS = 1000;
     const MAX_LABEL_CHARS = 200;
 
@@ -31,7 +22,6 @@ final class Outliner {
         'wp_enqueue_script_module', 'wp_register_script_module',
     );
 
-    
     const KINDS = array(
         'php'  => 'php',
         'inc'  => 'php',
@@ -49,18 +39,12 @@ final class Outliner {
         'htm'  => 'html',
     );
 
-    
     private $truncated = false;
 
-    
     public static function kind( string $path ): ?string {
         $extension = strtolower( (string) pathinfo( $path, PATHINFO_EXTENSION ) );
         return self::KINDS[ $extension ] ?? null;
     }
-
-    
-
-
 
     public function outline( string $kind, string $source ): array {
         $this->truncated = false;
@@ -83,11 +67,6 @@ final class Outliner {
         return array( 'type' => $kind ) + $out + array( 'truncated' => $this->truncated );
     }
 
-    
-    
-    
-
-    
     private function php( string $source ): array {
         $tokens = self::significant( token_get_all( $source ) );
         $out    = array(
@@ -97,8 +76,6 @@ final class Outliner {
             'hooks'      => array(),
             'enqueues'   => array(),
         );
-        
-        
         $scope = array(
             'depth'   => 0,
             'stack'   => array(),
@@ -126,12 +103,6 @@ final class Outliner {
         return $out;
     }
 
-    
-
-
-
-
-
     private static function significant( array $raw ): array {
         $out  = array();
         $line = 1;
@@ -148,14 +119,6 @@ final class Outliner {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
 
     private static function php_brace( array $t, array &$scope ): bool {
         if ( '{' === $t[0] || T_CURLY_OPEN === $t[0] || T_DOLLAR_OPEN_CURLY_BRACES === $t[0] ) {
@@ -180,26 +143,12 @@ final class Outliner {
         return true;
     }
 
-    
-
-
-
-
-
     private function php_namespace( array $tokens, int $i, array &$namespaces ): void {
         $name = self::name_at( $tokens, $i + 1 );
         if ( '' !== $name ) {
             $this->add( $namespaces, array( 'name' => self::label( $name ), 'line' => $tokens[ $i ][2] ) );
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function class_kind( array $tokens, int $i ): ?string {
         if ( $i > 0 && T_DOUBLE_COLON === $tokens[ $i - 1 ][0] ) {
@@ -217,12 +166,6 @@ final class Outliner {
         return self::is_enum( $tokens, $i ) ? 'enum' : null;
     }
 
-    
-
-
-
-
-
     private static function is_enum( array $tokens, int $i ): bool {
         $id = $tokens[ $i ][0];
         if ( defined( 'T_ENUM' ) && constant( 'T_ENUM' ) === $id ) {
@@ -234,14 +177,6 @@ final class Outliner {
         return T_STRING === $tokens[ $i + 1 ][0] && in_array( $tokens[ $i + 2 ][0], array( '{', ':', T_IMPLEMENTS ), true );
     }
 
-    
-
-
-
-
-
-
-
     private function php_class( array $tokens, int $i, string $kind, array &$classes ): ?int {
         if ( ! isset( $tokens[ $i + 1 ] ) || T_STRING !== $tokens[ $i + 1 ][0] ) {
             return null;
@@ -251,14 +186,6 @@ final class Outliner {
         }
         return count( $classes ) - 1;
     }
-
-    
-
-
-
-
-
-
 
     private function php_function( array $tokens, int $i, array $scope, array &$out ): void {
         $name = self::function_name( $tokens, $i );
@@ -276,31 +203,19 @@ final class Outliner {
         }
     }
 
-    
-
-
-
-
-
     private static function function_name( array $tokens, int $i ): ?string {
         if ( $i > 0 && T_USE === $tokens[ $i - 1 ][0] ) {
             return null;
         }
         $j = $i + 1;
         if ( isset( $tokens[ $j ] ) && '&' === $tokens[ $j ][1] ) {
-            ++$j; 
+            ++$j;
         }
         if ( ! isset( $tokens[ $j ] ) || ! is_int( $tokens[ $j ][0] ) ) {
             return null;
         }
         return preg_match( '/^[A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*\z/', $tokens[ $j ][1] ) ? $tokens[ $j ][1] : null;
     }
-
-    
-
-
-
-
 
     private function php_call( array $tokens, int $i, array &$out ): void {
         $list = self::call_list( $tokens, $i );
@@ -317,13 +232,6 @@ final class Outliner {
             )
         );
     }
-
-    
-
-
-
-
-
 
     private static function call_list( array $tokens, int $i ): ?string {
         $names = array( T_STRING );
@@ -343,12 +251,6 @@ final class Outliner {
         return in_array( $call, self::ENQUEUE_CALLS, true ) ? 'enqueues' : null;
     }
 
-    
-
-
-
-
-
     private static function name_at( array $tokens, int $i ): string {
         $parts = array( T_STRING, T_NS_SEPARATOR );
         if ( defined( 'T_NAME_QUALIFIED' ) ) {
@@ -364,18 +266,7 @@ final class Outliner {
         return $name;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     private function css( string $source ): array {
-        
         $source = (string) preg_replace_callback(
             '#/\*.*?(?:\*/|\z)#s',
             static function ( array $m ): string {
@@ -385,7 +276,7 @@ final class Outliner {
         );
         $state  = array(
             'rules'  => array(),
-            'stack'  => array(), 
+            'stack'  => array(),
             'buffer' => '',
             'line'   => 1,
             'start'  => 1,
@@ -396,11 +287,6 @@ final class Outliner {
         }
         return $state['rules'];
     }
-
-    
-
-
-
 
     private function css_char( string $c, array &$state ): void {
         if ( "\n" === $c ) {
@@ -423,11 +309,6 @@ final class Outliner {
         $state['buffer'] .= $c;
     }
 
-    
-
-
-
-
     private function css_open( array &$state ): void {
         $text             = trim( (string) preg_replace( '/\s+/', ' ', $state['buffer'] ) );
         $listed           = ! in_array( false, $state['stack'], true );
@@ -437,12 +318,6 @@ final class Outliner {
         }
         $state['buffer'] = '';
     }
-
-    
-
-
-
-
 
     private function js( string $source ): array {
         $functions = array();
@@ -454,15 +329,6 @@ final class Outliner {
         }
         return $functions;
     }
-
-    
-
-
-
-
-
-
-
 
     private function json( string $source ): array {
         if ( ! is_object( json_decode( $source ) ) ) {
@@ -491,7 +357,6 @@ final class Outliner {
         return array( 'keys' => $keys );
     }
 
-    
     private static function json_string_end( string $source, int $start ): int {
         $len = strlen( $source );
         for ( $k = $start + 1; $k < $len; $k++ ) {
@@ -504,24 +369,17 @@ final class Outliner {
         return $len - 1;
     }
 
-    
     private static function json_colon_follows( string $source, int $from ): bool {
         $rest = ltrim( substr( $source, $from ), " \t\r\n" );
         return '' !== $rest && ':' === $rest[0];
     }
 
-    
     private static function json_depth_change( string $c ): int {
         if ( '{' === $c || '[' === $c ) {
             return 1;
         }
         return ( '}' === $c || ']' === $c ) ? -1 : 0;
     }
-
-    
-
-
-
 
     private function html( string $source ): array {
         $blocks = array();
@@ -535,16 +393,6 @@ final class Outliner {
         return $blocks;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     private function add( array &$list, array $entry ): bool {
         if ( count( $list ) >= self::MAX_ITEMS ) {
             $this->truncated = true;
@@ -553,11 +401,6 @@ final class Outliner {
         $list[] = $entry;
         return true;
     }
-
-    
-
-
-
 
     private static function label( string $text ): string {
         $text = Text_File::safe( $text );

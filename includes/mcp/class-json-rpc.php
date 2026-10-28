@@ -12,21 +12,11 @@ class JSON_RPC {
         if ( null === $data ) {
             return new \WP_Error( 'parse_error', Error_Codes::get_message( Error_Codes::PARSE_ERROR ), Error_Codes::PARSE_ERROR );
         }
-        
-        
-        
-        
-        
-        
         $is_batch = is_array( $data ) && ( empty( $data ) || array_key_exists( 0, $data ) );
         if ( $is_batch ) {
-            
             if ( empty( $data ) ) {
                 return new \WP_Error( 'invalid_request', 'Empty batch array is not allowed', Error_Codes::INVALID_REQUEST );
             }
-            
-            
-            
             $messages = array();
             foreach ( $data as $item ) {
                 $messages[] = self::validate_message( $item );
@@ -46,8 +36,6 @@ class JSON_RPC {
         if ( ! isset( $data['method'] ) || ! is_string( $data['method'] ) ) {
             return new \WP_Error( 'invalid_request', 'Missing or invalid method', Error_Codes::INVALID_REQUEST );
         }
-        
-        
         if ( array_key_exists( 'id', $data ) && null === $data['id'] ) {
             return new \WP_Error( 'invalid_request', 'Request id MUST NOT be null; omit the id field to send a notification', Error_Codes::INVALID_REQUEST );
         }
@@ -56,7 +44,6 @@ class JSON_RPC {
             'method'  => $data['method'],
             'params'  => isset( $data['params'] ) ? $data['params'] : array(),
         );
-        
         if ( array_key_exists( 'id', $data ) ) {
             $normalized['id'] = $data['id'];
         }
@@ -76,7 +63,6 @@ class JSON_RPC {
     }
 
     public static function is_notification( $message ) {
-        
         return ! array_key_exists( 'id', $message );
     }
 }

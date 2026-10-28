@@ -11,55 +11,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_CPT_Items extends Base_Tool {
 
-    
-
-
-
-
     const QUERY_ORDERBY = array( 'comment_count', 'rand', 'meta_value', 'meta_value_num' );
-
-    
-
-
-
 
     const REST_FIELDS = 'id,title,status,date,modified,link,slug';
 
-    
     const QUERY_MAX_DEPTH = 3;
 
-    
     const QUERY_MAX_CLAUSES = 10;
 
-    
     const QUERY_FILTER_PRIORITY = 999;
 
-    
     const TIEBREAK_VAR = 'easy_mcp_ai_id_tiebreak';
 
-    
     const DATE_UNIT_KEYS = array( 'year', 'month', 'monthnum', 'week', 'w', 'dayofyear', 'day', 'dayofweek', 'dayofweek_iso', 'hour', 'minute', 'second' );
 
-    
     const DATE_COLUMNS = array( 'post_date', 'post_date_gmt', 'post_modified', 'post_modified_gmt' );
 
-    
     const DATE_COMPARE = array( '=', '!=', '>', '>=', '<', '<=', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN' );
-
-    
-
-
-
 
     const TAX_FIELDS = array( 'term_id', 'slug', 'name' );
 
-    
     const TAX_OPERATORS = array( 'IN', 'NOT IN', 'AND', 'EXISTS', 'NOT EXISTS' );
 
-    
     const META_COMPARE = array( '=', '!=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'EXISTS', 'NOT EXISTS', 'RLIKE', 'REGEXP', 'NOT REGEXP', '>', '>=', '<', '<=', 'BETWEEN', 'NOT BETWEEN' );
 
-    
     const META_TYPE_PATTERN = '/^(?:BINARY|CHAR|DATE|DATETIME|SIGNED|UNSIGNED|TIME|NUMERIC(?:\(\d+(?:,\s?\d+)?\))?|DECIMAL(?:\(\d+(?:,\s?\d+)?\))?)$/';
 
     public function get_name() {
@@ -74,7 +49,6 @@ class List_CPT_Items extends Base_Tool {
         return 'cpt';
     }
 
-    
     public function get_required_capability() {
         return 'read';
     }
@@ -174,15 +148,12 @@ class List_CPT_Items extends Base_Tool {
         $orderby  = self::sanitized_orderby( $arguments );
         $request  = self::collection_request( $rest_base, $arguments, $per_page, $page, $context, $orderby );
 
-        
         $params = self::collection_params( $arguments, array( 'include', 'exclude', 'slug', 'offset', 'author', 'author_exclude', 'parent', 'parent_exclude', 'after', 'before' ) );
         if ( isset( $params['offset'] ) && $page > 1 ) {
             throw new \InvalidArgumentException( 'Send either offset or page, not both: WP_Query ignores page when offset is set.' );
         }
         list( $post_type, $vars ) = self::type_bound_query( $rest_base, $arguments, $params, $orderby );
         if ( '' === $post_type ) {
-            
-            
             $post_type = self::post_type_for_rest_base( $rest_base )[0];
         }
         foreach ( $params as $key => $value ) {
@@ -212,29 +183,9 @@ class List_CPT_Items extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private static function sanitized_orderby( array $arguments ): string {
         return ! empty( $arguments['orderby'] ) ? sanitize_text_field( $arguments['orderby'] ) : '';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function collection_request( string $rest_base, array $arguments, int $per_page, int $page, string $context, string $orderby ): \WP_REST_Request {
         $request = new \WP_REST_Request( 'GET', self::post_type_route( $rest_base, null, 'GET' ) );
@@ -256,20 +207,6 @@ class List_CPT_Items extends Base_Tool {
         return $request;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function type_bound_query( string $rest_base, array $arguments, array $params, string $orderby ): array {
         $type_bound = array_values( array_intersect( array_keys( $params ), array( 'author', 'author_exclude', 'parent', 'parent_exclude' ) ) );
         $query_args = array();
@@ -289,18 +226,6 @@ class List_CPT_Items extends Base_Tool {
         return array( $post_type, self::query_vars( $post_type, $arguments ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function empty_page_or_refusal( \WP_REST_Response $response, string $rest_base, int $page, int $per_page ): array {
         $wp_error = $response->as_error();
         if ( 'rest_no_route' === $wp_error->get_error_code() ) {
@@ -315,14 +240,6 @@ class List_CPT_Items extends Base_Tool {
         }
         throw new \RuntimeException( self::rest_error_message( $wp_error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
 
     private static function item_row( array $item, bool $raw ): array {
         $row = array(
@@ -339,18 +256,6 @@ class List_CPT_Items extends Base_Tool {
         }
         return $row;
     }
-
-    
-    
-    
-    
-    
-
-    
-
-
-
-
 
     public static function shared_filter_schema( bool $with_parent_exclude ): array {
         $schema = array(
@@ -409,16 +314,6 @@ class List_CPT_Items extends Base_Tool {
         return $schema;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function collection_params( array $arguments, array $names ): array {
         $params = array();
         foreach ( $names as $name ) {
@@ -430,15 +325,6 @@ class List_CPT_Items extends Base_Tool {
         self::refuse_overridden_pairs( $params );
         return $params;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function collection_param( string $name, $value ): array {
         if ( in_array( $name, array( 'include', 'exclude', 'author_exclude', 'parent_exclude' ), true ) ) {
@@ -456,16 +342,6 @@ class List_CPT_Items extends Base_Tool {
         return array();
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function id_list_param( string $name, $value ): array {
         $ids = self::id_list( $value, $name, 'parent_exclude' === $name ? 0 : 1 );
         if ( 'include' === $name && empty( $ids ) ) {
@@ -474,18 +350,6 @@ class List_CPT_Items extends Base_Tool {
         return $ids ? array( $name => $ids ) : array();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_overridden_pairs( array $params ): void {
         foreach ( array( 'include' => 'exclude', 'parent' => 'parent_exclude', 'author' => 'author_exclude' ) as $in => $out ) {
             if ( isset( $params[ $in ], $params[ $out ] ) ) {
@@ -493,16 +357,6 @@ class List_CPT_Items extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function query_vars( string $post_type, array $arguments ): array {
         $vars = array();
@@ -525,13 +379,6 @@ class List_CPT_Items extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
     private static function rest_taxonomy_names( string $post_type ): array {
         $taxonomies = array();
         foreach ( (array) get_object_taxonomies( $post_type, 'objects' ) as $key => $tax ) {
@@ -542,18 +389,6 @@ class List_CPT_Items extends Base_Tool {
         return $taxonomies;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function meta_query_var( string $post_type, array $arguments ): array {
         if ( ! current_user_can( 'edit_posts' ) ) {
             throw new \InvalidArgumentException( 'meta_query needs the edit_posts capability, the one wp_get_post_meta requires to read meta.' );
@@ -562,16 +397,6 @@ class List_CPT_Items extends Base_Tool {
         self::refuse_meta_filter_beyond_readable_statuses( $post_type, isset( $arguments['status'] ) ? $arguments['status'] : null );
         return $meta_query;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function query_orderby( array $arguments, array $vars ): ?string {
         $orderby = isset( $arguments['orderby'] ) && is_scalar( $arguments['orderby'] ) ? (string) $arguments['orderby'] : '';
@@ -584,27 +409,6 @@ class List_CPT_Items extends Base_Tool {
         return $orderby;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function refuse_meta_filter_beyond_readable_statuses( string $post_type, $status ): void {
         list( $edit_others, $read_private ) = self::other_authors_capabilities( $post_type );
 
@@ -616,14 +420,6 @@ class List_CPT_Items extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function requested_statuses( $status ): array {
         $statuses = array();
@@ -642,13 +438,6 @@ class List_CPT_Items extends Base_Tool {
         return array_values( array_unique( $statuses ) );
     }
 
-    
-
-
-
-
-
-
     private static function other_authors_capabilities( string $post_type ): array {
         $type = get_post_type_object( $post_type );
         $cap  = is_object( $type ) && isset( $type->cap ) ? (object) $type->cap : (object) array();
@@ -657,16 +446,6 @@ class List_CPT_Items extends Base_Tool {
             isset( $cap->read_private_posts ) ? (string) $cap->read_private_posts : 'read_private_posts',
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function capabilities_to_read_others_in( string $one, string $edit_others, string $read_private ): array {
         $object = function_exists( 'get_post_status_object' ) ? get_post_status_object( $one ) : null;
@@ -681,24 +460,6 @@ class List_CPT_Items extends Base_Tool {
         }
         return array( $edit_others );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function dispatch( \WP_REST_Request $request, string $post_type, array $vars ): \WP_REST_Response {
         $hook     = 'rest_' . $post_type . '_query';
@@ -724,32 +485,10 @@ class List_CPT_Items extends Base_Tool {
         return $response;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function with_tiebreak_marker( array $args ): array {
         $args[ self::TIEBREAK_VAR ] = true;
         return $args;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function id_tiebreak_clauses( $clauses, $query = null ) {
         if ( ! is_array( $clauses ) || ! isset( $clauses['orderby'] ) || ! is_string( $clauses['orderby'] ) || ! is_object( $query ) || ! method_exists( $query, 'get' ) || ! $query->get( self::TIEBREAK_VAR ) ) {
@@ -758,18 +497,6 @@ class List_CPT_Items extends Base_Tool {
         $clauses['orderby'] = self::order_by_with_id( $clauses['orderby'] );
         return $clauses;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function order_by_with_id( string $orderby ): string {
         $clause = trim( $orderby );
@@ -782,15 +509,6 @@ class List_CPT_Items extends Base_Tool {
         $direction = preg_match( '/\s(ASC|DESC)\s*\z/i', $clause, $m ) ? strtoupper( $m[1] ) : 'ASC';
         return $clause . ', ' . $id . ' ' . $direction;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function merge_query_vars( array $args, array $vars ): array {
         foreach ( $vars as $key => $value ) {
@@ -807,33 +525,9 @@ class List_CPT_Items extends Base_Tool {
         return $args;
     }
 
-    
-
-
-
-
-
     public static function raw_columns( array $arguments ): bool {
         return isset( $arguments['raw_columns'] ) && (bool) rest_sanitize_boolean( $arguments['raw_columns'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function resolve_context( array $arguments, string $default, bool $raw ): string {
         $context = isset( $arguments['context'] ) && is_scalar( $arguments['context'] ) && '' !== $arguments['context'] ? (string) $arguments['context'] : $default;
@@ -846,22 +540,6 @@ class List_CPT_Items extends Base_Tool {
         return $context;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function may_list_in_context( string $context, $id ): bool {
         if ( 'edit' !== $context ) {
             return true;
@@ -872,32 +550,13 @@ class List_CPT_Items extends Base_Tool {
         return current_user_can( 'edit_post', (int) $id );
     }
 
-    
-
-
-
-
-
-
     public static function raw_row( $id ): ?array {
         $post = get_post( (int) $id );
         return is_object( $post ) ? get_object_vars( $post ) : null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function filterable_meta_keys( string $post_type ): array {
         $exposure = '\\Easy_MCP_AI\\Meta\\Meta_Exposure';
-        
         if ( ! function_exists( 'get_registered_meta_keys' ) || ! class_exists( $exposure ) ) {
             return array();
         }
@@ -916,18 +575,6 @@ class List_CPT_Items extends Base_Tool {
         return array_keys( $keys );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function sanitize_query( $value, string $label, string $kind, array $allowed ): array {
         if ( is_string( $value ) ) {
             $decoded = json_decode( $value, true );
@@ -939,19 +586,6 @@ class List_CPT_Items extends Base_Tool {
         $count = 0;
         return self::query_group( $value, $label, $kind, $allowed, 0, $count );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function query_group( array $group, string $label, string $kind, array $allowed, int $depth, int &$count ): array {
         if ( ! self::is_query_group( $group ) ) {
@@ -976,20 +610,6 @@ class List_CPT_Items extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function query_member( $item, string $path, string $label, string $kind, array $allowed, int $depth, int &$count ): array {
         if ( ! is_array( $item ) || array() === $item ) {
             throw new \InvalidArgumentException( sprintf( '%s must be a clause object.', $path ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -1012,13 +632,6 @@ class List_CPT_Items extends Base_Tool {
         return self::meta_clause( $item, $path, $allowed );
     }
 
-    
-
-
-
-
-
-
     private static function is_query_group( array $value ): bool {
         foreach ( array_keys( $value ) as $key ) {
             if ( is_int( $key ) || 'relation' === $key ) {
@@ -1027,15 +640,6 @@ class List_CPT_Items extends Base_Tool {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function date_clause( array $clause, string $path ): array {
         $out      = array();
@@ -1052,15 +656,6 @@ class List_CPT_Items extends Base_Tool {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function date_clause_value( string $key, $value, string $path ) {
         if ( in_array( $key, self::DATE_UNIT_KEYS, true ) ) {
@@ -1081,15 +676,6 @@ class List_CPT_Items extends Base_Tool {
         throw new \InvalidArgumentException( sprintf( '%1$s: unknown key "%2$s".', $path, $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
     private static function date_bound( $value, string $path ) {
         if ( is_string( $value ) && '' !== trim( $value ) ) {
             return trim( $value );
@@ -1107,17 +693,6 @@ class List_CPT_Items extends Base_Tool {
         }
         throw new \InvalidArgumentException( sprintf( '%s must be a date string or an object of year, month, day, hour, minute, second.', $path ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function tax_clause( array $clause, string $path, array $taxonomies ): array {
         foreach ( array_keys( $clause ) as $key ) {
@@ -1143,15 +718,6 @@ class List_CPT_Items extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function tax_clause_taxonomy( array $clause, string $path, array $taxonomies ): string {
         $taxonomy = isset( $clause['taxonomy'] ) && is_scalar( $clause['taxonomy'] ) ? (string) $clause['taxonomy'] : '';
         if ( ! in_array( $taxonomy, $taxonomies, true ) ) {
@@ -1167,15 +733,6 @@ class List_CPT_Items extends Base_Tool {
         return $taxonomy;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function tax_clause_field( array $clause, string $path ): string {
         if ( ! isset( $clause['field'] ) ) {
             return 'term_id';
@@ -1186,17 +743,6 @@ class List_CPT_Items extends Base_Tool {
         }
         return self::one_of( $raw_field, self::TAX_FIELDS, $path . '.field' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function tax_clause_terms( array $clause, string $path, string $field, string $operator ): array {
         if ( ! isset( $clause['terms'] ) ) {
@@ -1216,22 +762,10 @@ class List_CPT_Items extends Base_Tool {
             if ( '' === $term ) {
                 throw new \InvalidArgumentException( sprintf( '%1$s.terms: every %2$s must be a non-empty string.', $path, $field ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-            
-            
             $clean[] = $term;
         }
         return $clean;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function meta_clause( array $clause, string $path, array $keys ): array {
         self::refuse_unknown_meta_clause_keys( $clause, $path );
@@ -1248,16 +782,6 @@ class List_CPT_Items extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_unknown_meta_clause_keys( array $clause, string $path ): void {
         foreach ( array_keys( $clause ) as $key ) {
             $key = (string) $key;
@@ -1269,15 +793,6 @@ class List_CPT_Items extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function meta_clause_key( array $clause, string $path, array $keys ): string {
         $meta_key = isset( $clause['key'] ) && is_string( $clause['key'] ) ? $clause['key'] : '';
@@ -1294,14 +809,6 @@ class List_CPT_Items extends Base_Tool {
         return $meta_key;
     }
 
-    
-
-
-
-
-
-
-
     private static function meta_clause_value( $value, string $path ) {
         if ( is_array( $value ) ) {
             foreach ( $value as $item ) {
@@ -1317,15 +824,6 @@ class List_CPT_Items extends Base_Tool {
         return $value;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function meta_clause_type( $type, string $path ): string {
         $type = strtoupper( is_scalar( $type ) ? (string) $type : '' );
         if ( ! preg_match( self::META_TYPE_PATTERN, $type ) ) {
@@ -1334,29 +832,12 @@ class List_CPT_Items extends Base_Tool {
         return $type;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function one_of( string $value, array $allowed, string $label ): string {
         if ( ! in_array( $value, $allowed, true ) ) {
             throw new \InvalidArgumentException( sprintf( 'Invalid %1$s: %2$s. Use %3$s.', $label, $value, implode( ', ', $allowed ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
 
     private static function number_or_numbers( $value, string $label ) {
         if ( is_array( $value ) ) {
@@ -1372,15 +853,6 @@ class List_CPT_Items extends Base_Tool {
         return self::whole_number( $value, $label, 0 );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function whole_number( $value, string $label, int $min ): int {
         $int = null;
         if ( is_int( $value ) ) {
@@ -1395,15 +867,6 @@ class List_CPT_Items extends Base_Tool {
         }
         return $int;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function id_list( $value, string $label, int $min ): array {
         if ( is_string( $value ) ) {
@@ -1426,13 +889,6 @@ class List_CPT_Items extends Base_Tool {
         return array_values( array_unique( $ids ) );
     }
 
-    
-
-
-
-
-
-
     public static function slug_list( $value ): array {
         if ( is_string( $value ) ) {
             $decoded = json_decode( $value, true );
@@ -1447,26 +903,10 @@ class List_CPT_Items extends Base_Tool {
             if ( '' === $slug ) {
                 throw new \InvalidArgumentException( 'slug: every entry must be a non-empty string.' );
             }
-            
-            
-            
             $slugs[] = $slug;
         }
         return array_values( array_unique( $slugs ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function refuse_unregistered_collection_params( array $names, ?object $post_type_object, string $post_type ): void {
         if ( empty( $names ) || ! is_object( $post_type_object ) || ! method_exists( $post_type_object, 'get_rest_controller' ) ) {
@@ -1485,14 +925,6 @@ class List_CPT_Items extends Base_Tool {
             throw new \InvalidArgumentException( sprintf( '%1$s: post type "%2$s" cannot be filtered by it (%3$s), so WordPress would ignore it.', $name, $post_type, $why ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
 
     public static function post_type_for_rest_base( string $rest_base ): array {
         return Post_Type_Rest_Base::require_served_type( $rest_base );

@@ -1,37 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,23 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Tool_Visibility {
 
-    
     const ABILITIES_MIN_WP = '6.9';
 
-    
     const LOW_VISIBILITY_RATIO = 0.25;
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function run( $registry = null ) {
         $registry = self::registry( $registry );
@@ -69,37 +23,12 @@ class Check_Tool_Visibility {
         return $results;
     }
 
-    
-
-
-
-
-
-
-
     private static function off_names( $registry ) {
         if ( null === $registry ) {
             return (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() );
         }
         return \Easy_MCP_AI\Tools\Tool_State::off_names( $registry );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function run_with_definitions( array $defs, array $disabled, array $patterns ) {
         if ( empty( $defs ) ) {
@@ -140,28 +69,6 @@ class Check_Tool_Visibility {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function scan_ability_schemas( array $defs ) {
         if ( ! class_exists( '\Easy_MCP_AI\MCP\Gemini_Safe_Schema' ) ) {
             return null;
@@ -185,7 +92,7 @@ class Check_Tool_Visibility {
             try {
                 $result = \Easy_MCP_AI\MCP\Gemini_Safe_Schema::sanitize( $def['schema'] );
             } catch ( \Throwable $e ) {
-                continue; 
+                continue;
             }
 
             $map = ( isset( $result['map'] ) && is_array( $result['map'] ) ) ? $result['map'] : array();
@@ -195,11 +102,6 @@ class Check_Tool_Visibility {
 
             $rewritten[ $name ] = count( $map );
 
-            
-            
-            
-            
-            
             if ( array() !== \Easy_MCP_AI\MCP\Gemini_Safe_Schema::unreachable_paths( $map ) ) {
                 $unrepairable[] = $name;
             }
@@ -212,22 +114,6 @@ class Check_Tool_Visibility {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function resolve( array $defs, array $allowed, array $disabled, array $patterns, callable $can ) {
         $names = array_map( static function ( $d ) {
             return isset( $d['name'] ) ? (string) $d['name'] : '';
@@ -238,8 +124,6 @@ class Check_Tool_Visibility {
             return array( 'visible' => array(), 'zeroed_by' => null, 'eligible' => 0, 'missing_caps' => array() );
         }
 
-        
-        
         $surviving = array_values( array_filter( $names, static function ( $name ) use ( $allowed ) {
             return \Easy_MCP_AI\Auth\Permission_Guard::allowlist_permits( $allowed, $name );
         } ) );
@@ -247,7 +131,6 @@ class Check_Tool_Visibility {
             return array( 'visible' => array(), 'zeroed_by' => 'token_allowlist', 'eligible' => 0, 'missing_caps' => array() );
         }
 
-        
         if ( ! empty( $disabled ) ) {
             $surviving = array_values( array_filter( $surviving, static function ( $name ) use ( $disabled ) {
                 return ! in_array( $name, $disabled, true );
@@ -257,7 +140,6 @@ class Check_Tool_Visibility {
             }
         }
 
-        
         if ( ! empty( $patterns ) ) {
             $surviving = array_values( array_filter( $surviving, static function ( $name ) use ( $patterns ) {
                 return self::matches_pattern_filter( $name, $patterns );
@@ -267,7 +149,6 @@ class Check_Tool_Visibility {
             }
         }
 
-        
         $by_name = array();
         foreach ( $defs as $d ) {
             if ( isset( $d['name'] ) ) {
@@ -275,15 +156,13 @@ class Check_Tool_Visibility {
             }
         }
 
-        
-        
         $eligible = count( $surviving );
 
         $missing_caps = array();
 
         $surviving = array_values( array_filter( $surviving, static function ( $name ) use ( $by_name, $can, &$missing_caps ) {
             if ( ! isset( $by_name[ $name ] ) ) {
-                return true; 
+                return true;
             }
             $def = $by_name[ $name ];
             $cap = self::effective_capability(
@@ -293,8 +172,6 @@ class Check_Tool_Visibility {
             if ( ! $cap || (bool) call_user_func( $can, $cap ) ) {
                 return true;
             }
-            
-            
             $missing_caps[ $cap ] = true;
             return false;
         } ) );
@@ -307,12 +184,6 @@ class Check_Tool_Visibility {
 
         return array( 'visible' => $surviving, 'zeroed_by' => null, 'eligible' => $eligible, 'missing_caps' => $missing_caps );
     }
-
-    
-
-
-
-
 
     public static function evaluate_token_visibility( $tokens ) {
         $label = __( 'Every API token can see tools', 'easy-mcp-ai' );
@@ -330,11 +201,6 @@ class Check_Tool_Visibility {
         }
 
         if ( empty( $blind ) ) {
-            
-            
-            
-            
-            
             return Diagnostic_Result::pass(
                 'd1',
                 Diagnostic_Result::TIER_BLOCKER,
@@ -365,7 +231,6 @@ class Check_Tool_Visibility {
         );
     }
 
-    
     public static function evaluate_low_capability( $tokens ) {
         $label   = __( 'Token users can reach the tools they need', 'easy-mcp-ai' );
 
@@ -378,15 +243,6 @@ class Check_Tool_Visibility {
         foreach ( $tokens as $t ) {
             $visible = (int) ( isset( $t['visible'] ) ? $t['visible'] : 0 );
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
             if ( ! isset( $t['eligible'] ) ) {
                 continue;
             }
@@ -427,7 +283,6 @@ class Check_Tool_Visibility {
         );
     }
 
-    
     public static function evaluate_dead_patterns( array $dead ) {
         $label = __( 'Tool filter patterns match something', 'easy-mcp-ai' );
 
@@ -448,23 +303,6 @@ class Check_Tool_Visibility {
 
         return Diagnostic_Result::pass( 'd3', Diagnostic_Result::TIER_WARNING, $label, '', array( 'dead_patterns' => array() ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_override_names( $status ): Diagnostic_Result {
         $label = __( 'Every tool EASY_MCP_AI_TOOLS names exists', 'easy-mcp-ai' );
@@ -541,14 +379,6 @@ class Check_Tool_Visibility {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function evaluate_disabled_categories( array $categories ) {
         $label = __( 'All tool categories are available', 'easy-mcp-ai' );
 
@@ -569,14 +399,6 @@ class Check_Tool_Visibility {
         return Diagnostic_Result::pass( 'd4', Diagnostic_Result::TIER_WARNING, $label, '', array( 'disabled_categories' => array() ) );
     }
 
-    
-
-
-
-
-
-
-
     public static function evaluate_grant_scopes( $grants ) {
         $label = __( 'Connected clients have usable permissions', 'easy-mcp-ai' );
 
@@ -592,9 +414,6 @@ class Check_Tool_Visibility {
             }
         }
 
-        
-        
-        
         $scope = ! empty( $grants[0]['truncated'] )
             ? ' ' . sprintf(
                 /* translators: %d: number of connected clients examined. */
@@ -621,10 +440,6 @@ class Check_Tool_Visibility {
         return Diagnostic_Result::pass( 'd5', Diagnostic_Result::TIER_WARNING, $label, trim( $scope ), array( 'empty_grants' => array() ) );
     }
 
-    
-
-
-
     public static function evaluate_abilities( $wp_version, $ability_count, $registered_in_wp = null, $enabled_but_missing = array() ) {
         $label    = __( 'WordPress Abilities available', 'easy-mcp-ai' );
         $missing  = array_values( array_filter( array_map( 'strval', (array) $enabled_but_missing ) ) );
@@ -635,19 +450,6 @@ class Check_Tool_Visibility {
             'enabled_but_missing' => $missing,
         );
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( $missing ) {
             return Diagnostic_Result::warn(
                 'd6',
@@ -686,13 +488,6 @@ class Check_Tool_Visibility {
         }
 
         if ( 0 === (int) $ability_count ) {
-            
-            
-            
-            
-            
-            
-            
             if ( is_int( $registered_in_wp ) && $registered_in_wp > 0 ) {
                 return Diagnostic_Result::pass(
                     'd6',
@@ -732,27 +527,6 @@ class Check_Tool_Visibility {
             $evidence
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_sanitizer( array $rewritten, array $unrepairable, $sanitizer_available = true, $scanned_count = null ) {
         $label = __( 'Plugin ability schemas are client-compatible', 'easy-mcp-ai' );
@@ -795,10 +569,6 @@ class Check_Tool_Visibility {
             );
         }
 
-        
-        
-        
-        
         if ( null !== $scanned_count && 0 === (int) $scanned_count ) {
             return Diagnostic_Result::pass(
                 'd7',
@@ -811,12 +581,6 @@ class Check_Tool_Visibility {
 
         return Diagnostic_Result::pass( 'd7', Diagnostic_Result::TIER_WARNING, $label, '', array( 'rewritten' => array(), 'unrepairable' => array() ) );
     }
-
-    
-
-    
-
-
 
     private static function matches_pattern_filter( $name, array $patterns ) {
         foreach ( $patterns as $pattern ) {
@@ -833,10 +597,6 @@ class Check_Tool_Visibility {
         }
         return false;
     }
-
-    
-
-
 
     private static function effective_capability( $category, $default_cap ) {
         if ( class_exists( '\Easy_MCP_AI\MCP\Server' ) ) {
@@ -875,9 +635,6 @@ class Check_Tool_Visibility {
         }
     }
 
-    
-
-    
     private static function registry( $registry ) {
         if ( null !== $registry ) {
             return $registry;
@@ -891,9 +648,6 @@ class Check_Tool_Visibility {
         }
         return $registry;
     }
-
-    
-
 
     private static function tool_definitions( $registry ) {
         if ( null === $registry || ! method_exists( $registry, 'get_all_definitions' ) ) {
@@ -911,8 +665,6 @@ class Check_Tool_Visibility {
                 'name'       => $name,
                 'category'   => ( $tool && method_exists( $tool, 'get_category' ) ) ? $tool->get_category() : '',
                 'capability' => ( $tool && method_exists( $tool, 'get_required_capability' ) ) ? $tool->get_required_capability() : '',
-                
-                
                 'schema'     => ( isset( $definition['inputSchema'] ) && is_array( $definition['inputSchema'] ) ) ? $definition['inputSchema'] : null,
             );
         }
@@ -920,41 +672,20 @@ class Check_Tool_Visibility {
         return $defs;
     }
 
-    
     const TOKEN_SCAN_LIMIT = 50;
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function decode_allowed_tools( $json ) {
         $decoded = json_decode( (string) $json, true );
         return is_array( $decoded ) ? $decoded : array();
     }
 
-    
-
-
     private static function token_visibility_rows( array $defs, array $disabled, array $patterns ) {
         $wpdb = self::wpdb( 'get_results' );
         if ( null === $wpdb || empty( $defs ) ) {
-            return null; 
+            return null;
         }
 
         $table = $wpdb->prefix . 'easy_mcp_ai_tokens';
-        
-        
         $probe_limit = self::TOKEN_SCAN_LIMIT + 1;
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; diagnostics must read live state.
         $rows = $wpdb->get_results(
@@ -992,7 +723,6 @@ class Check_Tool_Visibility {
                 'name'         => isset( $row['name'] ) ? (string) $row['name'] : '',
                 'user'         => ( $user && isset( $user->user_login ) ) ? $user->user_login : (string) $user_id,
                 'visible'      => count( $resolved['visible'] ),
-                
                 'eligible'     => isset( $resolved['eligible'] ) ? (int) $resolved['eligible'] : 0,
                 'total'        => count( $defs ),
                 'zeroed_by'    => $resolved['zeroed_by'],
@@ -1004,7 +734,6 @@ class Check_Tool_Visibility {
         return $out;
     }
 
-    
     private static function dead_patterns( array $defs, array $patterns ) {
         if ( empty( $patterns ) || empty( $defs ) ) {
             return array();
@@ -1030,14 +759,6 @@ class Check_Tool_Visibility {
         return $dead;
     }
 
-    
-
-
-
-
-
-
-
     private static function override_names( $registry ) {
         return self::classify_override_names(
             \Easy_MCP_AI\Tools\Tool_State::override_source(),
@@ -1047,17 +768,6 @@ class Check_Tool_Visibility {
             }
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function classify_override_names( $source, array $named, callable $known ) {
         $named  = array_map( 'strval', $named );
@@ -1084,17 +794,6 @@ class Check_Tool_Visibility {
         sort( $status['abilities'] );
         return $status;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function known_tool_names( $registry ) {
         $catalogue = new \Easy_MCP_AI\Tools\Tool_Registry();
@@ -1146,39 +845,20 @@ class Check_Tool_Visibility {
         return $fully_off;
     }
 
-    
     const GRANT_SCAN_LIMIT = 50;
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function grant_rows() {
         $wpdb = self::wpdb( 'get_results' );
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
 
-        
-        
-        
         if ( ! class_exists( '\Easy_MCP_AI\OAuth\Scope_Map' ) ) {
             return null;
         }
 
         $consents = $wpdb->prefix . 'easy_mcp_ai_oauth_consents';
         $clients  = $wpdb->prefix . 'easy_mcp_ai_oauth_clients';
-        
-        
         $probe_limit = self::GRANT_SCAN_LIMIT + 1;
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned tables; diagnostics must read live state.
         $rows = $wpdb->get_results(
@@ -1201,9 +881,6 @@ class Check_Tool_Visibility {
 
         $out = array();
         foreach ( $rows as $row ) {
-            
-            
-            
             $tools = \Easy_MCP_AI\OAuth\Scope_Map::resolve_allowed_tools(
                 (string) ( isset( $row['scope'] ) ? $row['scope'] : '' )
             );
@@ -1217,13 +894,6 @@ class Check_Tool_Visibility {
         return $out;
     }
 
-    
-
-
-
-
-
-
     private static function count_registered_abilities() {
         if ( ! function_exists( 'wp_get_abilities' ) ) {
             return null;
@@ -1231,18 +901,6 @@ class Check_Tool_Visibility {
         $abilities = \wp_get_abilities();
         return is_array( $abilities ) ? count( $abilities ) : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function enabled_abilities_missing_from_registry() {
         if ( ! function_exists( 'wp_get_abilities' ) ) {
@@ -1254,8 +912,6 @@ class Check_Tool_Visibility {
         }
         $registered = \wp_get_abilities();
         if ( ! is_array( $registered ) ) {
-            
-            
             return array();
         }
         $missing = array();
@@ -1299,8 +955,6 @@ class Check_Tool_Visibility {
 
         $detail = implode( ', ', $parts );
 
-        
-        
         if ( ! empty( $tokens[0]['truncated'] ) ) {
             $detail .= ' ' . sprintf(
                 /* translators: %d: number of tokens examined. */

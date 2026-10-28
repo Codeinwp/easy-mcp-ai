@@ -46,24 +46,6 @@ class Count_Posts extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function execute( array $arguments ) {
         $post_type = isset( $arguments['post_type'] ) && '' !== $arguments['post_type']
             ? sanitize_key( (string) $arguments['post_type'] )
@@ -94,27 +76,12 @@ class Count_Posts extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function published_only_note( string $post_type, string $edit_cap ): string {
         if ( '' === $edit_cap ) {
             return sprintf( "Only published posts are counted: '%s' declares no edit capability, so its other statuses are counted for no one.", $post_type );
         }
         return sprintf( "Only published posts are counted: the other statuses of '%1\$s' are counted only for users with that type's %2\$s capability.", $post_type, $edit_cap );
     }
-
-    
-
-
-
-
-
 
     private static function public_counts( array $counts ): array {
         $public = array();

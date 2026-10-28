@@ -7,12 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class Delete_Term extends Base_Tool {
 
     public function get_name() {
@@ -28,9 +22,6 @@ class Delete_Term extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
         return 'read';
     }
 
@@ -60,7 +51,6 @@ class Delete_Term extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id       = isset( $arguments['term_id'] ) ? (int) $arguments['term_id'] : 0;
         $taxonomy = isset( $arguments['taxonomy'] ) ? (string) $arguments['taxonomy'] : '';
@@ -79,15 +69,6 @@ class Delete_Term extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function preview_collection_route( string $taxonomy ): ?string {
         $tax_obj = '' !== $taxonomy && function_exists( 'get_taxonomy' ) ? \get_taxonomy( $taxonomy ) : null;
         if ( ! $tax_obj ) {
@@ -100,7 +81,7 @@ class Delete_Term extends Base_Tool {
         try {
             $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
         } catch ( \Throwable $e ) {
-            return null; 
+            return null;
         }
         return '/' . $namespace . '/' . $rest_base;
     }
@@ -117,13 +98,9 @@ class Delete_Term extends Base_Tool {
             );
         }
         $this->refuse_non_rest_taxonomy( $taxonomy, $tax_obj );
-        
-        
         $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
         $rest_base = $this->validate_rest_route_segment( $rest_base, 'rest_base' );
 
-        
-        
         $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
 
         $this->rest_request( 'DELETE', '/' . $namespace . '/' . $rest_base . '/' . $term_id, array( 'force' => true ) );

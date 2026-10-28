@@ -7,25 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Reorder_Menu_Items extends Base_Tool {
 
     use Menu_Item_Refusal;
 
-    
     const IDS_IN_MESSAGE = 8;
 
     public function get_name() {
@@ -106,8 +91,6 @@ class Reorder_Menu_Items extends Base_Tool {
         $this->assert_menu_exists( $menu_id );
         $current = List_Menu_Items::every_item( $menu_id );
 
-        
-        
         $writes = $this->changed_rows( $this->plan( $menu_id, $entries, $current, $strict ), $current );
         $this->assert_writable( $writes, $current );
 
@@ -136,16 +119,6 @@ class Reorder_Menu_Items extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function parse_entries( $raw ) {
         $list = $this->parse_json_param( $raw, 'items' );
         if ( array_values( $list ) !== $list ) {
@@ -165,30 +138,12 @@ class Reorder_Menu_Items extends Base_Tool {
         return $entries;
     }
 
-    
-
-
-
-
-
-
     private function parse_parent( $value, $index ) {
         if ( 0 === $value || '0' === $value ) {
             return 0;
         }
         return $this->parse_required_id( $value, sprintf( 'items[%d].parent', $index ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function assert_menu_exists( $menu_id ) {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/menus/' . $menu_id );
@@ -201,45 +156,11 @@ class Reorder_Menu_Items extends Base_Tool {
         }
     }
 
-    
-
-
-
-
     private static function throw_if_no_route( $error ) {
         if ( 'rest_no_route' === $error->get_error_code() ) {
             throw new \RuntimeException( 'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function plan( $menu_id, array $entries, array $current, $strict ) {
         $listed  = $this->validate_entries( $menu_id, $entries, $current, $strict );
@@ -249,15 +170,6 @@ class Reorder_Menu_Items extends Base_Tool {
         return $this->flatten( $this->sibling_order( $entries, $listed, $parents['layout'], $current ), $parents['final'] );
     }
 
-    
-
-
-
-
-
-
-
-
     private function validate_entries( $menu_id, array $entries, array $current, $strict ) {
         $listed = $this->listed_parents( $entries );
         $this->refuse_outside_menu( $menu_id, $listed, $current );
@@ -266,12 +178,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
         return $listed;
     }
-
-    
-
-
-
-
 
     private function listed_parents( array $entries ) {
         $listed     = array();
@@ -288,18 +194,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
         return $listed;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_outside_menu( $menu_id, array $listed, array $current ) {
         $foreign    = array();
@@ -327,13 +221,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function refuse_unlisted( $menu_id, array $listed, array $current ) {
         $missing = array_diff( array_keys( $current ), array_keys( $listed ) );
         if ( ! $missing ) {
@@ -345,18 +232,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
         $this->refuse( sprintf( 'strict mode, %d item(s) of menu %d not listed: %%s.', count( $missing ), $menu_id ), $labels, 'List every item of the menu, or pass strict=false to move only the listed ones.' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function final_parents( array $listed, array $current ) {
         $final  = array();
@@ -371,16 +246,6 @@ class Reorder_Menu_Items extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function sibling_order( array $entries, array $listed, array $layout, array $current ) {
         $children = array( 0 => array() );
         foreach ( $entries as $entry ) {
@@ -393,14 +258,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
         return $children;
     }
-
-    
-
-
-
-
-
-
 
     private function flatten( array $children, array $final ) {
         $plan  = array();
@@ -421,13 +278,6 @@ class Reorder_Menu_Items extends Base_Tool {
         return $plan;
     }
 
-    
-
-
-
-
-
-
     private function changed_rows( array $plan, array $current ) {
         $writes = array();
         foreach ( $plan as $row ) {
@@ -438,16 +288,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
         return $writes;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function refuse_cycles( array $layout, array $listed ) {
         $done   = array();
@@ -475,16 +315,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function describe_cycles( array $cycles, array $listed ) {
         $described = array();
         $unlisted  = array();
@@ -502,23 +332,6 @@ class Reorder_Menu_Items extends Base_Tool {
         }
         return $message;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function assert_writable( array $writes, array $current ) {
         $denied     = array();
@@ -539,31 +352,12 @@ class Reorder_Menu_Items extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function item_title( array $item, string $field ): string {
         if ( ! isset( $item['title'] ) ) {
             return '';
         }
         return is_array( $item['title'] ) ? (string) ( $item['title'][ $field ] ?? '' ) : (string) $item['title'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function partial_failure_report( $menu_id, array $applied, $failed_id, $error, array $remaining ) {
         $report = array(
@@ -592,18 +386,10 @@ class Reorder_Menu_Items extends Base_Tool {
         try {
             $report['items'] = $this->shape_items( List_Menu_Items::every_item( $menu_id ) );
         } catch ( \RuntimeException $e ) {
-            
             unset( $e );
         }
         return $report;
     }
-
-    
-
-
-
-
-
 
     private function shape_items( array $items ) {
         $out = array();

@@ -17,7 +17,6 @@ class History_Diff extends Base_Tool {
     public function get_required_capability() { return 'read'; }
 
     public function get_annotations() {
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => true,
@@ -52,14 +51,6 @@ class History_Diff extends Base_Tool {
         }
         $a_after = ! empty( $row_a['after_value'] ) ? json_decode( $row_a['after_value'], true ) : array();
 
-        
-        
-        
-        
-        
-        
-        
-        
         $explanations = $this->take_explanations( $a_after );
 
         if ( isset( $args['id_b'] ) ) {
@@ -70,10 +61,6 @@ class History_Diff extends Base_Tool {
             if ( ! $can_view_all && (int) ( $row_b['wp_user_id'] ?? 0 ) !== $current_uid ) {
                 throw new \RuntimeException( 'id_b not found' );
             }
-            
-            
-            
-            
             if ( $row_a['object_type'] !== $row_b['object_type']
                 || (string) $row_a['object_id'] !== (string) $row_b['object_id']
             ) {
@@ -83,14 +70,6 @@ class History_Diff extends Base_Tool {
             $b_label = (int) $row_b['id'];
         } else {
             $b_after = $this->live_state( $row_a['object_type'], $row_a['object_id'], $can_view_all, $row_a['object_subtype'] ?? null );
-            
-            
-            
-            
-            
-            
-            
-            
             if ( null === $b_after ) {
                 $out = array(
                     'a'           => (int) $row_a['id'],
@@ -106,15 +85,6 @@ class History_Diff extends Base_Tool {
                 }
                 return $out;
             }
-            
-            
-            
-            
-            
-            
-            
-            
-            
             if ( is_array( $b_after ) ) {
                 $redacted = \Easy_MCP_AI\History\Change_Redactor::redact( $b_after );
                 $b_after  = $redacted['value'];
@@ -122,53 +92,8 @@ class History_Diff extends Base_Tool {
             $b_label = 'live';
         }
 
-        
-        
         $explanations = array_merge( $explanations, $this->take_explanations( $b_after ) );
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $uncomparable = array();
         $a_keys       = array_keys( (array) $a_after );
         $b_keys       = array_keys( (array) $b_after );
@@ -204,9 +129,6 @@ class History_Diff extends Base_Tool {
             'object_id'   => $row_a['object_id'],
             'diff'        => $diff,
         );
-        
-        
-        
         if ( $uncomparable ) {
             $out['not_compared'] = $uncomparable;
             $out['not_compared_note'] = __( 'These fields appear on only one side of the comparison, so they were not compared. Each entry says why. Their absence from "diff" is a limit of the comparison, not evidence that the object changed or did not change.', 'easy-mcp-ai' );
@@ -216,15 +138,6 @@ class History_Diff extends Base_Tool {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
 
     private function take_explanations( &$payload ) {
         $found = array();
@@ -239,14 +152,6 @@ class History_Diff extends Base_Tool {
         }
         return $found;
     }
-
-    
-
-
-
-
-
-
 
     private function live_state( $type, $id, $can_view_all = false, $object_subtype = null ) {
         return \Easy_MCP_AI\History\Live_State::read( $type, $id, $can_view_all, $object_subtype );

@@ -44,14 +44,6 @@ class Update_Theme_Mod extends Base_Tool {
                     'type'        => 'string',
                     'description' => 'Customizer setting id of the theme mod to change.',
                 ),
-                
-                
-                
-                
-                
-                
-                
-                
                 'value'   => array(
                     'description' => 'New value, in the shape the setting stores (see its default): an object or list when the default is one, otherwise a string, number or boolean.',
                     'oneOf'       => array(
@@ -88,7 +80,6 @@ class Update_Theme_Mod extends Base_Tool {
 
         $publish = ! array_key_exists( 'publish', $arguments ) || rest_sanitize_boolean( $arguments['publish'] );
 
-        
         $denied = Customizer_Settings::denied_reason( $key );
         if ( null !== $denied ) {
             throw new \InvalidArgumentException( $denied ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -98,12 +89,6 @@ class Update_Theme_Mod extends Base_Tool {
             throw new \RuntimeException( Customizer_Settings::NO_CUSTOMIZER );
         }
 
-        
-        
-        
-        
-        
-        
         $entered = false;
         $checked = null;
         $unknown = false;
@@ -112,8 +97,6 @@ class Update_Theme_Mod extends Base_Tool {
                 static function ( $manager ) use ( $key, &$value, $publish, &$entered, &$checked, &$unknown ) {
                     $entered = true;
                     $setting = Customizer_Settings::resolve_writable_setting( $manager, $key );
-                    
-                    
                     $value = Theme_Mod_Value::conform( (string) $setting->id, $setting->default, $value );
                     Customizer_Settings::validate_value( $manager, $setting, $value );
                     $checked = $setting;
@@ -131,17 +114,6 @@ class Update_Theme_Mod extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function publish( object $manager, object $setting, $value, bool &$unknown ): array {
         $id        = (string) $setting->id;
         $previous  = Customizer_Settings::effective_value( $setting );
@@ -155,12 +127,6 @@ class Update_Theme_Mod extends Base_Tool {
             }
         } catch ( \Throwable $e ) {
             Customizer_Changeset::discard( $changeset );
-            
-            
-            
-            
-            
-            
             try {
                 $after = Customizer_Settings::stored_value( $setting );
                 $live  = $after !== $before || ( $saved && null !== $after && $setting->sanitize( $value ) === $after );
@@ -177,9 +143,6 @@ class Update_Theme_Mod extends Base_Tool {
             $warnings[] = 'The value was saved, but code on this site failed after the save: ' . $e->getMessage();
         }
 
-        
-        
-        
         $result = array(
             'published' => true,
             'changed'   => null,
@@ -190,9 +153,6 @@ class Update_Theme_Mod extends Base_Tool {
         );
         try {
             $result['stored'] = Customizer_Settings::stored_value( $setting );
-            
-            
-            
             $result['changed'] = $result['stored'] !== $before;
             $result['value']   = Customizer_Settings::effective_value( $setting );
         } catch ( \Throwable $e ) {
@@ -203,15 +163,6 @@ class Update_Theme_Mod extends Base_Tool {
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function staged( string $key, $value, bool $checked, ?\Throwable $why ): array {
         $uuid   = Customizer_Changeset::stage( $key, $value );

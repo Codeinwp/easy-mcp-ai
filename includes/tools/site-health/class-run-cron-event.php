@@ -8,29 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Run_Cron_Event extends Base_Tool {
 
-    
     const OWN_PREFIX = 'easy_mcp_ai_';
 
-    
     const OUTPUT_LIMIT = 16384;
 
-    
     const TIME_LIMIT = 300;
 
     public function get_name() {
@@ -50,8 +33,6 @@ class Run_Cron_Event extends Base_Tool {
     }
 
     public function get_annotations() {
-        
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
@@ -90,9 +71,6 @@ class Run_Cron_Event extends Base_Tool {
         if ( '' === $hook ) {
             throw new \InvalidArgumentException( 'hook must be a non-empty string.' );
         }
-        
-        
-        
         if ( 0 === strpos( $hook, self::OWN_PREFIX ) ) {
             throw new \RuntimeException( sprintf( 'Refused: %s belongs to Easy MCP AI. Its scheduled tasks are run from the plugin\'s own admin screens, not through this tool.', $hook ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -101,14 +79,6 @@ class Run_Cron_Event extends Base_Tool {
 
         return $this->consume_and_run( $event );
     }
-
-    
-
-
-
-
-
-
 
     private function select_event( $hook, array $arguments ) {
         $matches = array();
@@ -133,20 +103,8 @@ class Run_Cron_Event extends Base_Tool {
 
         self::refuse_if_ambiguous( $hook, $matches );
 
-        
-        
         return $matches[0];
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function wanted_key( array $arguments ) {
         if ( isset( $arguments['key'] ) && '' !== $arguments['key'] ) {
@@ -161,15 +119,6 @@ class Run_Cron_Event extends Base_Tool {
         return md5( serialize( $arguments['args'] ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_if_ambiguous( $hook, array $matches ) {
         if ( count( array_unique( array_column( $matches, 'key' ) ) ) <= 1 ) {
             return;
@@ -180,20 +129,6 @@ class Run_Cron_Event extends Base_Tool {
         }
         throw new \RuntimeException( sprintf( 'Hook %1$s is scheduled %2$d times with different arguments; pass `key` to choose one: %3$s', $hook, count( $matches ), implode( '; ', $list ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function consume_and_run( array $event ) {
         $hook = $event['hook'];
@@ -211,8 +146,6 @@ class Run_Cron_Event extends Base_Tool {
         $unscheduled = \wp_unschedule_event( $ts, $hook, $args, true );
         if ( \is_wp_error( $unscheduled ) || false === $unscheduled ) {
             $reason = \is_wp_error( $unscheduled ) ? $unscheduled->get_error_message() : 'unknown error';
-            
-            
             throw new \RuntimeException( sprintf( 'Not run: the due instance of %1$s could not be removed from the schedule (%2$s), so running it now could run it twice.', $hook, $reason ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
@@ -241,27 +174,6 @@ class Run_Cron_Event extends Base_Tool {
             'error'            => $run['error'],
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function run_callbacks( $hook, array $args ) {
         $this->raise_time_limit();
@@ -295,7 +207,6 @@ class Run_Cron_Event extends Base_Tool {
         } finally {
             \wp_set_current_user( $previous );
             \remove_filter( 'wp_doing_cron', '__return_true', PHP_INT_MAX );
-            
             while ( ob_get_level() > $level ) {
                 ob_end_clean();
             }
@@ -313,7 +224,6 @@ class Run_Cron_Event extends Base_Tool {
         );
     }
 
-    
     private function raise_time_limit() {
         $current = (int) ini_get( 'max_execution_time' );
         if ( 0 === $current || $current >= self::TIME_LIMIT ) {

@@ -12,46 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Term_Adapter extends Terms_Command {
 
     protected $obj_type = 'post';
 
-    
     private ?object $post = null;
 
     const MSG_READ_CAP = "'wp %s' needs the read_post capability for post %d: wp_get_post_full reads it through the REST API.";
@@ -64,16 +28,6 @@ final class Post_Term_Adapter extends Terms_Command {
 
     const MSG_TAXONOMY_KEY = "wp_cli_run refuses the taxonomy '%s': wp_add_post_terms reads taxonomy names through sanitize_key(), which would change it.";
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_ids( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
         Ids::require_digits( $ctx, isset( $args[0] ) ? $args[0] : '', 'a post ID' );
@@ -82,31 +36,13 @@ final class Post_Term_Adapter extends Terms_Command {
         }
     }
 
-    
-
-
-
-
     public function plan_add( Invocation $inv ): array {
         return self::plan_write( $inv, true );
     }
 
-    
-
-
-
-
     public function plan_set( Invocation $inv ): array {
         return self::plan_write( $inv, false );
     }
-
-    
-
-
-
-
-
-
 
     private static function plan_write( Invocation $inv, bool $append ): array {
         $args     = array_values( $inv->args );
@@ -137,16 +73,6 @@ final class Post_Term_Adapter extends Terms_Command {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     protected function get_object_type(): string {
         if ( null === $this->post ) {
             $listing = 'list' === $this->subcommand();
@@ -168,21 +94,9 @@ final class Post_Term_Adapter extends Terms_Command {
         return (string) $this->post->post_type;
     }
 
-    
     protected function object_taxonomies( string $object_type ): array {
         return array_values( array_map( 'strval', (array) \get_object_taxonomies( $object_type ) ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function get_object_terms( $object_id, array $taxonomies, array $args ) {
         if ( 'list' !== $this->subcommand() ) {
@@ -200,14 +114,6 @@ final class Post_Term_Adapter extends Terms_Command {
         return $terms;
     }
 
-    
-
-
-
-
-
-
-
     private function listed_terms( int $object_id, array $taxonomies ): array {
         $by_taxonomy = $this->read_terms( $object_id, $taxonomies );
         $terms       = array();
@@ -221,13 +127,6 @@ final class Post_Term_Adapter extends Terms_Command {
         }
         return $terms;
     }
-
-    
-
-
-
-
-
 
     private function read_terms( int $object_id, array $taxonomies ): array {
         $base = Post_Adapter::read_base( $this->get_object_type(), $this->inv->command );
@@ -253,13 +152,6 @@ final class Post_Term_Adapter extends Terms_Command {
         return isset( $result['payload']['terms'] ) && is_array( $result['payload']['terms'] ) ? $result['payload']['terms'] : array();
     }
 
-    
-
-
-
-
-
-
     private static function term_object( array $term, string $taxonomy ): object {
         return (object) array(
             'term_id'          => (int) $term['id'],
@@ -275,18 +167,10 @@ final class Post_Term_Adapter extends Terms_Command {
         );
     }
 
-    
     protected function term_slug_by_id( $term_id, string $taxonomy ): ?string {
         $term = Fetchers::term_by( 'id', $term_id, $taxonomy );
         return $term ? (string) $term->slug : null;
     }
-
-    
-
-
-
-
-
 
     protected function prepare_terms( string $field, array $terms, string $taxonomy ): array {
         if ( 'id' !== $field ) {
@@ -299,14 +183,6 @@ final class Post_Term_Adapter extends Terms_Command {
         }
         return $ids;
     }
-
-    
-
-
-
-
-
-
 
     protected function set_object_terms( $object_id, $terms, string $taxonomy, bool $append ): array {
         if ( function_exists( 'sanitize_key' ) && \sanitize_key( $taxonomy ) !== $taxonomy ) {
@@ -325,20 +201,10 @@ final class Post_Term_Adapter extends Terms_Command {
             )
         );
         if ( ! $result['ok'] ) {
-            
-            
             $this->ctx->out->error( (string) $result['error'] );
         }
         return isset( $result['payload']['term_taxonomy_ids'] ) ? (array) $result['payload']['term_taxonomy_ids'] : array();
     }
-
-    
-
-
-
-
-
-
 
     private function all_ids( array $terms ): bool {
         $by_ids = true;
@@ -354,43 +220,17 @@ final class Post_Term_Adapter extends Terms_Command {
         return $by_ids;
     }
 
-    
-
-
-
-
-
-
     protected function remove_object_terms( $object_id, array $terms, string $taxonomy ): bool {
         throw new \LogicException( 'post term remove is an own handler (Post_Term_Handler).' );
     }
-
-    
-
-
-
-
 
     protected function delete_object_term_relationships( $object_id, string $taxonomy ): void {
         throw new \LogicException( 'post term remove is an own handler (Post_Term_Handler).' );
     }
 
-    
-    
-    
-
-    
     private function subcommand(): string {
         return isset( $this->inv->leaf['name'] ) ? (string) $this->inv->leaf['name'] : '';
     }
-
-    
-
-
-
-
-
-
 
     private static function sort_by_name( array $terms ): array {
         $keyed = array();

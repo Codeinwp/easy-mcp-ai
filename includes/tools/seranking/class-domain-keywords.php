@@ -78,8 +78,6 @@ class Domain_Keywords extends Base_Tool {
 				$query['page'] = (int) $arguments['page'];
 			}
 			if ( isset( $arguments['with_subdomains'] ) ) {
-				
-				
 				$query['with_subdomains'] = rest_sanitize_boolean( $arguments['with_subdomains'] ) ? 1 : 0;
 			}
 

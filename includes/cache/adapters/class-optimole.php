@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,43 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Optimole extends Cache_Adapter {
 
     const SETTINGS_CLASS = 'Optml_Settings';
 
-    
     const SETTINGS_METHODS = array( 'clear_cache', 'use_cdn' );
 
-    
     const SUPPRESS_FILTER = 'optml_dont_trigger_settings_updated';
 
-    
     const SUPPRESS_SINCE = '3.10.0';
 
     public function id(): string {
@@ -125,12 +91,6 @@ final class Optimole extends Cache_Adapter {
         return $result;
     }
 
-    
-
-
-
-
-
     private function settings(): ?object {
         $calls = $this->calls();
         if ( ! $calls->class_exists( self::SETTINGS_CLASS ) ) {
@@ -144,13 +104,6 @@ final class Optimole extends Cache_Adapter {
         }
         return $settings;
     }
-
-    
-
-
-
-
-
 
     private static function to_boolean( $value ): bool {
         if ( in_array( $value, array( 'yes', 'enabled', 'true', '1' ), true ) ) {

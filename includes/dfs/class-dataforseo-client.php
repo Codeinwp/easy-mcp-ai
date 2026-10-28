@@ -5,44 +5,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
 class DataforSEO_Client {
-
-	
 
 	const OPTION_LOGIN        = 'easy_mcp_ai_dfs_login';
 	const OPTION_API_PASSWORD = 'easy_mcp_ai_dfs_api_password';
 
-	
-
-	
-
-
-
-
-
 	const TRANSIENT_BALANCE_PREFIX = 'easy_mcp_ai_dfs_balance_';
-
-	
-
-
-
-
 
 	public static function balance_transient_key( string $login ): string {
 		return self::TRANSIENT_BALANCE_PREFIX . md5( $login );
 	}
 
-	
-
 	const BASE_URL = 'https://api.dataforseo.com';
-
-	
 
 	const STATUS_OK                  = 20000;
 	const STATUS_AUTH_FAILED         = 40100;
@@ -57,18 +31,9 @@ class DataforSEO_Client {
 	const STATUS_INVALID_FIELD       = 40501;
 	const STATUS_INTERNAL_ERROR      = 50000;
 
-	
-
 	const CIPHER_VERSION    = "v2\x00";
 	const CIPHER_PREFIX_LEN = 3;
 	const HKDF_INFO         = 'easy_mcp_ai_dfs_v2';
-
-	
-
-
-
-
-
 
 	private static function derive_key(): string {
 		if ( ! defined( 'SECURE_AUTH_KEY' ) || ! defined( 'SECURE_AUTH_SALT' ) ) {
@@ -85,12 +50,6 @@ class DataforSEO_Client {
 		return hash_hkdf( 'sha256', $material, 32, self::HKDF_INFO );
 	}
 
-	
-
-
-
-
-
 	public static function encrypt( string $plaintext ): string {
 		$key = self::derive_key();
 		$iv  = random_bytes( 12 );
@@ -98,12 +57,6 @@ class DataforSEO_Client {
 		$ct  = openssl_encrypt( $plaintext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, '', 16 );
 		return base64_encode( self::CIPHER_VERSION . $iv . $tag . $ct ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- AES-256-GCM ciphertext encoding for safe storage in wp_options.
 	}
-
-	
-
-
-
-
 
 	public static function decrypt( string $encrypted ) {
 		$raw = base64_decode( $encrypted, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes AES-256-GCM ciphertext stored in wp_options.
@@ -125,14 +78,7 @@ class DataforSEO_Client {
 		return openssl_decrypt( $ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag );
 	}
 
-	
-
-
-
-
-
 	public static function get_credentials(): array {
-		
 		if ( \Easy_MCP_AI\Provider_Credentials::is_deployed( 'dfs' ) ) {
 			return array(
 				'login'        => \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_LOGIN ),
@@ -168,15 +114,6 @@ class DataforSEO_Client {
 		);
 	}
 
-	
-
-
-
-
-
-
-
-
 	public static function auth_header( ?array $creds = null ): string {
 		if ( null === $creds ) {
 			$creds = self::get_credentials();
@@ -185,20 +122,7 @@ class DataforSEO_Client {
 		return 'Basic ' . base64_encode( $credentials ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- HTTP Basic Auth encoding (RFC 7617).
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
-
 	public function request( string $method, string $url, ?array $body = null, bool $admin_context = false ): array {
-		
 		$scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
 		$host   = \wp_parse_url( $url, PHP_URL_HOST );
 
@@ -208,13 +132,6 @@ class DataforSEO_Client {
 			);
 		}
 
-		
-		
-		
-		
-		
-
-		
 		$creds = self::get_credentials();
 
 		$args = array(
@@ -223,8 +140,6 @@ class DataforSEO_Client {
 				'Authorization' => self::auth_header( $creds ),
 			),
 			'timeout'             => 30,
-			
-			
 			'limit_response_size' => 33554432,
 		);
 
@@ -244,34 +159,12 @@ class DataforSEO_Client {
 		$code = (int) \wp_remote_retrieve_response_code( $response );
 		$raw  = \wp_remote_retrieve_body( $response );
 
-		
 		if ( ( 401 === $code || 403 === $code ) && $admin_context ) {
 			throw new \RuntimeException(
 				'DataforSEO authentication failed for the configured credentials. Verify the API password (different from account password) at app.dataforseo.com/api-access.'
 			);
 		}
 
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 		if ( $code < 200 || $code >= 300 ) {
 			$excerpt = \mb_substr( $raw, 0, 200 );
 			throw new \RuntimeException(
@@ -279,7 +172,6 @@ class DataforSEO_Client {
 			);
 		}
 
-		
 		$decoded = json_decode( $raw, true );
 		if ( ! is_array( $decoded ) ) {
 			throw new \RuntimeException(
@@ -290,21 +182,7 @@ class DataforSEO_Client {
 		return $this->parse_envelope( $decoded );
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
-
 	public function post( string $url, array $body, bool $admin_context = false ): array {
-		
-		
 		$is_list = ( count( $body ) === 0 ) || ( array_keys( $body ) === range( 0, count( $body ) - 1 ) );
 
 		if ( ! $is_list ) {
@@ -314,24 +192,9 @@ class DataforSEO_Client {
 		return $this->request( 'POST', $url, $body, $admin_context );
 	}
 
-	
-
-
-
-
-
-
-
 	public function get( string $url, bool $admin_context = false ): array {
 		return $this->request( 'GET', $url, null, $admin_context );
 	}
-
-	
-
-
-
-
-
 
 	public static function map_status_code( int $code, string $message ): string {
 		switch ( $code ) {
@@ -380,24 +243,10 @@ class DataforSEO_Client {
 		}
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
-
-
 	public function parse_envelope( array $response ): array {
 		$outer_code    = (int) ( $response['status_code'] ?? 0 );
 		$outer_message = (string) ( $response['status_message'] ?? '' );
 
-		
 		if ( 20000 !== $outer_code ) {
 			throw new \RuntimeException(
 				self::map_status_code( $outer_code, $outer_message ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -430,7 +279,6 @@ class DataforSEO_Client {
 			}
 		}
 
-		
 		if ( empty( $successes ) && ! empty( $errors ) ) {
 			$first_error = $errors[0];
 			throw new \RuntimeException(
@@ -449,19 +297,6 @@ class DataforSEO_Client {
 
 		return $result;
 	}
-
-	
-
-
-
-
-
-
-
-
-
-
-
 
 	public function get_balance( bool $admin_context = false ): array {
 		$envelope = $this->get( self::BASE_URL . '/v3/appendix/user_data', $admin_context );

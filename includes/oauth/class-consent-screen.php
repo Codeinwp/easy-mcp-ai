@@ -5,53 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 class Consent_Screen {
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function render( $client, $user, $scope, array $request_params, $script_nonce = '', array $options = array() ) {
 
@@ -79,23 +33,17 @@ class Consent_Screen {
         $notice        = isset( $options['notice'] ) ? (string) $options['notice'] : '';
         $client_label  = isset( $options['client_label'] ) ? (string) $options['client_label'] : '';
 
-        
-        
-        
-        $ceiling      = ! empty( $scope_list ) ? $scope_list : array_values( array_filter( explode( ' ', $default_scope ) ) );
+        $open_request = array() === $scope_list;
+        $ceiling      = $open_request ? array( 'mcp' ) : $scope_list;
         $ceiling_all  = in_array( 'mcp', $ceiling, true );
         $level_scopes = array(
             'read' => $ceiling_all ? Scope_Map::get_read_scopes() : array_values( array_intersect( Scope_Map::get_read_scopes(), $ceiling ) ),
             'full' => $ceiling_all ? array( 'mcp' ) : array(),
         );
-        $default_level  = $ceiling_all ? 'full' : 'custom';
-        $checked_scopes = $ceiling;
-        $tick_all       = $ceiling_all;
+        $default_level  = $ceiling_all && ! $open_request ? 'full' : 'custom';
+        $checked_scopes = $open_request ? array_values( array_filter( explode( ' ', $default_scope ) ) ) : $ceiling;
+        $tick_all       = $ceiling_all && ! $open_request;
 
-        
-        
-        
-        
         $privileged_rows = array();
         foreach ( \Easy_MCP_AI\Privileged\Privileged_Groups::enabled_groups() as $group ) {
             $privileged_rows[] = array(
@@ -104,32 +52,24 @@ class Consent_Screen {
             );
         }
 
-        
-        
         $new_scopes = array();
         if ( isset( $options['step_up']['new'] ) && is_array( $options['step_up']['new'] ) ) {
             $new_scopes = array_values( array_intersect( array_map( 'strval', $options['step_up']['new'] ), $ceiling_all ? Scope_Map::get_all_scopes() : $ceiling ) );
         }
-        
-        
-        
         $carried_scopes = array();
         if ( array() !== $new_scopes ) {
             $held           = isset( $options['step_up']['held'] ) && is_array( $options['step_up']['held'] ) ? array_map( 'strval', $options['step_up']['held'] ) : array();
             $default_level  = 'custom';
             $tick_all       = false;
             $checked_scopes = array_values( array_unique( array_merge( $held, $new_scopes ) ) );
-            $carried_scopes = array_values(
-                array_diff(
-                    array_intersect( $held, array_diff( Scope_Map::get_all_scopes(), array( 'mcp' ) ) ),
-                    self::box_scopes( $categories, $privileged_rows, $ceiling, $ceiling_all )
-                )
-            );
+            $carried_scopes = self::carried_scopes( $held, $categories, $privileged_rows, $ceiling, $ceiling_all );
+        } elseif ( isset( $options['held'] ) && is_array( $options['held'] ) ) {
+            $carried_scopes = self::carried_scopes( array_map( 'strval', $options['held'] ), $categories, $privileged_rows, $ceiling, $ceiling_all );
         }
+        $carried_rows = self::carried_rows( $carried_scopes, $categories );
 
         $step_up_notice = array() === $new_scopes ? '' : self::step_up_notice( $client_name, $new_scopes, $categories, $privileged_rows );
 
-        
         $template_vars = array(
             'client_name'       => $client_name,
             'client_id'         => $client_id,
@@ -159,10 +99,9 @@ class Consent_Screen {
             'tick_all'          => $tick_all,
             'new_scopes'        => $new_scopes,
             'step_up_notice'    => $step_up_notice,
-            'carried_scopes'    => $carried_scopes,
+            'carried_rows'      => $carried_rows,
         );
 
-        
         // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
         extract( $template_vars );
 
@@ -171,16 +110,45 @@ class Consent_Screen {
         return ob_get_clean();
     }
 
-    
+    private static function carried_scopes( array $held, array $categories, array $privileged_rows, array $ceiling, $ceiling_all ) {
+        return array_values(
+            array_diff(
+                array_intersect( $held, array_diff( Scope_Map::get_all_scopes(), array( 'mcp' ) ) ),
+                self::box_scopes( $categories, $privileged_rows, $ceiling, $ceiling_all )
+            )
+        );
+    }
 
-
-
-
-
-
-
-
-
+    private static function carried_rows( array $carried, array $categories ) {
+        $rows = array();
+        foreach ( $categories as $category ) {
+            $row = array(
+                'label' => isset( $category['label'] ) ? (string) $category['label'] : '',
+                'flag'  => __( 'Not active now', 'easy-mcp-ai' ),
+                'read'  => '',
+                'write' => '',
+            );
+            foreach ( array( 'read', 'write' ) as $kind ) {
+                $scope = isset( $category[ $kind . '_scope' ] ) ? (string) $category[ $kind . '_scope' ] : '';
+                if ( '' !== $scope && in_array( $scope, $carried, true ) ) {
+                    $row[ $kind ] = $scope;
+                    $carried      = array_values( array_diff( $carried, array( $scope ) ) );
+                }
+            }
+            if ( '' !== $row['read'] || '' !== $row['write'] ) {
+                $rows[] = $row;
+            }
+        }
+        foreach ( $carried as $scope ) {
+            $rows[] = array(
+                'label' => 'mcp:abilities' === $scope ? __( 'All abilities', 'easy-mcp-ai' ) : $scope,
+                'flag'  => '',
+                'read'  => $scope,
+                'write' => '',
+            );
+        }
+        return $rows;
+    }
 
     private static function box_scopes( array $categories, array $privileged_rows, array $ceiling, $ceiling_all ) {
         $boxes = array();
@@ -201,16 +169,6 @@ class Consent_Screen {
         }
         return $boxes;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function step_up_notice( $client_name, array $new_scopes, array $categories, array $privileged_rows ) {
         $labels = array();

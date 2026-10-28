@@ -1,15 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Meta\Providers;
 
 use Easy_MCP_AI\Meta\Meta_Field_Provider;

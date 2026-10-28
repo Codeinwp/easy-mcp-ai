@@ -9,16 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 class Install_Theme extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -53,7 +43,6 @@ class Install_Theme extends Base_Tool {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -102,7 +91,6 @@ class Install_Theme extends Base_Tool {
         $force   = $this->parse_force( $arguments );
 
         $this->refuse_when_file_mods_are_off( 'themes cannot be installed' );
-        
         if ( ! current_user_can( 'install_themes' ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to install themes on this site.' );
         }
@@ -116,9 +104,6 @@ class Install_Theme extends Base_Tool {
 
         $offer = $this->wporg_package( 'theme', $slug, $version );
 
-        
-        
-        
         $skin     = $this->new_upgrader_skin();
         $upgrader = $this->new_theme_upgrader( $skin );
         $package  = $offer['package'];
@@ -133,16 +118,6 @@ class Install_Theme extends Base_Tool {
         return $this->result( $slug, $offer, $upgrader, $skin, $replacing, '' !== $printed );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_existing_theme( string $slug, bool $force ): bool {
         $existing  = wp_get_theme( $slug );
         $replacing = $existing->exists();
@@ -151,17 +126,6 @@ class Install_Theme extends Base_Tool {
         }
         return $replacing;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function result( string $slug, array $offer, object $upgrader, \WP_Ajax_Upgrader_Skin $skin, bool $replacing, bool $printed ): array {
         $theme      = self::installed_theme( $upgrader );
@@ -186,43 +150,18 @@ class Install_Theme extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
     private static function installed_theme( object $upgrader ): ?object {
         $theme = method_exists( $upgrader, 'theme_info' ) ? $upgrader->theme_info() : false;
         return is_object( $theme ) && method_exists( $theme, 'exists' ) && $theme->exists() ? $theme : null;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function theme_header( ?object $theme, string $header, string $fallback ): string {
         return null !== $theme && '' !== (string) $theme->get( $header ) ? (string) $theme->get( $header ) : $fallback;
     }
 
-    
-
-
-
     private function parse_force( array $arguments ): bool {
         return isset( $arguments['force'] ) && rest_sanitize_boolean( $arguments['force'] );
     }
-
-    
-
-
-
-
 
     protected function new_theme_upgrader( \WP_Ajax_Upgrader_Skin $skin ): object {
         return new \Theme_Upgrader( $skin );

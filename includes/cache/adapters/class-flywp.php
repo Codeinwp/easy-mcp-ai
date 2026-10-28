@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,23 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Flywp extends Cache_Adapter {
 
@@ -82,12 +60,6 @@ final class Flywp extends Cache_Adapter {
         }
         return $this->sent( sprintf( 'FlyWP page cache cleared %d page(s).', count( $request->urls ) ) );
     }
-
-    
-
-
-
-
 
     private function cache(): ?object {
         $plugin = $this->calls()->call( 'flywp' );

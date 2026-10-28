@@ -18,89 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Plugin_Adapter extends Command_Handler {
 
     const LIST_TOOL  = 'wp_list_plugins';
@@ -111,18 +28,14 @@ final class Plugin_Adapter extends Command_Handler {
     const DELETE     = 'wp_delete_plugin';
     const UNINSTALL  = 'wp_uninstall_plugin';
 
-    
     const INSTALL_CAP = 5;
 
-    
     const UNINSTALL_CAP = 5;
 
-    
     const INSTALL_PLACEHOLDER = '%s/<main plugin file, known once installed>';
 
     const NOT_CAPTURED_FILES = 'Plugin files are outside change history: a plugin installed, updated, deleted or uninstalled here cannot be restored from it.';
 
-    
     const UPDATE_CAP = 5;
 
     const MSG_NOT_PLANNED  = "%s: its update appeared when wp_list_plugins refreshed the update data, after this command's plan (the approval preview) was built from the stored data, so it was not updated. Run the command again to update it.";
@@ -136,7 +49,6 @@ final class Plugin_Adapter extends Command_Handler {
     const MSG_LIST_FIELD     = "wp_cli_run cannot print the '%s' field of `plugin list`: %s.";
     const MSG_LIST_FILTER    = '--%s is not a field `plugin list` can filter on through wp_cli_run: %s.';
 
-    
     const LIST_REFUSED_FIELDS = array(
         'update_package'     => 'a package URL can carry a licence key, so the plugin never returns it',
         'tested_up_to'       => 'wp_list_plugins does not read readme files yet',
@@ -144,36 +56,22 @@ final class Plugin_Adapter extends Command_Handler {
         'wporg_last_updated' => 'wp_list_plugins does not query wordpress.org for each plugin yet',
     );
 
-    
     const LIST_FILTERS = array( 'name', 'status', 'update', 'version', 'update_version', 'auto_update' );
 
-    
     private $planning = false;
 
-    
-    
-    
-
-    
     public function preflight_activate( Invocation $inv, Context $ctx ): void {
         self::refuse_network_on_single( $inv, $ctx, 'network' );
     }
 
-    
     public function preflight_switch( Invocation $inv, Context $ctx ): void {
         self::refuse_own_names( $inv, $ctx );
         self::refuse_network_on_single( $inv, $ctx, 'network' );
     }
 
-    
     public function preflight_named( Invocation $inv, Context $ctx ): void {
         self::refuse_own_names( $inv, $ctx );
     }
-
-    
-
-
-
 
     public function preflight_update( Invocation $inv, Context $ctx ): void {
         self::refuse_own_names( $inv, $ctx );
@@ -182,12 +80,6 @@ final class Plugin_Adapter extends Command_Handler {
             $ctx->out->error( sprintf( self::MSG_OVER_CAP, self::UPDATE_CAP, $inv->command, $count ) );
         }
     }
-
-    
-
-
-
-
 
     public function preflight_install( Invocation $inv, Context $ctx ): void {
         $slugs = self::positional( $inv );
@@ -211,59 +103,34 @@ final class Plugin_Adapter extends Command_Handler {
         self::refuse_network_on_single( $inv, $ctx, 'activate-network' );
     }
 
-    
-    
-    
-
-    
     public function plan_activate( Invocation $inv ): array {
         return $this->plan( $inv, 'activate' );
     }
 
-    
     public function plan_deactivate( Invocation $inv ): array {
         return $this->plan( $inv, 'deactivate' );
     }
 
-    
     public function plan_toggle( Invocation $inv ): array {
         return $this->plan( $inv, 'toggle' );
     }
 
-    
     public function plan_install( Invocation $inv ): array {
         return $this->plan( $inv, 'install' );
     }
-
-    
-
-
-
-
-
-
 
     public function plan_update( Invocation $inv ): array {
         $calls = $this->plan( $inv, 'update' );
         return count( self::update_targets( $calls ) ) > self::UPDATE_CAP ? array() : $calls;
     }
 
-    
     public function plan_delete( Invocation $inv ): array {
         return $this->plan( $inv, 'delete' );
     }
 
-    
     public function plan_uninstall( Invocation $inv ): array {
         return $this->plan( $inv, 'uninstall' );
     }
-
-    
-
-
-
-
-
 
     private function plan( Invocation $inv, string $method ): array {
         $calls      = array();
@@ -286,19 +153,12 @@ final class Plugin_Adapter extends Command_Handler {
         try {
             $this->$method( $inv, $ctx );
         } catch ( Cli_Exit $e ) {
-            unset( $e ); 
+            unset( $e );
         } finally {
             $this->planning = false;
         }
         return $calls;
     }
-
-    
-
-
-
-
-
 
     private static function planned_response( string $tool, array $arguments ): array {
         $plugin = isset( $arguments['plugin'] ) ? (string) $arguments['plugin'] : '';
@@ -336,11 +196,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     public static function caller_may_use( string $tool ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' ) ) {
             return true;
@@ -348,11 +203,6 @@ final class Plugin_Adapter extends Command_Handler {
         return false !== \Easy_MCP_AI\MCP\Server::current_call_may_use( $tool );
     }
 
-    
-    
-    
-
-    
     public function activate( Invocation $inv, Context $ctx ): void {
         $assoc   = $inv->assoc;
         $network = (bool) Read_Value::flag( $assoc, 'network', false );
@@ -365,7 +215,6 @@ final class Plugin_Adapter extends Command_Handler {
         $this->run_activate( $inv, $ctx, $names, $network, $all, false, null );
     }
 
-    
     public function deactivate( Invocation $inv, Context $ctx ): void {
         $assoc     = $inv->assoc;
         $network   = (bool) Read_Value::flag( $assoc, 'network', false );
@@ -383,7 +232,6 @@ final class Plugin_Adapter extends Command_Handler {
         $this->run_deactivate( $inv, $ctx, $names, $network, $all, $uninstall, false, null );
     }
 
-    
     public function toggle( Invocation $inv, Context $ctx ): void {
         $network = (bool) Read_Value::flag( $inv->assoc, 'network', false );
         $args    = self::positional( $inv );
@@ -420,28 +268,14 @@ final class Plugin_Adapter extends Command_Handler {
         Values::report_batch( $ctx->out, 'plugin', 'toggle', count( $args ), $successes, $errors );
     }
 
-    
-
-
-
-
-
-
-
     private function run_activate( Invocation $inv, Context $ctx, array $names, bool $network, bool $all, bool $chained, ?Batch $outer ): array {
         $plugins   = Fetchers::of( 'plugin' )->get_many( array_values( $names ), $ctx->out );
         $errors    = count( $names ) - count( $plugins );
         $successes = 0;
         if ( $all ) {
-            
-            
             $plugins = self::by_activity( $plugins, false );
         }
 
-        
-        
-        
-        
         $handled = array();
 
         $each = function ( object $plugin, ?Batch $batch ) use ( $ctx, $network, $all, &$successes, &$errors, &$handled ): string {
@@ -461,14 +295,6 @@ final class Plugin_Adapter extends Command_Handler {
         return array( $successes, $errors );
     }
 
-    
-
-
-
-
-
-
-
     private function activate_one( Context $ctx, object $plugin, ?Batch $batch, bool $network, array &$handled ): string {
         $file   = (string) $plugin->file;
         $name   = (string) $plugin->name;
@@ -483,7 +309,6 @@ final class Plugin_Adapter extends Command_Handler {
         $result = $this->call( $ctx, $batch, self::ACTIVATE, $arguments );
         if ( ! $result['ok'] ) {
             if ( 'active-network' === $status ) {
-                
                 $ctx->out->warning( "Plugin '{$name}' is already network active." );
                 return Batch::SKIP;
             }
@@ -493,12 +318,6 @@ final class Plugin_Adapter extends Command_Handler {
         $handled[ $file ] = true;
         return self::report_activation( $ctx, $result['payload'], $name, $file, $status, $network );
     }
-
-    
-
-
-
-
 
     private function deactivate_for_network( Context $ctx, ?Batch $batch, string $file ): bool {
         $off = $this->call( $ctx, $batch, self::DEACTIVATE, array( 'plugin' => $file ) );
@@ -512,13 +331,6 @@ final class Plugin_Adapter extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
-
     private static function report_activation( Context $ctx, array $payload, string $name, string $file, string $status, bool $network ): string {
         if ( empty( $payload['changed'] ) ) {
             $ctx->out->warning( 'active-network' === $status ? "Plugin '{$name}' is already network active." : "Plugin '{$name}' is already active." );
@@ -526,7 +338,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         $ctx->mark_changed();
         if ( isset( $payload['warning'] ) && '' !== (string) $payload['warning'] ) {
-            
             $ctx->out->warning( 'Failed to activate plugin. ' . self::clean_error( (string) $payload['warning'] ) );
             return Batch::FAILURE;
         }
@@ -535,13 +346,6 @@ final class Plugin_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    
-
-
-
-
-
-
     private function run_deactivate( Invocation $inv, Context $ctx, array $names, bool $network, bool $all, bool $uninstall, bool $chained, ?Batch $outer ): array {
         $plugins   = Fetchers::of( 'plugin' )->get_many( array_values( $names ), $ctx->out );
         $errors    = count( $names ) - count( $plugins );
@@ -549,7 +353,6 @@ final class Plugin_Adapter extends Command_Handler {
         $skips     = 0;
         $plugins   = self::deactivation_targets( $inv, $ctx, $plugins, $all, $uninstall );
 
-        
         $handled = array();
 
         $each = function ( object $plugin, ?Batch $batch ) use ( $ctx, $network, $all, $uninstall, &$successes, &$errors, &$skips, &$handled ): string {
@@ -580,16 +383,6 @@ final class Plugin_Adapter extends Command_Handler {
         return array( $successes, $errors );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function deactivation_targets( Invocation $inv, Context $ctx, array $plugins, bool $all, bool $uninstall ): array {
         if ( $all ) {
             $plugins = self::by_activity( $plugins, true );
@@ -602,14 +395,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return $plugins;
     }
-
-    
-
-
-
-
-
-
 
     private function deactivate_one( Context $ctx, object $plugin, string $status, ?Batch $batch, bool $network, array &$handled ): string {
         $file = (string) $plugin->file;
@@ -638,26 +423,12 @@ final class Plugin_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    
-
-
-
-
-
     private function uninstall_after_deactivation( Context $ctx, ?Batch $batch, object $plugin ): bool {
         $name = (string) $plugin->name;
         $ctx->out->log( "Uninstalling '{$name}'..." );
         $removed = $this->call( $ctx, $batch, self::UNINSTALL, array( 'plugin' => (string) $plugin->file ) );
         return $this->report_uninstall( $ctx, $name, $removed, false );
     }
-
-    
-
-
-
-
-
-
 
     private function run_each_plugin( Invocation $inv, Context $ctx, array $plugins, callable $each, bool $chained, ?Batch $outer, string $verb ): void {
         if ( ! $chained ) {
@@ -668,13 +439,6 @@ final class Plugin_Adapter extends Command_Handler {
             $each( $plugin, $outer );
         }
     }
-
-    
-
-
-
-
-
 
     private static function by_activity( array $plugins, bool $active ): array {
         return array_values(
@@ -687,10 +451,6 @@ final class Plugin_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
     private static function tally( string $outcome, int &$successes, int &$errors ): void {
         if ( Batch::SUCCESS === $outcome ) {
             ++$successes;
@@ -698,22 +458,6 @@ final class Plugin_Adapter extends Command_Handler {
             ++$errors;
         }
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public function install( Invocation $inv, Context $ctx ): void {
         $assoc   = $inv->assoc;
@@ -732,7 +476,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         $ctx->not_captured( self::NOT_CAPTURED_FILES );
         if ( null === $options['version'] ) {
-            
             $ctx->note( self::NOTE_REQUIREMENTS );
         }
 
@@ -755,14 +498,6 @@ final class Plugin_Adapter extends Command_Handler {
         Values::report_batch( $ctx->out, 'plugin', 'install', count( $slugs ), $successes, $errors );
     }
 
-    
-
-
-
-
-
-
-
     private function install_one( Invocation $inv, Context $ctx, string $slug, ?Batch $batch, array $options ): string {
         if ( '' === $slug ) {
             $ctx->out->warning( 'Ignoring ambiguous empty slug value.' );
@@ -778,19 +513,12 @@ final class Plugin_Adapter extends Command_Handler {
         $result  = $this->call( $ctx, $batch, self::INSTALL, $arguments );
         $outcome = $result['ok'] ? self::report_installed( $ctx, $slug, $options['version'], $result['payload'] ) : self::report_install_error( $ctx, $slug, (string) $result['error'] );
 
-        
         $extension = Fetchers::of( 'plugin' )->get_many( array( $slug ), $ctx->out );
         if ( Batch::FAILURE !== $outcome && ( $options['activate'] || $options['activate_network'] ) ) {
             $this->activate_installed( $inv, $ctx, $slug, $batch, $options, (bool) $extension );
         }
         return $outcome;
     }
-
-    
-
-
-
-
 
     private static function report_installed( Context $ctx, string $slug, ?string $version, array $payload ): string {
         $shown = 'dev' === $version ? 'Development Version' : ( isset( $payload['version'] ) ? (string) $payload['version'] : '' );
@@ -801,12 +529,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return Batch::SUCCESS;
     }
-
-    
-
-
-
-
 
     private static function report_install_error( Context $ctx, string $slug, string $error ): string {
         if ( 0 === strpos( $error, 'The plugin "' . $slug . '" is already installed as ' ) ) {
@@ -820,13 +542,6 @@ final class Plugin_Adapter extends Command_Handler {
         $ctx->out->warning( "{$slug}: {$error}" );
         return Batch::FAILURE;
     }
-
-    
-
-
-
-
-
 
     private function activate_installed( Invocation $inv, Context $ctx, string $slug, ?Batch $batch, array $options, bool $installed ): void {
         if ( ! $installed ) {
@@ -845,12 +560,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private function plan_install_activation( Context $ctx, string $slug, ?Batch $batch, array $options ): void {
         $placeholder = sprintf( self::INSTALL_PLACEHOLDER, $slug );
         if ( $options['activate_network'] ) {
@@ -868,20 +577,6 @@ final class Plugin_Adapter extends Command_Handler {
             $this->call( $ctx, $batch, self::ACTIVATE, array( 'plugin' => $placeholder ) );
         }
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
 
     public function update( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
@@ -908,17 +603,9 @@ final class Plugin_Adapter extends Command_Handler {
         $this->update_many( $inv, $ctx, array_values( $args ), $all );
     }
 
-    
-
-
-
-
-
-
     private function update_to_version( Invocation $inv, Context $ctx, array $args, string $version ): void {
         $plugins = Fetchers::of( 'plugin' )->get_many( array_values( $args ), $ctx->out );
         if ( count( $plugins ) > self::UPDATE_CAP ) {
-            
             $ctx->out->error( sprintf( self::MSG_OVER_CAP, self::UPDATE_CAP, $inv->command, count( $plugins ) ) );
         }
         $this->each(
@@ -953,24 +640,11 @@ final class Plugin_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function update_many( Invocation $inv, Context $ctx, array $args, bool $all ): void {
         $dry_run = (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
         Fetchers::require_tool( $ctx, $inv, self::LIST_TOOL );
         $format = self::update_format( $ctx, $inv->assoc );
 
-        
         $planned = $this->planned_or_refuse( $inv, $ctx, $dry_run );
 
         $items   = $this->update_items( $ctx );
@@ -990,8 +664,6 @@ final class Plugin_Adapter extends Command_Handler {
             return;
         }
 
-        
-        
         if ( ! $this->planning ) {
             $items_to_update = self::only_planned( $ctx, $items_to_update, $planned, $skipped );
         }
@@ -1010,14 +682,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function update_format( Context $ctx, array $assoc_args ): ?string {
         $format = isset( $assoc_args['format'] ) && is_string( $assoc_args['format'] ) ? $assoc_args['format'] : null;
         if ( in_array( $format, array( 'json', 'csv' ), true ) ) {
@@ -1025,15 +689,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return $format;
     }
-
-    
-
-
-
-
-
-
-
 
     private function planned_or_refuse( Invocation $inv, Context $ctx, bool $dry_run ): array {
         $planned = ( $this->planning || $dry_run ) ? array() : $this->planned_updates( $inv );
@@ -1043,14 +698,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $planned;
     }
 
-    
-
-
-
-
-
-
-
     private function update_items( Context $ctx ): array {
         $listed = $this->call( $ctx, null, self::LIST_TOOL, array( 'skip_update_check' => false ) );
         if ( $this->planning ) {
@@ -1058,14 +705,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return self::listed_items( $ctx, $listed );
     }
-
-    
-
-
-
-
-
-
 
     private static function picked_items( Context $ctx, array $args, array $items ): array {
         $picked = array();
@@ -1075,12 +714,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $picked;
     }
 
-    
-
-
-
-
-
     private static function with_update( array $items ): array {
         return array_filter(
             $items,
@@ -1089,13 +722,6 @@ final class Plugin_Adapter extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
-
 
     private static function without_excluded( array $items_to_update, ?string $exclude ): array {
         if ( null === $exclude ) {
@@ -1109,14 +735,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return $items_to_update;
     }
-
-    
-
-
-
-
-
-
 
     private static function without_unavailable( Context $ctx, array $items_to_update, int &$skipped ): array {
         foreach ( $items_to_update as $item_key => $item_info ) {
@@ -1142,14 +760,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $items_to_update;
     }
 
-    
-
-
-
-
-
-
-
     private static function only_planned( Context $ctx, array $items_to_update, array $planned, int &$skipped ): array {
         foreach ( $items_to_update as $item_key => $item_info ) {
             if ( ! in_array( (string) $item_key, $planned, true ) ) {
@@ -1160,12 +770,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return $items_to_update;
     }
-
-    
-
-
-
-
 
     private function run_updates( Invocation $inv, Context $ctx, array $items_to_update ): array {
         $result = array();
@@ -1193,14 +797,6 @@ final class Plugin_Adapter extends Command_Handler {
         );
         return $result;
     }
-
-    
-
-
-
-
-
-
 
     private static function report_updates( Context $ctx, array $items_to_update, array $result, ?string $format ): int {
         if ( ! $items_to_update ) {
@@ -1230,20 +826,9 @@ final class Plugin_Adapter extends Command_Handler {
         return $errors;
     }
 
-    
-
-
-
-
     private function planned_updates( Invocation $inv ): array {
         return self::update_targets( $this->plan( $inv, 'update' ) );
     }
-
-    
-
-
-
-
 
     private static function update_targets( array $calls ): array {
         $targets = array();
@@ -1254,11 +839,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return $targets;
     }
-
-    
-
-
-
 
     private function dry_run( Context $ctx, array $items_to_update, ?string $format, ?string $exclude ): void {
         if ( empty( $items_to_update ) ) {
@@ -1286,11 +866,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         $all   = (bool) Read_Value::flag( $assoc, 'all', false );
@@ -1304,8 +879,6 @@ final class Plugin_Adapter extends Command_Handler {
         $errors    = 0;
         $skips     = 0;
         $plugins   = Fetchers::of( 'plugin' )->get_many( array_values( $names ), $ctx->out );
-        
-        
         $handled = array();
 
         $this->each(
@@ -1345,23 +918,12 @@ final class Plugin_Adapter extends Command_Handler {
             'delete'
         );
 
-        
         $missing = self::missing_names( array_values( $names ), $plugins );
         if ( $missing ) {
             $ctx->fail_missing_target( sprintf( Fetchers::MESSAGES['plugin'], $missing[0] ) );
         }
         Values::report_batch( $ctx->out, 'plugin', 'delete', count( $names ), $successes, $errors, $skips > 0 ? $skips : null );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function uninstall( Invocation $inv, Context $ctx ): void {
         $assoc       = $inv->assoc;
@@ -1379,8 +941,6 @@ final class Plugin_Adapter extends Command_Handler {
         $skips     = 0;
         $plugins   = Fetchers::of( 'plugin' )->get_many( array_values( $names ), $ctx->out );
         $errors    = count( $names ) - count( $plugins );
-        
-        
         $handled = array();
 
         $this->each(
@@ -1410,16 +970,6 @@ final class Plugin_Adapter extends Command_Handler {
         Values::report_batch( $ctx->out, 'plugin', 'uninstall', count( $names ), $successes, $errors, $skips > 0 ? $skips : null );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function uninstall_one( Context $ctx, object $plugin, string $status, ?Batch $batch, bool $deactivate, bool $skip_delete, array &$handled ): string {
         $file = (string) $plugin->file;
         $name = (string) $plugin->name;
@@ -1435,18 +985,11 @@ final class Plugin_Adapter extends Command_Handler {
         if ( $result['ok'] ) {
             $handled[ $file ] = true;
             if ( $deactivate ) {
-                
                 self::report_deactivated( $ctx, $name, $result['payload'] );
             }
         }
         return $this->report_uninstall( $ctx, $name, $result, $skip_delete ) ? Batch::SUCCESS : Batch::FAILURE;
     }
-
-    
-
-
-
-
 
     private static function uninstall_arguments( string $file, bool $deactivate, bool $skip_delete ): array {
         $arguments = array( 'plugin' => $file );
@@ -1459,12 +1002,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-
-
-
-
-
     private static function report_deactivated( Context $ctx, string $name, array $payload ): void {
         $ctx->out->log( "Deactivating '{$name}'..." );
         if ( ! empty( $payload['deactivated'] ) ) {
@@ -1473,12 +1010,6 @@ final class Plugin_Adapter extends Command_Handler {
             $ctx->out->warning( "Plugin '{$name}' isn't active." );
         }
     }
-
-    
-
-
-
-
 
     private function report_uninstall( Context $ctx, string $name, array $result, bool $skip_delete ): bool {
         if ( ! $result['ok'] ) {
@@ -1495,17 +1026,6 @@ final class Plugin_Adapter extends Command_Handler {
         $ctx->out->log( $skip_delete ? "Ran uninstall procedure for '{$name}' plugin without deleting." : "Uninstalled and deleted '{$name}' plugin." );
         return true;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
@@ -1543,14 +1063,6 @@ final class Plugin_Adapter extends Command_Handler {
         $formatter->display_items( $all_items );
     }
 
-    
-
-
-
-
-
-
-
     private static function listed_items( Context $ctx, array $listed ): array {
         if ( ! $listed['ok'] ) {
             $ctx->out->error( (string) $listed['error'] );
@@ -1560,16 +1072,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
         return self::list_items( isset( $listed['payload']['plugins'] ) ? (array) $listed['payload']['plugins'] : array() );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function shown_item( array $item, array &$obj_fields ): array {
         if ( empty( $item['version'] ) ) {
@@ -1591,14 +1093,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $item;
     }
 
-    
-
-
-
-
-
-
-
     private static function matches_filters( array $item, array $obj_fields, array $assoc_args ): bool {
         foreach ( $obj_fields as $field ) {
             if ( ! array_key_exists( $field, $assoc_args ) ) {
@@ -1616,13 +1110,6 @@ final class Plugin_Adapter extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
-
     private static function refuse_list_fields( Context $ctx, array $assoc_args ): void {
         $asked = array();
         if ( isset( $assoc_args['fields'] ) && is_string( $assoc_args['fields'] ) ) {
@@ -1638,13 +1125,6 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private static function refuse_list_filters( Context $ctx, array $assoc_args ): void {
         $synopsis = array( 'field', 'fields', 'format', 'status', 'skip-update-check', 'recently-active' );
         foreach ( array_keys( $assoc_args ) as $key ) {
@@ -1658,15 +1138,6 @@ final class Plugin_Adapter extends Command_Handler {
             $ctx->out->error( sprintf( self::MSG_LIST_FILTER, $key, 'WP-CLI filters only on name, status, update, version, update_version and auto_update, and silently ignores any other key' ) );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function list_items( array $rows ): array {
         $items      = array();
@@ -1690,12 +1161,6 @@ final class Plugin_Adapter extends Command_Handler {
         return self::rename_duplicates( $items, $duplicates );
     }
 
-    
-
-
-
-
-
     private static function must_use_item( string $file, array $row ): array {
         $title = isset( $row['name'] ) ? (string) $row['name'] : '';
         return array(
@@ -1717,12 +1182,6 @@ final class Plugin_Adapter extends Command_Handler {
             'wporg_last_updated' => '',
         );
     }
-
-    
-
-
-
-
 
     private static function dropin_item( string $file, array $row ): array {
         $title = isset( $row['name'] ) ? (string) $row['name'] : '';
@@ -1746,13 +1205,6 @@ final class Plugin_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     private static function plugin_item( string $name, string $file, string $status, array $row ): array {
         return array(
             'name'           => $name,
@@ -1765,13 +1217,6 @@ final class Plugin_Adapter extends Command_Handler {
             'title'          => isset( $row['name'] ) ? (string) $row['name'] : '',
         );
     }
-
-    
-
-
-
-
-
 
     private static function plugin_item_details( string $file, array $row ): array {
         return array(
@@ -1789,14 +1234,6 @@ final class Plugin_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function rename_duplicates( array $items, array $duplicates ): array {
         foreach ( $duplicates as $files ) {
             if ( count( $files ) <= 1 ) {
@@ -1809,17 +1246,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $items;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     private function names( Invocation $inv, Context $ctx, string $tool, bool $all, string $verb, ?string $exclude ): array {
         $args = self::positional( $inv );
         if ( $all || $args ) {
@@ -1828,24 +1254,10 @@ final class Plugin_Adapter extends Command_Handler {
         return Plugin_Handler::check_optional_args_and_all( $ctx->out, $args, $all, $verb, $exclude );
     }
 
-    
-
-
-
-
     private static function exclude_flag( Invocation $inv ): ?string {
         $exclude = Read_Value::flag( $inv->assoc, 'exclude' );
         return null === $exclude ? null : (string) $exclude;
     }
-
-    
-
-
-
-
-
-
-
 
     private function each( Invocation $inv, Context $ctx, array $items, callable $each, string $noun, string $verb, ?callable $label = null ): void {
         if ( $this->planning ) {
@@ -1866,34 +1278,18 @@ final class Plugin_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     private function call( Context $ctx, ?Batch $batch, string $tool, array $arguments ): array {
         return null !== $batch ? $batch->delegate( $tool, $arguments ) : $ctx->delegate( $tool, $arguments );
     }
 
-    
     private static function positional( Invocation $inv ): array {
         return array_values( array_map( 'strval', $inv->args ) );
     }
-
-    
-
 
     private static function own_plugin( string $name, string $file ): ?string {
         $refusal = Self_Protection::plugin( $name );
         return null !== $refusal ? $refusal : Self_Protection::plugin( $file );
     }
-
-    
-
-
-
 
     private static function refuse_own_names( Invocation $inv, Context $ctx ): void {
         foreach ( self::positional( $inv ) as $name ) {
@@ -1904,23 +1300,11 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     private static function refuse_network_on_single( Invocation $inv, Context $ctx, string $flag ): void {
         if ( Read_Value::flag( $inv->assoc, $flag ) && ! \is_multisite() ) {
             $ctx->out->error( sprintf( self::MSG_NETWORK_SINGLE, $flag, $flag ) );
         }
     }
-
-    
-
-
-
-
-
 
     private static function missing_names( array $names, array $found ): array {
         $remaining = array();
@@ -1939,13 +1323,6 @@ final class Plugin_Adapter extends Command_Handler {
         return $missing;
     }
 
-    
-
-
-
-
-
-
     private static function upgrader_lines( Context $ctx, array $payload ): void {
         foreach ( isset( $payload['messages'] ) ? (array) $payload['messages'] : array() as $message ) {
             $line = (string) $message;
@@ -1955,18 +1332,11 @@ final class Plugin_Adapter extends Command_Handler {
         }
     }
 
-    
     private static function clean_error( string $message ): string {
         $message = (string) preg_replace( '/<a\s[^>]+>.*<\/a>/im', '', $message );
         $message = function_exists( 'wp_strip_all_tags' ) ? \wp_strip_all_tags( $message ) : $message;
         return str_replace( 'Error: ', '', $message );
     }
-
-    
-
-
-
-
 
     private static function format_items( Context $ctx, string $format, iterable $items, array $fields ): void {
         $assoc_args = array(

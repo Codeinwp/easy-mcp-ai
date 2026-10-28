@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class Create_Redirect extends Base_Tool {
 
     use Redirection_Rest;
@@ -38,12 +35,6 @@ class Create_Redirect extends Base_Tool {
             'required'   => array( 'source' ),
         );
     }
-
-    
-
-
-
-
 
     public static function write_properties( bool $create ): array {
         $properties = array(
@@ -119,15 +110,12 @@ class Create_Redirect extends Base_Tool {
             'group_id'    => $this->resolve_group( $arguments['group_id'] ?? null ),
             'regex'       => $regex ? 1 : 0,
         );
-        
-        $body   = array_merge( $body, $this->optional_fields( $arguments, $target, $regex ) );
-        $stored = self::stored_source( $source, $regex );
-        $query  = isset( $body['match_data'] ) ? $body['match_data']['source']['flag_query'] : self::default_source_flags()['flag_query'];
-        Protected_Sources::refuse( 'This source', $arguments, Protected_Sources::host_of( $source ), $stored, $regex, $query );
+        $body = array_merge( $body, $this->optional_fields( $arguments, $target, $regex ) );
+        $row  = Protected_Sources::overridden( $arguments ) ? null : Protected_Sources::as_stored( $body );
+        Protected_Sources::refuse( 'This source', $row );
+        $stored = null !== $row && isset( $row['url'] ) && is_string( $row['url'] ) ? $row['url'] : self::stored_source( $source, $regex );
 
         $before = $this->highest_redirect_id();
-        
-        
         $data = $this->rest_request( 'POST', self::$redirection_ns . '/redirect', $body );
 
         return array(
@@ -135,14 +123,6 @@ class Create_Redirect extends Base_Tool {
             'redirect' => self::normalize_redirect( self::created_item( self::rows( $data ), $before, $stored, $body ) ),
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function checked_target( array $arguments, string $action_type ): string {
         $target = isset( $arguments['target'] ) && is_string( $arguments['target'] ) ? trim( $arguments['target'] ) : '';
@@ -152,22 +132,11 @@ class Create_Redirect extends Base_Tool {
             }
             return '';
         }
-        
-        
-        
         if ( '' === $target ) {
             throw new \InvalidArgumentException( sprintf( 'target is required for action_type "%s": where to send the visitor, e.g. /new-page.', $action_type ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $target;
     }
-
-    
-
-
-
-
-
-
 
     private function optional_fields( array $arguments, string $target, bool $regex ): array {
         $fields = array();
@@ -187,19 +156,6 @@ class Create_Redirect extends Base_Tool {
         }
         return $fields;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function created_item( array $items, int $before, string $stored, array $body ): array {
         $new = array_values(
@@ -232,19 +188,11 @@ class Create_Redirect extends Base_Tool {
             : sprintf( 'The redirect was created, but other redirects were created at the same moment and it could not be told apart. Find it with wp_redirection_list_redirects (search: %s) before retrying.', $stored ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
     private static function stored_target( array $item ): string {
         $data = self::array_of( $item, 'action_data' );
         return '' !== self::str_of( $data, 'url' ) ? self::str_of( $data, 'url' ) : self::str_of( $data, 'url_from' );
     }
 
-    
     private function highest_redirect_id(): int {
         $data = $this->rest_request( 'GET', self::$redirection_ns . '/redirect', array( 'per_page' => self::$redirection_min_per_page, 'page' => 0, 'direction' => 'desc' ) );
         $max  = 0;

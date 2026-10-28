@@ -5,23 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class Change_Log_Repository {
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function list_columns() {
         return 'id, audit_id, tool_name, action, object_type, object_id, object_subtype, '
@@ -52,18 +36,12 @@ class Change_Log_Repository {
             'changed_fields'  => null,
             'revision_id'     => null,
             'truncated'       => 0,
-            
-            
-            
             'capture_mode'    => null,
             'ip_address'      => null,
             'created_at'      => \current_time( 'mysql', true ),
         );
         $row = array_merge( $defaults, $row );
 
-        
-        
-        
         if ( isset( $row['object_id'] ) && is_string( $row['object_id'] ) ) {
             $row['object_id'] = mb_substr( $row['object_id'], 0, 191 );
         }
@@ -74,11 +52,6 @@ class Change_Log_Repository {
             }
         }
 
-        
-        
-        
-        
-        
         $formats = array(
             'audit_id'        => '%d',
             'auth_source'     => '%s',
@@ -108,13 +81,6 @@ class Change_Log_Repository {
         return (int) $wpdb->insert_id;
     }
 
-    
-
-
-
-
-
-
     public function update_revision_id( $row_id, $revision_id ) {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table back-patch.
@@ -134,19 +100,6 @@ class Change_Log_Repository {
         return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", (int) $id ), ARRAY_A );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public function query( array $filters, $limit = 50, $offset = 0, $columns = null ) {
         global $wpdb;
         $table  = $this->table();
@@ -164,13 +117,6 @@ class Change_Log_Repository {
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
     }
 
-    
-
-
-
-
-
-
     public function count( array $filters ) {
         global $wpdb;
         $table = $this->table();
@@ -180,13 +126,6 @@ class Change_Log_Repository {
         return (int) $wpdb->get_var( empty( $w['params'] ) ? $sql : $wpdb->prepare( $sql, ...$w['params'] ) );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
     }
-
-    
-
-
-
-
-
 
     public static function build_where( array $filters ) {
         $where  = array( '1=1' );
@@ -203,7 +142,6 @@ class Change_Log_Repository {
         }
         if ( ! empty( $filters['drafts'] ) ) {
             global $wpdb;
-            
             $where[] = "action = 'create' AND object_type = 'post' AND object_id IN ( SELECT CAST( ID AS CHAR ) FROM {$wpdb->posts} WHERE post_status = 'draft' )";
         }
         if ( ! empty( $filters['since'] ) ) {
@@ -217,52 +155,12 @@ class Change_Log_Repository {
         return array( 'sql' => implode( ' AND ', $where ), 'params' => $params );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function deferred_join_sql( $table, $cols, $where ) {
         return "SELECT " . self::qualify_columns( $cols ) . " FROM {$table} c"
             . " JOIN (SELECT id FROM {$table} WHERE {$where}"
             . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d) k ON k.id = c.id'
             . ' ORDER BY c.created_at DESC, c.id DESC';
     }
-
-    
-
-
-
-
-
-
-
 
     private static function qualify_columns( $cols ) {
         $cols = trim( (string) $cols );
@@ -289,10 +187,6 @@ class Change_Log_Repository {
         );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
     }
-
-    
-
-
 
     public function delete_db_rows_older_than( $datetime_gmt, $batch = 500 ) {
         global $wpdb;

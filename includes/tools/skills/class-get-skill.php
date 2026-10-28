@@ -11,24 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Get_Skill extends Base_Tool {
 
     public function get_name() {
@@ -106,9 +88,6 @@ class Get_Skill extends Base_Tool {
         return ( '' !== $check ? $check . "\n" : '' ) . $header . $skill['files'][0]['text'];
     }
 
-    
-
-
     private static function catalog_text( Skill_Set $served ): string {
         if ( $served->is_empty() ) {
             return 'No skills are available on this site right now.';
@@ -119,11 +98,6 @@ class Get_Skill extends Base_Tool {
         }
         return implode( "\n", $lines );
     }
-
-    
-
-
-
 
     private static function availability( array $skill ): string {
         if ( empty( $skill['tools'] ) || ! class_exists( Server::class, false ) ) {
@@ -150,17 +124,11 @@ class Get_Skill extends Base_Tool {
         return implode( "\n", $lines ) . "\n";
     }
 
-    
-
-
-
-
     private static function version_label( array $skill ): string {
         $version = Skill_Set::version( $skill );
         return null !== $version ? ' (version ' . $version . ')' : '';
     }
 
-    
     private static function names( Skill_Set $served ): array {
         $names = array();
         foreach ( $served->skills() as $skill ) {

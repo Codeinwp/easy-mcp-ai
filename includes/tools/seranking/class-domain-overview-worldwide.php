@@ -50,9 +50,6 @@ class Domain_Overview_Worldwide extends Base_Tool {
 					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
 				}
 			}
-			
-			
-			
 			foreach ( array( 'show_zones_list', 'with_subdomains' ) as $opt ) {
 				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
 					$query[ $opt ] = rest_sanitize_boolean( $arguments[ $opt ] ) ? 1 : 0;

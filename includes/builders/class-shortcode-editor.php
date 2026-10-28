@@ -1,77 +1,28 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Shortcode_Editor {
 
-    
     const OPS = array( 'set_text', 'set_link', 'set_image', 'set_fields' );
 
-    
     const MAX_OPS = 50;
 
-    
     const TEXT_KINDS = array( 'text', 'html' );
 
-    
     const CONTENT = 'content';
 
-    
     private $adapter;
 
-    
     private $media;
 
-    
     private $unfiltered;
 
-    
     private $kses;
-
-    
-
-
-
-
 
     public function __construct( Shortcode_Adapter $adapter, callable $media, bool $unfiltered, ?callable $kses = null ) {
         $this->adapter    = $adapter;
@@ -79,15 +30,6 @@ final class Shortcode_Editor {
         $this->unfiltered = $unfiltered;
         $this->kses       = $kses ?? 'wp_kses_post';
     }
-
-    
-
-
-
-
-
-
-
 
     public function plan( string $source, array $ops ): array {
         $errors = array();
@@ -110,8 +52,6 @@ final class Shortcode_Editor {
                 $errors[] = sprintf( 'Operation %d: %s', $index + 1, $applied );
                 continue;
             }
-            
-            
             if ( self::shape( $this->adapter->layout_items( $applied['content'] ) ) !== $shape ) {
                 $errors[] = sprintf( 'Operation %d: the value would change which elements the layout holds, so it was not applied.', $index + 1 );
                 continue;
@@ -129,16 +69,6 @@ final class Shortcode_Editor {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function value( Shortcode_Adapter $adapter, array $item, string $op, string $field ) {
         if ( Shortcode_Tree::TEXT === $item['tag'] ) {
             return $item['content'];
@@ -153,24 +83,10 @@ final class Shortcode_Editor {
         return $decoded[ $field ] ?? null;
     }
 
-    
-
-
-
-
-
-
     public static function find( array $items, string $address ): ?array {
         $path = self::path( $items, $address );
         return null === $path ? null : $path[ count( $path ) - 1 ];
     }
-
-    
-
-
-
-
-
 
     public static function path( array $items, string $address ): ?array {
         if ( 1 !== preg_match( '/^\d+(?:\.\d+)*$/', $address ) ) {
@@ -188,15 +104,6 @@ final class Shortcode_Editor {
         return $path;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function shape( array $items, string $prefix = '' ): array {
         $shape = array();
         foreach ( array_values( $items ) as $index => $item ) {
@@ -210,13 +117,6 @@ final class Shortcode_Editor {
         return $shape;
     }
 
-    
-
-
-
-
-
-
     private static function refused( string $source, array $errors ): array {
         return array(
             'content' => $source,
@@ -224,13 +124,6 @@ final class Shortcode_Editor {
             'errors'  => $errors,
         );
     }
-
-    
-
-
-
-
-
 
     private function apply( string $content, array $op ) {
         $name    = isset( $op['op'] ) && is_string( $op['op'] ) ? $op['op'] : '';
@@ -252,9 +145,6 @@ final class Shortcode_Editor {
         if ( '' !== $expect && $expect !== $type ) {
             return sprintf( 'element "%s" is a %s, not the expected %s.', $address, $type, $expect );
         }
-        
-        
-        
         foreach ( $path as $holder ) {
             if ( Shortcode_Tree::TEXT === $holder['tag'] ) {
                 continue;
@@ -283,7 +173,6 @@ final class Shortcode_Editor {
         }
         foreach ( $changes as $stored ) {
             if ( null !== $stored && false !== strpos( $stored, '\\' ) ) {
-                
                 return sprintf( 'a value for "%s" holds a backslash, which WordPress removes from shortcode attributes when it reads the page; send it without one.', $address );
             }
             if ( null !== $stored && ! self::safe_value( $stored ) ) {
@@ -299,7 +188,6 @@ final class Shortcode_Editor {
         foreach ( $changes as $attribute => $stored ) {
             $read = $after['atts'][ $attribute ] ?? null;
             if ( null !== $stored && $read !== $stored ) {
-                
                 $why = false !== strpos( $stored, '<' ) ? ' A "<" that does not open a closed HTML tag empties a shortcode attribute; write &lt; instead.' : '';
                 return sprintf( 'WordPress would read field "%s" of "%s" back as "%s", not as sent, so it was not changed.%s', $attribute, $address, (string) $read, $why );
             }
@@ -312,22 +200,10 @@ final class Shortcode_Editor {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function text_item( string $content, array $item, string $name, array $op, string $address ) {
         if ( 'set_text' !== $name ) {
             return sprintf( '"%s" is text between elements; only set_text changes it.', $address );
         }
-        
-        
         $text   = (string) $item['content'];
         $lead   = strlen( $text ) - strlen( ltrim( $text ) );
         $length = strlen( trim( $text ) );
@@ -348,21 +224,10 @@ final class Shortcode_Editor {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function enclosed( string $content, array $item, array $op, string $address ) {
         if ( null === $item['content'] || $item['content_at'] < 0 ) {
             return sprintf( 'element "%s" (%s) has no enclosed content to write; give `field`.', $address, $item['tag'] );
         }
-        
-        
         foreach ( $this->adapter->layout_items( (string) $item['content'] ) as $child ) {
             if ( Shortcode_Tree::TEXT !== $child['tag'] ) {
                 return sprintf( 'element "%s" (%s) holds other elements; edit those by their own addresses.', $address, $item['tag'] );
@@ -387,27 +252,12 @@ final class Shortcode_Editor {
         );
     }
 
-    
-
-
-
-
-
     private function text_field( array $op, string $type ): string {
         if ( isset( $op['field'] ) && is_string( $op['field'] ) && '' !== $op['field'] ) {
             return $op['field'];
         }
         return $this->adapter->element_roles( $type )['text'] ?? '';
     }
-
-    
-
-
-
-
-
-
-
 
     private function attribute_changes( string $name, array $op, array $item, array $fields ) {
         $type    = $item['tag'];
@@ -461,14 +311,6 @@ final class Shortcode_Editor {
         return array( $field => (string) $id );
     }
 
-    
-
-
-
-
-
-
-
     private function field_changes( array $op, array $fields, string $type ) {
         if ( ! isset( $op['fields'] ) || ! is_array( $op['fields'] ) || array() === $op['fields'] ) {
             return 'set_fields needs `fields`, an object of field name to value.';
@@ -495,16 +337,6 @@ final class Shortcode_Editor {
         return $changes;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function field_value( string $type, string $field, array $spec, $value ) {
         $kind = (string) ( $spec['kind'] ?? 'other' );
         if ( ! in_array( $kind, $this->adapter->field_kinds(), true ) || ( 'boolean' === $kind && ! isset( $spec['on_value'] ) ) ) {
@@ -519,8 +351,6 @@ final class Shortcode_Editor {
             if ( ! is_bool( $value ) ) {
                 return array( 'error' => 'must be true or false' );
             }
-            
-            
             $default = $spec['default'] ?? '';
             return $value ? (string) $spec['on_value'] : ( is_scalar( $default ) && '' !== (string) $default ? '' : null );
         }
@@ -536,8 +366,6 @@ final class Shortcode_Editor {
             if ( array() !== $options && ! in_array( $value, $options, true ) ) {
                 return array( 'error' => sprintf( 'must be one of: %s', implode( ', ', array_map( array( __CLASS__, 'quoted' ), $options ) ) ) );
             }
-            
-            
             if ( array() === $options && 1 !== preg_match( '/^[\w-]+$/', $value ) ) {
                 return array( 'error' => 'has no list of allowed values here, so it takes only a plain value of letters, digits, - and _' );
             }
@@ -545,12 +373,10 @@ final class Shortcode_Editor {
             $units = isset( $spec['units'] ) && is_array( $spec['units'] ) ? array_map( 'strval', $spec['units'] ) : array();
             if ( array() !== $units ) {
                 $pattern = '/^\d*\.?\d+(?:' . implode( '|', array_map( 'preg_quote', $units, array_fill( 0, count( $units ), '/' ) ) ) . ')?$/';
-                
                 if ( 1 !== preg_match( $pattern, $value ) || ! is_finite( (float) $value ) ) {
                     return array( 'error' => sprintf( 'must be a finite number, optionally with a unit: %s', implode( ', ', $units ) ) );
                 }
             } elseif ( ! is_numeric( $value ) || ! is_finite( (float) $value ) ) {
-                
                 return array( 'error' => 'must be a finite number' );
             }
         } elseif ( 'color' === $kind ) {
@@ -571,12 +397,6 @@ final class Shortcode_Editor {
         return $this->adapter->encode_attribute( $type, $field, $spec, $value );
     }
 
-    
-
-
-
-
-
     private function html_value( array $op ) {
         if ( ! isset( $op['value'] ) || ! is_string( $op['value'] ) ) {
             return array( 'error' => 'set_text needs `value`, a string.' );
@@ -585,8 +405,6 @@ final class Shortcode_Editor {
         if ( $this->unfiltered ) {
             return $value;
         }
-        
-        
         $clean = (string) ( $this->kses )( $value );
         if ( ! self::same_text( $clean, $value ) ) {
             return array( 'error' => 'Holds HTML this account cannot save (it may not post unfiltered HTML), so WordPress would cut part of it. Send it without scripts, styles, iframes or event attributes.' );
@@ -594,27 +412,9 @@ final class Shortcode_Editor {
         return $clean;
     }
 
-    
-
-
-
-
-
     public static function same_text( string $clean, string $original ): bool {
         return html_entity_decode( $clean, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) === html_entity_decode( $original, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function set_attributes( string $raw, array $changes ): string {
         preg_match_all( get_shortcode_atts_regex(), $raw, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
@@ -627,7 +427,6 @@ final class Shortcode_Editor {
                 }
             }
         }
-        
         foreach ( array_reverse( $spans ) as $span ) {
             list( $key, $name, $at, $length ) = $span;
             if ( ! array_key_exists( $key, $changes ) ) {
@@ -635,7 +434,6 @@ final class Shortcode_Editor {
             }
             $stored = $changes[ $key ];
             if ( null === $stored ) {
-                
                 $from = $at;
                 while ( $from > 0 && ctype_space( $raw[ $from - 1 ] ) ) {
                     --$from;
@@ -656,40 +454,17 @@ final class Shortcode_Editor {
         return $raw;
     }
 
-    
-
-
-
-
-
     private static function safe_value( string $stored ): bool {
         return false === strpbrk( $stored, '"[]' );
     }
-
-    
-
-
-
-
 
     private static function written_fields( string $name, array $changes ): string {
         if ( 'set_fields' === $name ) {
             return implode( ', ', array_map( 'strval', array_keys( $changes ) ) );
         }
-        
         $keys = array_keys( $changes );
         return (string) reset( $keys );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function views( array $item, string $name, array $changes ) {
         if ( 'set_fields' === $name ) {
@@ -701,18 +476,6 @@ final class Shortcode_Editor {
         }
         return self::value( $this->adapter, $item, $name, self::written_fields( $name, $changes ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function result( string $op, string $address, string $type, string $field, $before, $after, bool $changed ): array {
         return array(
@@ -726,13 +489,6 @@ final class Shortcode_Editor {
         );
     }
 
-    
-
-
-
-
-
-
     private static function field_spec( array $fields, string $name ): ?array {
         foreach ( $fields as $spec ) {
             $devices = isset( $spec['devices'] ) && is_array( $spec['devices'] ) ? $spec['devices'] : array();
@@ -743,7 +499,6 @@ final class Shortcode_Editor {
         return null;
     }
 
-    
     private static function quoted( string $value ): string {
         return '"' . $value . '"';
     }

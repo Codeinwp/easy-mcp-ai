@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\MCP;
 
 use Easy_MCP_AI\Config;
@@ -14,103 +9,40 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Tool_Status {
 
-    
     const SETTINGS_PATH = 'Easy MCP AI › Settings › Advanced › Disabled tools';
 
-    
     const TOOLS_PATH = 'Easy MCP AI › Tools';
 
-    
     const PATTERNS_PATH = 'Easy MCP AI › Settings › Advanced';
 
-    
     const ABILITIES_PATH = 'Easy MCP AI › Tools › Abilities';
 
-    
     const CORE_ABILITIES_PATH = 'Easy MCP AI › Tools › Core';
 
-    
     const EXTERNAL_PATH = 'Easy MCP AI › Tools › External data';
 
-    
     const IN_CONFIGURATION = 'switched off in this site\'s configuration (wp-config.php or the server environment), where only the site owner can switch %s on';
 
-    
     const CONFIGURATION_PLACE = 'in this site\'s configuration, where only the site owner can switch it on';
-
-    
-
-
-
-
-
 
     public static function switch_locked( string $tool_name ): bool {
         return null !== Tool_State::override_of( $tool_name ) || Config::is_locked( 'easy_mcp_ai_disabled_tools' );
     }
-
-    
-
-
-
-
-
-
 
     public static function switch_path( string $tool_name, bool $default_off ): string {
         $in_grid = $default_off || in_array( $tool_name, \Easy_MCP_AI\Admin\Settings_Validator::destructive_tools(), true );
         return Config::brand( $in_grid ? self::SETTINGS_PATH : self::TOOLS_PATH );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function place( string $path, bool $locked = false ): string {
         return $locked ? self::CONFIGURATION_PLACE : self::in_admin( Config::brand( $path ) );
     }
 
-    
-
-
-
-
-
-
     public static function in_admin( string $branded_path ): string {
         return 'wp-admin: ' . $branded_path;
     }
-
-    
-
-
-
-
-
 
     public static function off( string $tool_name, bool $default_off ): array {
         if ( self::switch_locked( $tool_name ) ) {
@@ -121,14 +53,6 @@ final class Tool_Status {
             'where'  => self::switch_path( $tool_name, $default_off ),
         );
     }
-
-    
-
-
-
-
-
-
 
     public static function predicate( array $status ): string {
         switch ( $status['status'] ) {
@@ -159,17 +83,6 @@ final class Tool_Status {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function who_switches_on( array $off, array $locked, string $path ): string {
         $parts = array();
         if ( array() !== $off ) {
@@ -182,12 +95,6 @@ final class Tool_Status {
         }
         return implode( '; ', $parts );
     }
-
-    
-
-
-
-
 
     public static function names( array $names ): string {
         $last = array_pop( $names );

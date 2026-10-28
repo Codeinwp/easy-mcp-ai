@@ -15,26 +15,11 @@ class Update_Post_Meta extends Base_Tool {
 
     public function get_description() {
         $description = 'Updates REST-API-visible meta fields for a post. Only fields registered with show_in_rest can be updated. Pass a JSON object of key-value pairs. Nested arrays/objects are passed through as-is and are accepted only when the key is registered with an array or object show_in_rest schema; a value of the wrong type is refused with the key, its registered type and what was sent. Optional `post_type` (REST base, default `posts`) lets this tool also operate on pages or any custom post type, not just posts. Returns { post_id, updated_meta } with only the requested keys that were saved. If none was saved the call is refused, naming the keys (its details list the keys this post type accepts); if only some were, `ignored_keys` and `notice` come first. SEO plugin keys (Rank Math, Yoast, SEOPress, The SEO Framework) are writable here when that plugin\'s integration is enabled under Easy MCP AI → Tools → Plugins.';
-        
-        
         if ( class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {
             $description .= \Easy_MCP_AI\Meta\Meta_Exposure::describe_writable_keys();
         }
         return $description . $this->acf_hint( ' ' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function acf_hint( $prefix = '' ) {
         if ( class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) && \Easy_MCP_AI\Meta\Meta_Exposure::is_group_enabled( 'acf' ) ) {
@@ -46,13 +31,6 @@ class Update_Post_Meta extends Base_Tool {
     public function get_category() {
         return 'meta';
     }
-
-    
-
-
-
-
-
 
     public function get_required_capability() {
         return 'edit_posts';
@@ -89,13 +67,6 @@ class Update_Post_Meta extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         $this->precheck_post_type_route( $arguments, 'post_type', 'posts', 'post_id', 'POST', 'GET' );
     }
@@ -111,11 +82,6 @@ class Update_Post_Meta extends Base_Tool {
             : 'posts';
         $this->refuse_builder_owned_write( $post_id, false, $meta );
 
-        
-        
-        
-        
-        
         $route   = self::post_type_route( $post_type, $post_id, 'POST', 'GET' );
         $request = new \WP_REST_Request( 'POST', $route );
         $request->set_header( 'content-type', 'application/json' );
@@ -125,14 +91,10 @@ class Update_Post_Meta extends Base_Tool {
             throw new \RuntimeException( $this->explain_rejected_meta( $response, $meta, $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
         $read_data = $this->rest_request( 'GET', $route, array(
             'context' => 'edit',
         ) );
 
-        
-        
-        
         $persisted_meta = isset( $read_data['meta'] ) ? $read_data['meta'] : array();
         $saved          = array();
         $ignored_keys   = array();
@@ -153,9 +115,6 @@ class Update_Post_Meta extends Base_Tool {
 
         $notice = $this->ignored_keys_notice( $ignored_keys );
 
-        
-        
-        
         if ( empty( $saved ) ) {
             $accepted = array_keys( $persisted_meta );
             throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error(
@@ -164,8 +123,6 @@ class Update_Post_Meta extends Base_Tool {
             );
         }
 
-        
-        
         return array(
             'ignored_keys' => $ignored_keys,
             'notice'       => $notice,
@@ -173,13 +130,6 @@ class Update_Post_Meta extends Base_Tool {
             'updated_meta' => $saved,
         );
     }
-
-    
-
-
-
-
-
 
     private function ignored_keys_notice( array $ignored_keys ) {
         $notice = sprintf(
@@ -194,13 +144,6 @@ class Update_Post_Meta extends Base_Tool {
         }
         return $notice;
     }
-
-    
-
-
-
-
-
 
     private function none_saved_message( array $keys ) {
         $head  = 'Nothing was saved. Not writable through the REST API for this post: ';
@@ -223,40 +166,6 @@ class Update_Post_Meta extends Base_Tool {
         return $head . $list . $tail;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function explain_rejected_meta( $response, array $meta, $post_id ) {
         $error   = $response->as_error();
         $message = $error ? $error->get_error_message() : 'REST error';
@@ -267,8 +176,6 @@ class Update_Post_Meta extends Base_Tool {
 
         $post      = get_post( $post_id );
         $post_type = ( $post && ! empty( $post->post_type ) ) ? (string) $post->post_type : '';
-        
-        
         $registered = array();
         if ( function_exists( 'get_registered_meta_keys' ) ) {
             $registered = get_registered_meta_keys( 'post', $post_type ) + get_registered_meta_keys( 'post', '' );
@@ -303,29 +210,14 @@ class Update_Post_Meta extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function rejected_meta_keys( $response, $error ) {
         $params = array();
 
-        
         $payload = $response->get_data();
         if ( is_array( $payload ) ) {
             $this->collect_params_from_data( $params, $payload );
         }
 
-        
-        
         if ( $error instanceof \WP_Error ) {
             foreach ( $error->get_error_codes() as $code ) {
                 $all_data = method_exists( $error, 'get_all_error_data' )
@@ -339,8 +231,6 @@ class Update_Post_Meta extends Base_Tool {
             }
         }
 
-        
-        
         if ( array() === $params && $error instanceof \WP_Error ) {
             foreach ( $error->get_error_messages() as $text ) {
                 if ( preg_match_all( '/\bmeta(?:\.[A-Za-z0-9_\-]+|\[[^\]]+\])/', (string) $text, $m ) ) {
@@ -351,23 +241,12 @@ class Update_Post_Meta extends Base_Tool {
 
         $keys = array();
         foreach ( $params as $param ) {
-            
             if ( preg_match( '/^meta(?:\.(.+)|\[(.+)\])$/', $param, $m ) ) {
                 $keys[] = isset( $m[2] ) && '' !== $m[2] ? $m[2] : $m[1];
             }
         }
         return array_values( array_unique( $keys ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function collect_params_from_data( array &$params, array $entry ) {
         $data_entries = array();
@@ -396,7 +275,7 @@ class Update_Post_Meta extends Base_Tool {
         if ( isset( $entry['additional_errors'] ) && is_array( $entry['additional_errors'] ) ) {
             foreach ( $entry['additional_errors'] as $additional ) {
                 if ( is_array( $additional ) ) {
-                    unset( $additional['additional_errors'] ); 
+                    unset( $additional['additional_errors'] );
                     $this->collect_params_from_data( $params, $additional );
                 }
             }

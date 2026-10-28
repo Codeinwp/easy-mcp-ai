@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,32 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Sg_Cachepress extends Cache_Adapter {
 
@@ -55,20 +24,9 @@ final class Sg_Cachepress extends Cache_Adapter {
         return 'SiteGround Speed Optimizer';
     }
 
-    
-
-
-
-
     public function kind(): string {
         return self::KIND_HOST;
     }
-
-    
-
-
-
-
 
     public function tier(): int {
         return self::TIER_PROXY;
@@ -82,13 +40,6 @@ final class Sg_Cachepress extends Cache_Adapter {
         return is_object( $this->calls()->global_value( 'siteground_optimizer_loader' ) )
             && $this->calls()->class_exists( self::SUPERCACHER );
     }
-
-    
-
-
-
-
-
 
     public function also_clears( Purge_Request $request ): array {
         $home = false;
@@ -178,31 +129,14 @@ final class Sg_Cachepress extends Cache_Adapter {
         return $this->sent( $detail . ' The home page was left out: SiteGround Speed Optimizer clears its whole cache when asked for it, so use scope=site.' )->with( array( 'needs' => 'scope=site' ) );
     }
 
-    
-
-
-
-
-
     private function has_dot_segment( string $url ): bool {
         $segments = explode( '/', rawurldecode( $this->path_of( $url ) ) );
         return in_array( '.', $segments, true ) || in_array( '..', $segments, true );
     }
 
-    
-
-
-
-
     private function file_on(): bool {
         return 1 === (int) $this->calls()->get_option( 'siteground_optimizer_file_caching' );
     }
-
-    
-
-
-
-
 
     private function dynamic_on(): bool {
         $calls = $this->calls();

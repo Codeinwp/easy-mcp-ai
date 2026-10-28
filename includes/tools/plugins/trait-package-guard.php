@@ -5,34 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Package_Guard {
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function refuse_when_file_mods_are_off( string $doing ): void {
         if ( ! wp_is_file_mod_allowed( 'capability_update_core' ) ) {
@@ -42,18 +15,6 @@ trait Package_Guard {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_unless_network_file_admin( string $network_cap, string $doing ): void {
         if ( is_multisite() && ( ! is_super_admin() || ! current_user_can( $network_cap ) ) ) {
             throw new \RuntimeException(
@@ -61,33 +22,6 @@ trait Package_Guard {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_unless_direct_filesystem( string $context, string $where ): void {
         if ( ! function_exists( 'get_filesystem_method' ) ) {
@@ -107,41 +41,17 @@ trait Package_Guard {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     protected function parse_wporg_slug( array $arguments, string $kind ): string {
         $raw = isset( $arguments['slug'] ) && is_string( $arguments['slug'] ) ? trim( $arguments['slug'] ) : '';
         if ( '' === $raw ) {
             throw new \InvalidArgumentException( 'Missing required parameters: slug' );
         }
         self::refuse_url_zip_or_path( $raw, $kind );
-        
-        
-        
-        
         if ( strlen( $raw ) > 200 || ! preg_match( '/^[a-z0-9][a-z0-9_-]*\z/', $raw ) ) {
             throw new \InvalidArgumentException( sprintf( 'Invalid %s slug "%s": a wordpress.org slug is lowercase letters, digits and hyphens.', $kind, substr( $raw, 0, 100 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $raw;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function refuse_url_zip_or_path( string $raw, string $kind ): void {
         if ( false !== strpos( $raw, '://' ) ) {
@@ -154,14 +64,6 @@ trait Package_Guard {
             throw new \InvalidArgumentException( sprintf( 'Paths are not accepted: pass the wordpress.org %s slug (the last part of its wordpress.org address), e.g. "%s".', $kind, 'plugin' === $kind ? 'akismet' : 'twentytwentyfive' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
 
     protected function parse_package_version( array $arguments, bool $allow_dev ): ?string {
         if ( ! isset( $arguments['version'] ) ) {
@@ -181,16 +83,6 @@ trait Package_Guard {
         return $version;
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function wporg_information( string $kind, string $slug, bool $versions ) {
         $fields = array( 'sections' => false );
         if ( $versions ) {
@@ -208,28 +100,6 @@ trait Package_Guard {
         return themes_api( 'theme_information', array( 'slug' => $slug, 'fields' => $fields ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function wporg_package( string $kind, string $slug, ?string $version ): array {
         $info   = $this->wporg_answer( $kind, $slug, $version );
         $name   = self::wporg_name( $info );
@@ -238,8 +108,6 @@ trait Package_Guard {
         list( $package, $listed ) = null === $version
             ? self::wporg_latest_package( $info )
             : self::wporg_versioned_package( $info, $kind, $slug, $version );
-        
-        
         if ( 0 === strpos( $package, 'http://downloads.wordpress.org/' ) ) {
             $package = 'https://' . substr( $package, 7 );
         }
@@ -252,16 +120,6 @@ trait Package_Guard {
             'version' => $listed,
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function wporg_answer( string $kind, string $slug, ?string $version ): object {
         $info = $this->wporg_information( $kind, $slug, null !== $version );
@@ -281,40 +139,15 @@ trait Package_Guard {
         return $info;
     }
 
-    
-
-
-
-
-
-
     private static function wporg_name( object $info ): string {
         return isset( $info->name ) && is_scalar( $info->name ) ? trim( wp_strip_all_tags( html_entity_decode( (string) $info->name, ENT_QUOTES, 'UTF-8' ) ) ) : '';
     }
-
-    
-
-
-
-
 
     private static function wporg_latest_package( object $info ): array {
         $package = isset( $info->download_link ) && is_string( $info->download_link ) ? $info->download_link : '';
         $listed  = isset( $info->version ) && is_scalar( $info->version ) ? (string) $info->version : '';
         return array( $package, $listed );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function wporg_versioned_package( object $info, string $kind, string $slug, string $version ): array {
         $versions = self::wporg_version_list( $info );
@@ -326,32 +159,9 @@ trait Package_Guard {
         return array( $versions[ $key ], 'dev' === $version ? 'dev' : $version );
     }
 
-    
-
-
-
-
-
-
     private static function wporg_version_list( object $info ): array {
         return ( isset( $info->versions ) && ( is_array( $info->versions ) || is_object( $info->versions ) ) ) ? (array) $info->versions : array();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function interpret_install_result( $result, \WP_Ajax_Upgrader_Skin $skin, string $failed ): void {
         if ( is_wp_error( $result ) ) {
@@ -371,15 +181,6 @@ trait Package_Guard {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     protected function upgrader_error_text( \WP_Error $error ): string {
         $text = wp_strip_all_tags( (string) $error->get_error_message() );
         $data = $error->get_error_data();
@@ -390,13 +191,6 @@ trait Package_Guard {
         return '' === $text ? 'WordPress refused the operation without giving a reason.' : $text;
     }
 
-    
-
-
-
-
-
-
     protected function relative_paths( string $text ): string {
         $root = rtrim( str_replace( '\\', '/', (string) ABSPATH ), '/' ) . '/';
         if ( '/' === $root ) {
@@ -404,12 +198,6 @@ trait Package_Guard {
         }
         return str_replace( array( $root, str_replace( '/', '\\', $root ) ), '', $text );
     }
-
-    
-
-
-
-
 
     protected function filesystem_failure_message(): string {
         global $wp_filesystem;
@@ -419,31 +207,9 @@ trait Package_Guard {
         return 'Unable to connect to the filesystem. Please confirm your credentials.';
     }
 
-    
-
-
-
-
-
-
-
     protected function new_upgrader_skin(): \WP_Ajax_Upgrader_Skin {
         return new \WP_Ajax_Upgrader_Skin();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_own_plugin_files( string $plugin, string $why ): void {
         $own = defined( 'EASY_MCP_AI_PLUGIN_BASENAME' ) ? (string) EASY_MCP_AI_PLUGIN_BASENAME : '';
@@ -456,14 +222,6 @@ trait Package_Guard {
         }
     }
 
-    
-
-
-
-
-
-
-
     protected function installed_plugin( string $plugin ): array {
         $installed = get_plugins();
         if ( ! isset( $installed[ $plugin ] ) || ! is_array( $installed[ $plugin ] ) ) {
@@ -472,32 +230,9 @@ trait Package_Guard {
         return $installed[ $plugin ];
     }
 
-    
-
-
-
-
     protected function plugin_label( string $plugin, array $data ): string {
         return ! empty( $data['Name'] ) && is_string( $data['Name'] ) ? $data['Name'] : $plugin;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_required_plugin( string $plugin, string $label ): void {
         $dependents = $this->dependents_of( $plugin );
@@ -507,14 +242,6 @@ trait Package_Guard {
             throw new \RuntimeException( sprintf( 'Plugin "%s" is required by %s%s. Remove those first, as the Plugins screen requires.', $label, implode( ', ', $shown ), count( $dependents ) > 3 ? ' and ' . ( count( $dependents ) - 3 ) . ' more' : '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
 
     private function dependents_of( string $plugin ): array {
         $installed  = get_plugins();
@@ -536,12 +263,6 @@ trait Package_Guard {
         return $dependents;
     }
 
-    
-
-
-
-
-
     private function dependency_slug( string $plugin ): string {
         if ( 'hello.php' === $plugin ) {
             return 'hello-dolly';
@@ -549,17 +270,9 @@ trait Package_Guard {
         return false !== strpos( $plugin, '/' ) ? dirname( $plugin ) : str_replace( '.php', '', $plugin );
     }
 
-    
-
-
-
-
-
-
     private function dependency_slugs( $header ): array {
         $slugs = array();
         foreach ( explode( ',', is_string( $header ) ? $header : '' ) as $slug ) {
-            
             $slug = apply_filters( 'wp_plugin_dependencies_slug', trim( $slug ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's own filter, applied as core applies it.
             if ( is_string( $slug ) && preg_match( '/^[a-z0-9]+(-[a-z0-9]+)*$/', $slug ) ) {
                 $slugs[] = $slug;
@@ -567,14 +280,6 @@ trait Package_Guard {
         }
         return array_values( array_unique( $slugs ) );
     }
-
-    
-
-
-
-
-
-
 
     protected function describe_removal( array $arguments, string $format ): string {
         try {
@@ -588,16 +293,6 @@ trait Package_Guard {
         $version = ! empty( $data['Version'] ) ? ' ' . $data['Version'] : '';
         return sprintf( $format, '"' . $this->plugin_label( $plugin, $data ) . '"' . $version, $plugin );
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function without_output( callable $run ): array {
         $level = ob_get_level();

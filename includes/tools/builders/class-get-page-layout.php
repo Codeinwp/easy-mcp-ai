@@ -9,17 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Get_Page_Layout extends Base_Tool {
 
-    
     const DEFAULT_DEPTH = 4;
     const MAX_DEPTH     = 12;
 
@@ -140,12 +131,6 @@ class Get_Page_Layout extends Base_Tool {
         return $reply;
     }
 
-    
-
-
-
-
-
     private function not_a_builder_page( object $post ): array {
         $present = array_map(
             static function ( Layout_Adapter $adapter ): string {
@@ -166,15 +151,6 @@ class Get_Page_Layout extends Base_Tool {
                 : 'This item is not built with a supported page builder; its content is classic post content.',
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function item( array $node, int $level, int $depth, bool $settings ): array {
         $item = array(
@@ -204,13 +180,6 @@ class Get_Page_Layout extends Base_Tool {
         return $item;
     }
 
-    
-
-
-
-
-
-
     private static function find( array $nodes, string $address ): ?array {
         foreach ( $nodes as $node ) {
             if ( $node['address'] === $address ) {
@@ -223,12 +192,6 @@ class Get_Page_Layout extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
 
     private static function count_nodes( array $nodes ): int {
         $count = 0;

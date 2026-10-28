@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; the name is prefix + a constant, never input, and approval state must be read fresh.
 
-
-
-
-
-
 class Wpdb_Approval_Store implements Approval_Store {
 
     const FORMATS = array(
@@ -50,8 +45,6 @@ class Wpdb_Approval_Store implements Approval_Store {
     public function find_latest( array $identity, $tool_name, $args_hash, $status ) {
         global $wpdb;
         $client = isset( $identity['oauth_client_id'] ) && is_string( $identity['oauth_client_id'] ) ? $identity['oauth_client_id'] : '';
-        
-        
         $row = $wpdb->get_row( $wpdb->prepare(
             "SELECT * FROM `{$this->table()}` WHERE auth_source = %s AND token_id = %d AND COALESCE(oauth_client_id, '') = %s AND wp_user_id = %d AND tool_name = %s AND args_hash = %s AND status = %s ORDER BY id DESC LIMIT 1",
             (string) $identity['auth_source'], (int) $identity['token_id'], $client, (int) $identity['wp_user_id'], (string) $tool_name, (string) $args_hash, (string) $status
@@ -70,8 +63,6 @@ class Wpdb_Approval_Store implements Approval_Store {
 
     public function claim( $approval_id, $now ) {
         global $wpdb;
-        
-        
         $affected = $wpdb->query( $wpdb->prepare(
             "UPDATE `{$this->table()}` SET status = 'consumed', consumed_at = %s, arguments = NULL WHERE approval_id = %s AND status = 'approved' AND expires_at > %s",
             (string) $now, (string) $approval_id, (string) $now

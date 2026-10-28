@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,22 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Smart_Slider extends Cache_Adapter {
 
@@ -64,12 +43,6 @@ final class Smart_Slider extends Cache_Adapter {
         $this->calls()->call( array( $model, 'invalidateCache' ) );
         return $this->sent( 'Smart Slider 3 cleared the stored output of every slider.' );
     }
-
-    
-
-
-
-
 
     private function model(): ?object {
         $calls = $this->calls();

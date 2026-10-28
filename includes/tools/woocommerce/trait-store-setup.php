@@ -5,43 +5,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 trait Store_Setup {
 
-    
     private static $location_types = array( 'postcode', 'state', 'country', 'continent' );
 
-    
     private static $continents = array( 'AF', 'AN', 'AS', 'EU', 'NA', 'OC', 'SA' );
-
-    
-
 
     protected function require_woocommerce(): void {
         if ( ! class_exists( 'WooCommerce' ) ) {
             throw new \RuntimeException( 'WooCommerce is not active.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function parse_bool( $value, string $label ): bool {
         if ( is_bool( $value ) ) {
@@ -56,16 +30,6 @@ trait Store_Setup {
         throw new \InvalidArgumentException( sprintf( 'Invalid %s: send true or false.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function parse_non_negative_int( $value, string $label ): int {
         if ( is_int( $value ) && $value >= 0 ) {
             return $value;
@@ -73,36 +37,17 @@ trait Store_Setup {
         if ( is_string( $value ) && ctype_digit( $value ) ) {
             return (int) $value;
         }
-        
-        
         if ( is_float( $value ) && $value >= 0 && floor( $value ) === $value && $value <= 2147483647 ) {
             return (int) $value;
         }
         throw new \InvalidArgumentException( sprintf( 'Invalid %s: a whole number of 0 or more.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_catch_all_zone( array $locations ): void {
         if ( empty( $locations ) ) {
             throw new \InvalidArgumentException( 'A shipping zone needs at least one location: WooCommerce matches a zone with none to every address, ahead of every zone after it. For "everywhere else" use zone 0 ("Rest of the world"); to stop using a zone, delete it with wp_wc_delete_shipping_zone.' );
         }
     }
-
-    
-
-
-
 
     protected static function locations_schema(): array {
         return array(
@@ -122,15 +67,6 @@ trait Store_Setup {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     protected function parse_locations( $value ): array {
         if ( ! is_array( $value ) || array_values( $value ) !== $value ) {
             throw new \InvalidArgumentException( 'Invalid locations: must be a list of { code, type } objects.' );
@@ -146,22 +82,12 @@ trait Store_Setup {
                 throw new \InvalidArgumentException( sprintf( 'Invalid locations[%d].type: use country, state, continent or postcode.', $index ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
             $locations[] = array(
-                
                 'code' => 'postcode' === $type ? $code : strtoupper( $code ),
                 'type' => $type,
             );
         }
         return $locations;
     }
-
-    
-
-
-
-
-
-
-
 
     protected function refuse_unknown_location_codes( array $locations ): void {
         $countries = null;
@@ -186,11 +112,6 @@ trait Store_Setup {
         }
     }
 
-    
-
-
-
-
     private function country_states(): array {
         $out = array();
         foreach ( (array) $this->rest_request( 'GET', '/wc/v3/data/countries' ) as $country ) {
@@ -208,17 +129,6 @@ trait Store_Setup {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     protected function parse_editable_zone_id( $value, string $verb ): int {
         if ( 0 === $value || '0' === $value ) {
             throw new \InvalidArgumentException( sprintf( 'Zone 0 is WooCommerce\'s "Rest of the world" zone (locations not covered by your other zones); it cannot be %s. Its shipping methods can be changed with wp_wc_add_shipping_method and wp_wc_update_shipping_method.', $verb ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -226,26 +136,12 @@ trait Store_Setup {
         return $this->parse_required_id( $value, 'id' );
     }
 
-    
-
-
-
-
-
-
-
     protected function parse_zone_id( $value ): int {
         if ( 0 === $value || '0' === $value ) {
             return 0;
         }
         return $this->parse_required_id( $value, 'zone_id' );
     }
-
-    
-
-
-
-
 
     protected static function present_shipping_class( $class ): array {
         $class = is_array( $class ) ? $class : array();
@@ -257,12 +153,6 @@ trait Store_Setup {
             'count'       => (int) ( $class['count'] ?? 0 ),
         );
     }
-
-    
-
-
-
-
 
     protected static function tax_rate_properties(): array {
         return array(
@@ -317,14 +207,6 @@ trait Store_Setup {
         );
     }
 
-    
-
-
-
-
-
-
-
     protected function tax_rate_params( array $arguments ): array {
         $params = array();
         foreach ( array( 'country', 'state', 'name', 'class' ) as $field ) {
@@ -366,12 +248,6 @@ trait Store_Setup {
         return $params;
     }
 
-    
-
-
-
-
-
     protected static function present_tax_rate( $rate ): array {
         $rate = is_array( $rate ) ? $rate : array();
         return array(
@@ -390,14 +266,6 @@ trait Store_Setup {
         );
     }
 
-    
-
-
-
-
-
-
-
     protected static function present_method( $method, int $zone_id ): array {
         $method   = is_array( $method ) ? $method : array();
         $settings = array();
@@ -408,22 +276,12 @@ trait Store_Setup {
             'zone_id'     => $zone_id,
             'instance_id' => (int) ( $method['instance_id'] ?? 0 ),
             'method_id'   => (string) ( $method['method_id'] ?? '' ),
-            
-            
             'title'       => (string) ( $settings['title'] ?? $method['title'] ?? '' ),
             'enabled'     => (bool) ( $method['enabled'] ?? false ),
             'order'       => (int) ( $method['order'] ?? 0 ),
             'settings'    => $settings,
         );
     }
-
-    
-
-
-
-
-
-
 
     protected static function method_fields( $method ): array {
         $fields = array();
@@ -434,17 +292,6 @@ trait Store_Setup {
         }
         return $fields;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function method_settings( $sent, array $definitions, string $method_id ): array {
         if ( ! is_array( $sent ) || ( ! empty( $sent ) && array_values( $sent ) === $sent ) ) {
@@ -458,12 +305,6 @@ trait Store_Setup {
         return $settings;
     }
 
-    
-
-
-
-
-
     protected function read_zone( int $zone_id ): array {
         $zone = $this->rest_request( 'GET', '/wc/v3/shipping/zones/' . $zone_id );
         return array(
@@ -473,13 +314,6 @@ trait Store_Setup {
             'locations' => $this->zone_locations( $zone_id ),
         );
     }
-
-    
-
-
-
-
-
 
     protected function zone_locations( int $zone_id ): array {
         if ( 0 === $zone_id ) {
@@ -496,21 +330,6 @@ trait Store_Setup {
         }
         return $locations;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function normalize_setting_value( string $id, $value, array $setting, string $reader ) {
         $type    = (string) ( $setting['type'] ?? 'text' );
@@ -554,31 +373,11 @@ trait Store_Setup {
         return $value;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function refuse_backslash( string $value, string $label ): void {
         if ( false !== strpos( $value, '\\' ) ) {
             throw new \InvalidArgumentException( sprintf( 'Invalid value for %s: backslashes are removed from this text when it is saved, so it would not be saved as sent. Leave the backslashes out.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
 
     protected function refuse_unknown_keys( array $sent, array $known, string $label ): void {
         $unknown = array_diff( array_map( 'strval', array_keys( $sent ) ), $known );
@@ -586,16 +385,6 @@ trait Store_Setup {
             throw new \InvalidArgumentException( sprintf( 'Unknown %1$s: %2$s. Accepted: %3$s.', $label, implode( ', ', $unknown ), empty( $known ) ? 'none' : implode( ', ', $known ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected static function changed_fields( array $before, array $after, array $fields ): array {
         $changed = array();
@@ -614,25 +403,12 @@ trait Store_Setup {
         return $changed;
     }
 
-    
-
-
-
-
-
     private static function scalar_text( $value ): string {
         if ( is_bool( $value ) ) {
             return $value ? 'yes' : 'no';
         }
         return is_scalar( $value ) ? (string) $value : '';
     }
-
-    
-
-
-
-
-
 
     protected function refuse_empty_update( array $params, array $fields ): void {
         if ( empty( $params ) ) {

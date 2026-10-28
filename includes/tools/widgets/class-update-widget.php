@@ -13,18 +13,7 @@ class Update_Widget extends Base_Tool {
         sidebar_widget_ids as private rest_sidebar_widget_ids;
     }
 
-    
-
-
-
-
-
     private $record_order = false;
-
-    
-
-
-
 
     private $order_before = null;
 
@@ -107,18 +96,6 @@ class Update_Widget extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function current_widget( string $widget_id, bool $has_instance ): array {
         $current = (array) $this->rest_request( 'GET', '/wp/v2/widgets/' . $widget_id, array( 'context' => 'edit' ), 'id,id_base,sidebar,rendered,instance' );
         $shaped  = $this->shape_widget( $current, true );
@@ -129,33 +106,13 @@ class Update_Widget extends Base_Tool {
         return $shaped;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function save_changes( string $widget_id, array $shaped, ?array $settings, ?string $sidebar ): array {
-        
-        
         if ( null !== $sidebar && $sidebar !== $shaped['sidebar'] ) {
             $this->sidebar_widget_ids( $sidebar );
         }
 
         $params = array();
         if ( null !== $settings ) {
-            
-            
-            
-            
-            
-            
-            
             $merged             = array_merge( is_array( $shaped['settings'] ) ? $shaped['settings'] : (array) $shaped['settings'], $settings );
             $params['instance'] = $this->raw_instance( $merged );
         }
@@ -170,29 +127,10 @@ class Update_Widget extends Base_Tool {
         return $this->shape_widget( (array) $data, true );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function widget_changed( array $before, array $after, bool $has_instance ): bool {
         return $after['sidebar'] !== $before['sidebar']
             || ( $has_instance && self::comparable_settings( $after['settings'] ) !== self::comparable_settings( $before['settings'] ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function with_placement( string $widget_id, array $result, int $position, bool $changed ): array {
         $this->order_before = null;
@@ -202,8 +140,6 @@ class Update_Widget extends Base_Tool {
         } finally {
             $this->record_order = false;
         }
-        
-        
         if ( $placed['applied'] && $this->order_before !== $placed['sidebar_widgets'] ) {
             $changed = true;
         }
@@ -212,13 +148,6 @@ class Update_Widget extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
     protected function sidebar_widget_ids( string $sidebar_id ): array {
         $ids = $this->rest_sidebar_widget_ids( $sidebar_id );
         if ( $this->record_order && null === $this->order_before ) {
@@ -226,15 +155,6 @@ class Update_Widget extends Base_Tool {
         }
         return $ids;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function comparable_settings( $settings ) {
         if ( is_object( $settings ) ) {

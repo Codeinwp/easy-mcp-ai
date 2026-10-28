@@ -5,152 +5,35 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Device_Authorization {
-
-    
-
-
-
 
     const NAMESPACE_V1 = 'easy-mcp-ai/v1';
 
-    
-
-
-
-
-
     const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code';
-
-    
-
-
-
-
-
-
 
     const CODE_LIFETIME = 600;
 
-    
-
-
-
-
-
     const POLL_INTERVAL = 5;
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     const USER_CODE_ALPHABET = 'BCDFGHJKLMNPQRSTVWXZ';
 
-    
-
-
-
-
     const USER_CODE_LENGTH = 8;
 
-    
-
-
-
-
-
-
-
     const USER_CODE_ATTEMPTS = 5;
-
-    
-
-
 
     const STATUS_PENDING  = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_DENIED   = 'denied';
     const STATUS_CONSUMED = 'consumed';
 
-    
-
-
-
-
-
-
     const RATE_LIMIT_PER_HOUR        = 10;
     const GLOBAL_RATE_LIMIT_PER_HOUR = 100;
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function verification_uri() {
         return home_url( '?easy_mcp_ai_oauth=device' );
     }
 
-    
-
-
-
-
-
     public function handle_device_request( \WP_REST_Request $request ) {
-        
-        
         $transport_error = Token_Endpoint::enforce_transport_security();
         if ( null !== $transport_error ) {
             return $transport_error;
@@ -161,20 +44,11 @@ class Device_Authorization {
             return $rate_error;
         }
 
-        
-        
-        
         $query_error = Token_Endpoint::reject_query_credentials( $request, array( 'client_secret' ) );
         if ( null !== $query_error ) {
             return $query_error;
         }
 
-        
-        
-        
-        
-        
-        
         $basic     = Token_Endpoint::read_basic_credentials( $request );
         $client_id = Token_Endpoint::resolve_client_id( $request, $basic );
         if ( $client_id instanceof \WP_REST_Response ) {
@@ -184,8 +58,6 @@ class Device_Authorization {
             return self::device_error( 'invalid_request', __( 'Missing required parameter: client_id', 'easy-mcp-ai' ) );
         }
 
-        
-        
         $client = ( new Client_Registry() )->find_client( $client_id );
         if ( null === $client ) {
             return self::device_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
@@ -196,25 +68,14 @@ class Device_Authorization {
             return $auth_error;
         }
 
-        
-        
-        
-        
-        
         if ( ! self::client_supports_device_grant( $client ) ) {
             return self::device_error( 'unauthorized_client', __( 'This client is not registered for the device authorization grant. Register with grant_types including urn:ietf:params:oauth:grant-type:device_code.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
         $requested_scope = sanitize_text_field( $request->get_param( 'scope' ) );
-        if ( '' === $requested_scope ) {
-            $requested_scope = Scope_Map::get_default_scope();
-        }
-        $scope_list   = array_values( array_filter( array_map( 'trim', explode( ' ', $requested_scope ) ) ) );
-        $scope_list   = Scope_Map::apply_legacy_scope_upgrades( $scope_list );
-        $valid_scopes = Scope_Map::get_all_scopes();
+        $scope_list      = array_values( array_filter( array_map( 'trim', explode( ' ', $requested_scope ) ) ) );
+        $scope_list      = Scope_Map::apply_legacy_scope_upgrades( $scope_list );
+        $valid_scopes    = Scope_Map::get_all_scopes();
         foreach ( $scope_list as $s ) {
             if ( 'mcp' !== $s && ! in_array( $s, $valid_scopes, true ) ) {
                 return self::device_error( 'invalid_scope', __( 'Unknown scope requested.', 'easy-mcp-ai' ) );
@@ -222,9 +83,6 @@ class Device_Authorization {
         }
         $scope = implode( ' ', $scope_list );
 
-        
-        
-        
         $resource_raw = $request->get_param( 'resource' );
         $resource     = is_string( $resource_raw ) && '' !== $resource_raw
             ? esc_url_raw( $resource_raw )
@@ -249,9 +107,6 @@ class Device_Authorization {
             ),
             200
         );
-        
-        
-        
         $response->header( 'Content-Type', 'application/json' );
         $response->header( 'Cache-Control', 'no-store' );
         $response->header( 'Pragma', 'no-cache' );
@@ -260,12 +115,6 @@ class Device_Authorization {
         return $response;
     }
 
-    
-
-
-
-
-
     public static function client_supports_device_grant( $client ) {
         if ( ! is_object( $client ) || empty( $client->grant_types ) ) {
             return false;
@@ -273,16 +122,6 @@ class Device_Authorization {
         $grant_types = is_array( $client->grant_types ) ? $client->grant_types : json_decode( (string) $client->grant_types, true );
         return is_array( $grant_types ) && in_array( self::GRANT_TYPE, $grant_types, true );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public static function generate_user_code() {
         $alphabet = self::USER_CODE_ALPHABET;
@@ -294,12 +133,6 @@ class Device_Authorization {
         return $code;
     }
 
-    
-
-
-
-
-
     public static function format_user_code( $normalized ) {
         $normalized = (string) $normalized;
         if ( self::USER_CODE_LENGTH !== strlen( $normalized ) ) {
@@ -307,16 +140,6 @@ class Device_Authorization {
         }
         return substr( $normalized, 0, 4 ) . '-' . substr( $normalized, 4 );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function normalize_user_code( $raw ) {
         if ( ! is_scalar( $raw ) ) {
@@ -333,43 +156,14 @@ class Device_Authorization {
         return self::USER_CODE_LENGTH === strlen( $out ) ? $out : '';
     }
 
-    
-
-
-
-
-
     public static function hash_user_code( $normalized ) {
         return hash( 'sha256', 'user_code|' . $normalized );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public static function table() {
         global $wpdb;
         return $wpdb->prefix . 'easy_mcp_ai_oauth_device_codes';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function store_pending( $device_code, $client_id, $scope, $resource ) {
         global $wpdb;
@@ -403,7 +197,6 @@ class Device_Authorization {
                 return $user_code;
             }
 
-            
             if ( null === self::find_by_user_code( $user_code ) ) {
                 return null;
             }
@@ -411,13 +204,6 @@ class Device_Authorization {
 
         return null;
     }
-
-    
-
-
-
-
-
 
     public static function find_by_user_code( $normalized ) {
         global $wpdb;
@@ -433,12 +219,6 @@ class Device_Authorization {
         return is_object( $row ) ? $row : null;
     }
 
-    
-
-
-
-
-
     public static function find_by_device_code( $device_code ) {
         global $wpdb;
         if ( '' === (string) $device_code ) {
@@ -453,35 +233,9 @@ class Device_Authorization {
         return is_object( $row ) ? $row : null;
     }
 
-    
-
-
-
-
-
-
-
     public static function is_expired( $row ) {
         return empty( $row->expires_at ) || (string) $row->expires_at < gmdate( 'Y-m-d H:i:s' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function record_decision( $row_id, $approved, $wp_user_id, $scope = '', $consent_id = 0 ) {
         global $wpdb;
@@ -521,12 +275,6 @@ class Device_Authorization {
         return 1 === (int) $affected;
     }
 
-    
-
-
-
-
-
     public static function touch_polled( $row_id ) {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table write.
@@ -538,15 +286,6 @@ class Device_Authorization {
             array( '%d' )
         );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function claim_approved( $row_id ) {
         global $wpdb;
@@ -564,18 +303,6 @@ class Device_Authorization {
         return 1 === (int) $affected;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     public static function device_error( $error, $description, $status = 400 ) {
         $response = new \WP_REST_Response(
             array(
@@ -591,17 +318,6 @@ class Device_Authorization {
         }
         return $response;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function enforce_rate_limit() {
         $ip = \Easy_MCP_AI\Client_IP::get();

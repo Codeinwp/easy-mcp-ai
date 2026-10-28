@@ -7,14 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Update_Store_Settings extends Base_Tool {
 
     use Store_Setup;
@@ -96,22 +88,6 @@ class Update_Store_Settings extends Base_Tool {
         return $this->report( $group, $update, $before, $after, is_array( $reply ) && isset( $reply['update'] ) ? (array) $reply['update'] : array() );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function report( string $group, array $update, array $before, array $after, array $items ): array {
         $errors = array();
         foreach ( $items as $item ) {
@@ -172,13 +148,6 @@ class Update_Store_Settings extends Base_Tool {
         }
         return $result;
     }
-
-    
-
-
-
-
-
 
     private static function stored_value( array $setting ) {
         $value = $setting['value'] ?? null;

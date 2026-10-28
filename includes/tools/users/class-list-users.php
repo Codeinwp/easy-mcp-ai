@@ -10,27 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Users extends Base_Tool {
 
-    
-
-
-
-
-
     const QUERY_ORDERBY = array( 'login', 'post_count', 'meta_value', 'meta_value_num' );
 
-    
     const SEARCH_COLUMNS = array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename', 'display_name' );
 
-    
     const META_COMPARE = array( '=', '!=', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'EXISTS', 'NOT EXISTS', 'REGEXP', 'NOT REGEXP', 'RLIKE' );
 
-    
     const META_TYPE = array( 'NUMERIC', 'BINARY', 'CHAR', 'DATE', 'DATETIME', 'DECIMAL', 'SIGNED', 'TIME', 'UNSIGNED' );
-
-    
-
-
-
 
     const QUERY_LIST_VARS = array( 'role__not_in', 'capability', 'capability__not_in', 'login__in', 'login__not_in', 'nicename__in', 'nicename__not_in' );
 
@@ -194,13 +180,6 @@ class List_Users extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function rest_params( array $arguments ): array {
         $params = array(
             'context' => 'edit',
@@ -219,22 +198,9 @@ class List_Users extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function route_orderby_and_ids( array $arguments, array $params, array $query_vars ): array {
         if ( ! empty( $arguments['orderby'] ) ) {
             if ( in_array( $arguments['orderby'], self::QUERY_ORDERBY, true ) ) {
-                
-                
                 $params['orderby']     = 'id';
                 $query_vars['orderby'] = $arguments['orderby'];
             } else {
@@ -255,22 +221,12 @@ class List_Users extends Base_Tool {
         return array( $params, $query_vars );
     }
 
-    
-
-
-
-
-
-
-
     private static function dispatch( array $params, array $query_vars ): \WP_REST_Response {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/users' );
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
         }
 
-        
-        
         $filter = self::query_vars_filter( $request, $query_vars );
         if ( null !== $filter ) {
             add_filter( 'rest_user_query', $filter, 10, 2 );
@@ -284,14 +240,6 @@ class List_Users extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function query_vars_filter( \WP_REST_Request $request, array $query_vars ): ?\Closure {
         if ( empty( $query_vars ) ) {
             return null;
@@ -304,18 +252,8 @@ class List_Users extends Base_Tool {
         };
     }
 
-    
-
-
-
-
-
-
-
-
     private function empty_page_or_throw( \WP_REST_Response $response, array $params ): array {
         $error = $response->as_error();
-        
         if ( $this->is_invalid_page_error( $error ) ) {
             return array_merge(
                 array( 'users' => array() ),
@@ -325,15 +263,6 @@ class List_Users extends Base_Tool {
         throw new \RuntimeException( $error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
     private static function user_rows( array $users, bool $with_caps, string $tool ): array {
         $cap_key_base = self::cap_key();
         $result       = array();
@@ -342,15 +271,6 @@ class List_Users extends Base_Tool {
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function user_row( array $user, bool $with_caps, string $cap_key ): array {
         $row = array(
@@ -373,16 +293,6 @@ class List_Users extends Base_Tool {
         return $row;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function query_vars( array $arguments, array $params ): array {
         $vars = array_merge( self::list_vars( $arguments ), self::string_vars( $arguments ), $this->id_vars( $arguments ) );
         $vars = self::role_vars( $arguments, $vars );
@@ -395,12 +305,6 @@ class List_Users extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private static function list_vars( array $arguments ): array {
         $vars = array();
         foreach ( self::QUERY_LIST_VARS as $name ) {
@@ -410,13 +314,6 @@ class List_Users extends Base_Tool {
         }
         return $vars;
     }
-
-    
-
-
-
-
-
 
     private static function string_vars( array $arguments ): array {
         $vars = array();
@@ -430,13 +327,6 @@ class List_Users extends Base_Tool {
         }
         return $vars;
     }
-
-    
-
-
-
-
-
 
     private function id_vars( array $arguments ): array {
         $vars = array();
@@ -455,15 +345,6 @@ class List_Users extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function role_vars( array $arguments, array $vars ): array {
         if ( ! isset( $arguments['role'] ) || array() === $arguments['role'] ) {
             return $vars;
@@ -479,16 +360,6 @@ class List_Users extends Base_Tool {
         return self::no_role_vars( $vars );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function no_role_vars( array $vars ): array {
         $no_role = function_exists( 'wp_get_users_with_no_role' ) ? array_map( 'intval', (array) wp_get_users_with_no_role() ) : array();
         if ( empty( $no_role ) ) {
@@ -503,13 +374,6 @@ class List_Users extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
     private static function published_posts_vars( array $arguments ): array {
         if ( ! isset( $arguments['has_published_posts'] ) || array() === $arguments['has_published_posts'] ) {
             return array();
@@ -522,15 +386,6 @@ class List_Users extends Base_Tool {
         }
         return array( 'has_published_posts' => $types );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function search_vars( array $arguments, array $params ): array {
         $search_exact = ! empty( $arguments['search_exact'] ) && rest_sanitize_boolean( $arguments['search_exact'] );
@@ -548,13 +403,6 @@ class List_Users extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
     private static function search_columns( $value ): array {
         $columns = self::string_list( $value, 'search_columns' );
         $unknown = array_diff( $columns, self::SEARCH_COLUMNS );
@@ -563,15 +411,6 @@ class List_Users extends Base_Tool {
         }
         return array_values( array_unique( $columns ) );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function network_vars( array $arguments ): array {
         if ( empty( $arguments['network'] ) || ! rest_sanitize_boolean( $arguments['network'] ) ) {
@@ -587,16 +426,6 @@ class List_Users extends Base_Tool {
         return array( 'blog_id' => 0 );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_site_only_filters( array $arguments ): void {
         $site_only = array();
         foreach ( array( 'roles', 'role', 'role__not_in', 'capability', 'capability__not_in', 'has_published_posts' ) as $name ) {
@@ -609,16 +438,6 @@ class List_Users extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function meta_vars( array $arguments ): array {
         $has_key = isset( $arguments['meta_key'] ) && '' !== $arguments['meta_key'];
         if ( ! $has_key ) {
@@ -628,14 +447,6 @@ class List_Users extends Base_Tool {
         $key = self::meta_key_argument( $arguments['meta_key'] );
         return array_merge( array( 'meta_key' => $key ), $this->meta_clause_vars( $arguments ) );
     }
-
-    
-
-
-
-
-
-
 
     private static function refuse_meta_arguments_without_key( array $arguments ): void {
         $dependent = array();
@@ -652,23 +463,10 @@ class List_Users extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function meta_key_argument( $key ): string {
         if ( ! is_string( $key ) ) {
             throw new \InvalidArgumentException( 'meta_key must be a string.' );
         }
-        
-        
-        
-        
-        
         if ( '0' === $key ) {
             throw new \InvalidArgumentException( 'Invalid meta_key "0": WordPress drops a meta key of "0" and would compare the value with every user meta key.' );
         }
@@ -680,14 +478,6 @@ class List_Users extends Base_Tool {
         }
         return $key;
     }
-
-    
-
-
-
-
-
-
 
     private function meta_clause_vars( array $arguments ): array {
         $vars = array();
@@ -710,14 +500,6 @@ class List_Users extends Base_Tool {
         return $vars;
     }
 
-    
-
-
-
-
-
-
-
     private static function string_list( $value, string $name ): array {
         if ( ! is_array( $value ) ) {
             throw new \InvalidArgumentException( sprintf( '%s must be an array of strings.', $name ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -731,11 +513,6 @@ class List_Users extends Base_Tool {
         }
         return array_values( array_unique( $out ) );
     }
-
-    
-
-
-
 
     private static function cap_key(): string {
         global $wpdb;

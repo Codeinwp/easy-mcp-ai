@@ -1,18 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Admin_Page;
@@ -31,21 +18,13 @@ class Settings_Controller extends Admin_Rest_Controller {
 
     const SECTIONS = array( 'access', 'logging', 'usage', 'advanced', 'capture' );
 
-    
     const LOGGER_FLAG_OPTION = 'easy_mcp_ai_logger_flag';
 
-    
     const ASKED_OPTION = 'easy_mcp_ai_usage_consent_asked';
-
-    
-
-
 
     const FIELDS = array(
         'access'   => array(
             'oauthMinCapability'  => 'oauth_min_capability',
-            
-            
             'connectRoles'        => 'connect_roles',
             'forceDraftOnCreate'  => 'force_draft_on_create',
             'selfServiceKeys'     => 'self_service_keys',
@@ -61,7 +40,6 @@ class Settings_Controller extends Admin_Rest_Controller {
         ),
         'usage'    => array(
             'shareUsageData'  => 'logger_flag',
-            
             'dismissUsageAsk' => 'usage_consent_asked',
         ),
         'advanced' => array(
@@ -81,12 +59,7 @@ class Settings_Controller extends Admin_Rest_Controller {
         ),
     );
 
-    
     private $tool_registry;
-
-    
-
-
 
     public function __construct( $tool_registry = null ) {
         $this->tool_registry = $tool_registry;
@@ -119,12 +92,6 @@ class Settings_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
     public function patch_paused( $request ) {
         $raw = $request->get_param( 'paused' );
         if ( ! is_bool( $raw ) && ! in_array( $raw, array( 0, 1, '0', '1', 'true', 'false' ), true ) ) {
@@ -145,24 +112,9 @@ class Settings_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'paused' => true === Config::get( 'paused' ) ) );
     }
 
-    
-
-    
-
-
-
-
-
     public function get_settings( $request ) {
         return $this->ok( $this->payload() );
     }
-
-    
-
-
-
-
-
 
     public function payload() {
         $patterns = (array) Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() );
@@ -172,12 +124,9 @@ class Settings_Controller extends Admin_Rest_Controller {
         $sections = array(
             'access'   => array(
                 'oauthMinCapability'  => Connect_Policy::stored_floor(),
-                
                 'connectRoles'        => Connect_Policy::ticked_roles(),
                 'forceDraftOnCreate'  => (bool) Config::get( 'easy_mcp_ai_force_draft_on_create', false ),
                 'selfServiceKeys'     => true === Config::get( 'self_service_keys' ),
-                
-                
                 'approvalRequired'    => true === Config::get( 'approval_required' ),
                 'approvalAlways'      => array_values( (array) Config::get( 'approval_always' ) ),
                 'approvalNever'       => array_values( (array) Config::get( 'approval_never' ) ),
@@ -195,9 +144,6 @@ class Settings_Controller extends Admin_Rest_Controller {
                 'rateLimitPerMinute'        => self::rate_limit(),
                 'externalDataMinCapability' => Admin_Page::sanitize_external_data_min_capability( Config::get( 'easy_mcp_ai_external_data_min_capability', 'manage_options' ) ),
                 'maxTitleLength'            => max( 0, (int) Config::get( 'easy_mcp_ai_max_title_length', 0 ) ),
-                
-                
-                
                 'disabledTools'             => array_values( array_filter( $grid, static function ( $name ) use ( $defaults ) {
                     return Tool_State::stored_off( $name, $defaults[ $name ] );
                 } ) ),
@@ -221,7 +167,6 @@ class Settings_Controller extends Admin_Rest_Controller {
                 }
             }
         }
-        
         if ( ! isset( $locked['connectRoles'] ) && isset( $locked['oauthMinCapability'] ) ) {
             $locked['connectRoles'] = $locked['oauthMinCapability'];
         }
@@ -232,39 +177,22 @@ class Settings_Controller extends Admin_Rest_Controller {
             'choices'    => array(
                 'oauthCapabilities'        => self::capability_choices( Admin_Page::oauth_min_capability_choices() ),
                 'connectRoles'             => Connect_Policy::role_choices(),
-                
-                
                 'connectRolesFiltered'     => Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_OAUTH ),
                 'externalDataCapabilities' => self::capability_choices( Admin_Page::external_data_min_capability_choices() ),
                 'optionModes'              => array(
                     array( 'value' => 'all_except_denylist', 'label' => \__( 'All options except churn (recommended)', 'easy-mcp-ai' ) ),
                     array( 'value' => 'allowlist', 'label' => \__( 'Allowlist only (legacy)', 'easy-mcp-ai' ) ),
                 ),
-                
-                
                 'destructiveTools'         => $grid,
-                
-                
-                
                 'toolOverrides'            => (object) array_intersect_key( Tool_State::overrides(), array_flip( $grid ) ),
                 'toolOverridesSource'      => Tool_State::override_source(),
                 'toolOverridesStrict'      => Tool_State::is_strict(),
-                
-                
-                
                 'approvalDefaultTools'     => $this->approval_default_tools(),
             ),
             'tools'      => $this->tool_counts( $patterns ),
             'controlled' => self::controlled(),
         );
     }
-
-    
-
-
-
-
-
 
     private static function controlled() {
         $invalid = \Easy_MCP_AI\Config_Admin::invalid_settings();
@@ -279,13 +207,7 @@ class Settings_Controller extends Admin_Rest_Controller {
         return $list;
     }
 
-    
-
-
-
-
     private function approval_default_tools() {
-        
         if ( ! $this->tool_registry instanceof \Easy_MCP_AI\Tools\Tool_Registry ) {
             return array();
         }
@@ -295,19 +217,16 @@ class Settings_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
     private static function audit_retention() {
         $stored = Config::get( 'easy_mcp_ai_audit_log_retention', 30 );
         return is_numeric( $stored ) ? max( 1, (int) $stored ) : 30;
     }
 
-    
     private static function rate_limit() {
         $stored = (int) Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
         return $stored < 1 ? 60 : $stored;
     }
 
-    
     private static function capability_choices( array $choices ) {
         $list = array();
         foreach ( $choices as $cap => $label ) {
@@ -315,14 +234,6 @@ class Settings_Controller extends Admin_Rest_Controller {
         }
         return $list;
     }
-
-    
-
-
-
-
-
-
 
     private function tool_counts( array $patterns ) {
         $names = array();
@@ -335,28 +246,11 @@ class Settings_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
-
     public static function matching_tools( array $names, array $patterns ) {
         return array_values( array_filter( $names, static function ( $name ) use ( $patterns ) {
             return \Easy_MCP_AI\MCP\Server::matches_tool_patterns( $name, $patterns );
         } ) );
     }
-
-
-    
-
-    
-
-
-
-
-
 
     public function patch_section( $request ) {
         $section = (string) $request->get_param( 'section' );
@@ -394,8 +288,6 @@ class Settings_Controller extends Admin_Rest_Controller {
             } elseif ( 'disabled_tools' === $suffix ) {
                 $this->write_disabled_tools( $value );
             } elseif ( 'connect_roles' === $suffix ) {
-                
-                
                 Config::update( Connect_Policy::FLOOR_OPTION, $value[0] );
                 Config::update( 'easy_mcp_ai_connect_roles', $value[1] );
             } else {
@@ -405,33 +297,15 @@ class Settings_Controller extends Admin_Rest_Controller {
         return $this->ok( $this->payload() );
     }
 
-    
     private static function is_sdk_field( $suffix ) {
         return in_array( $suffix, array( 'logger_flag', 'usage_consent_asked' ), true );
     }
-
-    
-
-
-
 
     public static function usage_ask(): bool {
         return 'yes' !== \get_option( self::LOGGER_FLAG_OPTION, 'no' )
             && ! \get_option( self::ASKED_OPTION, false )
             && ! Config::is_white_labelled();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function connect_roles( $raw ) {
         $field = 'connectRoles';
@@ -454,31 +328,15 @@ class Settings_Controller extends Admin_Rest_Controller {
             }
         }
         $split = Connect_Policy::split_ticks( array_values( array_unique( $raw ) ) );
-        
-        
         if ( Connect_Policy::filter_overrides( $split[0] ) ) {
             return $this->locked( $field, self::filter_decides() );
         }
         return $split;
     }
 
-    
-
-
-
-
-
-
     private function locked( string $field, string $message ): \WP_Error {
         return $this->fail( 'easy_mcp_ai_setting_locked', $message, 409, array( 'field' => $field ) );
     }
-
-    
-
-
-
-
-
 
     private function deployed( string $field, string $suffix ): \WP_Error {
         return $this->locked(
@@ -491,20 +349,9 @@ class Settings_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
     private static function filter_decides(): string {
         return \__( 'Who can connect is set in code by the easy_mcp_ai_oauth_min_capability filter and cannot be changed here.', 'easy-mcp-ai' );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function validate_field( $field, $raw ) {
         switch ( $field ) {
@@ -592,7 +439,6 @@ class Settings_Controller extends Admin_Rest_Controller {
                             )
                         );
                     }
-                    
                     if ( 'allowedToolPatterns' !== $field && ! Settings_Validator::is_valid_approval_entry( $pattern ) ) {
                         return $this->invalid(
                             $field,
@@ -604,8 +450,6 @@ class Settings_Controller extends Admin_Rest_Controller {
                         );
                     }
                 }
-                
-                
                 return 'allowedToolPatterns' === $field ? $patterns : array_values( array_unique( $patterns ) );
 
             case 'ipWhitelist':
@@ -628,13 +472,6 @@ class Settings_Controller extends Admin_Rest_Controller {
         return $this->invalid( $field, \__( 'Unknown field.', 'easy-mcp-ai' ) );
     }
 
-    
-
-
-
-
-
-
     private function integer( $field, $raw, $min, $max ) {
         $value = Settings_Validator::integer_in_range( $raw, $min, $max );
         if ( null === $value ) {
@@ -655,30 +492,10 @@ class Settings_Controller extends Admin_Rest_Controller {
         return $this->fail( 'easy_mcp_ai_invalid_setting', $message, 400, array( 'field' => $field ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private function write_disabled_tools( array $submitted ) {
         $grid = $this->grid();
         Tool_Catalogue::store_choices( $grid, $submitted, Tool_Catalogue::defaults_of( $this->tool_registry, $grid ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function grid(): array {
         $grid = Settings_Validator::destructive_tools();

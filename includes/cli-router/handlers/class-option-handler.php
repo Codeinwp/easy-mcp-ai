@@ -14,58 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Option_Handler extends Command_Handler {
 
-    
     const ROW_CAP = 1000;
 
     const MASK = '[REDACTED]';
 
-    
-
-
-
-
     const CREDENTIAL_COMPOUNDS = array( 'purchasecode', 'licensecode', 'licencecode', 'connectionstring' );
-
-    
-
-
-
-
 
     const SITE_SETTINGS = array(
         'blogname'        => 'title',
@@ -77,15 +32,7 @@ class Option_Handler extends Command_Handler {
         'WPLANG'          => 'language',
     );
 
-    
     const UNTRAILING = array( 'siteurl', 'home', 'category_base', 'tag_base' );
-
-    
-
-
-
-
-
 
     const SETTINGS_SCREENS = array(
         'general'    => array( 'blogname', 'blogdescription', 'site_icon', 'gmt_offset', 'date_format', 'time_format', 'start_of_week', 'timezone_string', 'WPLANG', 'new_admin_email' ),
@@ -107,36 +54,27 @@ class Option_Handler extends Command_Handler {
     const NOTE_NO_PATH  = "WP-CLI exits 1 without output here: the option '%s' has no value at that key path.";
     const AUTOLOAD_NOT_WRITTEN = "The autoload value of '%s' option was not written: no row was updated (the option was deleted meanwhile, or the database refused the write).";
 
-    
     const NOT_RECORDED = "Option '%s': change history does not record this option under the site's capture settings.";
     const RAW_SQL      = 'Raw SQL: change history records this database write only while database capture is on.';
 
-    
-    
-    
-
-    
     public function preflight_read( Invocation $inv, Context $ctx ): void {
         $key = (string) $this->arg( $inv, 0 );
         $this->guard( $key, false, $ctx );
         $this->guard_network( $key, $ctx );
     }
 
-    
     public function preflight_write( Invocation $inv, Context $ctx ): void {
         $key = (string) $this->arg( $inv, 0 );
         $this->guard( $key, true, $ctx );
         $this->guard_network( $key, $ctx );
     }
 
-    
     public function preflight_patch( Invocation $inv, Context $ctx ): void {
         $key = (string) $this->arg( $inv, 1 );
         $this->guard( $key, true, $ctx );
         $this->guard_network( $key, $ctx );
     }
 
-    
     public function preflight_keys( Invocation $inv, Context $ctx ): void {
         $keys = 'option delete' === $inv->command ? array_values( $inv->args ) : array( $this->arg( $inv, 0 ) );
         foreach ( $keys as $key ) {
@@ -144,11 +82,6 @@ class Option_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $key = (string) $this->arg( $inv, 0 );
         $this->guard( $key, false, $ctx );
@@ -166,7 +99,6 @@ class Option_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
     public function add( Invocation $inv, Context $ctx ): void {
         $args = $inv->args;
         $key  = (string) $this->arg( $inv, 0 );
@@ -190,7 +122,6 @@ class Option_Handler extends Command_Handler {
         }
     }
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $args = $inv->args;
         $key  = (string) $this->arg( $inv, 0 );
@@ -205,7 +136,6 @@ class Option_Handler extends Command_Handler {
         }
 
         $value = $this->sanitize_option( $key, $value );
-        
         if ( in_array( $key, self::UNTRAILING, true ) && is_string( $value ) ) {
             $value = rtrim( $value, '/\\' );
         }
@@ -222,7 +152,6 @@ class Option_Handler extends Command_Handler {
         }
     }
 
-    
     public function patch( Invocation $inv, Context $ctx ): void {
         $args   = array_values( $inv->args );
         $action = (string) $args[0];
@@ -233,8 +162,6 @@ class Option_Handler extends Command_Handler {
         if ( 'delete' === $action ) {
             $patch_value = null;
         } else {
-            
-            
             if ( count( $key_path ) > 1 ) {
                 $patch_value = Read_Value::read( $ctx->out, array_pop( $key_path ), $inv->assoc );
             } else {
@@ -245,7 +172,6 @@ class Option_Handler extends Command_Handler {
             }
         }
 
-        
         $old_value     = $this->sanitize_option( $key, $this->get_option( $key ) );
         $current_value = $old_value;
         if ( is_object( $current_value ) ) {
@@ -272,7 +198,6 @@ class Option_Handler extends Command_Handler {
         }
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $missing = array();
         foreach ( array_values( $inv->args ) as $arg ) {
@@ -297,7 +222,6 @@ class Option_Handler extends Command_Handler {
         }
     }
 
-    
     public function get_autoload( Invocation $inv, Context $ctx ): void {
         $option = (string) $this->arg( $inv, 0 );
         $this->guard( $option, false, $ctx );
@@ -315,7 +239,6 @@ class Option_Handler extends Command_Handler {
         $ctx->out->log( (string) $existing->autoload );
     }
 
-    
     public function set_autoload( Invocation $inv, Context $ctx ): void {
         $option   = (string) $this->arg( $inv, 0 );
         $autoload = (string) $this->arg( $inv, 1 );
@@ -343,7 +266,6 @@ class Option_Handler extends Command_Handler {
             array( 'option_name' => $option )
         );
 
-        
         $notoptions = $this->cache_get( 'notoptions', 'options' );
         if ( is_array( $notoptions ) && isset( $notoptions[ $option ] ) ) {
             unset( $notoptions[ $option ] );
@@ -368,7 +290,6 @@ class Option_Handler extends Command_Handler {
         $ctx->out->success( "Updated autoload value for '{$option}' option." );
     }
 
-    
     public function pluck( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
         $key  = (string) $args[0];
@@ -397,11 +318,6 @@ class Option_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
-
-
-
-
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args  = $inv->assoc;
         $db          = $this->db();
@@ -413,7 +329,6 @@ class Option_Handler extends Command_Handler {
         $results = $this->list_rows( $db, $table, $where, $assoc_args, $ctx );
 
         if ( $total_bytes ) {
-            
             $sum = null;
             foreach ( $results as $v ) {
                 $sum = (int) $sum + (int) $v->size_bytes;
@@ -426,19 +341,6 @@ class Option_Handler extends Command_Handler {
         $formatter = $this->formatter( $ctx, $assoc_args, $fields );
         $formatter->display_items( $results );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     private function list_where( object $db, array $assoc_args, Context $ctx ): string {
         $pattern = '%';
@@ -456,9 +358,7 @@ class Option_Handler extends Command_Handler {
 
         $autoload_query = isset( $assoc_args['autoload'] ) ? self::autoload_clause( $assoc_args['autoload'], $ctx ) : '';
 
-        
         if ( Read_Value::flag( $assoc_args, 'transients', false ) ) {
-            
             $transients_query = " AND (option_name LIKE '\_transient\_%' OR option_name LIKE '\_site\_transient\_%')";
         } else {
             $transients_query = " AND option_name NOT LIKE '\_transient\_%' AND option_name NOT LIKE '\_site\_transient\_%'";
@@ -475,25 +375,11 @@ class Option_Handler extends Command_Handler {
         return $where . $autoload_query . $transients_query;
     }
 
-    
-
-
-
-
-
     public static function like_pattern( object $db, string $value ): string {
         $pattern = self::esc_like( $db, $value );
-        
         $pattern = str_replace( '*', '%', $pattern );
         return str_replace( '?', '_', $pattern );
     }
-
-    
-
-
-
-
-
 
     private static function autoload_clause( $autoload, Context $ctx ): string {
         if ( 'on' === $autoload || 'yes' === $autoload ) {
@@ -506,14 +392,6 @@ class Option_Handler extends Command_Handler {
         return '';
     }
 
-    
-
-
-
-
-
-
-
     private function check_list_names( object $db, string $table, string $where, array $assoc_args, Context $ctx ): void {
         $names                  = (array) $db->get_col( "SELECT `option_name` FROM {$table} {$where}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- every value in $where went through prepare(); the table name is quoted by ident().
         list( $kept, $omitted ) = self::count_kept( $names );
@@ -525,15 +403,6 @@ class Option_Handler extends Command_Handler {
             $ctx->out->warning( self::omitted_warning( $omitted, 'option', 'options' ) );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function list_rows( object $db, string $table, string $where, array $assoc_args, Context $ctx ): array {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- every value in $where went through prepare(); the table name is quoted by ident().
@@ -564,28 +433,14 @@ class Option_Handler extends Command_Handler {
         return $results;
     }
 
-    
-
-
-
-
-
-
-
     private static function order_rows( array &$results, $orderby, $order ): void {
-        
         if ( 'option_id' !== $orderby ) {
             self::sort_rows( $results, (string) $orderby, (string) $order );
-        } elseif ( 'option_id' === $orderby && 'desc' === $order ) { 
+        } elseif ( 'option_id' === $orderby && 'desc' === $order ) {
             krsort( $results );
         }
     }
 
-    
-    
-    
-
-    
     public function describe_add( Invocation $inv ): array {
         $key      = (string) $this->arg( $inv, 0 );
         $new      = self::described_value( $inv, $this->arg( $inv, 1 ) );
@@ -597,7 +452,6 @@ class Option_Handler extends Command_Handler {
         return array( sprintf( "Option '%s': (not set) → add %s (autoload %s)", $key, self::preview( $key, $new ), $autoload ) );
     }
 
-    
     public function describe_update( Invocation $inv ): array {
         $key      = (string) $this->arg( $inv, 0 );
         $new      = self::described_value( $inv, $this->arg( $inv, 1 ) );
@@ -610,7 +464,6 @@ class Option_Handler extends Command_Handler {
         return array( $line );
     }
 
-    
     public function describe_patch( Invocation $inv ): array {
         $args   = array_values( $inv->args );
         $action = (string) $args[0];
@@ -626,7 +479,6 @@ class Option_Handler extends Command_Handler {
         return array( sprintf( "Option '%s': %s → %s", $key, false === $current ? '(not set)' : self::preview( $key, $current ), $effect ) );
     }
 
-    
     public function describe_delete( Invocation $inv ): array {
         $lines = array();
         foreach ( array_values( $inv->args ) as $key ) {
@@ -639,7 +491,6 @@ class Option_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     public function describe_set_autoload( Invocation $inv ): array {
         $option   = (string) $this->arg( $inv, 0 );
         $autoload = (string) $this->arg( $inv, 1 );
@@ -656,26 +507,9 @@ class Option_Handler extends Command_Handler {
         return array( sprintf( "Option '%s': autoload '%s' → '%s'", $option, (string) $previous->autoload, $autoload ) );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     public function is_site_setting( Invocation $inv ): bool {
         return 'option update' === $inv->command && null !== self::site_setting_argument( (string) $this->arg( $inv, 0 ) );
     }
-
-    
-
-
-
 
     public static function site_setting_argument( string $key ): ?string {
         $lc = strtolower( trim( $key ) );
@@ -687,12 +521,6 @@ class Option_Handler extends Command_Handler {
         return null;
     }
 
-    
-
-
-
-
-
     public static function key_is_secret( string $key ): bool {
         if ( class_exists( '\\Easy_MCP_AI\\Text_Redactor' ) && preg_match( \Easy_MCP_AI\Text_Redactor::SENSITIVE_KEY_PATTERN, $key ) ) {
             return true;
@@ -702,21 +530,6 @@ class Option_Handler extends Command_Handler {
         }
         return self::names_credential( $key );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function names_credential( string $key ): bool {
         $flat = (string) preg_replace( '/[^a-z0-9]+/', '', strtolower( $key ) );
@@ -730,15 +543,6 @@ class Option_Handler extends Command_Handler {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function omission( string $name, bool $write ): ?string {
         if ( null === Self_Protection::option( $name, $write ) ) {
@@ -764,14 +568,6 @@ class Option_Handler extends Command_Handler {
         return 'plugin';
     }
 
-    
-
-
-
-
-
-
-
     public static function count_kept( array $names ): array {
         $omitted = array();
         $kept    = 0;
@@ -786,21 +582,10 @@ class Option_Handler extends Command_Handler {
         return array( $kept, $omitted );
     }
 
-    
-
-
-
-
-
     public static function omitted_warning( array $omitted, string $noun, string $nouns ): string {
         $total = array_sum( $omitted );
         return sprintf( self::OMITTED, $total, 1 === $total ? $noun : $nouns, self::omission_summary( $omitted ) );
     }
-
-    
-
-
-
 
     public static function omission_summary( array $omitted ): string {
         $labels = array(
@@ -818,12 +603,6 @@ class Option_Handler extends Command_Handler {
         return implode( '; ', $parts );
     }
 
-    
-
-
-
-
-
     public static function preview( string $key, $value ): string {
         if ( self::key_is_secret( $key ) ) {
             return self::MASK;
@@ -832,11 +611,6 @@ class Option_Handler extends Command_Handler {
         return strlen( $text ) > 120 ? Envelope::cut( $text, 117 ) . '...' : $text;
     }
 
-    
-
-
-
-
     public static function esc_like( object $db, string $text ): string {
         if ( method_exists( $db, 'esc_like' ) ) {
             return (string) $db->esc_like( $text );
@@ -844,26 +618,18 @@ class Option_Handler extends Command_Handler {
         return addcslashes( $text, '_%\\' );
     }
 
-    
     public static function ident( string $name ): string {
         return '`' . str_replace( '`', '``', $name ) . '`';
     }
 
-    
-    
-    
-
-    
     protected function get_option( string $key ) {
         return \get_option( $key );
     }
 
-    
     protected function add_option( string $key, $value, string $autoload ): bool {
         return (bool) \add_option( $key, $value, '', $autoload );
     }
 
-    
     protected function update_option( string $key, $value, ?string $autoload ): bool {
         return (bool) \update_option( $key, $value, $autoload );
     }
@@ -872,50 +638,30 @@ class Option_Handler extends Command_Handler {
         return (bool) \delete_option( $key );
     }
 
-    
-
-
-
     protected function sanitize_option( string $key, $value ) {
         return \sanitize_option( $key, $value );
     }
 
-    
     protected function db(): object {
         global $wpdb;
         return $wpdb;
     }
 
-    
     protected function cache_get( string $key, string $group ) {
         return \wp_cache_get( $key, $group );
     }
 
-    
     protected function cache_set( string $key, $value, string $group ): void {
         \wp_cache_set( $key, $value, $group );
     }
 
-    
     protected function load_alloptions(): array {
         return (array) \wp_load_alloptions( true );
     }
 
-    
-
-
-
     protected function maybe_unserialize( $value ) {
         return \maybe_unserialize( $value );
     }
-
-    
-
-
-
-
-
-
 
     protected function settings_screen_options(): array {
         $allowed = self::SETTINGS_SCREENS;
@@ -946,31 +692,16 @@ class Option_Handler extends Command_Handler {
         return array_values( array_unique( $names ) );
     }
 
-    
-
-
-
-
     protected function registered_setting_names(): array {
         return function_exists( 'get_registered_settings' ) ? array_map( 'strval', array_keys( (array) \get_registered_settings() ) ) : array();
     }
 
-    
     protected function option_is_recordable( string $name ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Recorder' ) ) {
             return true;
         }
         return \Easy_MCP_AI\History\Change_Recorder::option_is_recordable( trim( $name ) );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     private function guard( string $key, bool $write, Context $ctx ): void {
         $refusal = Self_Protection::option( $key, $write );
@@ -985,12 +716,6 @@ class Option_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private function guard_network( string $key, Context $ctx ): void {
         if ( ! \is_multisite() ) {
             return;
@@ -1004,24 +729,16 @@ class Option_Handler extends Command_Handler {
         $ctx->out->error( sprintf( self::NOT_REGISTERED, $key ) );
     }
 
-    
     private function note_recording( string $key, Context $ctx ): void {
         if ( ! $this->option_is_recordable( $key ) ) {
             $ctx->not_captured( sprintf( self::NOT_RECORDED, trim( $key ) ) );
         }
     }
 
-    
     private function arg( Invocation $inv, int $index ): string {
         $args = array_values( $inv->args );
         return isset( $args[ $index ] ) ? $args[ $index ] : '';
     }
-
-    
-
-
-
-
 
     private static function described_value( Invocation $inv, string $raw ) {
         if ( 'json' === Read_Value::flag( $inv->assoc, 'format' ) ) {
@@ -1031,7 +748,6 @@ class Option_Handler extends Command_Handler {
         return $raw;
     }
 
-    
     private static function quoted_list( array $names ): string {
         $quoted = array();
         foreach ( $names as $name ) {
@@ -1039,15 +755,6 @@ class Option_Handler extends Command_Handler {
         }
         return implode( ', ', $quoted );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function sort_rows( array &$rows, string $orderby, string $order ): void {
         if ( PHP_VERSION_ID >= 80000 ) {
@@ -1067,7 +774,6 @@ class Option_Handler extends Command_Handler {
         );
     }
 
-    
     private static function compare_rows( object $a, object $b, string $orderby, string $order ): int {
         $x = isset( $a->$orderby ) ? $a->$orderby : null;
         $y = isset( $b->$orderby ) ? $b->$orderby : null;
@@ -1077,11 +783,9 @@ class Option_Handler extends Command_Handler {
         return $x < $y ? 1 : ( $y < $x ? -1 : 0 );
     }
 
-    
     private static function compare_rows_as_bool( object $a, object $b, string $orderby, string $order ): bool {
         $x = isset( $a->$orderby ) ? $a->$orderby : null;
         $y = isset( $b->$orderby ) ? $b->$orderby : null;
-        
         return 'asc' === $order
             ? $x > $y
             : $x < $y;

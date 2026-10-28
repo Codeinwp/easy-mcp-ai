@@ -7,15 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
-
-
-
-
 class Rankmath_Create_Redirect extends Base_Tool {
 
 	use Rank_Math_Redirects;
@@ -123,8 +114,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 		}
 
 		if ( null !== $object ) {
-			
-			
 			$model->set_nocache( true );
 		}
 		$id = (int) $model->save();
@@ -152,15 +141,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
-
-
-
 	private function linked_object( array $arguments ): ?array {
 		$given = array_keys(
 			array_filter(
@@ -186,10 +166,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 		return null;
 	}
 
-	
-
-
-
 	private function post_object( int $post_id ): array {
 		$post = get_post( $post_id );
 		if ( ! $post ) {
@@ -198,8 +174,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( sprintf( 'This account cannot edit post %d, so it cannot redirect it.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
-		
-		
 		if ( 'publish' !== $post->post_status ) {
 			throw new \InvalidArgumentException( sprintf( 'Post %1$d is not published (status "%2$s"), so it has no public URL to redirect. Give its address in sources instead.', $post_id, $post->post_status ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
@@ -213,10 +187,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 			'url'  => $url,
 		);
 	}
-
-	
-
-
 
 	private function term_object( int $term_id ): array {
 		$term = get_term( $term_id );
@@ -237,18 +207,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
-
 	private function refuse_linked_object( array $object ): void {
 		$link = \RankMath\Redirections\Cache::get_by_object_id( $object['id'], $object['type'] );
 		$row  = is_object( $link ) && isset( $link->redirection_id ) ? $this->find_redirect( (int) $link->redirection_id ) : null;
@@ -256,14 +214,6 @@ class Rankmath_Create_Redirect extends Base_Tool {
 			throw new \InvalidArgumentException( sprintf( 'This %1$s is already linked to redirect %2$d (status "%3$s"); Rank Math\'s Redirect field reads only that link, so it would never show a new one. Change that one with wp_rm_update_redirect (status "active" restores it from the trash), or delete it with wp_rm_delete_redirects and force: true first.', $object['type'], (int) $row['id'], (string) $row['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
-
-	
-
-
-
-
-
-
 
 	private function refuse_taken_sources( \RankMath\Redirections\Redirection $model ): void {
 		$match = \RankMath\Redirections\DB::match_redirections_source( maybe_serialize( $model->sources ) );

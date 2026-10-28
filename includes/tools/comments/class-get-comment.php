@@ -22,8 +22,6 @@ class Get_Comment extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'moderate_comments';
     }
 
@@ -57,29 +55,6 @@ class Get_Comment extends Base_Tool {
 
         return self::format( $data );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function format( array $data ): array {
         $out = array(

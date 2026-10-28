@@ -21,7 +21,6 @@ class Get_Revision extends Base_Tool {
         return 'revisions';
     }
 
-    
     public function get_required_capability() {
         return 'read';
     }

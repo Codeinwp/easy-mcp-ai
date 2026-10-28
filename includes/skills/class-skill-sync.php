@@ -1,33 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 use Easy_MCP_AI\Config;
@@ -40,45 +12,27 @@ final class Skill_Sync {
 
     const HOOK = 'easy_mcp_ai_skills_sync';
 
-    
     const OPTION_RELEASE = 'easy_mcp_ai_skills_release';
 
-    
     const OPTION_STATE = 'easy_mcp_ai_skills_state';
 
     const BASE_URL = 'https://skills.easymcpai.com';
 
-    
     const BASE_URL_FILTER = 'easy_mcp_ai_skills_base_url';
 
     const TIMEOUT = 10;
 
-    
-
-
-
-
-
     const MIN_INTERVAL = 72000;
 
-    
     public static function enabled(): bool {
         return true === Config::get( 'skills_sync' ) && null === Local_Skills::directory();
     }
-
-    
-
-
-
-
-
 
     public static function arm(): bool {
         if ( ! self::enabled() ) {
             return false;
         }
         if ( empty( self::state()['armed_at'] ) ) {
-            
             $state             = self::state( true );
             $state['armed_at'] = time();
             self::write( self::OPTION_STATE, $state, true );
@@ -89,19 +43,11 @@ final class Skill_Sync {
         return true;
     }
 
-    
-
-
-
-
-
     public static function run(): string {
         $state = self::state( true );
         if ( ! self::enabled() ) {
             return self::finish( 'disabled' );
         }
-        
-        
         if ( isset( $state['last_check'] ) && time() - $state['last_check'] < self::MIN_INTERVAL ) {
             return 'recent';
         }
@@ -145,15 +91,6 @@ final class Skill_Sync {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function store( array $release, int $serial, array $result ): string {
         $latest = self::state( true );
         if ( isset( $latest['serial'] ) && $latest['serial'] >= $serial ) {
@@ -171,10 +108,6 @@ final class Skill_Sync {
             'revoked'            => $result['revoked'],
         );
         self::write( self::OPTION_RELEASE, $release, false );
-        
-        
-        
-        
         if ( self::read( self::OPTION_RELEASE, true ) !== $release ) {
             return self::finish( 'store_failed', array(), $revocations );
         }
@@ -189,22 +122,10 @@ final class Skill_Sync {
         );
     }
 
-    
-
-
-
-
     public static function is_revoked( string $public_key ): bool {
         $state = self::state();
         return isset( $state['revoked'] ) && in_array( $public_key, $state['revoked'], true );
     }
-
-    
-
-
-
-
-
 
     public static function state( bool $fresh = false ): array {
         $raw   = self::read( self::OPTION_STATE, $fresh );
@@ -222,13 +143,6 @@ final class Skill_Sync {
         return $state;
     }
 
-    
-
-
-
-
-
-
     public static function stored(): ?array {
         $raw = self::read( self::OPTION_RELEASE );
         if ( ! is_array( $raw ) || ! isset( $raw['sig'], $raw['body'] ) || ! is_string( $raw['sig'] ) || ! is_string( $raw['body'] ) ) {
@@ -244,7 +158,6 @@ final class Skill_Sync {
         );
     }
 
-    
     public static function base_url(): string {
         $url = \apply_filters( self::BASE_URL_FILTER, self::BASE_URL );
         if ( ! is_string( $url ) || 0 !== strpos( $url, 'https://' ) || false !== strpos( $url, '?' ) || false !== strpos( $url, '#' ) ) {
@@ -253,11 +166,6 @@ final class Skill_Sync {
         return rtrim( $url, '/' );
     }
 
-    
-
-
-
-
     private static function fetch( string $url, int $limit ): array {
         $response = \wp_safe_remote_get(
             $url,
@@ -265,9 +173,6 @@ final class Skill_Sync {
                 'timeout'             => self::TIMEOUT,
                 'redirection'         => 0,
                 'limit_response_size' => $limit + 1,
-                
-                
-                
                 'user-agent'          => 'EasyMCPAI-Skills/' . ( defined( 'EASY_MCP_AI_VERSION' ) ? EASY_MCP_AI_VERSION : '0' ),
                 'headers'             => array( 'Accept' => 'application/json' ),
             )
@@ -301,16 +206,6 @@ final class Skill_Sync {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function finish( string $result, array $reasons = array(), array $fields = array() ): string {
         $state = self::state( true );
         if ( isset( $fields['revocations_issued'], $state['revocations_issued'] ) && $state['revocations_issued'] > $fields['revocations_issued'] ) {
@@ -327,16 +222,6 @@ final class Skill_Sync {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function read( string $name, bool $fresh = false ) {
         if ( $fresh ) {
             self::forget_cached( $name );
@@ -344,7 +229,6 @@ final class Skill_Sync {
         return \is_multisite() ? \get_site_option( $name, null ) : \get_option( $name, null );
     }
 
-    
     private static function forget_cached( string $name ): void {
         if ( \is_multisite() ) {
             $network = \get_current_network_id();
@@ -356,11 +240,6 @@ final class Skill_Sync {
         \wp_cache_delete( 'notoptions', 'options' );
         \wp_cache_delete( 'alloptions', 'options' );
     }
-
-    
-
-
-
 
     private static function write( string $name, array $value, bool $autoload ): bool {
         if ( \is_multisite() ) {

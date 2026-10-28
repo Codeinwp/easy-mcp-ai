@@ -14,71 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Media_Handler extends Command_Handler {
 
-    
     const BULK = 25;
 
-    
     const NOT_CAPTURED_FILES = 'Image files: regenerating or rotating an image rewrites and deletes files in the uploads folder, which change history never records; it records only the post meta WordPress updates for the attachment, such as _wp_attachment_metadata, so the old files cannot be restored from it.';
 
     const OVER_CAP      = "wp_cli_run runs at most %d items in one 'wp %s' command, and this one has %d. Run it for explicit attachment IDs in smaller groups.";
     const NOT_EDITABLE  = 'Sorry, you are not allowed to change %s: wp_cli_run needs the edit_post capability for that attachment.';
     const NOT_FOUND_IDS = 'No %1$s attachment has ID %2$s, so wp_cli_run leaves it out.';
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     public function preflight_regenerate( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
@@ -98,29 +42,16 @@ class Media_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     public function preflight_fix_orientation( Invocation $inv, Context $ctx ): void {
         if ( ! $this->is_dry_run( $inv ) ) {
             Ids::require_all( $ctx, array_values( $inv->args ), 'an attachment ID' );
         }
     }
 
-    
     public function is_dry_run( Invocation $inv ): bool {
         return (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
     }
 
-    
-    
-    
-
-    
     public function image_size( Invocation $inv, Context $ctx ): void {
         $assoc_args = array_merge(
             array( 'fields' => 'name,width,height,crop,ratio' ),
@@ -159,7 +90,6 @@ class Media_Handler extends Command_Handler {
             )
         );
 
-        
         $format_args = array(
             'format' => $assoc_args['format'],
             'fields' => explode( ',', (string) $assoc_args['fields'] ),
@@ -167,20 +97,10 @@ class Media_Handler extends Command_Handler {
         $this->formatter( $ctx, $format_args )->display_items( $sizes );
     }
 
-    
-    
-    
-
-    
-
-
-
     public function regenerate( Invocation $inv, Context $ctx ): void {
         $args       = array_values( $inv->args );
         $assoc_args = array_merge( array( 'image_size' => '' ), $inv->assoc );
 
-        
-        
         $image_size = $assoc_args['image_size'];
 
         $skip_delete  = Read_Value::flag( $assoc_args, 'skip-delete' );
@@ -193,7 +113,6 @@ class Media_Handler extends Command_Handler {
             $skip_delete = false;
         }
 
-        
         $images = $this->find_images( $args, array( 'image', 'application/pdf' ), 'image or PDF', $ctx );
         $count  = count( $images );
 
@@ -230,11 +149,6 @@ class Media_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'image', 'regenerate', $count, $successes, $errors, $skips );
     }
 
-    
-
-
-
-
     public function describe_regenerate( Invocation $inv ): array {
         $image_size = (string) Read_Value::flag( $inv->assoc, 'image_size', '' );
         $what       = '' !== $image_size ? sprintf( 'its "%s" thumbnail is regenerated', $image_size ) : 'its thumbnails are regenerated';
@@ -245,11 +159,6 @@ class Media_Handler extends Command_Handler {
         }
         return $this->describe_images( array_values( $inv->args ), array( 'image', 'application/pdf' ), $what );
     }
-
-    
-
-
-
 
     private function process_regeneration( Context $ctx, int $id, bool $skip_delete, bool $only_missing, bool $delete_unknown, string $image_size, string $progress, int &$successes, int &$errors, int &$skips ): void {
         $att_desc       = $this->att_desc( $id );
@@ -311,12 +220,6 @@ class Media_Handler extends Command_Handler {
         ++$successes;
     }
 
-    
-
-
-
-
-
     private function needs_regeneration( Context $ctx, int $att_id, string $fullsizepath, bool $is_pdf, string $image_size, bool $skip_delete, $metadata, bool &$skip_it ): bool {
         $skip_it = false;
 
@@ -344,13 +247,6 @@ class Media_Handler extends Command_Handler {
         return $this->sizes_need_regeneration( (array) $image_sizes['sizes'], $metadata['sizes'], $fullsizepath, $image_size );
     }
 
-    
-
-
-
-
-
-
     private static function with_sizes( $metadata ): array {
         if ( ! is_array( $metadata ) ) {
             $metadata = array();
@@ -360,14 +256,6 @@ class Media_Handler extends Command_Handler {
         }
         return $metadata;
     }
-
-    
-
-
-
-
-
-
 
     private function sizes_need_regeneration( array $image_sizes, array $meta_sizes, string $fullsizepath, string $image_size ): bool {
         if ( $image_size ) {
@@ -397,11 +285,6 @@ class Media_Handler extends Command_Handler {
         return false;
     }
 
-    
-
-
-
-
     private function remove_old_images( array $metadata, string $fullsizepath, string $image_size ): bool {
         if ( empty( $metadata['sizes'] ) ) {
             return false;
@@ -427,12 +310,6 @@ class Media_Handler extends Command_Handler {
         return $deleted;
     }
 
-    
-
-
-
-
-
     private static function image_sizes_differ( array $image_sizes, array $meta_sizes ): bool {
         if ( array_diff( array_keys( $image_sizes ), array_keys( $meta_sizes ) ) ) {
             return true;
@@ -444,12 +321,6 @@ class Media_Handler extends Command_Handler {
         }
         return false;
     }
-
-    
-
-
-
-
 
     private function update_attachment_metadata_for_image_size( int $id, array $new_metadata, string $image_size, $metadata ): bool {
         if ( ! is_array( $metadata ) ) {
@@ -466,11 +337,6 @@ class Media_Handler extends Command_Handler {
         }
         return false;
     }
-
-    
-
-
-
 
     private function delete_unknown_image_sizes( int $id, string $fullsizepath, $original_meta ): void {
         $image_sizes     = array_keys( $this->registered_subsizes() );
@@ -501,11 +367,6 @@ class Media_Handler extends Command_Handler {
         $this->update_metadata( $id, $original_meta );
     }
 
-    
-    
-    
-
-    
     public function fix_orientation( Invocation $inv, Context $ctx ): void {
         if ( ! $this->exif_available( 'extension' ) ) {
             $ctx->out->error( "'EXIF' extension is not loaded, it is required for this operation." );
@@ -541,11 +402,6 @@ class Media_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     public function describe_fix_orientation( Invocation $inv ): array {
         if ( Read_Value::flag( $inv->assoc, 'dry-run' ) ) {
             return array( 'Dry run: the orientation of each image is read; nothing is written.' );
@@ -553,7 +409,6 @@ class Media_Handler extends Command_Handler {
         return $this->describe_images( array_values( $inv->args ), array( 'image' ), 'rotated or flipped in place when its EXIF orientation is above 1, its sub-sizes regenerated' );
     }
 
-    
     private function process_orientation_fix( Context $ctx, int $id, string $progress, int &$successes, int &$errors, bool $dry_run ): void {
         $att_desc = $this->att_desc( $id );
 
@@ -586,11 +441,6 @@ class Media_Handler extends Command_Handler {
             $ctx->out->log( "{$progress} No orientation fix required for {$att_desc}." );
         }
     }
-
-    
-
-
-
 
     public static function calculate_transformation( int $orientation ): array {
         $rotate = false;
@@ -636,22 +486,9 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     private function find_images( array $args, array $mime_types, string $kind, Context $ctx ): array {
         $ids = array_map( 'intval', $this->query_images( $args, $mime_types ) );
         foreach ( array_values( array_unique( array_map( 'strval', $args ) ) ) as $arg ) {
-            
             if ( ! in_array( abs( (int) $arg ), $ids, true ) ) {
                 $ctx->out->warning( sprintf( self::NOT_FOUND_IDS, $kind, $arg ) );
             }
@@ -659,20 +496,12 @@ class Media_Handler extends Command_Handler {
         return $ids;
     }
 
-    
     private function enforce_cap( Invocation $inv, Context $ctx, int $count ): void {
         $cap = isset( $inv->route['bulk'] ) ? (int) $inv->route['bulk'] : self::BULK;
         if ( $count > $cap ) {
             $ctx->out->error( sprintf( self::OVER_CAP, $cap, $inv->command, $count ) );
         }
     }
-
-    
-
-
-
-
-
 
     private function describe_images( array $args, array $mime_types, string $what ): array {
         $ids = array_map( 'intval', $this->query_images( $args, $mime_types ) );
@@ -687,7 +516,6 @@ class Media_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     private function att_desc( int $id ): string {
         $title = $this->title( $id );
         if ( '' === $title ) {
@@ -698,11 +526,6 @@ class Media_Handler extends Command_Handler {
         }
         return sprintf( '"%1$s" (ID %2$d)', $title, $id );
     }
-
-    
-
-
-
 
     private function editable_original( Context $ctx, int $id, string $att_desc, bool $needs_edit ): ?string {
         if ( $needs_edit && ! $this->user_can( 'edit_post', $id ) ) {
@@ -718,13 +541,6 @@ class Media_Handler extends Command_Handler {
         return (string) $path;
     }
 
-    
-
-
-
-
-
-
     private static function metadata_error( array $metadata, bool $is_pdf, string $image_size ): ?string {
         if ( empty( $metadata ) && ! ( $is_pdf && $image_size ) ) {
             return 'No metadata. (ID %d)';
@@ -735,7 +551,6 @@ class Media_Handler extends Command_Handler {
         return null;
     }
 
-    
     private static function ratio( int $width, int $height ): string {
         if ( 0 === $height ) {
             return "0:{$width}";
@@ -754,24 +569,10 @@ class Media_Handler extends Command_Handler {
         return ( $width / $gcd ) . ':' . ( $height / $gcd );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     protected function call( string $name, array $args, callable $real ) {
         return $real();
     }
 
-    
     protected function registered_subsizes(): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -782,7 +583,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function intermediate_sizes(): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -792,13 +592,6 @@ class Media_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
-
 
     protected function query_images( array $args, array $mime_types ): array {
         return (array) $this->call(
@@ -822,7 +615,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function user_can( string $cap, int ...$args ): bool {
         return (bool) $this->call(
             __FUNCTION__,
@@ -853,7 +645,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function attached_file( int $id ) {
         return $this->call(
             __FUNCTION__,
@@ -901,7 +692,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function attachment_metadata( int $id ) {
         return $this->call(
             __FUNCTION__,
@@ -912,7 +702,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function generate_metadata( int $id, string $path ): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -924,7 +713,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function update_metadata( int $id, $metadata ): void {
         $this->call(
             __FUNCTION__,
@@ -936,7 +724,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     protected function size_filters( string $image_size, bool $on ): void {
         $this->call(
             __FUNCTION__,
@@ -965,15 +752,7 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     private array $image_size_filters = array();
-
-    
-
-
-
-
-
 
     protected function sizes_for_attachment( string $fullsizepath, bool $is_pdf, $metadata, int $att_id ): array {
         return (array) $this->call(
@@ -1013,12 +792,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     private static function intermediate_sizes_for( bool $is_pdf, $metadata, int $att_id ): array {
         if ( $is_pdf ) {
             // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's hook.
@@ -1046,7 +819,6 @@ class Media_Handler extends Command_Handler {
         return $sizes;
     }
 
-    
     protected function exif_available( string $what ): bool {
         return (bool) $this->call(
             __FUNCTION__,
@@ -1056,16 +828,6 @@ class Media_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function read_orientation( string $path ): ?int {
         $value = $this->call(
@@ -1087,11 +849,6 @@ class Media_Handler extends Command_Handler {
         return null === $value ? null : (int) $value;
     }
 
-    
-
-
-
-
     private static function would_auto_rotate( string $path ): bool {
         $editor = \wp_get_image_editor( $path );
         if ( \is_wp_error( $editor ) || 'image/jpeg' !== \wp_get_image_mime( $path ) || ! is_callable( 'exif_read_data' ) ) {
@@ -1103,13 +860,6 @@ class Media_Handler extends Command_Handler {
         $orientation = \apply_filters( 'wp_image_maybe_exif_rotate', $orientation, $path );
         return $orientation && 1 !== (int) $orientation;
     }
-
-    
-
-
-
-
-
 
     protected function flip_rotate_image( int $id, string $full_size_path, int $orientation ): array {
         return (array) $this->call(
@@ -1143,7 +893,6 @@ class Media_Handler extends Command_Handler {
         );
     }
 
-    
     private static function admin_includes(): void {
         if ( ! function_exists( 'wp_generate_attachment_metadata' ) || ! function_exists( 'wp_read_image_metadata' ) ) {
             require_once ABSPATH . 'wp-admin/includes/image.php';

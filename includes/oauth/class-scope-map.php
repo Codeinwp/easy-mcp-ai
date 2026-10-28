@@ -10,17 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Scope_Map {
 
-    
-
-
-
-
-
     const SCOPE_MAP = array(
-        
-        
-        
-        
         'mcp:posts:read'         => array( 'wp_get_post', 'wp_list_posts', 'wp_get_page', 'wp_list_pages', 'wp_list_revisions', 'wp_get_revision', 'wp_get_post_meta', 'wp_get_post_types', 'wp_get_post_statuses', 'wp_count_posts', 'wp_get_post_full', 'wp_get_post_blocks', 'wp_create_preview_link', 'wp_get_page_layout', 'wp_list_layout_elements' ),
         'mcp:posts:write'        => array( 'wp_create_post', 'wp_update_post', 'wp_delete_post', 'wp_create_page', 'wp_update_page', 'wp_delete_page', 'wp_delete_revision', 'wp_restore_revision', 'wp_update_post_meta', 'wp_delete_post_meta', 'wp_get_post_statuses', 'wp_add_post_terms', 'wp_replace_in_post', 'wp_update_post_blocks', 'wp_duplicate_post', 'wp_update_page_layout' ),
         'mcp:cpt:read'           => array( 'wp_list_cpt_items', 'wp_get_cpt_item' ),
@@ -46,38 +36,14 @@ class Scope_Map {
         'mcp:menus:read'         => array( 'wp_get_menu', 'wp_list_menus', 'wp_list_menu_items' ),
         'mcp:menus:write'        => array( 'wp_create_menu', 'wp_update_menu', 'wp_delete_menu', 'wp_create_menu_item', 'wp_update_menu_item', 'wp_delete_menu_item', 'wp_reorder_menu_items' ),
         'mcp:blocks:read'        => array( 'wp_get_block', 'wp_list_blocks', 'wp_list_patterns', 'wp_get_template', 'wp_list_templates', 'wp_get_global_styles', 'wp_get_active_theme', 'wp_list_themes', 'wp_list_block_types' ),
-        
-        
-        
-        
         'mcp:blocks:write'       => array( 'wp_create_block', 'wp_update_block', 'wp_delete_block' ),
-        
-        
-        
-        
-        
-        
         'mcp:appearance:read'    => array( 'wp_get_theme_mods', 'wp_get_custom_css' ),
         'mcp:appearance:write'   => array( 'wp_update_template', 'wp_update_global_styles', 'wp_update_theme_mod', 'wp_delete_theme_mod', 'wp_update_custom_css' ),
-        
-        
         'mcp:widgets:read'       => array( 'wp_list_sidebars', 'wp_list_widgets', 'wp_get_widget', 'wp_list_widget_types' ),
         'mcp:widgets:write'      => array( 'wp_create_widget', 'wp_update_widget', 'wp_delete_widget' ),
         'mcp:plugins:read'       => array( 'wp_list_plugins', 'wp_list_plugin_updates' ),
-        
-        
-        
         'mcp:plugins:write'      => array( 'wp_activate_plugin', 'wp_deactivate_plugin', 'wp_update_plugin' ),
-        
-        
-        
-        
-        
-        
-        
         'mcp:plugin_files:write' => array( 'wp_install_plugin', 'wp_delete_plugin', 'wp_uninstall_plugin' ),
-        
-        
         'mcp:themes:read'        => array( 'wp_list_themes', 'wp_get_active_theme' ),
         'mcp:themes:write'       => array( 'wp_switch_theme', 'wp_update_theme' ),
         'mcp:theme_files:write'  => array( 'wp_install_theme', 'wp_delete_theme' ),
@@ -86,14 +52,9 @@ class Scope_Map {
         'mcp:woocommerce:read'   => array( 'wp_wc_get_product', 'wp_wc_list_products', 'wp_wc_get_order', 'wp_wc_list_orders', 'wp_wc_get_customer', 'wp_wc_list_customers', 'wp_wc_list_coupons', 'wp_wc_get_coupon', 'wp_wc_list_order_notes', 'wp_wc_list_order_refunds', 'wp_wc_list_payment_gateways', 'wp_wc_list_shipping_methods', 'wp_wc_list_shipping_zones', 'wp_wc_list_tax_rates', 'wp_wc_list_webhooks', 'wp_wc_list_product_categories', 'wp_wc_list_product_variations', 'wp_wc_get_product_variation', 'wp_wc_list_product_attributes', 'wp_wc_report_sales', 'wp_wc_report_orders', 'wp_wc_report_products', 'wp_wc_report_customers', 'wp_wc_report_top_sellers', 'wp_wc_list_logs', 'wp_wc_get_log', 'wp_wc_get_store_settings', 'wp_wc_list_countries', 'wp_wc_list_shipping_classes', 'wp_wc_list_tax_classes' ),
         'mcp:woocommerce:write'  => array( 'wp_wc_create_product', 'wp_wc_update_product', 'wp_wc_delete_product', 'wp_wc_create_order', 'wp_wc_update_order', 'wp_wc_create_order_note', 'wp_wc_create_customer', 'wp_wc_update_customer', 'wp_wc_delete_customer', 'wp_wc_create_coupon', 'wp_wc_update_coupon', 'wp_wc_delete_coupon', 'wp_wc_create_product_variation', 'wp_wc_update_product_variation', 'wp_wc_delete_product_variation', 'wp_wc_batch_update_products', 'wp_wc_batch_update_orders', 'wp_wc_batch_update_variations', 'wp_wc_create_product_attribute', 'wp_wc_set_product_attributes' ),
         'mcp:wc_webhooks:write'  => array( 'wp_wc_create_webhook', 'wp_wc_update_webhook', 'wp_wc_delete_webhook' ),
-        
         'mcp:wc_store:write'     => array( 'wp_wc_update_store_settings', 'wp_wc_create_shipping_zone', 'wp_wc_update_shipping_zone', 'wp_wc_delete_shipping_zone', 'wp_wc_add_shipping_method', 'wp_wc_update_shipping_method', 'wp_wc_delete_shipping_method', 'wp_wc_create_shipping_class', 'wp_wc_update_shipping_class', 'wp_wc_delete_shipping_class', 'wp_wc_update_payment_gateway', 'wp_wc_create_tax_rate', 'wp_wc_update_tax_rate', 'wp_wc_delete_tax_rate', 'wp_wc_create_tax_class', 'wp_wc_delete_tax_class' ),
         'mcp:acf:read'           => array( 'wp_acf_get_fields', 'wp_acf_get_term_fields', 'wp_acf_get_user_fields', 'wp_acf_list_field_groups' ),
         'mcp:acf:write'          => array( 'wp_acf_update_fields', 'wp_acf_update_user_fields' ),
-        
-        
-        
-        
         'mcp:acf_posts:write'    => array( 'wp_acf_update_fields' ),
         'mcp:buddypress:read'    => array( 'wp_bp_list_activity', 'wp_bp_list_groups', 'wp_bp_get_group', 'wp_bp_list_group_members', 'wp_bp_list_members', 'wp_bp_get_member', 'wp_bp_list_message_threads', 'wp_bp_get_message_thread' ),
         'mcp:buddypress:write'   => array( 'wp_bp_create_activity', 'wp_bp_delete_activity' ),
@@ -118,9 +79,6 @@ class Scope_Map {
         'mcp:tsf:write'          => array( 'wp_tsf_update_post_seo' ),
         'mcp:gsc:read'           => array( 'wp_gsc_list_sites', 'wp_gsc_get_site', 'wp_gsc_query_performance', 'wp_gsc_list_sitemaps', 'wp_gsc_get_sitemap', 'wp_gsc_inspect_url' ),
         'mcp:ga:read'            => array( 'wp_ga_list_account_summaries', 'wp_ga_get_property', 'wp_ga_list_data_streams', 'wp_ga_list_custom_dimensions', 'wp_ga_list_custom_metrics', 'wp_ga_list_conversion_events', 'wp_ga_get_metadata', 'wp_ga_run_report', 'wp_ga_run_pivot_report', 'wp_ga_run_realtime_report', 'wp_ga_check_compatibility' ),
-        
-        
-        
         'mcp:ga:write'           => array( 'wp_ga_create_key_event', 'wp_ga_delete_key_event' ),
         'mcp:dfs:read'           => array(
             'wp_dfs_serp_google_organic_live',
@@ -132,41 +90,17 @@ class Scope_Map {
             'wp_dfs_on_page_instant_pages',
             'wp_dfs_account_balance',
         ),
-        
-        
-        
-        
-        
         'mcp:rest:read'          => array( 'wp_rest_routes', 'wp_rest_read' ),
         'mcp:rest:write'         => array( 'wp_rest_write' ),
         'mcp:rest_delete:write'  => array( 'wp_rest_delete' ),
         'mcp:history:read'       => array( 'wp_history_list', 'wp_history_get', 'wp_history_diff' ),
-        
-        
         'mcp:history:write'      => array( 'wp_history_apply' ),
         'mcp:audit:read'         => array( 'wp_audit_list' ),
-        
-        
-        
-        
         'mcp:site_health:read'   => array( 'wp_get_site_health', 'wp_list_cron_events', 'wp_get_error_log', 'wp_get_easy_mcp_diagnostics' ),
         'mcp:site_health:write'  => array( 'wp_run_cron_event' ),
-        
         'mcp:cache:write'        => array( 'wp_clear_cache' ),
-        
-        
         'mcp:mail:write'         => array( 'wp_send_email' ),
-        
-        
-        
-        
-        
         'mcp:core_update:write'  => array( 'wp_update_core' ),
-        
-        
-        
-        
-        
         'mcp:cli:write'          => array( 'wp_cli_run' ),
         'mcp:semrush:read'       => array(
             'wp_semrush_domain_overview',
@@ -205,41 +139,15 @@ class Scope_Map {
         ),
     );
 
-    
-
-
     const CROSS_CATEGORY_READ_TOOLS = array( 'wp_search', 'wp_search_posts' );
 
-    
-
-
-
-
-
     const CROSS_CATEGORY_WRITE_TOOLS = array( 'wp_approve_operation', 'wp_deny_operation' );
-
-    
-
-
-
-
 
     const LEGACY_SCOPE_UPGRADES = array(
         'mcp:users:write' => array( 'mcp:user_create:write', 'mcp:user_update:write', 'mcp:user_delete:write' ),
     );
 
-    
-
-
     const CORE_CATEGORIES = array( 'posts', 'cpt', 'media', 'taxonomies', 'term_meta', 'comments', 'users', 'user_meta', 'menus', 'blocks' );
-
-    
-
-
-
-
-
-
 
     const PLUGIN_CATEGORIES = array(
         'woocommerce' => 'WooCommerce',
@@ -266,12 +174,6 @@ class Scope_Map {
         'tsf'         => 'The SEO Framework',
     );
 
-    
-
-
-
-
-
     const PLUGIN_DETECTION_CLASSES = array(
         'woocommerce' => array( 'WooCommerce' ),
         'wc_webhooks' => array( 'WooCommerce' ),
@@ -297,28 +199,14 @@ class Scope_Map {
         'tsf'         => array(),
     );
 
-    
-
-
-
-
-
-
-
     public static function is_plugin_category_active( string $slug ): bool {
-        
         if ( in_array( $slug, array( 'gsc', 'ga', 'dfs', 'semrush', 'seranking' ), true ) ) {
             return \Easy_MCP_AI\Provider_Credentials::is_configured( $slug );
         }
-        
-        
-        
-        
         if ( 'ahrefs' === $slug ) {
             return \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' )
                 && (bool) \get_option( 'easy_mcp_ai_ahrefs_enabled', false );
         }
-        
         if ( 'seopress' === $slug ) {
             return \function_exists( 'seopress_get_service' );
         }
@@ -336,23 +224,9 @@ class Scope_Map {
         return false;
     }
 
-    
-
-
-
-
     public static function get_map(): array {
         return self::SCOPE_MAP;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function apply_legacy_scope_upgrades( array $scopes ): array {
         $result = array();
@@ -370,18 +244,12 @@ class Scope_Map {
         return $result;
     }
 
-    
-
-
-
-
     public static function get_all_scopes(): array {
         $scopes     = array( 'mcp' );
         $categories = array();
 
         foreach ( array_keys( self::SCOPE_MAP ) as $leaf ) {
             $scopes[] = $leaf;
-            
             $parts    = explode( ':', $leaf );
             $category = $parts[0] . ':' . $parts[1];
             $categories[ $category ] = true;
@@ -393,27 +261,10 @@ class Scope_Map {
 
         $scopes = array_merge( $scopes, self::get_dynamic_ability_scopes() );
 
-        
-        
-        
-        
-        
-        
         $scopes = array_merge( $scopes, Privileged_Groups::enabled_scopes() );
 
         return array_values( array_unique( $scopes ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function get_public_scopes(): array {
         $scopes     = array( 'mcp' );
@@ -434,36 +285,12 @@ class Scope_Map {
             $scopes[] = 'mcp:abilities';
         }
 
-        
-        
-        
-        
-
         return array_values( array_unique( $scopes ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function get_cached_abilities(): array {
         return function_exists( 'wp_get_abilities' ) ? (array) \wp_get_abilities() : array();
     }
-
-    
-
-
-
-
-
-
-
 
     public static function get_dynamic_ability_scopes(): array {
         $abilities = self::get_cached_abilities();
@@ -496,25 +323,6 @@ class Scope_Map {
         return $scopes;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function resolve_prefix_ability_tools( string $normalized_prefix ): array {
         $tools = array();
         foreach ( self::get_cached_abilities() as $ability ) {
@@ -535,25 +343,12 @@ class Scope_Map {
         return $tools;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function resolve_allowed_tools( string $scope ): array {
         $scope_parts    = array_filter( array_map( 'trim', explode( ' ', $scope ) ) );
         $scope_parts    = self::apply_legacy_scope_upgrades( array_values( $scope_parts ) );
         $tools           = array();
         $has_read_scope  = false;
         $has_write_scope = false;
-        
-        
-        
-        
         $privileged_tools = Privileged_Groups::tools_for_scopes( $scope_parts );
 
         foreach ( $scope_parts as $part ) {
@@ -564,21 +359,12 @@ class Scope_Map {
                 return array_values( array_unique( array_merge( array( '*' ), $privileged_tools ) ) );
             }
 
-            
             if ( 'mcp:abilities' === $part ) {
                 $tools[] = 'wp_ability_*';
                 continue;
             }
 
-            
-            
-            
             if ( 0 === strpos( $part, 'mcp:abilities:' ) ) {
-                
-                
-                
-                
-                
                 $prefix = Dynamic_Tool_Registrar::normalize_identifier( substr( $part, strlen( 'mcp:abilities:' ) ) );
                 if ( '' !== $prefix ) {
                     $tools = array_merge( $tools, self::resolve_prefix_ability_tools( $prefix ) );
@@ -586,7 +372,6 @@ class Scope_Map {
                 continue;
             }
 
-            
             if ( isset( self::SCOPE_MAP[ $part ] ) ) {
                 $tools = array_merge( $tools, self::SCOPE_MAP[ $part ] );
                 if ( substr( $part, -5 ) === ':read' ) {
@@ -598,7 +383,6 @@ class Scope_Map {
                 continue;
             }
 
-            
             foreach ( self::SCOPE_MAP as $leaf_scope => $leaf_tools ) {
                 if ( 0 === strpos( $leaf_scope, $part . ':' ) ) {
                     $tools = array_merge( $tools, $leaf_tools );
@@ -610,7 +394,6 @@ class Scope_Map {
                     }
                 }
             }
-            
         }
 
         if ( $has_write_scope ) {
@@ -623,19 +406,6 @@ class Scope_Map {
 
         return array_values( array_unique( $tools ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function expand_category_scopes( array $scopes ): array {
         $result = array();
@@ -658,12 +428,6 @@ class Scope_Map {
         return $result;
     }
 
-    
-
-
-
-
-
     public static function get_read_scopes(): array {
         $scopes = array();
         foreach ( array_keys( self::SCOPE_MAP ) as $scope ) {
@@ -674,18 +438,9 @@ class Scope_Map {
         return $scopes;
     }
 
-    
-
-
-
-
-
-
-
     public static function get_default_scope(): string {
         $scopes = array();
 
-        
         foreach ( self::CORE_CATEGORIES as $cat ) {
             if ( 'users' === $cat ) {
                 $scopes[] = 'mcp:users:read';
@@ -695,15 +450,10 @@ class Scope_Map {
             $scopes[] = "mcp:{$cat}:write";
         }
 
-        
-        
         $scopes[] = 'mcp:rest:read';
 
-        
-        
         $scopes[] = 'mcp:cache:write';
 
-        
         foreach ( array_keys( self::PLUGIN_CATEGORIES ) as $cat ) {
             if ( ! isset( self::SCOPE_MAP[ "mcp:{$cat}:read" ] ) ) {
                 continue;
@@ -711,27 +461,14 @@ class Scope_Map {
             $scopes[] = "mcp:{$cat}:read";
         }
 
-        
-        
-        
         $scopes[] = 'mcp:acf_posts:write';
 
         return implode( ' ', $scopes );
     }
 
-    
-
-
-
-
-
-
     public static function scope_permits_tool( string $scope, string $tool_name ): bool {
         $allowed = self::resolve_allowed_tools( $scope );
 
-        
-        
-        
         if ( Privileged_Groups::is_privileged_tool( $tool_name ) ) {
             return in_array( '*', $allowed, true ) || in_array( $tool_name, $allowed, true );
         }
@@ -744,7 +481,6 @@ class Scope_Map {
             return true;
         }
 
-        
         foreach ( $allowed as $entry ) {
             if ( is_string( $entry ) && false !== strpos( $entry, '*' ) && fnmatch( $entry, $tool_name ) ) {
                 return true;
@@ -754,38 +490,10 @@ class Scope_Map {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function scope_for_tool( string $tool_name ): ?string {
         $scopes = self::scopes_for_tools( array( $tool_name ) );
         return isset( $scopes[ $tool_name ] ) ? $scopes[ $tool_name ] : null;
     }
-
-    
-
-
-
-
-
 
     public static function scopes_for_tools( array $tool_names ): array {
         $leaves    = self::leaf_index();
@@ -824,12 +532,6 @@ class Scope_Map {
         return $out;
     }
 
-    
-
-
-
-
-
     private static function leaf_index(): array {
         static $index = null;
         if ( null === $index ) {
@@ -837,15 +539,6 @@ class Scope_Map {
         }
         return $index;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function index_leaves( array $map ): array {
         $best = array();
@@ -866,12 +559,6 @@ class Scope_Map {
         }, $best );
     }
 
-    
-
-
-
-
-
     private static function ability_tool_prefixes(): array {
         $out = array();
         foreach ( self::get_cached_abilities() as $ability ) {
@@ -890,19 +577,7 @@ class Scope_Map {
         return $out;
     }
 
-    
-
-
-
-
-
     private const DEFAULT_OFF_CATEGORIES = array( 'settings', 'plugins', 'themes', 'appearance', 'widgets', 'wc_webhooks', 'wc_store', 'user_create', 'user_update', 'user_delete', 'history', 'audit', 'site_health', 'core_update', 'plugin_files', 'theme_files', 'cli', 'rest_delete', 'mail' );
-
-    
-
-
-
-
 
     public static function get_categories(): array {
         $labels     = self::category_labels();
@@ -921,12 +596,6 @@ class Scope_Map {
 
         return array_merge( $categories, self::ability_categories() );
     }
-
-    
-
-
-
-
 
     private static function category_labels(): array {
         return array(
@@ -984,13 +653,6 @@ class Scope_Map {
         );
     }
 
-    
-
-
-
-
-
-
     private static function scope_category( string $slug, array $labels ): array {
         $plugin_required = isset( self::PLUGIN_CATEGORIES[ $slug ] ) ? self::PLUGIN_CATEGORIES[ $slug ] : null;
 
@@ -1012,12 +674,6 @@ class Scope_Map {
         );
     }
 
-    
-
-
-
-
-
     private static function category_defaults( string $slug ): array {
         if ( in_array( $slug, self::DEFAULT_OFF_CATEGORIES, true ) ) {
             return array( false, false );
@@ -1026,20 +682,13 @@ class Scope_Map {
             return array( true, false );
         }
         if ( 'cache' === $slug || 'acf_posts' === $slug ) {
-            
             return array( false, true );
         }
         if ( in_array( $slug, self::CORE_CATEGORIES, true ) ) {
             return array( true, true );
         }
-        
         return array( true, false );
     }
-
-    
-
-
-
 
     private static function ability_categories(): array {
         $abilities = self::get_cached_abilities();
@@ -1053,23 +702,15 @@ class Scope_Map {
                 /* translators: %s: ability prefix (e.g. "Core", "Wpforms") */
                 'label'           => sprintf( __( 'Abilities — %s', 'easy-mcp-ai' ), $display_label ),
                 'read_scope'      => "mcp:abilities:{$norm_prefix}",
-                'write_scope'     => '',     
-                'default_read'    => false,  
+                'write_scope'     => '',
+                'default_read'    => false,
                 'default_write'   => false,
-                'plugin_required' => null,   
+                'plugin_required' => null,
                 'is_ability'      => true,
             );
         }
         return $categories;
     }
-
-    
-
-
-
-
-
-
 
     private static function ability_prefixes( array $abilities ): array {
         $seen_prefixes = array();

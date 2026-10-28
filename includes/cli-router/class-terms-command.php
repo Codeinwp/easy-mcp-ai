@@ -5,59 +5,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 abstract class Terms_Command extends Command_Handler {
 
-    
     protected $obj_type = '';
 
-    
     protected $obj_id = null;
 
-    
     protected $obj_fields = array( 'term_id', 'name', 'slug', 'taxonomy' );
 
-    
     protected $ctx = null;
 
-    
     protected $inv = null;
 
     const UNKNOWN_ID = "Term %s doesn't exist in the '%s' taxonomy. wp_cli_run refuses --by=id with an unknown ID, which WP-CLI would skip without a word%s.";
@@ -66,77 +23,23 @@ abstract class Terms_Command extends Command_Handler {
 
     const NOT_REMOVED = "None of the terms named is on %s %s in the '%s' taxonomy, so nothing was removed.";
 
-    
-    
-    
-
-    
-
-
-
-
     abstract protected function get_object_type(): string;
-
-    
-
-
-
 
     abstract protected function object_taxonomies( string $object_type ): array;
 
-    
-
-
-
-
-
-
-
     abstract protected function get_object_terms( $object_id, array $taxonomies, array $args );
-
-    
-
-
-
 
     abstract protected function term_slug_by_id( $term_id, string $taxonomy ): ?string;
 
-    
-
-
-
-
-
-
     abstract protected function set_object_terms( $object_id, $terms, string $taxonomy, bool $append );
-
-    
-
-
-
-
-
 
     abstract protected function remove_object_terms( $object_id, array $terms, string $taxonomy );
 
-    
-
-
-
-
-
     abstract protected function delete_object_term_relationships( $object_id, string $taxonomy );
 
-    
     protected function default_category(): int {
         return function_exists( 'get_option' ) ? (int) \get_option( 'default_category' ) : 0;
     }
-
-    
-
-
-
-
 
     protected function object_term_ids( $object_id, string $taxonomy ): array {
         $ids = $this->get_object_terms( $object_id, array( $taxonomy ), array( 'fields' => 'ids' ) );
@@ -148,11 +51,6 @@ abstract class Terms_Command extends Command_Handler {
         return array_values( $ids );
     }
 
-    
-    
-    
-
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $assoc_args = array_merge( array( 'format' => 'table' ), $inv->assoc );
@@ -178,7 +76,6 @@ abstract class Terms_Command extends Command_Handler {
         $formatter->display_items( $items );
     }
 
-    
     public function remove( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $assoc_args = $inv->assoc;
@@ -198,14 +95,12 @@ abstract class Terms_Command extends Command_Handler {
             return;
         }
 
-        
         if ( ! $terms ) {
             $ctx->out->error( 'Please specify one or more terms, or use --all.' );
         }
 
         $before = $this->object_term_ids( $object_id, $taxonomy );
 
-        
         $result = $this->remove_object_terms( $object_id, $terms, $taxonomy );
 
         $label = count( $terms ) > 1 ? 'terms' : 'term';
@@ -222,23 +117,13 @@ abstract class Terms_Command extends Command_Handler {
         $ctx->out->success( "Removed {$label}." );
     }
 
-    
-
-
-
-
-
-
-
     private function remove_all( ?string $object_id, string $taxonomy, array $terms ): void {
-        
         if ( $terms ) {
             $this->ctx->out->error( 'No need to specify terms while removing all terms.' );
         }
 
         $before = $this->object_term_ids( $object_id, $taxonomy );
 
-        
         $result = $this->delete_object_term_relationships( $object_id, $taxonomy );
 
         $message = 'Removed all terms.';
@@ -256,16 +141,7 @@ abstract class Terms_Command extends Command_Handler {
         $this->ctx->out->success( $message );
     }
 
-    
-
-
-
-
-
-
-
     private function set_default_category( ?string $object_id, string $taxonomy, array $before ): void {
-        
         $default_category = $this->default_category();
         $default_category = ( ! empty( $default_category ) ) ? $default_category : 1;
         $default_category = $this->set_object_terms( $object_id, array( $default_category ), $taxonomy, true );
@@ -276,25 +152,13 @@ abstract class Terms_Command extends Command_Handler {
         }
     }
 
-    
     public function add( Invocation $inv, Context $ctx ): void {
         $this->write_terms( $inv, $ctx, true );
     }
 
-    
     public function set( Invocation $inv, Context $ctx ): void {
         $this->write_terms( $inv, $ctx, false );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function describe( Invocation $inv ): array {
         $this->begin(
@@ -322,11 +186,6 @@ abstract class Terms_Command extends Command_Handler {
         return array( sprintf( "%s %s, taxonomy '%s': %s → %s", ucfirst( $this->obj_type ), $object_id, $taxonomy, $now, $effect ) );
     }
 
-    
-
-
-
-
     private static function describe_effect( string $sub, string $taxonomy, string $named, bool $all ): string {
         if ( 'remove' === $sub && $all ) {
             return 'remove every term' . ( 'category' === $taxonomy ? ', then set the default category' : '' );
@@ -340,15 +199,6 @@ abstract class Terms_Command extends Command_Handler {
         return 'add ' . $named;
     }
 
-    
-    
-    
-
-    
-
-
-
-
     protected function taxonomy_exists( string $taxonomy ): void {
         $taxonomy_names = $this->object_taxonomies( $this->get_object_type() );
 
@@ -356,14 +206,6 @@ abstract class Terms_Command extends Command_Handler {
             $this->ctx->out->error( "Invalid taxonomy {$taxonomy}." );
         }
     }
-
-    
-
-
-
-
-
-
 
     protected function prepare_terms( string $field, array $terms, string $taxonomy ): array {
         if ( 'id' === $field ) {
@@ -381,36 +223,23 @@ abstract class Terms_Command extends Command_Handler {
         return $terms;
     }
 
-    
     protected function set_obj_id( ?string $obj_id ): void {
         $this->obj_id = $obj_id;
     }
 
-    
     protected function get_obj_id(): ?string {
         return $this->obj_id;
     }
-
-    
-
-
-
 
     protected function get_formatter( array &$assoc_args ): Formatter {
         return new Formatter( $this->ctx->out, $assoc_args, $this->obj_fields, $this->obj_type );
     }
 
-    
-    
-    
-
-    
     private function begin( Invocation $inv, Context $ctx ): void {
         $this->inv = $inv;
         $this->ctx = $ctx;
     }
 
-    
     private function write_terms( Invocation $inv, Context $ctx, bool $append ): void {
         $this->begin( $inv, $ctx );
         $args      = array_values( $inv->args );
@@ -438,15 +267,6 @@ abstract class Terms_Command extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private function named_terms( $field, array $terms, string $taxonomy ): array {
         if ( 'id' !== $field ) {
             $this->guard_terms( $terms );
@@ -456,12 +276,6 @@ abstract class Terms_Command extends Command_Handler {
         }
         return $terms;
     }
-
-    
-
-
-
-
 
     private function guard_terms( array $terms ): void {
         foreach ( $terms as $term ) {
@@ -473,12 +287,6 @@ abstract class Terms_Command extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
-
 
     private function mark_if_changed( $object_id, string $taxonomy, array $before ): bool {
         if ( $this->object_term_ids( $object_id, $taxonomy ) !== $before ) {

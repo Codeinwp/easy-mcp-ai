@@ -1,43 +1,18 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 final class Cache_Purger {
 
-    
     const VERIFY_AFTER_SECONDS = 5;
 
-    
     private $adapters;
 
-    
     private $calls;
-
-    
-
-
 
     public function __construct( ?array $adapters = null, ?Vendor_Calls $calls = null ) {
         $this->calls    = $calls ? $calls : new Vendor_Calls();
@@ -46,13 +21,6 @@ final class Cache_Purger {
             $adapter->with_calls( $this->calls );
         }
     }
-
-    
-
-
-
-
-
 
     public static function deadline( int $budget ): float {
         $now     = microtime( true );
@@ -65,11 +33,6 @@ final class Cache_Purger {
         return $now + $seconds;
     }
 
-    
-
-
-
-
     public function present_ids(): array {
         $ids = array();
         foreach ( $this->adapters as $id => $adapter ) {
@@ -79,13 +42,6 @@ final class Cache_Purger {
         }
         return $ids;
     }
-
-    
-
-
-
-
-
 
     public function run( Purge_Request $request, array $resolved = array() ): array {
         $layers = array();
@@ -97,12 +53,6 @@ final class Cache_Purger {
         return $this->reply( $request, $layers, $resolved );
     }
 
-    
-
-
-
-
-
     private function is_present( Cache_Adapter $adapter ): bool {
         try {
             return $adapter->is_present();
@@ -110,13 +60,6 @@ final class Cache_Purger {
             return false;
         }
     }
-
-    
-
-
-
-
-
 
     private function layer_for( Cache_Adapter $adapter, Purge_Request $request ): Layer_Result {
         try {
@@ -133,13 +76,6 @@ final class Cache_Purger {
         return $this->call( $adapter, $request );
     }
 
-    
-
-
-
-
-
-
     private function refusal( Cache_Adapter $adapter, Purge_Request $request ): ?Layer_Result {
         $skip = $this->availability( $adapter, $request );
         if ( null === $skip ) {
@@ -150,13 +86,6 @@ final class Cache_Purger {
         }
         return $skip;
     }
-
-    
-
-
-
-
-
 
     private function availability( Cache_Adapter $adapter, Purge_Request $request ): ?Layer_Result {
         if ( ! $request->selects( $adapter->id() ) ) {
@@ -173,14 +102,6 @@ final class Cache_Purger {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private function reach( Cache_Adapter $adapter, Purge_Request $request ): ?Layer_Result {
         $also = $adapter->also_clears( $request );
@@ -200,13 +121,6 @@ final class Cache_Purger {
         return null;
     }
 
-    
-
-
-
-
-
-
     private function call( Cache_Adapter $adapter, Purge_Request $request ): Layer_Result {
         $level = ob_get_level();
         ob_start();
@@ -222,37 +136,13 @@ final class Cache_Purger {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private function skipped( Cache_Adapter $adapter, string $reason, string $detail, array $extra = array() ): Layer_Result {
         return new Layer_Result( $adapter->id(), $adapter->label(), $adapter->kind(), Layer_Result::SKIPPED, array_merge( array( 'reason' => $reason, 'detail' => $detail ), $extra ) );
     }
 
-    
-
-
-
-
-
-
     private function failed( Cache_Adapter $adapter, \Throwable $e ): Layer_Result {
         return new Layer_Result( $adapter->id(), $adapter->label(), $adapter->kind(), Layer_Result::FAILED, array( 'detail' => sprintf( '%s raised an error: %s', $adapter->label(), $e->getMessage() ) ) );
     }
-
-    
-
-
-
-
-
-
 
     private function reply( Purge_Request $request, array $layers, array $resolved ): array {
         $changed = false;
@@ -280,14 +170,6 @@ final class Cache_Purger {
         return $reply;
     }
 
-    
-
-
-
-
-
-
-
     private function wait_seconds( array $layers ): int {
         $wait = self::VERIFY_AFTER_SECONDS;
         foreach ( $layers as $layer ) {
@@ -297,13 +179,6 @@ final class Cache_Purger {
         }
         return $wait;
     }
-
-    
-
-
-
-
-
 
     private function verify( array $resolved, int $wait ): array {
         $urls = array();
@@ -321,14 +196,6 @@ final class Cache_Purger {
             'how'           => 'Fetch each URL exactly as written, with no added query string (a query string bypasses or changes the cache key), and check that the change is in the HTML.',
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function summary( Purge_Request $request, array $layers, bool $changed ): string {
         if ( array() === $layers ) {

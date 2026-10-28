@@ -7,35 +7,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class OAuth_Token_Manager {
 
-    
     const ROTATION_SETTLE_MS = 1000;
 
-    
     const ROTATION_POLL_MS = 100;
 
     const TOKEN_PREFIX          = 'wpmcp_oat_';
     const DEFAULT_ACCESS_TTL   = 3600;
-    const DEFAULT_REFRESH_TTL  = 2592000; 
-
-    
-
-
-
-
-
-
-
-
-
-
+    const DEFAULT_REFRESH_TTL  = 2592000;
 
     public function mint_access_token( string $client_id, int $wp_user_id, string $resource, string $scope, int $parent_id = 0 ): ?array {
         global $wpdb;
@@ -45,11 +25,6 @@ class OAuth_Token_Manager {
         $access_ttl  = self::access_ttl( $client_id, $wp_user_id );
         $refresh_ttl = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_refresh_token_ttl', self::DEFAULT_REFRESH_TTL );
 
-        
-        
-        
-        
-        
         $key_id        = Token_Keys::current_id();
         $raw_access    = Token_Keys::mint_prefix( self::TOKEN_PREFIX ) . bin2hex( random_bytes( 32 ) );
         $raw_refresh   = Token_Keys::mint_prefix( '' ) . bin2hex( random_bytes( 32 ) );
@@ -95,35 +70,8 @@ class OAuth_Token_Manager {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function access_ttl( string $client_id, int $wp_user_id ): int {
         $configured = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_access_token_ttl', self::DEFAULT_ACCESS_TTL );
-
-        
-
-
-
-
-
-
-
-
-
-
-
 
         $filtered = \apply_filters( 'easy_mcp_ai_oauth_access_token_ttl', $configured, $wp_user_id, $client_id );
 
@@ -132,23 +80,15 @@ class OAuth_Token_Manager {
         return $valid ? (int) $ttl : $configured;
     }
 
-    
-
-
-
-
-
     public function validate_access_token( string $raw_token ) {
         global $wpdb;
 
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
 
-        
         if ( 0 !== strpos( $raw_token, self::TOKEN_PREFIX ) ) {
             return false;
         }
 
-        
         $key_id     = Token_Keys::parse_id( $raw_token, self::TOKEN_PREFIX );
         $token_hash = Token_Keys::hash( $raw_token, $key_id );
         if ( null === $token_hash ) {
@@ -173,14 +113,10 @@ class OAuth_Token_Manager {
             return false;
         }
 
-        
-        
         if ( strtotime( $row['expires_at'] . ' UTC' ) < time() ) {
             return false;
         }
 
-        
-        
         $throttle_key = 'easy_mcp_ai_oat_lu_' . (int) $row['id'];
         if ( ! \get_transient( $throttle_key ) ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table write; throttled via transient.
@@ -196,16 +132,6 @@ class OAuth_Token_Manager {
 
         return $row;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function refresh( string $raw_refresh_token, string $client_id, string $resource ) {
         global $wpdb;
@@ -231,33 +157,16 @@ class OAuth_Token_Manager {
             return false;
         }
 
-        
-        
         $row['scope'] = implode( ' ', \Easy_MCP_AI\OAuth\Scope_Map::apply_legacy_scope_upgrades(
             array_filter( explode( ' ', $row['scope'] ) )
         ) );
 
-        
-        
-        
-        
-        
-        
-        
-        
         if ( ! (int) $row['is_active'] ) {
             if ( $row['client_id'] !== $client_id ) {
                 return false;
             }
             $chain_id = ! empty( $row['refresh_parent_id'] ) ? (int) $row['refresh_parent_id'] : (int) $row['id'];
             if ( $this->successor_settles( $chain_id ) ) {
-                
-                
-                
-                
-                
-                
-                
                 $this->log_refresh_event( 'race_refused', $chain_id, $client_id );
                 return false;
             }
@@ -266,23 +175,16 @@ class OAuth_Token_Manager {
             return false;
         }
 
-        
         if ( $row['client_id'] !== $client_id ) {
             return false;
         }
 
-        
-        
         if ( ! empty( $row['refresh_expires_at'] ) && strtotime( $row['refresh_expires_at'] . ' UTC' ) < time() ) {
             return false;
         }
 
-        
         $parent_id = ! empty( $row['refresh_parent_id'] ) ? (int) $row['refresh_parent_id'] : (int) $row['id'];
 
-        
-        
-        
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix; atomic claim must hit DB.
         $claimed = $wpdb->query(
             $wpdb->prepare(
@@ -293,14 +195,7 @@ class OAuth_Token_Manager {
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
         if ( 1 !== (int) $claimed ) {
-            
-            
-            
-            
-            
             if ( $this->successor_settles( $parent_id ) ) {
-                
-                
                 $this->log_refresh_event( 'race_refused', $parent_id, $client_id );
                 return false;
             }
@@ -309,8 +204,6 @@ class OAuth_Token_Manager {
             return false;
         }
 
-        
-        
         $new_pair = $this->mint_access_token(
             $client_id,
             (int) $row['wp_user_id'],
@@ -326,19 +219,11 @@ class OAuth_Token_Manager {
         return $new_pair;
     }
 
-    
-
-
-
-
-
-
     public function revoke_token( string $token_hash, string $client_id = '' ): bool {
         global $wpdb;
 
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
 
-        
         if ( '' !== $client_id ) {
             // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix.
             $stored = $wpdb->get_var(
@@ -359,21 +244,8 @@ class OAuth_Token_Manager {
             array( '%s' )
         );
 
-        
-        
-        
-        
-        
         return false !== $result;
     }
-
-    
-
-
-
-
-
-
 
     public function revoke_by_refresh_hash( string $refresh_hash, string $client_id = '' ): bool {
         global $wpdb;
@@ -391,7 +263,6 @@ class OAuth_Token_Manager {
         if ( ! $row ) {
             return false;
         }
-        
         if ( '' !== $client_id && $row['client_id'] !== $client_id ) {
             return false;
         }
@@ -399,23 +270,6 @@ class OAuth_Token_Manager {
         $this->revoke_chain( $chain_id );
         return true;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function successor_settles( int $chain_id ): bool {
         if ( $this->chain_has_live_successor( $chain_id ) ) {
@@ -430,47 +284,6 @@ class OAuth_Token_Manager {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function chain_has_live_successor( int $chain_id ): bool {
         global $wpdb;
 
@@ -481,10 +294,6 @@ class OAuth_Token_Manager {
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix; freshness required.
-        
-        
-        
-        
         $count = (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table} WHERE refresh_parent_id = %d AND is_active = 1",
@@ -495,16 +304,6 @@ class OAuth_Token_Manager {
 
         return $count >= 1;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function log_refresh_event( string $event, int $chain_id, string $client_id ): void {
         if ( ! \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_enabled', true ) ) {
@@ -523,14 +322,7 @@ class OAuth_Token_Manager {
                     'client_id' => $client_id,
                 ) ),
                 'result_status' => $event,
-                
-                
-                
-                
-                
                 'ip_address'    => class_exists( '\\Easy_MCP_AI\\Client_IP' ) ? \Easy_MCP_AI\Client_IP::get() : '',
-                
-                
                 'auth_source'     => 'oauth',
                 'oauth_client_id' => '' !== $client_id ? $client_id : null,
                 'created_at'      => \current_time( 'mysql', true ),
@@ -538,12 +330,6 @@ class OAuth_Token_Manager {
             array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
         );
     }
-
-    
-
-
-
-
 
     public static function hash_presented( string $token ): ?string {
         $prefix = 0 === strpos( $token, self::TOKEN_PREFIX ) ? self::TOKEN_PREFIX : '';

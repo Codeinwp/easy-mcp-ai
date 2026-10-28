@@ -9,33 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Term_Handler extends Command_Handler {
 
     const NONE_EXISTS = 'None of the taxonomies named exists, so no term count was recounted.';
-
-    
-
-
-
-
 
     public function preflight_recount( Invocation $inv, Context $ctx ): void {
         foreach ( $inv->args as $taxonomy ) {
@@ -46,7 +22,6 @@ final class Term_Handler extends Command_Handler {
         }
     }
 
-    
     public function recount( Invocation $inv, Context $ctx ): void {
         foreach ( (array) ( $inv->route['not_captured'] ?? array() ) as $phrase ) {
             $ctx->not_captured( (string) $phrase );
@@ -76,12 +51,6 @@ final class Term_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     public function describe_recount( Invocation $inv ): array {
         $lines = array();
         foreach ( $inv->args as $taxonomy ) {
@@ -101,13 +70,6 @@ final class Term_Handler extends Command_Handler {
         }
         return $lines;
     }
-
-    
-
-
-
-
-
 
     private static function stored_counts( string $taxonomy ): array {
         $terms = \get_terms(

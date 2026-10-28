@@ -102,9 +102,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 				),
 			),
 			'required'   => array( 'keyword' ),
-			
-			
-			
 			'oneOf'      => array(
 				array( 'required' => array( 'location_code' ) ),
 				array( 'required' => array( 'location_name' ) ),
@@ -113,7 +110,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['keyword'] ) || empty( $arguments['keyword'] ) ) {
 			throw new \RuntimeException(
 				'keyword is required and must not exceed 700 characters.'
@@ -126,7 +122,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			);
 		}
 
-		
 		$has_location_code = isset( $arguments['location_code'] );
 		$has_location_name = isset( $arguments['location_name'] );
 		if ( ( $has_location_code && $has_location_name ) || ( ! $has_location_code && ! $has_location_name ) ) {
@@ -135,7 +130,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			);
 		}
 
-		
 		if ( isset( $arguments['depth'] ) ) {
 			$depth = (int) $arguments['depth'];
 			if ( $depth < 1 || $depth > 200 ) {
@@ -145,7 +139,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['device'] ) ) {
 			$device = (string) $arguments['device'];
 			if ( ! in_array( $device, array( 'desktop', 'mobile' ), true ) ) {
@@ -155,7 +148,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['os'] ) ) {
 			$os = (string) $arguments['os'];
 			if ( ! in_array( $os, array( 'windows', 'macos', 'android', 'ios' ), true ) ) {
@@ -165,7 +157,6 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['tag'] ) ) {
 			$tag = (string) $arguments['tag'];
 			if ( strlen( $tag ) > 255 ) {
@@ -175,17 +166,14 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			}
 		}
 
-		
 		$task = array( 'keyword' => $keyword );
 
-		
 		if ( $has_location_code ) {
 			$task['location_code'] = (int) $arguments['location_code'];
 		} else {
 			$task['location_name'] = (string) $arguments['location_name'];
 		}
 
-		
 		if ( isset( $arguments['language_code'] ) ) {
 			$task['language_code'] = (string) $arguments['language_code'];
 		}
@@ -217,14 +205,12 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			$task['tag'] = (string) $arguments['tag'];
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/serp/google/organic/live/advanced',
 			$task
 		);
 
-		
 		return array_merge(
 			$result['tasks'][0]['result'][0] ?? array(),
 			array( '_cost_usd' => $result['cost'] ?? 0 )

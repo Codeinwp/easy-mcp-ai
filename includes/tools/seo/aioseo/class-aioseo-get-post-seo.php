@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {

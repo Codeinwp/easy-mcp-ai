@@ -87,14 +87,12 @@ class Backlinks_Summary_Live extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['target'] ) || empty( $arguments['target'] ) ) {
 			throw new \RuntimeException(
 				'target is required and must not be empty.'
 			);
 		}
 
-		
 		if ( isset( $arguments['backlinks_status_type'] ) ) {
 			$backlinks_status_type = (string) $arguments['backlinks_status_type'];
 			if ( ! in_array( $backlinks_status_type, array( 'all', 'live', 'lost' ), true ) ) {
@@ -104,7 +102,6 @@ class Backlinks_Summary_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['internal_list_limit'] ) ) {
 			$internal_list_limit = (int) $arguments['internal_list_limit'];
 			if ( $internal_list_limit < 1 || $internal_list_limit > 1000 ) {
@@ -114,7 +111,6 @@ class Backlinks_Summary_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['rank_scale'] ) ) {
 			$rank_scale = (string) $arguments['rank_scale'];
 			if ( ! in_array( $rank_scale, array( 'one_hundred', 'one_thousand' ), true ) ) {
@@ -124,10 +120,8 @@ class Backlinks_Summary_Live extends Base_Tool {
 			}
 		}
 
-		
 		$task = array( 'target' => (string) $arguments['target'] );
 
-		
 		if ( isset( $arguments['internal_list_limit'] ) ) {
 			$task['internal_list_limit'] = (int) $arguments['internal_list_limit'];
 		}
@@ -150,14 +144,12 @@ class Backlinks_Summary_Live extends Base_Tool {
 			$task['rank_scale'] = (string) $arguments['rank_scale'];
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/backlinks/summary/live',
 			$task
 		);
 
-		
 		return array_merge(
 			$result['tasks'][0]['result'][0] ?? array(),
 			array( '_cost_usd' => $result['cost'] ?? 0 )

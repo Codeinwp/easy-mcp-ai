@@ -11,11 +11,6 @@ class Delete_Redirects extends Base_Tool {
 
     use Redirection_Rest;
 
-    
-
-
-
-
     const MAX_IDS = 100;
 
     public function get_name() {
@@ -51,7 +46,6 @@ class Delete_Redirects extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         try {
             $items = $this->existing( $this->parse_ids( $arguments ) );
@@ -78,9 +72,6 @@ class Delete_Redirects extends Base_Tool {
         $ids   = $this->parse_ids( $arguments );
         $items = $this->existing( $ids );
         if ( ! empty( $items['missing'] ) ) {
-            
-            
-            
             throw new \InvalidArgumentException( sprintf( 'No redirect with id %s. Nothing was deleted. List redirects with wp_redirection_list_redirects.', implode( ', ', $items['missing'] ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
@@ -113,11 +104,6 @@ class Delete_Redirects extends Base_Tool {
         );
     }
 
-    
-
-
-
-
     private function parse_ids( array $arguments ): array {
         $this->validate_required( $arguments, array( 'redirect_ids' ) );
         if ( ! is_array( $arguments['redirect_ids'] ) || empty( $arguments['redirect_ids'] ) ) {
@@ -133,12 +119,6 @@ class Delete_Redirects extends Base_Tool {
         }
         return $ids;
     }
-
-    
-
-
-
-
 
     private function existing( array $ids ): array {
         $found   = array();
@@ -156,12 +136,6 @@ class Delete_Redirects extends Base_Tool {
             'missing' => $missing,
         );
     }
-
-    
-
-
-
-
 
     private static function summary_line( array $redirect ): string {
         return sprintf( '#%d %s → %s', $redirect['id'], $redirect['source'], null !== $redirect['target'] ? $redirect['target'] : $redirect['action_type'] );

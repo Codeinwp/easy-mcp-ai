@@ -102,24 +102,20 @@ class Labs_Keywords_For_Site_Live extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['target'] ) || '' === $arguments['target'] ) {
 			throw new \RuntimeException( 'target is required.' );
 		}
 
 		$target = (string) $arguments['target'];
 
-		
 		if ( preg_match( '/^https?:\/\//', $target ) ) {
 			throw new \RuntimeException( 'target must be a bare domain (e.g. example.com), without protocol or www prefix.' );
 		}
 
-		
 		if ( strpos( $target, 'www.' ) === 0 ) {
 			throw new \RuntimeException( 'target must be a bare domain (e.g. example.com), without protocol or www prefix.' );
 		}
 
-		
 		$has_location_code = isset( $arguments['location_code'] ) && '' !== $arguments['location_code'] && null !== $arguments['location_code'];
 		$has_location_name = isset( $arguments['location_name'] ) && '' !== $arguments['location_name'] && null !== $arguments['location_name'];
 
@@ -131,17 +127,14 @@ class Labs_Keywords_For_Site_Live extends Base_Tool {
 			throw new \RuntimeException( 'Exactly one of location_code or location_name is required.' );
 		}
 
-		
 		$body = array( 'target' => $target );
 
-		
 		if ( $has_location_code ) {
 			$body['location_code'] = (int) $arguments['location_code'];
 		} else {
 			$body['location_name'] = (string) $arguments['location_name'];
 		}
 
-		
 		$optional_params = array(
 			'language_code',
 			'language_name',
@@ -160,14 +153,12 @@ class Labs_Keywords_For_Site_Live extends Base_Tool {
 			}
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/dataforseo_labs/google/keywords_for_site/live',
 			$body
 		);
 
-		
 		return array_merge(
 			$result['tasks'][0]['result'][0] ?? array(),
 			array( '_cost_usd' => $result['cost'] )

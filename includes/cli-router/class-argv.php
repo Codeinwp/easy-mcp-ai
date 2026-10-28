@@ -5,89 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Argv {
 
-    
     const ALIAS_REGEX = '^@[A-Za-z0-9-_\.\-]+$';
 
-    
     const ENV_ASSIGNMENT = '/^[A-Za-z_][A-Za-z0-9_]*\+?=/';
-
-    
-
-
-
-
-
 
     const SPEC_MULTIPLE    = array( 'require', 'exec' );
     const SPEC_DEPRECATED  = array( 'blog' => 'Use --url instead.' );
     const SPEC_NOT_RUNTIME = array( 'disabled_commands', 'apache_modules' );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function parse( array $words, array $global_keys ): array {
         $words = array_values( array_map( 'strval', $words ) );
@@ -98,8 +24,6 @@ final class Argv {
             self::refuse_env_assignment( $words );
         }
 
-        
-        
         if ( ! empty( $words[0] ) && preg_match( '#' . self::ALIAS_REGEX . '#', $words[0] ) ) {
             if ( '@all' === $words[0] ) {
                 throw new Cli_Parse_Error( 'alias', "Cannot use '@all' when no aliases are registered." );
@@ -111,8 +35,6 @@ final class Argv {
         list( $assoc, $runtime, $notices ) = self::unmix_assoc_args( $mixed, self::runtime_spec( $global_keys ) );
         list( $positional, $assoc )        = self::back_compat_conversions( $positional, $assoc );
 
-        
-        
         if ( array_key_exists( 'blog', $runtime ) ) {
             $runtime['url'] = $runtime['blog'];
             unset( $runtime['blog'] );
@@ -129,15 +51,6 @@ final class Argv {
             'notices'    => $notices,
         );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function extract_assoc( array $arguments ): array {
         $positional_args = array();
@@ -174,23 +87,6 @@ final class Argv {
         return array( $positional_args, $assoc_args, $global_assoc, $local_assoc );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function back_compat_conversions( array $args, array $assoc_args ): array {
         $args = self::convert_top_level_alias( $args );
         $args = self::convert_dashed_meta( $args );
@@ -208,12 +104,6 @@ final class Argv {
         return array( $args, $assoc_args );
     }
 
-    
-
-
-
-
-
     private static function convert_top_level_alias( array $args ): array {
         $top_level_aliases = array(
             'sql'  => 'db',
@@ -230,12 +120,6 @@ final class Argv {
         return $args;
     }
 
-    
-
-
-
-
-
     private static function convert_dashed_meta( array $args ): array {
         if ( ! empty( $args ) && preg_match( '/(post|comment|user|network)-meta/', $args[0], $matches ) ) {
             array_shift( $args );
@@ -245,27 +129,12 @@ final class Argv {
         return $args;
     }
 
-    
-
-
-
-
-
     private static function convert_cli_aliases( array $args ): array {
         if ( array( 'cli', 'aliases' ) === array_slice( $args, 0, 2 ) ) {
             list( $args[0], $args[1], $args[2] ) = array( 'cli', 'alias', 'list' );
         }
         return $args;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function convert_core( array $args, array $assoc_args ): array {
         if ( count( $args ) > 0 && 'core' === $args[0] && isset( $assoc_args['admin_name'] ) ) {
@@ -282,13 +151,6 @@ final class Argv {
         return array( $args, $assoc_args );
     }
 
-    
-
-
-
-
-
-
     private static function convert_checksum( array $args ): array {
         if ( array( 'checksum', 'core' ) === array_slice( $args, 0, 2 ) ) {
             list( $args[0], $args[1] ) = array( 'core', 'verify-checksums' );
@@ -299,13 +161,6 @@ final class Argv {
         return $args;
     }
 
-    
-
-
-
-
-
-
     private static function convert_site_create_site_id( array $args, array $assoc_args ): array {
         if ( count( $args ) >= 2 && 'site' === $args[0] && 'create' === $args[1] && isset( $assoc_args['site_id'] ) ) {
             $assoc_args['network_id'] = $assoc_args['site_id'];
@@ -313,15 +168,6 @@ final class Argv {
         }
         return $assoc_args;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function convert_bulk_subcommands( array $args, array $assoc_args ): array {
         if ( count( $args ) > 1 && in_array( $args[0], array( 'plugin', 'theme' ), true )
@@ -343,27 +189,12 @@ final class Argv {
         return array( $args, $assoc_args );
     }
 
-    
-
-
-
-
-
     private static function convert_plugin_scaffold( array $args ): array {
         if ( array( 'plugin', 'scaffold' ) === array_slice( $args, 0, 2 ) ) {
             list( $args[0], $args[1] ) = array( $args[1], $args[0] );
         }
         return $args;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function convert_flags( array $args, array $assoc_args ): array {
         if ( isset( $assoc_args['help'] ) ) {
@@ -396,14 +227,6 @@ final class Argv {
         }
         return array( $args, $assoc_args );
     }
-
-    
-
-
-
-
-
-
 
     private static function convert_url( array $args, array $assoc_args ): array {
         if ( count( $args ) < 2 || ! in_array( $args[0], array( 'post', 'comment', 'site', 'term' ), true ) || 'url' !== $args[1] ) {
@@ -446,15 +269,6 @@ final class Argv {
         return array( $args, $assoc_args );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function convert_config_get( array $args, array $assoc_args ): array {
         if ( count( $args ) !== 2 || 'config' !== $args[0] || 'get' !== $args[1] ) {
             return array( $args, $assoc_args );
@@ -474,22 +288,10 @@ final class Argv {
             $args[]             = $name;
             $assoc_args['type'] = $type;
         } else {
-            
             $args[1] = 'list';
         }
         return array( $args, $assoc_args );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function unmix_assoc_args( array $mixed_args, array $spec ): array {
         $assoc_args     = array();
@@ -516,20 +318,6 @@ final class Argv {
         return array( $assoc_args, $runtime_config, $notices );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function runtime_spec( array $global_keys ): array {
         $spec = array();
         foreach ( $global_keys as $key => $details ) {
@@ -547,12 +335,6 @@ final class Argv {
         return $spec;
     }
 
-    
-
-
-
-
-
     private static function spec_from_name( string $name ): ?array {
         if ( '' === $name || in_array( $name, self::SPEC_NOT_RUNTIME, true ) ) {
             return null;
@@ -562,13 +344,6 @@ final class Argv {
             'deprecated' => array_key_exists( $name, self::SPEC_DEPRECATED ) ? self::SPEC_DEPRECATED[ $name ] : null,
         );
     }
-
-    
-
-
-
-
-
 
     private static function spec_from_record( array $details ): ?array {
         if ( ! isset( $details['runtime'] ) || false === $details['runtime'] ) {
@@ -580,15 +355,10 @@ final class Argv {
         );
     }
 
-    
-
-
-
     private static function refuse_env_assignment( array $words ): void {
         if ( ! isset( $words[0] ) || ! preg_match( self::ENV_ASSIGNMENT, $words[0], $m ) ) {
             return;
         }
-        
         throw new Cli_Parse_Error(
             'env_assignment',
             'wp_cli_run does not run a shell: environment assignment ' . $m[0] . '... before the command. Environment variables cannot be set; remove it.'

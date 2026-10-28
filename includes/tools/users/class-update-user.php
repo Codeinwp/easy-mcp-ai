@@ -9,12 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_User extends Base_Tool {
 
-    
-
-
-
-
-
     const TAKEOVER_CAPABILITIES = array(
         'manage_options',
         'promote_users',
@@ -31,13 +25,10 @@ class Update_User extends Base_Tool {
         'delete_sites',
     );
 
-    
     const FLAG_FIELDS = array( 'rich_editing', 'syntax_highlighting', 'comment_shortcuts', 'show_admin_bar_front' );
 
-    
     const SNAPSHOT_META = array( 'first_name', 'last_name', 'nickname', 'description', 'locale', 'rich_editing', 'syntax_highlighting', 'comment_shortcuts', 'admin_color', 'use_ssl', 'show_admin_bar_front' );
 
-    
     const SNAPSHOT_COLUMNS = array(
         'email'           => 'user_email',
         'name'            => 'display_name',
@@ -67,15 +58,10 @@ class Update_User extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
-
-    
-
-
-
 
     public function get_redacted_arguments() {
         return array( 'password' );
@@ -182,33 +168,16 @@ class Update_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public function get_approval_policy( array $arguments ) {
         try {
             if ( self::grants_takeover_role( $arguments ) || self::sets_password( $arguments ) || self::changes_email( $arguments ) ) {
                 return 'always';
             }
         } catch ( \Throwable $e ) {
-            
             return 'always';
         }
         return 'inherit';
     }
-
-    
-
-
-
-
-
 
     private static function grants_takeover_role( array $arguments ): bool {
         foreach ( array( 'roles', 'add_roles' ) as $field ) {
@@ -224,23 +193,9 @@ class Update_User extends Base_Tool {
         return false;
     }
 
-    
-
-
-
-
-
     private static function sets_password( array $arguments ): bool {
         return isset( $arguments['password'] ) && is_string( $arguments['password'] ) && '' !== $arguments['password'];
     }
-
-    
-
-
-
-
-
-
 
     private static function changes_email( array $arguments ): bool {
         if ( ! isset( $arguments['email'] ) || ! is_string( $arguments['email'] ) || '' === trim( $arguments['email'] ) ) {
@@ -254,14 +209,6 @@ class Update_User extends Base_Tool {
         $current = isset( $user->user_email ) ? (string) $user->user_email : '';
         return 0 !== strcasecmp( sanitize_email( $arguments['email'] ), $current );
     }
-
-    
-
-
-
-
-
-
 
     public static function role_is_takeover_grant( string $role ): bool {
         if ( '' === $role ) {
@@ -282,16 +229,6 @@ class Update_User extends Base_Tool {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function parse_user_registered( $value ): string {
         $shown = is_scalar( $value ) ? (string) $value : gettype( $value );
         if ( is_string( $value ) && preg_match( '/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})$/', trim( $value ), $m ) ) {
@@ -304,18 +241,6 @@ class Update_User extends Base_Tool {
         throw new \InvalidArgumentException( sprintf( 'user_registered must be a real UTC date and time as "Y-m-d H:i:s" (e.g. 2024-05-01 09:30:00), got: %s', $shown ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function refuse_unusable_slug( $slug, int $user_id = 0 ): void {
         $clean = is_string( $slug ) ? sanitize_title( $slug ) : '';
         if ( '' === $clean ) {
@@ -326,13 +251,6 @@ class Update_User extends Base_Tool {
             throw new \InvalidArgumentException( sprintf( 'slug "%1$s" is already used by user %2$d; each user needs a different slug.', $clean, (int) $owner->ID ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
 
     public function describe( array $arguments ) {
         try {
@@ -351,15 +269,6 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function preview_sentence( array $user, int $id, array $parts ): string {
         $login = isset( $user['username'] ) ? (string) $user['username'] : '?';
         return sprintf(
@@ -370,15 +279,6 @@ class Update_User extends Base_Tool {
             empty( $parts ) ? 'no field changes requested' : implode( '; ', $parts )
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function describe_account_changes( array $arguments, array $user ): array {
         $parts = array();
@@ -395,14 +295,6 @@ class Update_User extends Base_Tool {
         return $parts;
     }
 
-    
-
-
-
-
-
-
-
     private static function describe_role_changes( array $arguments, array $user ): array {
         $parts = array();
         if ( ! empty( $arguments['roles'] ) && is_array( $arguments['roles'] ) ) {
@@ -415,13 +307,6 @@ class Update_User extends Base_Tool {
         }
         return $parts;
     }
-
-    
-
-
-
-
-
 
     private static function describe_profile_fields( array $arguments ): array {
         $parts = array();
@@ -440,25 +325,11 @@ class Update_User extends Base_Tool {
         return $parts;
     }
 
-    
-
-
-
-
-
     private static function role_list( $roles ): string {
         $roles = array_values( array_filter( array_map( 'strval', (array) $roles ), 'strlen' ) );
         sort( $roles, SORT_STRING );
         return empty( $roles ) ? '(none)' : implode( ', ', $roles );
     }
-
-    
-
-
-
-
-
-
 
     private static function flag( array $arguments, string $name ): bool {
         return ! empty( $arguments[ $name ] ) && rest_sanitize_boolean( $arguments[ $name ] );
@@ -472,13 +343,10 @@ class Update_User extends Base_Tool {
         $extra   = $this->extra_fields( $arguments );
         $plan    = $this->role_plan( $arguments, $params, $user_id );
 
-        
         $before = self::snapshot( $user_id );
 
         if ( $plan['join_site'] ) {
             self::join_site( $user_id, $plan['site_role'] );
-            
-            
             unset( $params['roles'] );
         }
 
@@ -496,16 +364,6 @@ class Update_User extends Base_Tool {
         $result['changed_fields'] = $changed;
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function rest_params( array $arguments, int $user_id ): array {
         $params = array();
@@ -541,16 +399,6 @@ class Update_User extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function string_params( array $arguments ): array {
         $params = array();
         foreach ( array( 'password', 'name', 'nickname', 'slug', 'locale' ) as $field ) {
@@ -564,16 +412,6 @@ class Update_User extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function role_plan( array $arguments, array $params, int $user_id ): array {
         $plan = array(
@@ -602,32 +440,12 @@ class Update_User extends Base_Tool {
         return $plan;
     }
 
-    
-
-
-
-
-
-
-
     private static function join_site( int $user_id, string $role ): void {
         $joined = add_user_to_blog( get_current_blog_id(), $user_id, $role );
         if ( is_wp_error( $joined ) ) {
             throw new \RuntimeException( $joined->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function maybe_rest_update( int $user_id, array $params, array $extra, array $plan ): ?array {
         if ( empty( $params ) && empty( $extra ) && ( $plan['role_ops'] || $plan['join_site'] ) ) {
@@ -642,16 +460,6 @@ class Update_User extends Base_Tool {
             throw $e;
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function result_row( int $user_id, ?array $data, bool $role_change ): array {
         if ( null !== $data && ! $role_change ) {
@@ -671,31 +479,12 @@ class Update_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function fresh_or_rest( $fresh, string $property, ?array $data, string $key ) {
         if ( $fresh && isset( $fresh->$property ) ) {
             return $fresh->$property;
         }
         return null !== $data ? $data[ $key ] : null;
     }
-
-    
-
-
-
-
-
-
-
 
     private function extra_fields( array $arguments ): array {
         $out = array();
@@ -716,28 +505,12 @@ class Update_User extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function admin_color_argument( $color ): string {
         if ( ! is_string( $color ) || ! preg_match( '/^[a-z0-9 _.\-@]+$/i', $color ) ) {
             throw new \InvalidArgumentException( sprintf( 'admin_color must be a color scheme slug of letters, digits, space, _ . - @ (e.g. "fresh"), got: %s', is_scalar( $color ) ? (string) $color : gettype( $color ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $color;
     }
-
-    
-
-
-
-
-
 
     private function role_argument( array $arguments, string $field ): array {
         if ( ! isset( $arguments[ $field ] ) || array() === $arguments[ $field ] ) {
@@ -757,17 +530,6 @@ class Update_User extends Base_Tool {
         return array_values( array_unique( $roles ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function refuse_conflicting_role_arguments( array $params, array $add_roles, array $remove_roles, bool $remove_from_site, bool $add_to_site ): void {
         $replaces = isset( $params['roles'] );
         $adjusts  = ! empty( $add_roles ) || ! empty( $remove_roles );
@@ -783,27 +545,12 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_roles_added_and_removed( array $add_roles, array $remove_roles ): void {
         $both = array_intersect( $add_roles, $remove_roles );
         if ( ! empty( $both ) ) {
             throw new \InvalidArgumentException( sprintf( 'Role(s) %s are in both add_roles and remove_roles.', implode( ', ', $both ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
 
     private static function refuse_unusable_add_to_site( array $params ): void {
         if ( ! is_multisite() ) {
@@ -813,16 +560,6 @@ class Update_User extends Base_Tool {
             throw new \InvalidArgumentException( 'add_to_site needs `roles` with exactly one role: the role the user gets on this site.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function check_add_to_site( int $user_id, string $role ): bool {
         if ( is_user_member_of_blog( $user_id, get_current_blog_id() ) ) {
@@ -835,23 +572,9 @@ class Update_User extends Base_Tool {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private function check_role_operations( int $user_id, $target, array $add_roles, array $remove_roles, bool $remove_from_site ): void {
         if ( is_multisite() && ! is_user_member_of_blog( $user_id, get_current_blog_id() ) ) {
             if ( $remove_from_site ) {
-                
                 return;
             }
             throw new \InvalidArgumentException( sprintf( 'User %d is not a member of this site. Pass add_to_site: true with roles [<role>] to add them first.', $user_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -874,16 +597,6 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function check_remove_from_site( int $user_id, array $current_roles ): void {
         if ( get_current_user_id() === $user_id ) {
             throw new \RuntimeException( 'remove_from_site cannot be used on your own account.' );
@@ -897,18 +610,6 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function check_remove_roles( int $user_id, array $remove_roles, array $current_roles ): void {
         $this->assert_roles_grantable( $remove_roles, 'remove_roles' );
         if ( in_array( 'administrator', $remove_roles, true ) && in_array( 'administrator', $current_roles, true ) ) {
@@ -920,12 +621,6 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
     private static function any_role_edits_users( array $roles ): bool {
         foreach ( $roles as $role ) {
             $object = get_role( $role );
@@ -935,15 +630,6 @@ class Update_User extends Base_Tool {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
 
     private function assert_roles_grantable( array $roles, string $field ): void {
         $registry = function_exists( 'wp_roles' ) ? wp_roles() : null;
@@ -955,15 +641,6 @@ class Update_User extends Base_Tool {
         $this->validate_assignable_roles( $roles );
         self::refuse_roles_not_editable( $roles, $field );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function refuse_roles_not_editable( array $roles, string $field ): void {
         if ( ! function_exists( 'get_editable_roles' ) && is_readable( ABSPATH . 'wp-admin/includes/user.php' ) ) {
@@ -980,13 +657,6 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private static function refuse_last_administrator( string $field ): void {
         $admin_count = count(
             get_users( array(
@@ -999,19 +669,6 @@ class Update_User extends Base_Tool {
             throw new \RuntimeException( sprintf( '%s would remove the last administrator. Promote another user to administrator first.', $field ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function rest_update( int $user_id, array $params, array $extra, bool $skip_email ): array {
         $route = '/wp/v2/users/' . $user_id;
@@ -1027,15 +684,6 @@ class Update_User extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function extra_fields_hooks( array $extra, string $route ): array {
         if ( empty( $extra ) ) {
@@ -1061,13 +709,6 @@ class Update_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function skip_email_hooks( bool $skip_email ): array {
         if ( ! $skip_email ) {
             return array();
@@ -1086,16 +727,6 @@ class Update_User extends Base_Tool {
         return $hooks;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function apply_role_operations( int $user_id, array $add_roles, array $remove_roles, bool $remove_from_site ): void {
         if ( $remove_from_site ) {
             self::remove_from_site( $user_id );
@@ -1113,15 +744,6 @@ class Update_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function remove_from_site( int $user_id ): void {
         if ( is_multisite() ) {
             if ( is_user_member_of_blog( $user_id, get_current_blog_id() ) ) {
@@ -1137,14 +759,6 @@ class Update_User extends Base_Tool {
             $user->remove_all_caps();
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function snapshot( int $user_id ): ?array {
         $user = get_userdata( $user_id );
@@ -1169,14 +783,6 @@ class Update_User extends Base_Tool {
         }
         return $snap;
     }
-
-    
-
-
-
-
-
-
 
     private static function changed_fields( ?array $before, ?array $after ): array {
         if ( ! is_array( $before ) || ! is_array( $after ) ) {

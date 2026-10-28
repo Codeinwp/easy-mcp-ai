@@ -1,52 +1,18 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Autoloader {
 
     const PREFIX = 'Easy_MCP_AI\\';
 
-    
     const IDENTIFIER_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_';
 
-    
     const FILE_PREFIXES = array( 'class-', 'trait-', 'interface-' );
-
-    
-
-
-
 
     const EXCEPTIONS = array(
         'easy_mcp_ai\\tools\\lifecycle_guard'                => 'tools/plugins/trait-lifecycle-guard.php',
@@ -86,7 +52,6 @@ final class Autoloader {
 
     private static bool $registered = false;
 
-    
     public static function register(): void {
         if ( self::$registered ) {
             return;
@@ -95,23 +60,12 @@ final class Autoloader {
         spl_autoload_register( array( __CLASS__, 'load' ) );
     }
 
-    
-
-
-
-
     public static function load( string $class ): void {
         $file = self::file_for( $class );
         if ( null !== $file ) {
             require_once $file;
         }
     }
-
-    
-
-
-
-
 
     public static function file_for( string $class ): ?string {
         foreach ( self::candidates( $class ) as $file ) {
@@ -121,13 +75,6 @@ final class Autoloader {
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     private static function candidates( string $class ): array {
         $lower = strtolower( ltrim( $class, '\\' ) );
@@ -140,10 +87,6 @@ final class Autoloader {
         }
         $parts = explode( '\\', substr( $lower, strlen( self::PREFIX ) ) );
         foreach ( $parts as $part ) {
-            
-            
-            
-            
             if ( '' === $part || strspn( $part, self::IDENTIFIER_CHARS ) !== strlen( $part ) ) {
                 return array();
             }

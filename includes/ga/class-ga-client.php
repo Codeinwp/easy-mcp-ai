@@ -14,27 +14,12 @@ class GA_Client extends Abstract_Google_Client {
     const OPTION_PROPERTY_ID = 'easy_mcp_ai_ga_default_property_id';
     const TRANSIENT_TOKEN    = 'easy_mcp_ai_ga_token';
     const SCOPE              = 'https://www.googleapis.com/auth/analytics.readonly';
-    
-
-
-
-
     const SCOPE_EDIT         = 'https://www.googleapis.com/auth/analytics.edit';
     const HKDF_INFO          = 'easy_mcp_ai_ga_creds_v1';
 
     protected static function product_name(): string {
         return 'Google Analytics';
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function request( string $method, string $url, ?array $body = null, bool $admin_context = false, bool $edit = false ): array {
         $scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
@@ -57,8 +42,6 @@ class GA_Client extends Abstract_Google_Client {
                 'Content-Type'  => 'application/json',
             ),
             'timeout'             => 20,
-            
-            
             'limit_response_size' => 8388608,
         );
         if ( null !== $body ) {
@@ -109,15 +92,6 @@ class GA_Client extends Abstract_Google_Client {
         return is_array( $decoded ) ? $decoded : array();
     }
 
-    
-
-
-
-
-
-
-
-
     private static function throw_edit_error( int $code, $decoded ): void {
         $detail = is_array( $decoded ) && isset( $decoded['error']['message'] ) && is_string( $decoded['error']['message'] )
             ? $decoded['error']['message']
@@ -148,26 +122,9 @@ class GA_Client extends Abstract_Google_Client {
         return self::request( 'POST', $url, $body, $admin_context );
     }
 
-    
-
-
-
-
-
-
     public static function edit( string $method, string $url, ?array $body = null ): array {
         return self::request( $method, $url, $body, false, true );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function key_events( string $property ): array {
         $events = array();
@@ -191,15 +148,9 @@ class GA_Client extends Abstract_Google_Client {
         throw new \RuntimeException( 'Google Analytics returned more than ten pages of key events; nothing was changed.' );
     }
 
-    
-
-
-
-
     public static function default_property_id(): string {
         $id = \Easy_MCP_AI\Config::get( self::OPTION_PROPERTY_ID, '' );
         if ( empty( $id ) && in_array( \Easy_MCP_AI\Config::constant_name( self::OPTION_PROPERTY_ID ), \Easy_MCP_AI\Config_Admin::invalid_settings(), true ) ) {
-            
             throw new \RuntimeException(
                 'No property_id provided, and EASY_MCP_AI_GA_DEFAULT_PROPERTY_ID is not a valid GA4 property ID. Set it to the numeric property ID (for example 123456789 or properties/123456789), or pass property_id.'
             );
@@ -212,21 +163,8 @@ class GA_Client extends Abstract_Google_Client {
         return self::normalize_property( (string) $id );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function write_property( array $arguments ): string {
         if ( ! array_key_exists( 'property_id', $arguments ) || null === $arguments['property_id'] ) {
-            
-            
             $default = self::default_property_id();
             if ( 1 === preg_match( '#^properties/0+\z#', $default ) ) {
                 throw new \RuntimeException( 'The default Google Analytics property is not a GA4 property; set a numeric property ID in Easy MCP AI → Tools → External data, or pass property_id. Nothing was changed.' );
@@ -252,16 +190,6 @@ class GA_Client extends Abstract_Google_Client {
         return $property;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function normalize_property( string $input ): string {
         $trimmed = trim( $input );
         if ( '' === $trimmed ) {
@@ -278,16 +206,6 @@ class GA_Client extends Abstract_Google_Client {
         }
         return 'properties/' . $trimmed;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function build_date_ranges( array $input ): array {
         if ( empty( $input ) ) {

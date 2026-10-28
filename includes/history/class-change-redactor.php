@@ -6,25 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Change_Redactor {
-    const MAX_BYTES = 262144; 
+    const MAX_BYTES = 262144;
 
     private static $exact_keys = array(
         'user_pass', 'user_activation_key', 'session_tokens', 'user_email',
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         'customer_ip_address', 'customer_user_agent',
     );
 
@@ -32,24 +17,7 @@ class Change_Redactor {
         '_secret', '_token', 'api_key', 'apikey', 'password', 'secret',
     );
 
-    
-
-
-
-
-
-
-
     private static $pattern_keys = '/pass|token|private|_hash$|api_?key/i';
-
-    
-
-
-
-
-
-
-
 
     private static $sensitive_option_names = array(
         'ninja_forms_settings',
@@ -57,25 +25,6 @@ class Change_Redactor {
         'nexter_extra_ext_options',
         'nexter_site_security',
     );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static $address_blocks = array( 'billing', 'shipping' );
 
@@ -85,89 +34,17 @@ class Change_Redactor {
         'email', 'phone',
     );
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static $address_flat_pattern =
         '/^_?(?:billing|shipping)_(?:first_name|last_name|company|address_1|address_2|address_index|postcode|email|phone)$/i';
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static $table_personal_columns = array(
         'wc_orders'           => array( 'ip_address', 'user_agent' ),
         'wc_order_addresses'  => array( 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'postcode', 'email', 'phone' ),
     );
 
-    
     private static $sensitive_option_prefixes = array(
         'ppcp-bearer', 'wdkit_auth_',
     );
-
-    
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function redact_for_table( $value, $table ) {
         $columns = self::personal_columns_for( $table );
@@ -181,7 +58,6 @@ class Change_Redactor {
         return self::redact( $out );
     }
 
-    
     private static function personal_columns_for( $table ) {
         $table = strtolower( (string) $table );
         if ( '' === $table ) {
@@ -196,8 +72,6 @@ class Change_Redactor {
         }
         foreach ( $map as $name => $columns ) {
             $name = strtolower( (string) $name );
-            
-            
             if ( $table === $name || substr( $table, -strlen( '_' . $name ) ) === '_' . $name ) {
                 return array_map( 'strtolower', (array) $columns );
             }
@@ -211,32 +85,14 @@ class Change_Redactor {
         }
         $truncated = false;
         $size      = 0;
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $blocks   = self::address_blocks();
         $personal = self::address_personal_keys();
         $out      = self::walk( $value, $truncated, $size, '', $blocks, $personal );
         return array( 'value' => $out, 'truncated' => $truncated, 'size_bytes' => $size );
     }
 
-    
-
-
-
     private static function walk( $value, &$truncated, &$size, $parent_key = '', $blocks = null, $personal = null ) {
         if ( is_array( $value ) ) {
-            
-            
-            
             if ( null === $blocks ) {
                 $blocks = self::address_blocks();
             }
@@ -245,20 +101,6 @@ class Change_Redactor {
             }
             $in_address = in_array( (string) $parent_key, $blocks, true );
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             if ( isset( $value['key'] ) && is_string( $value['key'] )
                 && array_key_exists( 'value', $value )
                 && self::is_sensitive( $value['key'] )
@@ -294,7 +136,6 @@ class Change_Redactor {
         return $value;
     }
 
-    
     private static function address_blocks() {
         $list = self::$address_blocks;
         if ( function_exists( 'apply_filters' ) ) {
@@ -306,7 +147,6 @@ class Change_Redactor {
         return array_map( 'strval', $list );
     }
 
-    
     private static function address_personal_keys() {
         $list = self::$address_personal_keys;
         if ( function_exists( 'apply_filters' ) ) {
@@ -318,20 +158,9 @@ class Change_Redactor {
         return array_map( 'strval', $list );
     }
 
-    
-
-
-
-
     public static function key_is_sensitive( $key ) {
         return self::is_sensitive( (string) $key );
     }
-
-    
-
-
-
-
 
     public static function option_name_is_sensitive( $name ) {
         $name = strtolower( (string) $name );

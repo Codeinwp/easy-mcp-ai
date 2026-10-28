@@ -5,72 +5,28 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class Token_Endpoint {
-
-    
-
-
-
 
     const NAMESPACE_V1 = 'easy-mcp-ai/v1';
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     const BODY_ONLY_PARAMS = array( 'code', 'code_verifier', 'refresh_token', 'client_secret' );
-
-    
-
-
-
-
 
     public function handle( \WP_REST_Request $request ) {
 
-        
-        
         $transport_error = self::enforce_transport_security();
         if ( null !== $transport_error ) {
             return $transport_error;
         }
 
-        
         $rate_error = self::enforce_rate_limit();
         if ( null !== $rate_error ) {
             return $rate_error;
         }
 
-        
-        
-        
         $query_error = self::reject_query_credentials( $request, self::BODY_ONLY_PARAMS );
         if ( null !== $query_error ) {
             return $query_error;
         }
-
-        
-        
-        
-        
 
         $grant_type = sanitize_text_field( $request->get_param( 'grant_type' ) );
 
@@ -95,38 +51,10 @@ class Token_Endpoint {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function handle_device_code( \WP_REST_Request $request ) {
-        
         $device_code = is_string( $request->get_param( 'device_code' ) ) ? $request->get_param( 'device_code' ) : '';
         $resource    = is_string( $request->get_param( 'resource' ) ) ? esc_url_raw( $request->get_param( 'resource' ) ) : '';
 
-        
-        
-        
-        
         $basic     = self::read_basic_credentials( $request );
         $client_id = self::resolve_client_id( $request, $basic );
         if ( $client_id instanceof \WP_REST_Response ) {
@@ -137,19 +65,11 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_request', __( 'Missing required parameter.', 'easy-mcp-ai' ) );
         }
 
-        
-        
         $client = ( new Client_Registry() )->find_client( $client_id );
         if ( null === $client ) {
             return $this->token_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }
 
-        
-        
-        
-        
-        
-        
         $auth_error = self::authenticate_client( $request, $client, $basic );
         if ( null !== $auth_error ) {
             return $auth_error;
@@ -157,16 +77,10 @@ class Token_Endpoint {
 
         $row = Device_Authorization::find_by_device_code( $device_code );
 
-        
-        
-        
         if ( null === $row || ! hash_equals( (string) $row->client_id, $client_id ) ) {
             return $this->token_error( 'invalid_grant', __( 'The device code is invalid.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
         if ( Device_Authorization::STATUS_CONSUMED === $row->status ) {
             return $this->token_error( 'invalid_grant', __( 'The device code has already been redeemed.', 'easy-mcp-ai' ) );
         }
@@ -175,13 +89,6 @@ class Token_Endpoint {
             return $this->token_error( 'expired_token', __( 'The device code has expired. Start the login again.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
-        
-        
-        
         if ( ! empty( $row->last_polled_at ) ) {
             $previous = strtotime( $row->last_polled_at . ' UTC' );
             if ( false !== $previous && ( time() - $previous ) < ( Device_Authorization::POLL_INTERVAL - 1 ) ) {
@@ -198,8 +105,6 @@ class Token_Endpoint {
             return $this->token_error( 'access_denied', __( 'The user denied the authorization request.', 'easy-mcp-ai' ) );
         }
 
-        
-        
         if ( '' === $resource ) {
             $resource = rest_url( self::NAMESPACE_V1 . '/mcp' );
         }
@@ -207,17 +112,10 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_target', __( 'Resource parameter does not match the authorized resource.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
         if ( Device_Authorization::STATUS_APPROVED !== $row->status || ! Device_Authorization::claim_approved( (int) $row->id ) ) {
             return $this->token_error( 'invalid_grant', __( 'The device code has already been redeemed.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
         $scope = $this->scope_backed_by_consent( Device_Authorization::GRANT_TYPE, $row );
         if ( $scope instanceof \WP_REST_Response ) {
             return $scope;
@@ -254,34 +152,6 @@ class Token_Endpoint {
         return $response;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function scope_backed_by_consent( string $grant_type, $grant ) {
         $consent = self::live_consent( (int) $grant->wp_user_id, (string) $grant->client_id );
         if ( ! self::consent_backs( $consent, self::bound_consent_id( $grant_type, $grant ) ) ) {
@@ -293,29 +163,6 @@ class Token_Endpoint {
         }
         return $scope;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function settle_against_consent( OAuth_Token_Manager $token_manager, array $tokens, string $grant_type, $grant, string $minted_scope ) {
         $post_consent = self::live_consent( (int) $grant->wp_user_id, (string) $grant->client_id );
@@ -337,14 +184,6 @@ class Token_Endpoint {
         $tokens_table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix; the conditional UPDATE and the read-back are the point.
         if ( $settled_scope !== $minted_scope ) {
-            
-            
-            
-            
-            
-            
-            
-            
             $wpdb->query(
                 $wpdb->prepare(
                     "UPDATE {$tokens_table} SET scope = %s WHERE id = %d AND scope = %s",
@@ -354,10 +193,6 @@ class Token_Endpoint {
                 )
             );
         }
-        
-        
-        
-        
         $final = $wpdb->get_row(
             $wpdb->prepare( "SELECT scope, is_active FROM {$tokens_table} WHERE id = %d LIMIT 1", $token_id )
         );
@@ -366,13 +201,6 @@ class Token_Endpoint {
             $token_manager->revoke_chain( $token_id );
             return $this->consent_refusal( $grant_type, 'empty' );
         }
-        
-        
-        
-        
-        
-        
-        
         $final_scope = (string) $final->scope;
         if ( self::cap_by_consent( $final_scope, (string) $post_consent->scope ) !== $final_scope ) {
             $token_manager->revoke_chain( $token_id );
@@ -382,15 +210,6 @@ class Token_Endpoint {
         return $tokens;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function bound_consent_id( string $grant_type, $grant ): ?int {
         if ( Device_Authorization::GRANT_TYPE !== $grant_type ) {
             return null;
@@ -398,27 +217,11 @@ class Token_Endpoint {
         return isset( $grant->consent_id ) ? (int) $grant->consent_id : 0;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function consent_backs( $consent, ?int $consent_id ): bool {
         return null !== $consent
             && '' !== trim( (string) $consent->scope )
             && ( null === $consent_id || ( $consent_id > 0 && (int) $consent->id === $consent_id ) );
     }
-
-    
-
-
-
-
-
 
     private function consent_refusal( string $grant_type, string $reason ): \WP_REST_Response {
         $device = Device_Authorization::GRANT_TYPE === $grant_type;
@@ -438,25 +241,9 @@ class Token_Endpoint {
         return $this->token_error( 'invalid_grant', $message );
     }
 
-    
-
-
-
-
-
     private function handle_authorization_code( \WP_REST_Request $request ) {
         global $wpdb;
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $code          = self::body_param( $request, 'code' );
         $code_verifier = self::body_param( $request, 'code_verifier' );
         $basic         = self::read_basic_credentials( $request );
@@ -465,22 +252,16 @@ class Token_Endpoint {
             return $client_id;
         }
         $redirect_uri  = is_string( $request->get_param( 'redirect_uri' ) ) ? esc_url_raw( $request->get_param( 'redirect_uri' ), Client_Registry::redirect_uri_allowed_protocols() ) : '';
-        
-        
-        
         $resource      = is_string( $request->get_param( 'resource' ) ) ? esc_url_raw( $request->get_param( 'resource' ) ) : '';
 
-        
         if ( '' === $code || '' === $code_verifier || '' === $client_id || '' === $redirect_uri ) {
             return $this->token_error( 'invalid_request', __( 'Missing required parameter.', 'easy-mcp-ai' ) );
         }
 
-        
         if ( ! preg_match( '/^[A-Za-z0-9\-._~]{43,128}$/', $code_verifier ) ) {
             return $this->token_error( 'invalid_request', __( 'Invalid code_verifier format.', 'easy-mcp-ai' ) );
         }
 
-        
         $code_hash   = \Easy_MCP_AI\Auth\Token_Keys::hash_current( $code );
         $codes_table = $wpdb->prefix . 'easy_mcp_ai_oauth_codes';
 
@@ -497,46 +278,23 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_grant', __( 'Authorization code not found.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $is_reuse = ( null !== $code_row->used_at );
 
-        
-        
-        
         $now_utc = gmdate( 'Y-m-d H:i:s' );
         if ( ! $is_reuse && $code_row->expires_at < $now_utc ) {
             return $this->token_error( 'invalid_grant', __( 'Authorization code has expired.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
         if ( $code_row->client_id !== Client_Metadata::storage_id( $client_id ) ) {
             return $this->token_error( 'invalid_grant', __( 'Client ID mismatch.', 'easy-mcp-ai' ) );
         }
 
-        
-        
         $registry = new Client_Registry();
         $client   = $registry->find_client( $client_id );
         if ( null === $client ) {
             return $this->token_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }
 
-        
-        
-        
-        
-        
         $auth_error = self::authenticate_client( $request, $client, $basic );
         if ( null !== $auth_error ) {
             return $auth_error;
@@ -546,12 +304,6 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_grant', __( 'Redirect URI mismatch.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
-        
-        
         if ( '' === $resource ) {
             $resource = rest_url( self::NAMESPACE_V1 . '/mcp' );
         }
@@ -559,26 +311,16 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_target', __( 'Resource parameter does not match the authorized resource.', 'easy-mcp-ai' ) );
         }
 
-        
         $computed_challenge = self::base64url_encode( hash( 'sha256', $code_verifier, true ) );
         if ( ! hash_equals( $code_row->code_challenge, $computed_challenge ) ) {
             return $this->token_error( 'invalid_grant', __( 'PKCE verification failed.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
-        
         if ( $is_reuse ) {
             $this->revoke_tokens_for_code( $code_row );
             return $this->token_error( 'invalid_grant', __( 'Authorization code has already been used. Any tokens issued from it have been revoked.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table prefixed by $wpdb->prefix; atomic redemption must hit DB.
         $affected = $wpdb->query(
             $wpdb->prepare(
@@ -591,21 +333,15 @@ class Token_Endpoint {
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
         if ( 1 !== (int) $affected ) {
-            
-            
             $this->revoke_tokens_for_code( $code_row );
             return $this->token_error( 'invalid_grant', __( 'Authorization code already redeemed or expired. Tokens revoked.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
         $scope = $this->scope_backed_by_consent( 'authorization_code', $code_row );
         if ( $scope instanceof \WP_REST_Response ) {
             return $scope;
         }
 
-        
         $token_manager = new OAuth_Token_Manager();
         $tokens = $token_manager->mint_access_token(
             $code_row->client_id,
@@ -618,10 +354,6 @@ class Token_Endpoint {
             return $this->token_error( 'server_error', __( 'Failed to issue access token.', 'easy-mcp-ai' ), 500 );
         }
 
-        
-        
-        
-        
         $minted_token_id = isset( $tokens['token_id'] ) ? (int) $tokens['token_id'] : 0;
         if ( $minted_token_id > 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table write.
@@ -653,16 +385,8 @@ class Token_Endpoint {
         return $response;
     }
 
-    
-
-
-
-
-
     private function handle_refresh_token( \WP_REST_Request $request ) {
 
-        
-        
         $refresh_token = self::body_param( $request, 'refresh_token' );
         $basic         = self::read_basic_credentials( $request );
         $client_id     = self::resolve_client_id( $request, $basic );
@@ -675,19 +399,11 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_request', __( 'Missing required parameter.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
         $client = ( new Client_Registry() )->find_client( $client_id );
         if ( ! $client ) {
             return $this->token_error( 'invalid_client', __( 'Client not found or inactive.', 'easy-mcp-ai' ), 401 );
         }
 
-        
-        
-        
-        
         $auth_error = self::authenticate_client( $request, $client, $basic );
         if ( null !== $auth_error ) {
             return $auth_error;
@@ -697,12 +413,6 @@ class Token_Endpoint {
             $resource = rest_url( self::NAMESPACE_V1 . '/mcp' );
         }
 
-        
-        
-        
-        
-        
-        
         $expected_resource = rest_url( self::NAMESPACE_V1 . '/mcp' );
         if ( ! self::resource_matches( $resource, $expected_resource ) ) {
             return $this->token_error( 'invalid_grant', __( 'Resource mismatch.', 'easy-mcp-ai' ) );
@@ -729,14 +439,6 @@ class Token_Endpoint {
         return $response;
     }
 
-    
-
-
-
-
-
-
-
     public static function live_consent( int $wp_user_id, string $client_id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_consents';
@@ -747,17 +449,6 @@ class Token_Endpoint {
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return is_object( $row ) && isset( $row->id, $row->scope ) ? $row : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function cap_scope( string $granted, string $consent ): string {
         $g = array_values( array_filter( array_map( 'trim', explode( ' ', $granted ) ) ) );
@@ -771,38 +462,10 @@ class Token_Endpoint {
         return implode( ' ', array_values( array_intersect( $g, $c ) ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function cap_by_consent( string $granted, string $consent ): string {
         $held = array_values( array_filter( array_map( 'trim', explode( ' ', $consent ) ) ) );
         $want = array_values( array_filter( array_map( 'trim', explode( ' ', $granted ) ) ) );
         if ( in_array( 'mcp', $held, true ) || in_array( 'mcp', $want, true ) ) {
-            
             return implode( ' ', array_values( array_unique( explode( ' ', self::cap_scope( $granted, $consent ) ) ) ) );
         }
         $held = array_values( array_unique( array_merge( $held, self::leaves_of( $held ) ) ) );
@@ -824,58 +487,14 @@ class Token_Endpoint {
         return implode( ' ', $kept );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function holds( array $scopes, string $scope ): bool {
         return in_array( $scope, $scopes, true )
             || ( 0 === strpos( $scope, 'mcp:abilities:' ) && in_array( 'mcp:abilities', $scopes, true ) );
     }
 
-    
-
-
-
-
-
-
     private static function leaves_of( array $scopes ): array {
         return Scope_Map::expand_category_scopes( Scope_Map::apply_legacy_scope_upgrades( $scopes ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function revoke_tokens_for_code( $code_row ) {
         global $wpdb;
@@ -902,12 +521,6 @@ class Token_Endpoint {
         }
     }
 
-    
-
-
-
-
-
     private function add_token_headers( \WP_REST_Response $response ) {
         $response->header( 'Content-Type', 'application/json' );
         $response->header( 'Cache-Control', 'no-store' );
@@ -916,45 +529,10 @@ class Token_Endpoint {
         $response->header( 'X-Content-Type-Options', 'nosniff' );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function wire_safe_description( $description ): string {
         if ( ! is_scalar( $description ) ) {
             return '';
         }
-        
-        
         $text = function_exists( 'remove_accents' ) ? remove_accents( (string) $description ) : (string) $description;
         $text = preg_replace( '/[^\x20\x21\x23-\x5B\x5D-\x7E]+/', ' ', $text );
         return trim( (string) $text );
@@ -964,22 +542,6 @@ class Token_Endpoint {
         return self::build_token_error( $error, $description, $status, 'Bearer' );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function build_token_error( $error, $description, $status = 400, $challenge_scheme = 'Bearer' ) {
         $response = new \WP_REST_Response(
             array(
@@ -988,9 +550,6 @@ class Token_Endpoint {
             ),
             $status
         );
-        
-        
-        
         if ( 401 === (int) $status ) {
             $response->header(
                 'WWW-Authenticate',
@@ -999,18 +558,6 @@ class Token_Endpoint {
         }
         return $response;
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
 
     public static function body_param( \WP_REST_Request $request, $key ) {
         $json = $request->get_json_params();
@@ -1023,18 +570,6 @@ class Token_Endpoint {
         }
         return '';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function reject_query_credentials( \WP_REST_Request $request, array $keys ) {
         $query = $request->get_query_params();
@@ -1054,37 +589,6 @@ class Token_Endpoint {
         return null;
     }
 
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function read_basic_credentials( \WP_REST_Request $request ) {
         $raw = $request->get_header( 'authorization' );
         if ( is_string( $raw ) && 0 === stripos( $raw, 'Basic ' ) ) {
@@ -1092,9 +596,6 @@ class Token_Endpoint {
         }
 
         if ( isset( $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] ) && is_string( $_SERVER['PHP_AUTH_USER'] ) && is_string( $_SERVER['PHP_AUTH_PW'] ) ) {
-            
-            
-            
             return array(
                 'client_id' => urldecode( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Credential compared by SHA-256 hash; sanitizing would alter it.
                 'secret'    => urldecode( wp_unslash( $_SERVER['PHP_AUTH_PW'] ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Credential compared by SHA-256 hash; sanitizing would alter it.
@@ -1114,12 +615,6 @@ class Token_Endpoint {
         return null;
     }
 
-    
-
-
-
-
-
     private static function decode_basic( $payload ) {
         // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding an HTTP Basic credential (RFC 7617), not obfuscation.
         $decoded = base64_decode( trim( (string) $payload ), true );
@@ -1133,19 +628,6 @@ class Token_Endpoint {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function resolve_client_id( \WP_REST_Request $request, $basic ) {
         $body_client_id  = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
         $basic_client_id = ( is_array( $basic ) && isset( $basic['client_id'] ) ) ? sanitize_text_field( $basic['client_id'] ) : '';
@@ -1156,44 +638,6 @@ class Token_Endpoint {
 
         return '' !== $body_client_id ? $body_client_id : $basic_client_id;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function authenticate_client( \WP_REST_Request $request, $client, $basic ) {
         $method       = Client_Registry::effective_auth_method( $client );
@@ -1230,33 +674,11 @@ class Token_Endpoint {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function resource_matches( string $candidate, string $expected ): bool {
         $a = self::canonicalize_resource_uri( $candidate );
         $b = self::canonicalize_resource_uri( $expected );
         return '' !== $a && $a === $b;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function canonicalize_resource_uri( string $uri ): string {
         $uri = trim( $uri );
@@ -1283,7 +705,6 @@ class Token_Endpoint {
         $path  = isset( $parts['path'] ) ? $parts['path'] : '';
         $query = isset( $parts['query'] ) ? $parts['query'] : '';
 
-        
         if ( '' !== $query ) {
             parse_str( $query, $q );
             if ( isset( $q['rest_route'] ) && is_string( $q['rest_route'] ) && '' !== $q['rest_route'] ) {
@@ -1292,7 +713,6 @@ class Token_Endpoint {
             }
         }
 
-        
         if ( strlen( $path ) > 1 && '/' === substr( $path, -1 ) ) {
             $path = rtrim( $path, '/' );
         }
@@ -1305,23 +725,9 @@ class Token_Endpoint {
         return $canonical;
     }
 
-    
-
-
-
-
-
     private static function base64url_encode( $data ) {
         return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' );
     }
-
-    
-
-
-
-
-
-
 
     public static function enforce_transport_security() {
         if ( is_ssl() ) {
@@ -1341,25 +747,6 @@ class Token_Endpoint {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function insecure_transport_description(): string {
         $proto = isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] )
             ? strtolower( trim( sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) ) )
@@ -1372,19 +759,6 @@ class Token_Endpoint {
         return __( 'HTTPS is required. This request reached PHP over plain HTTP. If your site is served over HTTPS through a proxy or CDN, WordPress is not being told — set $_SERVER["HTTPS"] from the forwarded protocol in wp-config.php. For local development over plain HTTP, define EASY_MCP_AI_OAUTH_ALLOW_HTTP as true in wp-config.php instead. Never set that on a production site.', 'easy-mcp-ai' );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function is_local_dev_request(): bool {
         if ( \Easy_MCP_AI\Config::get( 'oauth_allow_http' ) ) {
             return true;
@@ -1394,22 +768,6 @@ class Token_Endpoint {
             return false;
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         foreach ( array( 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED_PROTO', 'HTTP_FORWARDED', 'HTTP_X_REAL_IP', 'HTTP_CF_CONNECTING_IP', 'HTTP_TRUE_CLIENT_IP' ) as $proxy_header ) {
             if ( ! empty( $_SERVER[ $proxy_header ] ) ) {
                 return false;
@@ -1420,19 +778,7 @@ class Token_Endpoint {
         return in_array( $remote, array( '127.0.0.1', '::1' ), true );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function enforce_rate_limit() {
-        
-        
-        
         $ip = \Easy_MCP_AI\Client_IP::get();
 
         $per_ip_key   = 'easy_mcp_ai_token_rl_' . md5( $ip );
@@ -1447,16 +793,6 @@ class Token_Endpoint {
             \wp_cache_add( $global_key, 0, 'easy_mcp_ai', HOUR_IN_SECONDS );
             $global_count = \wp_cache_incr( $global_key, 1, 'easy_mcp_ai' );
         } else {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             $ip_count     = self::rl_transient_increment( $per_ip_key );
             $global_count = self::rl_transient_increment( $global_key );
         }
@@ -1467,16 +803,6 @@ class Token_Endpoint {
 
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function rl_transient_increment( string $key ): int {
         $now    = time();

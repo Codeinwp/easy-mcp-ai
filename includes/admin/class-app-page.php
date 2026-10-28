@@ -1,13 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,39 +12,21 @@ class App_Page {
     const HANDLE      = 'easy-mcp-ai-app';
     const ROOT_ID     = 'easy-mcp-ai-app';
 
-    
-
-
-
     const MENU_POSITION = 59.5;
 
-    
     const GENERIC_MENU_ICON = 'dashicons-rest-api';
-
-    
-
-
-
-
-
-
 
     const MENU_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="#a7aaad" d="M21.64 22.79L35.39 64.03L43.45 42.54A7 7 0 0 1 56.55 42.54L64.61 64.03L78.36 22.79A7 7 0 0 1 91.64 27.21L71.64 87.21A7 7 0 0 1 58.45 87.46L50 64.94L41.55 87.46A7 7 0 0 1 28.36 87.21L8.36 27.21A7 7 0 0 1 21.64 22.79Z"/></svg>';
 
-    
     private $hooks = array();
 
-    
     private $setup_hook = '';
 
-    
     const BODY_CLASS = 'easy-mcp-ai-app';
 
-    
     const SETUP_BODY_CLASS = 'easy-mcp-ai-setup';
 
     public function __construct() {
-        
         \add_action( 'admin_menu', array( $this, 'register_menus' ), 9 );
         \add_action( 'admin_head', array( $this, 'hide_menu_entries' ) );
         \add_action( 'admin_init', array( $this, 'maybe_redirect' ) );
@@ -64,25 +38,10 @@ class App_Page {
         \add_filter( 'admin_title', array( $this, 'admin_title' ), 10, 2 );
     }
 
-    
-
-
-
-
-
-
     public function blank_footer( $text ) {
         $hook = isset( $GLOBALS['hook_suffix'] ) ? $GLOBALS['hook_suffix'] : '';
         return $this->is_app_hook( $hook ) ? '' : $text;
     }
-
-    
-
-
-
-
-
-
 
     public function admin_title( $admin_title, $title ) {
         $hook = isset( $GLOBALS['hook_suffix'] ) ? $GLOBALS['hook_suffix'] : '';
@@ -94,19 +53,9 @@ class App_Page {
         return sprintf( $format, $title, (string) \Easy_MCP_AI\Config::get( 'brand_name' ) );
     }
 
-    
-
-
-
     private function is_app_hook( $hook ) {
         return in_array( (string) $hook, $this->hooks, true );
     }
-
-    
-
-
-
-
 
     public function body_class( $classes ) {
         $hook = isset( $GLOBALS['hook_suffix'] ) ? $GLOBALS['hook_suffix'] : '';
@@ -120,30 +69,13 @@ class App_Page {
         return $classes;
     }
 
-    
-
-
-
     public static function url_for( $key ) {
         $pages = self::pages();
         return \admin_url( 'admin.php?page=' . self::SLUG_PREFIX . ( isset( $pages[ $key ] ) ? $pages[ $key ][0] : '' ) );
     }
 
-    
-
-
-
-
-
-
-
     public static function canvas_css() {
         $b = 'body.' . self::BODY_CLASS;
-        
-        
-        
-        
-        
         return $b . ',' . $b . ' #wpwrap,' . $b . ' #wpcontent,' . $b . ' #wpfooter{background:#F3F4F6;}'
             . $b . ' #wpfooter{color:#5B6270;padding:0;line-height:0;}'
             . $b . ' #wpfooter a{color:#3F4654;}'
@@ -155,23 +87,9 @@ class App_Page {
             . self::element_reset_css();
     }
 
-    
-
-
-
-
-
     public static function notice_css() {
         return 'body.' . self::BODY_CLASS . ' #wpbody-content > :is(div.notice,div.error,div.updated,div.update-nag){display:none;}';
     }
-
-    
-
-
-
-
-
-
 
     public static function setup_chrome_css() {
         $b = 'body.' . self::SETUP_BODY_CLASS;
@@ -180,28 +98,12 @@ class App_Page {
             . 'html.wp-toolbar:has(' . $b . '){padding-top:0;}';
     }
 
-    
-
-
-
-
-
-
-
-
     public static function element_reset_css() {
         $scope = 'body :where(#' . self::ROOT_ID . ') ';
         return $scope . ':is(h1,h2,h3,h4,h5,h6,p,ul,ol,dl,dd,li,figure,pre,blockquote){margin:0;}'
             . $scope . ':is(h1,h2,h3,h4,h5,h6,p){font-size:inherit;font-weight:inherit;line-height:inherit;color:inherit;}'
             . $scope . ':is(ul,ol){padding:0;list-style:none;}';
     }
-
-    
-
-
-
-
-
 
     public static function pages() {
         $pages = array(
@@ -212,27 +114,11 @@ class App_Page {
             'settings'    => array( '-settings', \__( 'Settings', 'easy-mcp-ai' ) ),
             'setup'       => array( '-setup', \__( 'Set up', 'easy-mcp-ai' ) ),
         );
-        
-        
-        
-        
         if ( self::has_kit_page() ) {
             $pages['kit'] = array( '-kit', 'Kit', true );
         }
         return $pages;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function has_kit_page() {
         $chunk = defined( 'EASY_MCP_AI_PLUGIN_DIR' )
@@ -241,18 +127,10 @@ class App_Page {
         return (bool) \apply_filters( 'easy_mcp_ai_kit_page', '' !== $chunk && is_readable( $chunk ) );
     }
 
-    
-
-
-
     public static function is_hidden_page( $key ) {
         $pages = self::pages();
         return isset( $pages[ $key ][2] ) && true === $pages[ $key ][2];
     }
-
-    
-
-
 
     public static function page_key_for_slug( $slug ) {
         foreach ( self::pages() as $key => $page ) {
@@ -284,14 +162,9 @@ class App_Page {
             );
             $this->hooks[] = $hook;
             if ( 'setup' === $key ) {
-                
-                
-                
                 $this->setup_hook = (string) $hook;
             }
         }
-        
-        
         \add_submenu_page(
             self::SLUG_PREFIX,
             \__( 'Change history', 'easy-mcp-ai' ),
@@ -304,11 +177,6 @@ class App_Page {
         $this->hooks = array_values( array_unique( array_filter( $this->hooks ) ) );
     }
 
-    
-
-
-
-
     public static function menu_icon(): string {
         if ( \Easy_MCP_AI\Config::is_white_labelled() ) {
             return self::GENERIC_MENU_ICON;
@@ -316,17 +184,9 @@ class App_Page {
         return 'data:image/svg+xml;base64,' . base64_encode( self::MENU_ICON_SVG ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- core's svg-painter.js reads only a base64 data URI.
     }
 
-    
     public static function change_history_slug() {
         return 'admin.php?page=' . self::SLUG_PREFIX . self::pages()['activity'][0] . '&section=changes';
     }
-
-    
-
-
-
-
-
 
     public function current_submenu( $submenu_file ) {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only menu highlight.
@@ -339,18 +199,9 @@ class App_Page {
         return $submenu_file;
     }
 
-    
-
-
-
-
-
     public function hide_menu_entries() {
         $setup_pending = ! Setup_State::is_complete();
         foreach ( self::pages() as $key => $page ) {
-            
-            
-            
             if ( self::is_hidden_page( $key ) || ( $setup_pending ? 'setup' !== $key : 'setup' === $key ) ) {
                 \remove_submenu_page( self::SLUG_PREFIX, self::SLUG_PREFIX . $page[0] );
             }
@@ -362,13 +213,6 @@ class App_Page {
             }
         }
     }
-
-    
-
-
-
-
-
 
     public function maybe_redirect() {
         if ( \wp_doing_ajax() || ! \current_user_can( 'manage_options' ) ) {
@@ -402,16 +246,7 @@ class App_Page {
         echo '<div id="' . \esc_attr( self::ROOT_ID ) . '" data-page="' . \esc_attr( $key ) . '">' . self::skeleton_html( $key ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup, no input.
     }
 
-    
     const FRAMED_PAGES = array( 'dashboard', 'connections', 'tools', 'settings' );
-
-    
-
-
-
-
-
-
 
     public static function skeleton_html( $key ) {
         if ( 'setup' === $key ) {
@@ -429,14 +264,6 @@ class App_Page {
             . '<span class="screen-reader-text">' . \esc_html__( 'Loading…', 'easy-mcp-ai' ) . '</span>'
             . '</div>';
     }
-
-    
-
-
-
-
-
-
 
     public static function skeleton_css() {
         $s = '#' . self::ROOT_ID . ' .easy-mcp-ai-sk';
@@ -459,9 +286,6 @@ class App_Page {
             . '@media (prefers-reduced-motion:reduce){' . $s . '__bone{animation:none;}}';
     }
 
-    
-
-
     public function enqueue_assets( $hook ) {
         if ( ! $this->is_app_hook( $hook ) ) {
             return;
@@ -476,8 +300,6 @@ class App_Page {
         $deps  = isset( $asset['dependencies'] ) && is_array( $asset['dependencies'] ) ? $asset['dependencies'] : array();
         $ver   = isset( $asset['version'] ) ? (string) $asset['version'] : EASY_MCP_AI_VERSION;
 
-        
-        
         if ( is_readable( $build . 'runtime.asset.php' ) && file_exists( $build . 'runtime.js' ) ) {
             $runtime = require $build . 'runtime.asset.php';
             \wp_enqueue_script(
@@ -499,6 +321,7 @@ class App_Page {
         }
         \wp_add_inline_style( self::HANDLE, self::canvas_css() );
         \wp_set_script_translations( self::HANDLE, 'easy-mcp-ai', EASY_MCP_AI_PLUGIN_DIR . 'languages' );
+        self::add_chunk_translations( $build );
         \wp_add_inline_script(
             self::HANDLE,
             'window.easyMcpAi = ' . \wp_json_encode( self::bootstrap() ) . ';',
@@ -506,10 +329,47 @@ class App_Page {
         );
     }
 
-    
+    private static function add_chunk_translations( $build ) {
+        $messages = array();
+        $files    = glob( $build . '*.js' );
+        foreach ( is_array( $files ) ? $files : array() as $file ) {
+            $name = basename( $file );
+            if ( 'index.js' === $name || 'runtime.js' === $name ) {
+                continue;
+            }
+            $messages = array_replace( $messages, self::chunk_messages( $name ) );
+        }
+        $header = isset( $messages[''] ) ? $messages[''] : array();
+        unset( $messages[''] );
+        if ( array() === $messages ) {
+            return;
+        }
+        if ( array() !== $header ) {
+            $header['domain'] = 'easy-mcp-ai';
+            $messages         = array( '' => $header ) + $messages;
+        }
+        \wp_add_inline_script(
+            self::HANDLE,
+            'wp.i18n.setLocaleData( ' . \wp_json_encode( $messages, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE ) . ', "easy-mcp-ai" );',
+            'before'
+        );
+    }
 
+    private static function chunk_messages( $name ) {
+        $handle = self::HANDLE . '-chunk-' . basename( $name, '.js' );
+        \wp_register_script( $handle, EASY_MCP_AI_PLUGIN_URL . 'assets/build/' . $name, array(), null, true );
+        $json = \load_script_textdomain( $handle, 'easy-mcp-ai', EASY_MCP_AI_PLUGIN_DIR . 'languages' );
+        \wp_deregister_script( $handle );
 
-
+        $data = is_string( $json ) ? json_decode( $json, true ) : null;
+        foreach ( array( 'easy-mcp-ai', 'messages' ) as $key ) {
+            if ( isset( $data['locale_data'][ $key ] ) && is_array( $data['locale_data'][ $key ] ) ) {
+                $messages = array_filter( $data['locale_data'][ $key ], 'is_array' );
+                return false === \wp_json_encode( $messages ) ? array() : $messages;
+            }
+        }
+        return array();
+    }
 
     public static function bootstrap() {
         $user = \wp_get_current_user();
@@ -523,26 +383,17 @@ class App_Page {
             'version'           => EASY_MCP_AI_VERSION,
             'userDisplayName'   => isset( $user->display_name ) ? (string) $user->display_name : '',
             'adminUrl'          => \admin_url( 'admin.php' ),
-            
-            
             'timezone'          => self::site_timezone(),
             'dateFormat'        => self::site_date_format(),
-            
             'brandName'         => \__( 'Easy MCP AI', 'easy-mcp-ai' ),
             'whiteLabel'        => \Easy_MCP_AI\Config::is_white_labelled(),
         );
     }
 
-    
-
-
     private static function site_timezone() {
         $zone = (string) \wp_timezone_string();
         return '' !== $zone ? $zone : 'UTC';
     }
-
-    
-
 
     private static function site_date_format() {
         $format = \get_option( 'date_format', 'F j, Y' );

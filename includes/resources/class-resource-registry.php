@@ -9,23 +9,13 @@ class Resource_Registry {
 
     private $resources = array();
 
-    
     private $providers = array();
 
-    
     private $provided = null;
 
     public function register( Base_Resource $resource ) {
         $this->resources[ $resource->get_uri() ] = $resource;
     }
-
-    
-
-
-
-
-
-
 
     public function add_provider( callable $provider ): void {
         $this->providers[] = $provider;
@@ -39,10 +29,6 @@ class Resource_Registry {
         $provided = $this->provided();
         return isset( $provided[ $uri ] ) ? $provided[ $uri ] : null;
     }
-
-    
-
-
 
     public function get_all_definitions( ?callable $include = null ): array {
         $definitions = array();
@@ -59,7 +45,6 @@ class Resource_Registry {
         return $definitions;
     }
 
-    
     private function provided(): array {
         if ( null !== $this->provided ) {
             return $this->provided;
@@ -81,11 +66,9 @@ class Resource_Registry {
 
     public function auto_discover() {
         $resource_classes = array(
-            
             'Easy_MCP_AI\\Resources\\Site_Info_Resource',
             'Easy_MCP_AI\\Resources\\Recent_Posts_Resource',
             'Easy_MCP_AI\\Resources\\Site_Stats_Resource',
-            
             'Easy_MCP_AI\\Resources\\Reading_Settings_Resource',
             'Easy_MCP_AI\\Resources\\Discussion_Settings_Resource',
             'Easy_MCP_AI\\Resources\\Active_Plugins_Resource',
@@ -97,7 +80,6 @@ class Resource_Registry {
             'Easy_MCP_AI\\Resources\\Draft_Posts_Resource',
             'Easy_MCP_AI\\Resources\\Scheduled_Posts_Resource',
             'Easy_MCP_AI\\Resources\\Recent_Media_Resource',
-            
             'Easy_MCP_AI\\Resources\\Approval_Card_Resource',
         );
         foreach ( $resource_classes as $class ) {

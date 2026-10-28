@@ -10,11 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Pages extends Base_Tool {
 
-    
-
-
-
-
     const REST_FIELDS = 'id,title,status,date,modified,slug,parent,menu_order,link';
 
     public function get_name() {
@@ -137,8 +132,6 @@ class List_Pages extends Base_Tool {
 
         $result = array();
         foreach ( $pages as $page ) {
-            
-            
             if ( ! List_CPT_Items::may_list_in_context( $context, $page['id'] ) ) {
                 continue;
             }
@@ -150,13 +143,6 @@ class List_Pages extends Base_Tool {
             $this->pagination_meta( $response, $params['page'], $params['per_page'], count( $pages ) )
         );
     }
-
-    
-
-
-
-
-
 
     private static function status_and_paging_params( array $arguments ): array {
         $params = array();
@@ -178,14 +164,6 @@ class List_Pages extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private function author_date_and_sort_params( array $arguments ): array {
         $params = array();
         if ( ! empty( $arguments['author'] ) ) {
@@ -204,8 +182,6 @@ class List_Pages extends Base_Tool {
             $params['before'] = sanitize_text_field( $arguments['before'] );
         }
 
-        
-        
         if ( ! empty( $arguments['orderby'] ) && ! in_array( $arguments['orderby'], List_CPT_Items::QUERY_ORDERBY, true ) ) {
             $params['orderby'] = $arguments['orderby'];
         }
@@ -216,19 +192,8 @@ class List_Pages extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function with_cli_filters( array $arguments, array $params ): array {
         $params = array_merge( $params, List_CPT_Items::collection_params( $arguments, array( 'include', 'exclude', 'slug', 'offset', 'parent_exclude' ) ) );
-        
         if ( isset( $params['parent'], $params['parent_exclude'] ) ) {
             throw new \InvalidArgumentException( 'Send parent or parent_exclude, not both: WordPress applies only one of them and ignores the other.' );
         }
@@ -237,15 +202,6 @@ class List_Pages extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
 
     private function empty_page_or_refusal( \WP_REST_Response $response, array $params ): array {
         $error = $response->as_error();
@@ -257,13 +213,6 @@ class List_Pages extends Base_Tool {
         }
         throw new \RuntimeException( self::rest_error_message( $error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
 
     private static function page_row( array $page, bool $raw ): array {
         $row = array(

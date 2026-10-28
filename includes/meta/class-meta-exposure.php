@@ -1,88 +1,14 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Meta;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Meta_Exposure {
 
     const OPTION_ENABLED_GROUPS = 'easy_mcp_ai_enabled_plugin_groups';
-
-    
-
-
 
     const PROVIDERS = array(
         'rank-math'         => 'Easy_MCP_AI\\Meta\\Providers\\Rank_Math_Meta_Provider',
@@ -91,25 +17,15 @@ final class Meta_Exposure {
         'the-seo-framework' => 'Easy_MCP_AI\\Meta\\Providers\\Tsf_Meta_Provider',
     );
 
-    
     private static $registered = false;
 
-    
     private static $report = array();
 
-    
     private static $providers = null;
 
-    
     private static $exposed = array();
 
-    
     private static $hooked_types = array();
-
-    
-
-
-
 
     public static function all_providers() {
         if ( null === self::$providers ) {
@@ -118,22 +34,10 @@ final class Meta_Exposure {
         return self::$providers;
     }
 
-    
-
-
-
-
-
     public static function is_group_enabled( $slug ) {
         $enabled = get_option( self::OPTION_ENABLED_GROUPS, array() );
         return is_array( $enabled ) && in_array( $slug, $enabled, true );
     }
-
-    
-
-
-
-
 
     public static function enabled_providers() {
         $out = array();
@@ -144,14 +48,6 @@ final class Meta_Exposure {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
 
     public static function register_for_request( $providers = null ) {
         if ( null === $providers ) {
@@ -174,9 +70,6 @@ final class Meta_Exposure {
         return self::$report;
     }
 
-    
-
-
     private static function hook_rest_filters() {
         foreach ( array_keys( self::$exposed ) as $post_type ) {
             if ( isset( self::$hooked_types[ $post_type ] ) ) {
@@ -194,16 +87,6 @@ final class Meta_Exposure {
             add_filter( "rest_prepare_{$post_type}", array( __CLASS__, 'hide_meta_from_readers' ), 10, 2 );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function guard_meta_write( $prepared_post, $request, $post_type ) {
         if ( is_wp_error( $prepared_post ) || empty( self::$exposed[ $post_type ] ) ) {
@@ -240,15 +123,6 @@ final class Meta_Exposure {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function hide_meta_from_readers( $response, $post ) {
         if ( ! is_object( $post ) || empty( $post->post_type ) || empty( self::$exposed[ $post->post_type ] ) ) {
             return $response;
@@ -276,11 +150,6 @@ final class Meta_Exposure {
         return $response;
     }
 
-    
-
-
-
-
     public static function exposed_keys() {
         $out = array();
         foreach ( self::$exposed as $type => $keys ) {
@@ -288,12 +157,6 @@ final class Meta_Exposure {
         }
         return $out;
     }
-
-    
-
-
-
-
 
     public static function set_providers( array $providers ) {
         self::$providers = array();
@@ -304,9 +167,6 @@ final class Meta_Exposure {
         }
     }
 
-    
-
-
     public static function reset() {
         self::$registered   = false;
         self::$report       = array();
@@ -314,13 +174,6 @@ final class Meta_Exposure {
         self::$exposed      = array();
         self::$hooked_types = array();
     }
-
-    
-
-
-
-
-
 
     public static function register_provider( Meta_Field_Provider $provider ) {
         $report = array();
@@ -337,12 +190,10 @@ final class Meta_Exposure {
             foreach ( $fields as $key => $field ) {
                 $slot = $post_type . ':' . $key;
 
-                
                 if ( isset( $subtype[ $key ] ) ) {
                     $report[ $slot ] = 'vendor';
                     continue;
                 }
-                
                 if ( isset( $global[ $key ] ) && ! empty( $global[ $key ]['show_in_rest'] ) ) {
                     $report[ $slot ] = 'vendor';
                     continue;
@@ -351,16 +202,11 @@ final class Meta_Exposure {
                 $vendor_sanitize = isset( $global[ $key ]['sanitize_callback'] ) && is_callable( $global[ $key ]['sanitize_callback'] )
                     ? $global[ $key ]['sanitize_callback']
                     : null;
-                
-                
                 $vendor_auth = null;
                 if ( isset( $global[ $key ]['auth_callback'] ) && is_callable( $global[ $key ]['auth_callback'] )
                     && ! in_array( $global[ $key ]['auth_callback'], array( '__return_true', '__return_false' ), true ) ) {
                     $vendor_auth = $global[ $key ]['auth_callback'];
                 }
-                
-                
-                
                 $subtype_filter_exists = (bool) has_filter( "auth_post_meta_{$key}_for_{$post_type}" );
 
                 $registered = register_post_meta( $post_type, $key, self::registration_args( $provider, $key, $field, $vendor_sanitize, $vendor_auth, $subtype_filter_exists ) );
@@ -373,17 +219,6 @@ final class Meta_Exposure {
         }
         return $report;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function registration_args( Meta_Field_Provider $provider, $key, array $field, $vendor_sanitize = null, $vendor_auth = null, $respect_allowed = false ) {
         $type   = isset( $field['type'] ) ? (string) $field['type'] : 'string';
@@ -409,9 +244,6 @@ final class Meta_Exposure {
                 }
                 return $value;
             },
-            
-            
-            
             'auth_callback'     => static function ( $allowed, $meta_key, $object_id, $user_id = 0, $cap = '', $caps = array() ) use ( $provider, $key, $vendor_auth, $respect_allowed ) {
                 $user_id   = (int) $user_id;
                 $object_id = (int) $object_id;
@@ -432,11 +264,6 @@ final class Meta_Exposure {
         );
     }
 
-    
-
-
-
-
     public static function writable_keys() {
         $out = array();
         foreach ( self::enabled_providers() as $provider ) {
@@ -446,12 +273,6 @@ final class Meta_Exposure {
         }
         return $out;
     }
-
-    
-
-
-
-
 
     public static function describe_writable_keys() {
         $parts = array();
@@ -463,12 +284,6 @@ final class Meta_Exposure {
         }
         return ' Plugin integration keys writable on this site: ' . implode( '; ', $parts ) . '.';
     }
-
-    
-
-
-
-
 
     public static function provider_for_key( $key ) {
         $providers = self::all_providers();
@@ -484,13 +299,6 @@ final class Meta_Exposure {
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     public static function explain_ignored_keys( array $keys ) {
         $out = array();

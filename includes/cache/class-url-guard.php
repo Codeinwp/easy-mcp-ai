@@ -1,37 +1,16 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 final class Url_Guard {
 
-    
     const MAX_URLS = 100;
 
-    
     const UNSAFE = array( '..', '\\', "\0", '*', '(' );
-
-    
-
-
-
-
-
 
     public static function check( string $input ): string {
         $input = trim( $input );
@@ -49,15 +28,6 @@ final class Url_Guard {
         }
         return self::rebuild( $input, (string) $parts['host'], isset( $parts['path'] ) ? (string) $parts['path'] : '/' );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function refuse_unsafe( string $input ): void {
         if ( preg_match( '/[\x00-\x20\x7f]/', $input ) ) {
@@ -80,31 +50,11 @@ final class Url_Guard {
         throw new \InvalidArgumentException( sprintf( 'Refused %s: it is encoded too many times.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_encoded_ascii( string $input ): void {
         if ( 1 === preg_match( '/%[0-7][0-9a-f]/i', $input ) ) {
             throw new \InvalidArgumentException( sprintf( 'Refused %s: it holds a percent-encoded ASCII character. Only characters outside ASCII (such as %%C3%%A9) may be percent-encoded, because a cache that decodes them would clear a different folder.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
 
     private static function absolute( string $input ): string {
         if ( 0 === strpos( $input, '//' ) ) {
@@ -117,16 +67,6 @@ final class Url_Guard {
         return $home['scheme'] . '://' . $home['authority'] . $input;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function rebuild( string $input, string $host, string $path ): string {
         $home      = self::home();
         $canonical = \Easy_MCP_AI\Site_Host::normalize( $host );
@@ -134,15 +74,9 @@ final class Url_Guard {
             throw new \InvalidArgumentException( sprintf( 'Refused %s: it is not on this site (%s). Only this site\'s own pages can be cleared.', $input, $home['authority'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         $path = '' === $path ? '/' : $path;
-        
-        
-        
-        
         if ( 1 === preg_match( '#[^A-Za-z0-9._~!$&\'()*+,;=:@/%\x80-\xff-]#', $path ) ) {
             throw new \InvalidArgumentException( sprintf( 'Refused %s: a page address may hold only letters, digits, characters outside ASCII and - . _ ~ ! $ & \' ) + , ; = : @ / %%; a cache plugin strips other characters, which can point the clear at a different folder.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
-        
         $plain = self::decoded( $path );
         if ( false !== strpos( $plain, '//' ) || 1 === preg_match( '#(^|/)\.|\.(/|$)#', $plain ) ) {
             throw new \InvalidArgumentException( sprintf( 'Refused %s: a path may not hold an empty segment, or one that starts or ends with "."; a cache that rewrites it would clear a different folder, up to the whole site.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -156,13 +90,6 @@ final class Url_Guard {
         return $url;
     }
 
-    
-
-
-
-
-
-
     private static function decoded( string $path ): string {
         for ( $i = 0; $i < 5; $i++ ) {
             $next = rawurldecode( $path );
@@ -174,15 +101,6 @@ final class Url_Guard {
         return $path;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_other_blog( string $input, string $authority, string $path ): void {
         if ( ! \is_multisite() || ! function_exists( 'get_site_by_path' ) ) {
             return;
@@ -192,13 +110,6 @@ final class Url_Guard {
             throw new \InvalidArgumentException( sprintf( 'Refused %s: it belongs to another site of this network.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
 
     public static function home(): array {
         $home   = (string) \get_option( 'home' );
@@ -215,12 +126,6 @@ final class Url_Guard {
         );
     }
 
-    
-
-
-
-
-
     public static function allowed_hosts(): array {
         $hosts = array( \Easy_MCP_AI\Site_Host::normalize( (string) \get_option( 'home' ) ) );
         foreach ( self::language_domains() as $domain ) {
@@ -228,11 +133,6 @@ final class Url_Guard {
         }
         return array_values( array_unique( array_filter( $hosts ) ) );
     }
-
-    
-
-
-
 
     private static function language_domains(): array {
         $domains = array();

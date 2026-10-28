@@ -72,9 +72,6 @@ class Domain_Keyword_Comparison extends Base_Tool {
 				$query['limit'] = $limit;
 			}
 			if ( isset( $arguments['diff'] ) && '' !== $arguments['diff'] ) {
-				
-				
-				
 				$query['diff'] = rest_sanitize_boolean( $arguments['diff'] ) ? 1 : 0;
 			}
 			if ( isset( $arguments['page'] ) && '' !== $arguments['page'] ) {

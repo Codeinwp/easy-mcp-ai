@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,28 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Wp_Optimize extends Cache_Adapter {
 
@@ -108,11 +81,6 @@ final class Wp_Optimize extends Cache_Adapter {
         return $this->sent( sprintf( 'WP-Optimize cleared %d post(s) at their own address, and %d page(s).', $own, count( $request->urls ) ) );
     }
 
-    
-
-
-
-
     private function page_cache(): ?object {
         if ( ! $this->calls()->method_exists( self::PAGE_CACHE, 'instance' ) ) {
             return null;
@@ -120,15 +88,6 @@ final class Wp_Optimize extends Cache_Adapter {
         $cache = $this->calls()->call( array( self::PAGE_CACHE, 'instance' ) );
         return is_object( $cache ) ? $cache : null;
     }
-
-    
-
-
-
-
-
-
-
 
     private function vendor_url( string $url ): string {
         $host = \wp_parse_url( $url, PHP_URL_HOST );

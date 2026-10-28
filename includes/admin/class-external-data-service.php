@@ -1,16 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 use Easy_MCP_AI\Ahrefs\Ahrefs_Client;
@@ -30,46 +19,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class External_Data_Service {
 
-    
     const PROVIDERS = array( 'ga', 'gsc', 'dfs', 'semrush', 'seranking', 'ahrefs' );
 
-    
     const CACHE_PROVIDERS = array( 'ga', 'gsc' );
 
-    
     const BALANCE_PROVIDERS = array( 'dfs', 'semrush', 'seranking' );
-
-    
-
-
-
 
     const OPTION_BALANCES = 'easy_mcp_ai_external_data_balances';
 
-    
     private $gateway;
 
-    
     private $definitions;
 
-    
     private $definition_cache = array();
-
-    
-
-
 
     public function __construct( $gateway = null, $definitions = null ) {
         $this->gateway     = $gateway ? $gateway : new External_Data_Gateway();
         $this->definitions = $definitions ? $definitions : array( $this, 'load_definitions' );
     }
 
-    
     public static function is_provider( $key ) {
         return in_array( $key, self::PROVIDERS, true );
     }
 
-    
     const LABELS = array(
         'ga'        => 'Google Analytics',
         'gsc'       => 'Google Search Console',
@@ -79,12 +51,10 @@ class External_Data_Service {
         'ahrefs'    => 'Ahrefs (DR)',
     );
 
-    
     public static function label( $key ) {
         return self::LABELS[ $key ] ?? $key;
     }
 
-    
     public static function weak_salts() {
         return ! defined( 'SECURE_AUTH_KEY' )
             || ! defined( 'SECURE_AUTH_SALT' )
@@ -92,9 +62,6 @@ class External_Data_Service {
             || false !== strpos( SECURE_AUTH_KEY . SECURE_AUTH_SALT, 'put your unique phrase here' );
     }
 
-    
-
-    
     public function describe_all() {
         $providers = array();
         foreach ( self::PROVIDERS as $key ) {
@@ -107,16 +74,8 @@ class External_Data_Service {
         );
     }
 
-    
-
-
-
-
-
     public function describe( $key ) {
         $configured  = $this->is_configured( $key );
-        
-        
         $hint        = $configured && ! Provider_Credentials::is_deployed( $key );
         $credentials = array();
         $settings    = array();
@@ -162,17 +121,9 @@ class External_Data_Service {
         );
     }
 
-    
     public function is_configured( $key ) {
         return Provider_Credentials::is_configured( $key );
     }
-
-    
-
-
-
-
-
 
     private static function deployed( string $key ): ?array {
         if ( ! Provider_Credentials::is_deployed( $key ) ) {
@@ -193,12 +144,6 @@ class External_Data_Service {
         );
     }
 
-    
-
-
-
-
-
     private static function locked_settings( string $key ): \stdClass {
         $fields = array(
             'ga'  => array( 'propertyId' => GA_Client::OPTION_PROPERTY_ID ),
@@ -213,10 +158,9 @@ class External_Data_Service {
                 );
             }
         }
-        return (object) $locked; 
+        return (object) $locked;
     }
 
-    
     private static function deployed_error( string $field, string $constant ): \WP_Error {
         return new \WP_Error(
             'easy_mcp_ai_config_locked',
@@ -228,10 +172,6 @@ class External_Data_Service {
             array( 'status' => 409, 'field' => $field )
         );
     }
-
-    
-
-
 
     private function is_enabled( $key, array $items ) {
         if ( ! $this->is_configured( $key ) ) {
@@ -248,22 +188,13 @@ class External_Data_Service {
         return false;
     }
 
-    
     public function tool_names( $key ) {
         return array_column( $this->definitions_for( $key ), 'name' );
     }
 
-    
     private function bucket( $key ) {
         return array_values( array_map( 'strval', (array) Config::get( 'easy_mcp_ai_disabled_' . $key . '_tools', array() ) ) );
     }
-
-    
-
-
-
-
-
 
     private function items( $key ) {
         $items = array();
@@ -290,14 +221,6 @@ class External_Data_Service {
         return $this->definition_cache[ $key ];
     }
 
-    
-
-
-
-
-
-
-
     public function load_definitions( $key ) {
         $dir = EASY_MCP_AI_PLUGIN_DIR . 'includes/tools/' . $key . '/';
         if ( ! is_dir( $dir ) ) {
@@ -306,8 +229,6 @@ class External_Data_Service {
         if ( ! class_exists( '\\Easy_MCP_AI\\Tools\\Tool_Registry' ) ) {
             return array();
         }
-        
-        
         $registry = new Tool_Registry();
         $registry->auto_discover( true, array( $key ) );
         $rows = array();
@@ -324,7 +245,6 @@ class External_Data_Service {
         return $rows;
     }
 
-    
     private function google_email( $client ) {
         if ( Provider_Credentials::is_deployed( $client::PROVIDER ) ) {
             return Provider_Credentials::google_email( $client::PROVIDER );
@@ -342,7 +262,6 @@ class External_Data_Service {
         return is_array( $decoded ) && ! empty( $decoded['client_email'] ) ? (string) $decoded['client_email'] : null;
     }
 
-    
     private static function decrypt_option( $client, $option ) {
         $stored = (string) \get_option( $option, '' );
         if ( '' === $stored ) {
@@ -356,7 +275,6 @@ class External_Data_Service {
         return is_string( $plain ) && '' !== $plain ? $plain : null;
     }
 
-    
     private static function tail( $value ) {
         if ( null === $value ) {
             return null;
@@ -364,7 +282,6 @@ class External_Data_Service {
         return mb_substr( $value, -4 );
     }
 
-    
     private static function head( $value ) {
         if ( null === $value ) {
             return null;
@@ -372,7 +289,6 @@ class External_Data_Service {
         return mb_substr( $value, 0, 3 );
     }
 
-    
     private static function property_choices( array $cached ) {
         $choices = array();
         foreach ( $cached as $row ) {
@@ -382,13 +298,6 @@ class External_Data_Service {
         }
         return $choices;
     }
-
-    
-
-
-
-
-
 
     private function stored_balance( $key ) {
         $all = \get_option( self::OPTION_BALANCES, array() );
@@ -429,9 +338,6 @@ class External_Data_Service {
         }
     }
 
-    
-
-    
     private static function invalid( $field, $message, $code = 'easy_mcp_ai_invalid_param' ) {
         return new \WP_Error( $code, $message, array( 'status' => 400, 'field' => $field ) );
     }
@@ -444,7 +350,6 @@ class External_Data_Service {
         );
     }
 
-    
     private static function text( array $input, $field ) {
         if ( ! array_key_exists( $field, $input ) ) {
             return '';
@@ -457,16 +362,6 @@ class External_Data_Service {
         }
         return trim( $input[ $field ] );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function save( $key, array $input ) {
         $refused = self::refuse_deployed( $key, $input );
@@ -489,16 +384,6 @@ class External_Data_Service {
         }
         return new \WP_Error( 'easy_mcp_ai_not_found', \__( 'Unknown provider.', 'easy-mcp-ai' ), array( 'status' => 404 ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function refuse_deployed( $key, array $input ) {
         if ( Provider_Credentials::is_deployed( $key ) ) {
@@ -582,7 +467,6 @@ class External_Data_Service {
         return true;
     }
 
-    
     private static function check_service_account_json( $json ) {
         $decoded = json_decode( $json, true );
         if ( ! is_array( $decoded ) ) {
@@ -599,7 +483,6 @@ class External_Data_Service {
         return true;
     }
 
-    
     private function refresh_google_cache( $key ) {
         try {
             if ( 'ga' === $key ) {
@@ -608,7 +491,6 @@ class External_Data_Service {
                 External_Data_Admin::write_gsc_sites_cache( $this->gateway->gsc_sites() );
             }
         } catch ( \Throwable $e ) {
-            
         }
     }
 
@@ -706,12 +588,6 @@ class External_Data_Service {
         return true;
     }
 
-    
-
-
-
-
-
     private function restore_or_delete( array $previous, $was_configured ) {
         foreach ( $previous as $option => $value ) {
             if ( $was_configured && '' !== $value ) {
@@ -722,7 +598,6 @@ class External_Data_Service {
         }
     }
 
-    
     private static function rejected( $field, $message, \RuntimeException $e ) {
         return new \WP_Error(
             'easy_mcp_ai_invalid_credentials',
@@ -730,11 +605,6 @@ class External_Data_Service {
             array( 'status' => 400, 'field' => $field, 'detail' => Config::brand( $e->getMessage() ) )
         );
     }
-
-    
-
-
-
 
     private function enable_all( $key ) {
         if ( Config::is_locked( 'disabled_tools' ) ) {
@@ -747,23 +617,11 @@ class External_Data_Service {
         $this->sync_global_disabled( $key );
     }
 
-    
-
-
-
     public function sync_global_disabled( $key ) {
         $global = (array) Config::get( 'easy_mcp_ai_disabled_tools', array() );
         $other  = array_values( array_diff( $global, $this->tool_names( $key ) ) );
         Config::update( 'easy_mcp_ai_disabled_tools', External_Data_Admin::merge_disabled_tool_buckets( $other ) );
     }
-
-    
-
-
-
-
-
-
 
     public function apply_enabled( $key, array $checked ) {
         $disabled = External_Data_Admin::compute_disabled_tools( $this->tool_names( $key ), $checked );
@@ -773,13 +631,6 @@ class External_Data_Service {
         }
         $this->sync_global_disabled( $key );
     }
-
-    
-
-
-
-
-
 
     public function test( $key ) {
         if ( ! $this->is_configured( $key ) ) {
@@ -859,18 +710,6 @@ class External_Data_Service {
         return array( 'ok' => false, 'message' => \__( 'Unknown provider.', 'easy-mcp-ai' ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public function remove_key( $key ) {
         if ( Provider_Credentials::is_deployed( $key ) ) {
             return self::deployed_error( '', implode( ', ', array_keys( Provider_Credentials::deployed_constants( $key ) ) ) );
@@ -911,13 +750,6 @@ class External_Data_Service {
         return true;
     }
 
-    
-
-
-
-
-
-
     public function clear_cache( $key ) {
         if ( ! in_array( $key, self::CACHE_PROVIDERS, true ) ) {
             return new \WP_Error( 'easy_mcp_ai_unsupported', \__( 'This provider keeps no cache.', 'easy-mcp-ai' ), array( 'status' => 400 ) );
@@ -928,12 +760,6 @@ class External_Data_Service {
         }
         return true;
     }
-
-    
-
-
-
-
 
     public function refresh_balance( $key ) {
         if ( ! in_array( $key, self::BALANCE_PROVIDERS, true ) ) {

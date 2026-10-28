@@ -5,27 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Job_Store {
 
     const JOB_PREFIX  = 'easy_mcp_ai_sr_job_';
     const INDEX       = 'easy_mcp_ai_sr_index';
     const LIVE        = 'easy_mcp_ai_sr_live';
     const LOCK_PREFIX = 'easy_mcp_ai_sr_lock_';
-    
     const INDEX_MAX = 20;
-
-    
-
-
-
 
     public function get( string $id, bool $fresh = false ) {
         if ( ! self::valid_id( $id ) ) {
@@ -38,7 +24,6 @@ class Job_Store {
         return is_array( $job ) ? $job : null;
     }
 
-    
     public function save( array $job ): void {
         \update_option( self::JOB_PREFIX . $job['id'], $job, false );
         $this->index( $job );
@@ -52,12 +37,6 @@ class Job_Store {
         \update_option( self::INDEX, $index, false );
     }
 
-    
-
-
-
-
-
     public function recent(): array {
         $raw = \get_option( self::INDEX, array() );
         $out = array();
@@ -69,7 +48,6 @@ class Job_Store {
         return $out;
     }
 
-    
     public function live_job(): string {
         $id = \get_option( self::LIVE, '' );
         return is_string( $id ) && self::valid_id( $id ) ? $id : '';
@@ -82,14 +60,6 @@ class Job_Store {
         }
         \update_option( self::LIVE, $id, false );
     }
-
-    
-
-
-
-
-
-
 
     public function claim_live( string $id ): bool {
         global $wpdb;
@@ -107,18 +77,12 @@ class Job_Store {
             if ( null !== $job && 'running' === $job['status'] ) {
                 return false;
             }
-            
             $won = $holder === $id || 1 === (int) $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", $id, self::LIVE, $holder ) );
         }
         // phpcs:enable
         \wp_cache_delete( self::LIVE, 'options' );
         return $won;
     }
-
-    
-
-
-
 
     public function lock( string $id, int $ttl ): bool {
         global $wpdb;
@@ -134,7 +98,6 @@ class Job_Store {
             if ( $held > 0 && $now - $held < $ttl ) {
                 return false;
             }
-            
             $won = (int) $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", (string) $now, $name, (string) $held ) );
         }
         // phpcs:enable
@@ -154,7 +117,6 @@ class Job_Store {
         return (bool) preg_match( '/^[a-f0-9]{16}\z/', $id );
     }
 
-    
     private function index( array $job ): void {
         $index = $this->recent();
         unset( $index[ $job['id'] ] );
@@ -165,7 +127,6 @@ class Job_Store {
             'finished'  => (string) ( $job['finished'] ?? '' ),
             'updated'   => (int) ( $job['updated'] ?? 0 ),
         );
-        
         foreach ( $index as $id => $summary ) {
             if ( count( $index ) <= self::INDEX_MAX ) {
                 break;
@@ -177,11 +138,6 @@ class Job_Store {
         }
         \update_option( self::INDEX, $index, false );
     }
-
-    
-
-
-
 
     public function delete_finished_before( int $cutoff ): int {
         $deleted = 0;

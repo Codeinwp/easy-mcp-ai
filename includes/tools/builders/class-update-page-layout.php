@@ -11,16 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 class Update_Page_Layout extends Base_Tool {
 
     public function get_name() {
@@ -120,33 +110,13 @@ class Update_Page_Layout extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public function get_approval_policy( array $arguments ) {
         return self::is_dry_run( $arguments ) ? 'never' : 'inherit';
     }
 
-    
-
-
-
-
-
     public function is_read_only_call( array $arguments ) {
         return self::is_dry_run( $arguments );
     }
-
-    
-
-
-
-
-
 
     public function describe( array $arguments ) {
         $post_id = isset( $arguments['post_id'] ) && is_scalar( $arguments['post_id'] ) ? (string) $arguments['post_id'] : '?';
@@ -188,9 +158,6 @@ class Update_Page_Layout extends Base_Tool {
         if ( null !== $refusal ) {
             throw Layout_Adapter::refusal( array( $refusal ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
-        
-        
         $lock = $dry_run ? '' : Layout_Lock::acquire( $post_id );
         if ( ! $dry_run && '' === $lock ) {
             throw new \RuntimeException( sprintf( 'Another edit of post %d is being saved. Read the layout again with wp_get_page_layout, then redo the edit.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -240,14 +207,6 @@ class Update_Page_Layout extends Base_Tool {
         return $reply;
     }
 
-    
-
-
-
-
-
-
-
     private static function fence( int $post_id, string $lock ): callable {
         return static function () use ( $post_id, $lock ): void {
             if ( ! Layout_Lock::holds( $post_id, $lock ) ) {
@@ -256,25 +215,12 @@ class Update_Page_Layout extends Base_Tool {
         };
     }
 
-    
-
-
-
-
-
-
-
     private static function fresh_post( int $post_id, object $fallback ): object {
         wp_cache_delete( $post_id, 'posts' );
         wp_cache_delete( $post_id, 'post_meta' );
         $post = get_post( $post_id );
         return is_object( $post ) ? $post : $fallback;
     }
-
-    
-
-
-
 
     private static function latest_revision( int $post_id ): int {
         $revisions = wp_get_post_revisions(
@@ -287,9 +233,6 @@ class Update_Page_Layout extends Base_Tool {
         $first = is_array( $revisions ) ? reset( $revisions ) : false;
         return is_numeric( $first ) ? (int) $first : 0;
     }
-
-    
-
 
     private static function is_dry_run( array $arguments ): bool {
         return isset( $arguments['dry_run'] ) && rest_sanitize_boolean( $arguments['dry_run'] );

@@ -12,65 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Meta_Adapter extends Meta_Command {
 
     use Planned_Run;
 
     protected $meta_type = 'post';
 
-    
     private ?string $read_base = null;
 
-    
     private string $subcommand = '';
 
     const MSG_EDIT_CAP = "'wp %s' needs the edit_post capability for post %d: %s reads and writes protected meta only for users who can edit the post.";
@@ -79,30 +28,11 @@ final class Post_Meta_Adapter extends Meta_Command {
 
     const MSG_META_CAP = "WordPress refused edit_post_meta for the key '%s' on post %d: wp_update_post_meta writes it through the REST API, which asks that capability first, and the key's auth callback or an auth_post_meta filter denied your user.";
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_id( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
         $at   = isset( $inv->leaf['name'] ) && 'patch' === $inv->leaf['name'] ? 1 : 0;
         Ids::require_digits( $ctx, isset( $args[ $at ] ) ? $args[ $at ] : '', 'a post ID' );
     }
-
-    
-
-
-
-
-
-
-
 
     public function plan_patch( Invocation $inv ): array {
         $args = array_values( $inv->args );
@@ -117,25 +47,12 @@ final class Post_Meta_Adapter extends Meta_Command {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     protected function check_object_id( $object_id, string $subcommand ) {
         $this->subcommand = $subcommand;
         $writes           = in_array( $subcommand, array( 'update', 'patch' ), true );
         $tool             = 'delete' === $subcommand ? 'wp_delete_post_meta' : ( $writes ? 'wp_update_post_meta' : 'wp_get_post_full' );
         $command          = $this->inv->command;
         if ( $writes ) {
-            
             Fetchers::require_tool( $this->ctx, $this->inv, 'wp_get_post_full' );
         }
         $post             = Fetchers::of( 'post' )->get_check_for(
@@ -160,12 +77,6 @@ final class Post_Meta_Adapter extends Meta_Command {
         return $post->ID;
     }
 
-    
-
-
-
-
-
     private function require_meta_cap( int $post_id, string $subcommand ): void {
         $args = array_values( $this->inv->args );
         $key  = (string) ( 'patch' === $subcommand ? ( $args[2] ?? '' ) : ( $args[1] ?? '' ) );
@@ -174,16 +85,8 @@ final class Post_Meta_Adapter extends Meta_Command {
         }
     }
 
-    
-
-
-
-
-
-
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         if ( 'delete' === $this->subcommand ) {
-            
             $all = \get_post_meta( (int) $object_id );
             return is_array( $all ) ? $all : array();
         }
@@ -193,22 +96,12 @@ final class Post_Meta_Adapter extends Meta_Command {
             return self::all_rows( $meta );
         }
 
-        
-        
         $values = self::key_rows( $meta, $meta_key );
         if ( $single ) {
             return $values ? self::maybe_unserialize( $values[0] ) : '';
         }
         return array_map( array( __CLASS__, 'maybe_unserialize' ), $values );
     }
-
-    
-
-
-
-
-
-
 
     private function read_meta( int $object_id, string $meta_key ): array {
         $args = array(
@@ -233,13 +126,6 @@ final class Post_Meta_Adapter extends Meta_Command {
         return isset( $result['payload']['meta'] ) && is_array( $result['payload']['meta'] ) ? $result['payload']['meta'] : array();
     }
 
-    
-
-
-
-
-
-
     private function keys_to_read( string $meta_key ): array {
         if ( '' !== $meta_key ) {
             return array( $meta_key );
@@ -250,12 +136,6 @@ final class Post_Meta_Adapter extends Meta_Command {
         return array();
     }
 
-    
-
-
-
-
-
     private static function all_rows( array $meta ): array {
         $all = array();
         foreach ( $meta as $key => $values ) {
@@ -264,12 +144,6 @@ final class Post_Meta_Adapter extends Meta_Command {
         return $all;
     }
 
-    
-
-
-
-
-
     private static function key_rows( array $meta, string $meta_key ): array {
         if ( ! isset( $meta[ $meta_key ] ) ) {
             return array();
@@ -277,22 +151,9 @@ final class Post_Meta_Adapter extends Meta_Command {
         return is_array( $meta[ $meta_key ] ) ? array_values( $meta[ $meta_key ] ) : array( $meta[ $meta_key ] );
     }
 
-    
-
-
-
-
-
-
     protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool {
         throw new \LogicException( 'post meta add is an own handler (Post_Meta_Handler).' );
     }
-
-    
-
-
-
-
 
     protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool {
         $result = $this->delegate(
@@ -304,26 +165,14 @@ final class Post_Meta_Adapter extends Meta_Command {
             )
         );
         if ( ! $result['ok'] ) {
-            
-            
             $this->ctx->out->error( (string) $result['error'] );
         }
         return true;
     }
 
-    
-
-
-
-
-
-
-
     protected function delete_metadata( $object_id, string $meta_key, string $meta_value = '' ): bool {
         $args = array(
             'post_id'   => (int) $object_id,
-            
-            
             'key'       => function_exists( 'wp_unslash' ) ? (string) \wp_unslash( $meta_key ) : $meta_key,
             'exact_key' => true,
         );
@@ -333,33 +182,20 @@ final class Post_Meta_Adapter extends Meta_Command {
         $result = $this->delegate( 'wp_delete_post_meta', $args );
         if ( ! $result['ok'] ) {
             if ( Batch::is_rate_limited( $result ) ) {
-                
                 return false;
             }
             if ( $this->in_bulk() ) {
                 $this->ctx->out->warning( (string) $result['error'] );
                 return false;
             }
-            
             $this->ctx->out->error( (string) $result['error'] );
         }
         return ! empty( $result['payload']['deleted'] );
     }
 
-    
-    
-    
-
-    
     private function in_bulk(): bool {
         return 'delete' === $this->subcommand && ! empty( $this->inv->assoc['all'] );
     }
-
-    
-
-
-
-
 
     public static function maybe_unserialize( $value ) {
         return function_exists( 'maybe_unserialize' ) ? \maybe_unserialize( $value ) : $value;

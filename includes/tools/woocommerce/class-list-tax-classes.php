@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class List_Tax_Classes extends Base_Tool {
 
     use Store_Setup;

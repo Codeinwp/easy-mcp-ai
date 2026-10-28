@@ -1,32 +1,14 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 final class Builder_Registry {
 
-    
     private static ?array $adapters = null;
-
-    
-
-
-
 
     public static function all(): array {
         if ( null === self::$adapters ) {
@@ -34,11 +16,6 @@ final class Builder_Registry {
         }
         return self::$adapters;
     }
-
-    
-
-
-
 
     public static function present(): array {
         return array_values(
@@ -51,20 +28,9 @@ final class Builder_Registry {
         );
     }
 
-    
-
-
-
-
     public static function any_present(): bool {
         return array() !== self::present();
     }
-
-    
-
-
-
-
 
     public static function for_post( object $post ): ?Layout_Adapter {
         foreach ( self::present() as $adapter ) {
@@ -75,12 +41,6 @@ final class Builder_Registry {
         return null;
     }
 
-    
-
-
-
-
-
     public static function get( string $id ): ?Layout_Adapter {
         foreach ( self::present() as $adapter ) {
             if ( $adapter->id() === $id ) {
@@ -89,12 +49,6 @@ final class Builder_Registry {
         }
         return null;
     }
-
-    
-
-
-
-
 
     public static function set_adapters( ?array $adapters ): void {
         self::$adapters = $adapters;

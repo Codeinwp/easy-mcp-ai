@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,50 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Wp_Rocket extends Cache_Adapter {
 
-    
     private $label = '';
 
     public function id(): string {
         return 'wp-rocket';
     }
-
-    
-
-
-
 
     public function label(): string {
         if ( '' !== $this->label ) {
@@ -71,13 +29,6 @@ final class Wp_Rocket extends Cache_Adapter {
         $this->label = false !== strpos( $file, '/clsop/' ) ? 'AccelerateWP' : 'WP Rocket';
         return $this->label;
     }
-
-    
-
-
-
-
-
 
     public static function defining_file( string $name ): string {
         try {
@@ -174,24 +125,10 @@ final class Wp_Rocket extends Cache_Adapter {
         return $this->sent( sprintf( '%s cleared %d post(s) with their home page, archives and parent pages.', $this->label(), count( $request->post_ids ) ) );
     }
 
-    
-
-
-
-
-
     private function uses_post_helper(): bool {
         $calls = $this->calls();
         return $calls->function_exists( 'rocket_clean_post' ) && '' !== (string) $calls->get_option( 'permalink_structure', '' );
     }
-
-    
-
-
-
-
-
-
 
     private function wipes_a_host( Purge_Request $request ): bool {
         foreach ( $request->urls as $url ) {
@@ -201,11 +138,6 @@ final class Wp_Rocket extends Cache_Adapter {
         }
         return false;
     }
-
-    
-
-
-
 
     private function always_purges_root(): bool {
         $pages = $this->rocket_option( 'cache_purge_pages' );
@@ -217,13 +149,6 @@ final class Wp_Rocket extends Cache_Adapter {
         return false;
     }
 
-    
-
-
-
-
-
-
     private function is_vendor_home( string $url ): bool {
         $calls = $this->calls();
         $home  = $calls->function_exists( 'get_rocket_i18n_home_url' ) ? $calls->call( 'get_rocket_i18n_home_url' ) : '';
@@ -233,13 +158,6 @@ final class Wp_Rocket extends Cache_Adapter {
         return is_string( $host ) && is_string( $mine ) && strtolower( $host ) === strtolower( $mine )
             && untrailingslashit( $this->path_of( $url ) ) === untrailingslashit( $this->path_of( $home ) );
     }
-
-    
-
-
-
-
-
 
     private function cloudflare_on(): bool {
         if ( $this->rocket_option( 'do_cloudflare' ) ) {
@@ -257,12 +175,6 @@ final class Wp_Rocket extends Cache_Adapter {
         return true;
     }
 
-    
-
-
-
-
-
     private function polylang_wipes_every_host(): bool {
         $calls = $this->calls();
         if ( ! $calls->constant( 'POLYLANG_VERSION' ) ) {
@@ -271,13 +183,6 @@ final class Wp_Rocket extends Cache_Adapter {
         $pll = $calls->function_exists( 'PLL' ) ? $calls->call( 'PLL' ) : $calls->global_value( 'polylang' );
         return is_object( $pll ) && isset( $pll->options ) && is_array( $pll->options ) && isset( $pll->options['force_lang'] ) && 0 === $pll->options['force_lang'];
     }
-
-    
-
-
-
-
-
 
     private function cascade_reaches_network(): bool {
         $calls = $this->calls();
@@ -290,13 +195,6 @@ final class Wp_Rocket extends Cache_Adapter {
         $admin = $calls->global_value( 'nginx_helper_admin' );
         return ! is_object( $admin ) || ! isset( $admin->options['cache_method'] ) || 'enable_redis' !== $admin->options['cache_method'];
     }
-
-    
-
-
-
-
-
 
     private function rocket_option( string $name ) {
         $calls = $this->calls();

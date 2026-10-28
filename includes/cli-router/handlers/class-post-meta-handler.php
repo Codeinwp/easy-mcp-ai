@@ -12,53 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Meta_Handler extends Meta_Command {
 
-    
     protected $meta_type = 'post';
 
-    
     const META_CAPS = array(
         'add'              => 'add_post_meta',
         'update'           => 'edit_post_meta',
@@ -66,7 +23,6 @@ final class Post_Meta_Handler extends Meta_Command {
         'clean-duplicates' => 'delete_post_meta',
     );
 
-    
     const KEY_INDEX = array(
         'add'              => 1,
         'update'           => 1,
@@ -86,28 +42,9 @@ final class Post_Meta_Handler extends Meta_Command {
 
     const MSG_KEY_CASE = "wp_cli_run refuses the key '%1\$s' on post %2\$d: '%3\$s' is a registered key for post type %4\$s, and the meta table compares keys without regard to case, so '%1\$s' would reach the rows of '%3\$s' without the checks that apply to it. Use '%3\$s'.";
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_id( Invocation $inv, Context $ctx ): void {
         Ids::require_digits( $ctx, self::id_arg( $inv ), 'a post ID' );
     }
-
-    
-
-
-
-
-
-
-
 
     public function is_rest_key( Invocation $inv ): bool {
         $sub  = isset( $inv->leaf['name'] ) ? (string) $inv->leaf['name'] : '';
@@ -125,10 +62,6 @@ final class Post_Meta_Handler extends Meta_Command {
         return is_array( Post_Adapter::read_base( $type, $inv->command ) ) && Post_Adapter::is_rest_meta_key( $type, $key );
     }
 
-    
-
-
-
     private static function id_arg( Invocation $inv ): string {
         $args = array_values( $inv->args );
         $sub  = isset( $inv->leaf['name'] ) ? (string) $inv->leaf['name'] : '';
@@ -136,73 +69,27 @@ final class Post_Meta_Handler extends Meta_Command {
         return isset( $args[ $at ] ) ? $args[ $at ] : '';
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     protected function check_object_id( $object_id, string $subcommand ) {
         $post = Fetchers::of( 'post' )->get_check( $object_id, $this->ctx->out );
         $this->gate( $post, $subcommand );
         return $post->ID;
     }
 
-    
-
-
-
-
-
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         return \get_post_meta( $object_id, $meta_key, $single );
     }
-
-    
-
-
-
-
 
     protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool {
         return (bool) \add_post_meta( $object_id, $meta_key, $meta_value );
     }
 
-    
-
-
-
-
-
     protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool {
         return (bool) \update_post_meta( $object_id, $meta_key, $meta_value );
     }
 
-    
-
-
-
-
-
-
     protected function delete_metadata( $object_id, string $meta_key, $meta_value = '' ): bool {
         throw new \LogicException( 'post meta delete is delegated (Post_Meta_Adapter).' );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function meta_rows( $object_id, string $meta_key ): array {
         global $wpdb;
@@ -223,18 +110,6 @@ final class Post_Meta_Handler extends Meta_Command {
         return (bool) \delete_metadata_by_mid( 'post', $meta_id );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     private function gate( object $post, string $subcommand ): void {
         $post_id = (int) $post->ID;
         $this->ctx->require_cap( 'edit_post', $post_id );
@@ -252,13 +127,6 @@ final class Post_Meta_Handler extends Meta_Command {
         $this->require_integration_field( $key, $post_id );
     }
 
-    
-
-
-
-
-
-
     private function require_meta_cap( string $cap, string $key, int $post_id, string $post_type ): void {
         if ( \is_protected_meta( $key, 'post' ) ) {
             if ( ! \current_user_can( $cap, $post_id, $key ) ) {
@@ -274,12 +142,6 @@ final class Post_Meta_Handler extends Meta_Command {
         }
     }
 
-    
-
-
-
-
-
     private function require_integration_field( string $key, int $post_id ): void {
         if ( ! class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {
             return;
@@ -290,13 +152,6 @@ final class Post_Meta_Handler extends Meta_Command {
             }
         }
     }
-
-    
-
-
-
-
-
 
     private static function registered_case_variant( string $key, string $post_type ): ?string {
         $names = array();
@@ -324,11 +179,6 @@ final class Post_Meta_Handler extends Meta_Command {
         }
         return null;
     }
-
-    
-
-
-
 
     private static function key_is_registered( string $key, string $post_type ): bool {
         if ( function_exists( 'get_registered_meta_keys' ) ) {

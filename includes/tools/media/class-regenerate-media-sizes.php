@@ -7,24 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Regenerate_Media_Sizes extends Base_Tool {
 
     use Local_Image;
@@ -45,14 +27,11 @@ class Regenerate_Media_Sizes extends Base_Tool {
         return 'upload_files';
     }
 
-    
-
-
     public function get_annotations() {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'idempotentHint'  => true,
             'openWorldHint'   => false,
         );
@@ -82,7 +61,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id    = isset( $arguments['media_id'] ) ? (int) $arguments['media_id'] : 0;
         $media = $id > 0 ? $this->peek( '/wp/v2/media/' . $id, 'id,title,source_url' ) : null;
@@ -95,8 +73,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         $file  = isset( $media['source_url'] ) ? basename( (string) $media['source_url'] ) : '';
         $file  = '' !== $file ? $file : __( 'unknown file', 'easy-mcp-ai' );
 
-        
-        
         if ( ! $named ) {
             return sprintf(
                 $all
@@ -144,18 +120,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function reading_current_image( int $media_id, array $source, callable $run ): array {
         if ( $source['path'] === $source['original'] ) {
             return $run();
@@ -171,22 +135,9 @@ class Regenerate_Media_Sizes extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function regenerate( int $media_id, string $mode, array $sizes, array $source ): array {
         $before = isset( $source['meta']['sizes'] ) && is_array( $source['meta']['sizes'] ) ? $source['meta']['sizes'] : array();
 
-        
-        
-        
         $rebuildable = 'all' === $mode ? array_keys( array_intersect_key( $before, array_flip( $sizes ) ) ) : array();
         $wanted      = array_intersect_key( $this->missing_subsizes( $media_id, $source, $rebuildable ), array_flip( $sizes ) );
         $targets     = array_keys( $wanted );
@@ -203,9 +154,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
             );
         }
 
-        
-        
-        
         $forgotten = array_intersect_key( $before, $wanted );
         if ( array() !== $forgotten ) {
             $meta          = $source['meta'];
@@ -213,8 +161,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
             $this->update_attachment_metadata( $media_id, $meta );
         }
 
-        
-        
         $result = null;
         $thrown = null;
         try {
@@ -250,23 +196,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         }
         return $reply;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function rebuild_metadata( int $media_id, string $mode, bool $named, array $source ): array {
         if ( $named ) {
@@ -304,17 +233,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         return $reply;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function failure_cause( string $original, array $failed, array $forgotten ): string {
         $dir = dirname( $original );
         if ( ! $this->is_writable_path( $dir ) ) {
@@ -332,14 +250,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         }
         return ' WordPress\'s image editor does not report why: core discards its error.';
     }
-
-    
-
-
-
-
-
-
 
     protected function parse_sizes( $value ): array {
         $registered = array_keys( $this->registered_subsizes() );
@@ -360,14 +270,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
         return $names;
     }
 
-    
-
-
-
-
-
-
-
     private function restore_forgotten( int $media_id, array $forgotten ): void {
         if ( array() === $forgotten ) {
             return;
@@ -378,21 +280,10 @@ class Regenerate_Media_Sizes extends Base_Tool {
         $this->update_attachment_metadata( $media_id, $meta );
     }
 
-    
-
-
-
     private function current_sizes( int $media_id ): array {
         $meta = $this->attachment_metadata( $media_id );
         return is_array( $meta ) && isset( $meta['sizes'] ) && is_array( $meta['sizes'] ) ? $meta['sizes'] : array();
     }
-
-    
-
-
-
-
-
 
     private static function size_summary( array $sizes ): \stdClass {
         $summary = array();
@@ -406,29 +297,10 @@ class Regenerate_Media_Sizes extends Base_Tool {
         return (object) $summary;
     }
 
-    
-
-
     protected function registered_subsizes(): array {
         $this->load_image_functions();
         return \wp_get_registered_image_subsizes();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function missing_subsizes( int $media_id, array $source, array $without = array() ): array {
         $upright = $this->upright_size_of_rotated( $source['path'] );
@@ -447,18 +319,8 @@ class Regenerate_Media_Sizes extends Base_Tool {
         if ( isset( $meta['sizes'] ) ) {
             $meta['sizes'] = $have;
         }
-        
         return (array) \apply_filters( 'wp_get_missing_image_subsizes', array_diff_key( $fits, $have ), $meta, $media_id );
     }
-
-    
-
-
-
-
-
-
-
 
     private function core_missing_without( int $media_id, array $without ): array {
         if ( array() === $without ) {
@@ -478,20 +340,8 @@ class Regenerate_Media_Sizes extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function upright_size_of_rotated( string $path ): ?array {
-        
         $stored_as = $this->stored_orientation( $path );
-        
         $orientation = (int) \apply_filters( 'wp_image_maybe_exif_rotate', 0 === $stored_as ? null : $stored_as, $path );
         if ( $orientation < 5 || $orientation > 8 ) {
             return null;
@@ -500,23 +350,9 @@ class Regenerate_Media_Sizes extends Base_Tool {
         return is_array( $stored ) ? array( (int) $stored[1], (int) $stored[0] ) : null;
     }
 
-    
-
-
-
     protected function core_missing_subsizes( int $media_id ): array {
         return (array) \wp_get_missing_image_subsizes( $media_id );
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function update_subsizes( int $media_id, array $wanted ) {
         $only = static function () use ( $wanted ) {
@@ -529,10 +365,6 @@ class Regenerate_Media_Sizes extends Base_Tool {
             \remove_filter( 'wp_get_missing_image_subsizes', $only, PHP_INT_MAX );
         }
     }
-
-    
-
-
 
     protected function core_update_subsizes( int $media_id ) {
         return \wp_update_image_subsizes( $media_id );

@@ -1,16 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 use Easy_MCP_AI\Resources\Base_Resource;
@@ -19,21 +8,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 final class Skill_Resource extends Base_Resource {
 
-    
     private $skill;
 
-    
     private $file;
-
-    
-
-
 
     public function __construct( array $skill, array $file ) {
         $this->skill = $skill;
@@ -75,7 +54,6 @@ final class Skill_Resource extends Base_Resource {
         return $this->file['text'];
     }
 
-    
     public function skill(): array {
         return $this->skill;
     }

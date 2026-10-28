@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Rest_Routes;
 
 use Easy_MCP_AI\Tools\Tool_State;
@@ -13,50 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Namespace_State {
 
-    
     const OPTION = 'easy_mcp_ai_rest_disabled_namespaces';
 
-    
     const OVERRIDE_NAME = 'EASY_MCP_AI_REST_NAMESPACES';
 
-    
     const STRICT_ENTRY = '*';
-
-    
-
-
-
-
 
     public static function normalize( string $namespace ): string {
         return strtolower( trim( trim( $namespace ), '/' ) );
     }
-
-    
-
-
-
 
     public static function override_source(): string {
         if ( defined( self::OVERRIDE_NAME ) ) {
@@ -64,11 +26,6 @@ final class Namespace_State {
         }
         return false !== getenv( self::OVERRIDE_NAME ) ? 'environment' : '';
     }
-
-    
-
-
-
 
     private static function parsed(): array {
         $source = self::override_source();
@@ -84,13 +41,6 @@ final class Namespace_State {
         return $map;
     }
 
-    
-
-
-
-
-
-
     public static function override_of( string $namespace ): ?bool {
         $map = self::parsed();
         $key = self::normalize( $namespace );
@@ -99,12 +49,6 @@ final class Namespace_State {
         }
         return isset( $map[ self::STRICT_ENTRY ] ) ? false : null;
     }
-
-    
-
-
-
-
 
     public static function stored_off(): ?array {
         $stored = \get_option( self::OPTION, array() );
@@ -124,12 +68,6 @@ final class Namespace_State {
         return array_values( array_unique( $off ) );
     }
 
-    
-
-
-
-
-
     public static function is_enabled( string $namespace ): bool {
         $override = self::override_of( $namespace );
         if ( null !== $override ) {
@@ -139,25 +77,9 @@ final class Namespace_State {
         return null !== $off && ! in_array( self::normalize( $namespace ), $off, true );
     }
 
-    
-
-
-
-
-
-
     public static function off_by( string $namespace ): string {
         return null !== self::override_of( $namespace ) ? 'constant' : 'option';
     }
-
-    
-
-
-
-
-
-
-
 
     public static function apply_choices( array $off, array $on ): bool {
         $current = self::stored_off();

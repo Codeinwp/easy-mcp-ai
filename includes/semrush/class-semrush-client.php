@@ -5,14 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
-
-
 class Semrush_Client {
 
 	const OPTION_API_KEY = 'easy_mcp_ai_semrush_api_key';
@@ -23,7 +15,6 @@ class Semrush_Client {
 
 	const ALLOWED_HOSTS = array( 'api.semrush.com', 'www.semrush.com' );
 
-	
 	const ERR_LIMIT_EXCEEDED       = 30;
 	const ERR_PARAM_ACTION         = 40;
 	const ERR_PARAM_TYPE           = 41;
@@ -31,7 +22,7 @@ class Semrush_Client {
 	const ERR_PARAM_PHRASE         = 43;
 	const ERR_PARAM_URL            = 44;
 	const ERR_PARAM_VS_DOMAIN      = 45;
-	const ERR_NOTHING_FOUND        = 50;  
+	const ERR_NOTHING_FOUND        = 50;
 	const ERR_KEY_HASH_FAILURE     = 70;
 	const ERR_INVALID_IMPORT_KEY   = 110;
 	const ERR_WRONG_KEY_ID_PAIR    = 120;
@@ -65,7 +56,6 @@ class Semrush_Client {
 		'url_organic'            => array( 'base' => 10, 'shape' => 'per_row' ),
 	);
 
-	
 	const CIPHER_VERSION    = "v2\x00";
 	const CIPHER_PREFIX_LEN = 3;
 	const HKDF_INFO         = 'easy_mcp_ai_semrush_v2';
@@ -113,15 +103,10 @@ class Semrush_Client {
 		return openssl_decrypt( $ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag );
 	}
 
-	
-
-
-
-
 	public function get_api_key(): string {
 		$deployed = \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_API_KEY );
 		if ( null !== $deployed ) {
-			return $deployed; 
+			return $deployed;
 		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {
@@ -138,12 +123,6 @@ class Semrush_Client {
 		return in_array( $type, self::BACKLINKS_TYPES, true ) ? self::BASE_URL_BACKLINKS : self::BASE_URL_SEO;
 	}
 
-	
-
-
-
-
-
 	public function request( string $type, array $params ): array {
 		$url    = $this->base_url_for_type( $type );
 		$scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
@@ -159,7 +138,6 @@ class Semrush_Client {
 		$response = \wp_remote_get( $full_url, array(
 			'timeout'             => 30,
 			'headers'             => array( 'Accept' => 'text/csv' ),
-			
 			'limit_response_size' => 33554432,
 		) );
 
@@ -194,17 +172,11 @@ class Semrush_Client {
 		return $this->parse_csv( $body );
 	}
 
-	
-
-
-
-
 	public function parse_error( int $code, string $msg, string $api_key = '' ): void {
 		if ( '' === $api_key ) {
 			try {
 				$api_key = $this->get_api_key();
 			} catch ( \RuntimeException $e ) {
-				
 			}
 		}
 		if ( '' !== $api_key ) {
@@ -249,11 +221,6 @@ class Semrush_Client {
 		}
 	}
 
-	
-
-
-
-
 	public function parse_csv( string $body ): array {
 		$lines = preg_split( "/\r\n|\r|\n/", $body );
 		if ( empty( $lines ) ) {
@@ -277,11 +244,6 @@ class Semrush_Client {
 		return $rows;
 	}
 
-	
-
-
-
-
 	public static function coerce_value( string $code, string $raw ) {
 		if ( '' === $raw ) {
 			return null;
@@ -297,12 +259,6 @@ class Semrush_Client {
 		return $raw;
 	}
 
-	
-
-
-
-
-
 	public function request_balance(): int {
 		$url    = self::BASE_URL_BALANCE;
 		$scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
@@ -316,7 +272,6 @@ class Semrush_Client {
 
 		$response = \wp_remote_get( $full, array(
 			'timeout'             => 15,
-			
 			'limit_response_size' => 1048576,
 		) );
 		if ( \is_wp_error( $response ) ) {
@@ -327,7 +282,6 @@ class Semrush_Client {
 		if ( $code < 200 || $code >= 300 ) {
 			throw new \RuntimeException( "Semrush balance HTTP error: status {$code}." ); // phpcs:ignore
 		}
-		
 		if ( preg_match( '/^ERROR\s+(\d+)\s*::\s*(.+)$/is', $body, $m ) ) {
 			$this->parse_error( (int) $m[1], trim( $m[2] ) );
 		}
@@ -337,11 +291,6 @@ class Semrush_Client {
 		}
 		return (int) $normalized;
 	}
-
-	
-
-
-
 
 	public function report( string $type, array $params ): array {
 		$rows  = $this->request( $type, $params );
@@ -367,9 +316,6 @@ class Semrush_Client {
 		return (int) $entry['base'] * count( $rows );
 	}
 
-	
-
-
 	public function get_balance(): array {
 		$balance = $this->request_balance();
 		return array(
@@ -379,9 +325,6 @@ class Semrush_Client {
 			'_cost_estimated' => false,
 		);
 	}
-
-	
-
 
 	public function test_connection(): array {
 		$balance = $this->request_balance();

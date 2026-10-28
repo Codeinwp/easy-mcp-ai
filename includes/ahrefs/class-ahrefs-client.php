@@ -5,27 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Ahrefs_Client {
 
 	const OPTION_API_KEY = 'easy_mcp_ai_ahrefs_api_key';
 
-	
 	const CIPHER_VERSION    = "v2\x00";
 	const CIPHER_PREFIX_LEN = 3;
 	const HKDF_INFO         = 'easy_mcp_ai_ahrefs_v2';
@@ -73,11 +56,6 @@ class Ahrefs_Client {
 		return openssl_decrypt( $ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag );
 	}
 
-	
-
-
-
-
 	public static function has_api_key(): bool {
 		return \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' );
 	}
@@ -85,20 +63,9 @@ class Ahrefs_Client {
 	const ENDPOINT     = 'https://api.ahrefs.com/v3/public/domain-rating-free';
 	const ALLOWED_HOST = 'api.ahrefs.com';
 
-	
-
-
-
-
-
-
-
-
 	public function verify_key(): void {
 		$key = $this->get_api_key();
 
-		
-		
 		if ( self::ALLOWED_HOST !== \wp_parse_url( self::ENDPOINT, PHP_URL_HOST ) ) {
 			throw new \RuntimeException( 'Ahrefs client: refusing to call non-Ahrefs host.' );
 		}
@@ -135,15 +102,10 @@ class Ahrefs_Client {
 		}
 	}
 
-	
-
-
-
-
 	public function get_api_key(): string {
 		$deployed = \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_API_KEY );
 		if ( null !== $deployed ) {
-			return $deployed; 
+			return $deployed;
 		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {

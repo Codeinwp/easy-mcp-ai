@@ -56,14 +56,11 @@ class Delete_Category extends Base_Tool {
 
         $category_id = $this->parse_required_id( $arguments['category_id'], 'category_id' );
 
-        
         $default_category_id = get_option( 'default_category' );
         if ( (int) $category_id === (int) $default_category_id ) {
             throw new \RuntimeException( 'WordPress does not allow deleting the default category.' );
         }
 
-        
-        
         $args = array();
         if ( isset( $arguments['reassign'] ) ) {
             $reassign_id = absint( $arguments['reassign'] );

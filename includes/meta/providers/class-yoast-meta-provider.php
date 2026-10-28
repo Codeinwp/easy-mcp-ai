@@ -1,25 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Meta\Providers;
 
 use Easy_MCP_AI\Meta\Meta_Field_Provider;
@@ -50,17 +30,10 @@ class Yoast_Meta_Provider extends Meta_Field_Provider {
         return 'wp_yoast_update_post_seo';
     }
 
-    
-
-
-
-
-
     public static function can_edit_advanced( $user_id ) {
         if ( user_can( (int) $user_id, 'wpseo_manage_options' ) || user_can( (int) $user_id, 'wpseo_edit_advanced_metadata' ) ) {
             return true;
         }
-        
         return class_exists( 'WPSEO_Options' ) && false === \WPSEO_Options::get( 'disableadvanced_meta' );
     }
 

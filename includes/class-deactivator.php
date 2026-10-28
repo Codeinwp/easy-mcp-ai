@@ -17,11 +17,8 @@ class Deactivator {
         \wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_change_log' );
         \wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_tasks' );
         \wp_clear_scheduled_hook( 'easy_mcp_ai_cleanup_approvals' );
-        
         \wp_clear_scheduled_hook( 'easy_mcp_ai_skills_sync' );
-        \wp_clear_scheduled_hook( 'easy_mcp_ai_oauth_cimd_probe' ); 
-        
-        
+        \wp_clear_scheduled_hook( 'easy_mcp_ai_oauth_cimd_probe' );
         \Easy_MCP_AI\Tasks\Task_Scheduler::clear_all();
         \flush_rewrite_rules();
     }

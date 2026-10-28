@@ -1,11 +1,5 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Compat\Shims;
 
 use Easy_MCP_AI\Compat\Compat_Shim;
@@ -14,56 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Tec_Event_Update_Fill extends Compat_Shim {
 
     const ID   = 'tec-event-update-fill';
     const TOOL = 'wp_tec_update_event';
     const HOOK = 'tribe_events_rest_event_prepare_postarr';
 
-    
     private $stack = array();
-
-    
-
 
     public function id() {
         return self::ID;
     }
-
-    
-
 
     public function applies_to( $tool ) {
         return is_object( $tool )
@@ -72,22 +27,13 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
             && method_exists( $tool, 'sent_fields' );
     }
 
-    
-
-
     public function is_required() {
         return true;
     }
 
-    
-
-
     public function is_needed() {
         return class_exists( 'Tribe__Events__Main' );
     }
-
-    
-
 
     public function enter( array $arguments = array(), $tool = null ) {
         $arming           = new \stdClass();
@@ -107,9 +53,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         return $arming;
     }
 
-    
-
-
     public function leave( $state = null ): void {
         if ( ! is_object( $state ) || ! isset( $state->filter ) ) {
             return;
@@ -123,31 +66,12 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         $this->stack = array_values( $this->stack );
     }
 
-    
-
-
-
-
-
-
     private static function is_for( $request, int $event_id ): bool {
         return $event_id > 0
             && is_object( $request )
             && method_exists( $request, 'get_param' )
             && absint( $request->get_param( 'id' ) ) === $event_id;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function fill( $postarr, $request, int $event_id, array $sent ) {
         if ( ! is_array( $postarr ) || ! self::is_for( $request, $event_id ) ) {
@@ -167,17 +91,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         return self::fill_flags( $postarr, $post, $sent );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function drop_unsent( array $postarr, array $sent ): array {
         $keys = array(
             'date'     => 'post_date',
@@ -194,14 +107,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         return $postarr;
     }
 
-    
-
-
-
-
-
-
-
     private static function fill_cost( array $postarr, int $event_id ): array {
         foreach ( array( 'EventCurrencySymbol', 'EventCurrencyPosition' ) as $key ) {
             $postarr[ $key ] = metadata_exists( 'post', $event_id, '_' . $key ) ? get_post_meta( $event_id, '_' . $key, true ) : null;
@@ -214,17 +119,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         return $postarr;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function fill_schedule( array $postarr, int $event_id, array $sent ): array {
         if ( ! isset( $sent['all_day'] ) && self::truthy( get_post_meta( $event_id, '_EventAllDay', true ) ) ) {
             $postarr['EventAllDay'] = true;
@@ -232,10 +126,8 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         $timezone = get_post_meta( $event_id, '_EventTimezone', true );
         if ( ! isset( $sent['timezone'] ) && is_string( $timezone ) && '' !== $timezone ) {
             $postarr['EventTimezone'] = $timezone;
-            
             $postarr['EventTimezoneAbbr'] = '';
         }
-        
         $pairs = array(
             'start_date' => array( 'end_date', '_EventEndDate', 'EventEndDate', 'EventEndTime' ),
             'end_date'   => array( 'start_date', '_EventStartDate', 'EventStartDate', 'EventStartTime' ),
@@ -253,14 +145,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         return $postarr;
     }
 
-    
-
-
-
-
-
-
-
     private static function fill_organizers( array $postarr, int $event_id, array $sent ): array {
         if ( isset( $sent['organizer'] ) ) {
             return $postarr;
@@ -271,16 +155,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         }
         return $postarr;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function fill_flags( array $postarr, object $post, array $sent ): array {
         $event_id = (int) $post->ID;
@@ -300,12 +174,6 @@ final class Tec_Event_Update_Fill extends Compat_Shim {
         }
         return $postarr;
     }
-
-    
-
-
-
-
 
     private static function truthy( $value ): bool {
         if ( is_string( $value ) ) {

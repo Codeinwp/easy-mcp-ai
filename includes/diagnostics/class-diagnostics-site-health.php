@@ -1,28 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -31,7 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Diagnostics_Site_Health {
 
-    
     const GROUP_LABELS = array(
         'a' => 'Authentication and transport',
         'b' => 'Sessions and caching',
@@ -49,34 +25,11 @@ class Diagnostics_Site_Health {
         \add_filter( 'debug_information', array( __CLASS__, 'debug_information' ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function ensure_report_exists_before_first_read() {
         if ( null === Diagnostics::last_run_at() ) {
             Diagnostics::maybe_run();
         }
     }
-
-    
-
 
     public static function tests( $tests ) {
         self::ensure_report_exists_before_first_read();
@@ -89,7 +42,6 @@ class Diagnostics_Site_Health {
         }
 
         foreach ( self::group_results( Diagnostics::cached() ) as $prefix => $results ) {
-            
             $has_reportable = false;
             foreach ( $results as $result ) {
                 if ( $result->renders_in_site_health() ) {
@@ -112,11 +64,6 @@ class Diagnostics_Site_Health {
         return $tests;
     }
 
-    
-
-
-
-
     public static function run_group_test( $prefix ) {
         $groups = self::group_results( Diagnostics::cached() );
         if ( ! isset( $groups[ $prefix ] ) ) {
@@ -134,7 +81,7 @@ class Diagnostics_Site_Health {
         $status   = 'good';
         foreach ( $reportable as $result ) {
             if ( ! $result->is_problem() ) {
-                continue; 
+                continue;
             }
             $problems[] = $result;
             if ( $result->renders_in_notice() ) {
@@ -148,20 +95,6 @@ class Diagnostics_Site_Health {
         if ( empty( $problems ) ) {
             $description = '<p>' . \esc_html__( 'No problems found in this area.', 'easy-mcp-ai' ) . '</p>';
         } else {
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
             $description = '<ul>';
             foreach ( $problems as $problem ) {
                 $description .= '<li>' . $problem->problem_badge_html()
@@ -192,42 +125,6 @@ class Diagnostics_Site_Health {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const COPY_SAFE_IDS = array(
         'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9',
         'b1', 'b2', 'b3',
@@ -240,15 +137,9 @@ class Diagnostics_Site_Health {
         'i2',
     );
 
-    
     public static function is_copy_safe( $id ) {
         return in_array( (string) $id, self::COPY_SAFE_IDS, true );
     }
-
-    
-
-
-
 
     public static function debug_information( $info ) {
         self::ensure_report_exists_before_first_read();
@@ -272,15 +163,6 @@ class Diagnostics_Site_Health {
 
         $summary = Diagnostics::summary();
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $deferred   = isset( $summary['deferred'] ) ? (int) $summary['deferred'] : 0;
         $restricted = 0;
         foreach ( Diagnostics::cached() as $r ) {
@@ -326,12 +208,6 @@ class Diagnostics_Site_Health {
 
         return $info;
     }
-
-    
-
-
-
-
 
     public static function group_results( array $results ) {
         $groups = array();

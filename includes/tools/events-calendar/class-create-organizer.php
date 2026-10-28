@@ -75,8 +75,6 @@ class Create_Organizer extends Base_Tool {
             $this->refuse_existing_title( 'tribe_organizer', $name, array( '_OrganizerEmail' ), 'organizer', 'Pass that ID in the `organizer` array of `wp_tec_create_event` or `wp_tec_update_event` to use it.', 'wp_tec_list_organizers' );
         }
 
-        
-        
         $this->require_compat_shim( 'tec-no-duplicate-reuse', $arguments );
 
         $params = array(

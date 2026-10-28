@@ -1,25 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,15 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Release_Verifier {
-
-    
-
-
-
-
-
-
-
 
     public static function verify( $release_bytes, $signature_file, array $roots, int $now, ?int $min_serial = null, ?int $min_revocations_issued = null ): array {
         $file = $signature_file;
@@ -136,15 +107,6 @@ final class Release_Verifier {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function ed25519_verify( $public_key_b64, string $message, $signature_b64 ): bool {
         if ( ! is_string( $public_key_b64 ) || ! is_string( $signature_b64 ) ) {
             return false;
@@ -161,11 +123,6 @@ final class Release_Verifier {
         }
     }
 
-    
-
-
-
-
     private static function root( array $roots, $keyid ): ?array {
         foreach ( $roots as $root ) {
             if ( is_array( $root ) && isset( $root['keyid'], $root['public_key'] ) && $root['keyid'] === $keyid ) {
@@ -175,7 +132,6 @@ final class Release_Verifier {
         return null;
     }
 
-    
     private static function refuse( string $reason ): array {
         return array(
             'ok'      => false,

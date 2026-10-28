@@ -5,42 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Discovery {
-
-    
-
-
-
 
     const NAMESPACE_V1 = 'easy-mcp-ai/v1';
 
-    
-
-
-
-
-
-
-
-
     const ISSUER_SITE     = 'site';
     const ISSUER_RESOURCE = 'resource';
-
-    
-
-
-
-
-
-
 
     public static function issuer( string $variant ): ?string {
         if ( self::ISSUER_RESOURCE !== $variant ) {
@@ -50,47 +20,19 @@ class Discovery {
         return false === strpos( $url, '?' ) ? $url : null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function authorization_endpoint( string $variant = self::ISSUER_SITE ): string {
         $structure = (string) get_option( 'permalink_structure' );
         $prefix    = ( '' !== $structure && 0 !== strpos( ltrim( $structure, '/' ), 'index.php' ) ) ? '' : '/index.php';
         return home_url( $prefix . '/easy-mcp-ai/authorize' . ( self::ISSUER_RESOURCE === $variant ? '/resource' : '' ) );
     }
 
-    
-
-
-
-
-
     public function get_protected_resource_metadata( \WP_REST_Request $request ) {
         return $this->protected_resource_response( self::ISSUER_SITE );
     }
 
-    
-
-
-
-
-
     public function get_resource_issuer_protected_resource_metadata( \WP_REST_Request $request ) {
         return $this->protected_resource_response( self::ISSUER_RESOURCE );
     }
-
-    
-
-
 
     private function protected_resource_response( string $variant ) {
         $error = $this->enforce_transport_security();
@@ -120,52 +62,21 @@ class Discovery {
         return $response;
     }
 
-    
-
-
-
-
-
     public function get_authorization_server_metadata( \WP_REST_Request $request ) {
         return $this->authorization_server_response( self::ISSUER_SITE, false );
     }
-
-    
-
-
-
-
 
     public function get_openid_configuration( \WP_REST_Request $request ) {
         return $this->authorization_server_response( self::ISSUER_SITE, true );
     }
 
-    
-
-
-
-
-
     public function get_resource_issuer_metadata( \WP_REST_Request $request ) {
         return $this->authorization_server_response( self::ISSUER_RESOURCE, false );
     }
 
-    
-
-
-
-
-
     public function get_resource_issuer_openid_configuration( \WP_REST_Request $request ) {
         return $this->authorization_server_response( self::ISSUER_RESOURCE, true );
     }
-
-    
-
-
-
-
-
 
     public function get_jwks( \WP_REST_Request $request ) {
         $error = $this->enforce_transport_security();
@@ -177,13 +88,6 @@ class Discovery {
         $this->add_cors_headers( $response );
         return $response;
     }
-
-    
-
-
-
-
-
 
     public function authorization_server_response( string $variant, bool $openid ) {
         $error = $this->enforce_transport_security();
@@ -206,73 +110,27 @@ class Discovery {
             'authorization_endpoint'                => self::authorization_endpoint( $variant ),
             'token_endpoint'                        => $rest_base . '/oauth/token',
             'revocation_endpoint'                   => $rest_base . '/oauth/revoke',
-            
-            
-            
-            
             'device_authorization_endpoint'         => $rest_base . '/oauth/device',
             'response_types_supported'                     => array( 'code' ),
             'response_modes_supported'                     => array( 'query' ),
             'grant_types_supported'                        => array( 'authorization_code', 'refresh_token', Device_Authorization::GRANT_TYPE ),
             'code_challenge_methods_supported'             => array( 'S256' ),
-            
-            
-            
-            
-            
-            
             'token_endpoint_auth_methods_supported'        => Client_Registry::SUPPORTED_AUTH_METHODS,
             'revocation_endpoint_auth_methods_supported'   => Client_Registry::SUPPORTED_AUTH_METHODS,
             'scopes_supported'                             => $scopes,
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             'authorization_response_iss_parameter_supported' => true,
         );
 
-        
-        
-        
-        
-        
-        
-        
         if ( Client_Registry::is_dcr_enabled() ) {
             $metadata['registration_endpoint']                          = $rest_base . '/oauth/register';
             $metadata['registration_endpoint_auth_methods_supported']   = array( 'none' );
         }
 
-        
-        
-        
-        
-        
         Client_Metadata_Support::arm();
         if ( Client_Metadata_Support::advertised() ) {
             $metadata['client_id_metadata_document_supported'] = true;
         }
 
-        
-        
-        
-        
-        
         if ( $openid ) {
             $metadata['jwks_uri']                              = $rest_base . '/oauth/jwks';
             $metadata['subject_types_supported']               = array( 'public' );
@@ -286,11 +144,6 @@ class Discovery {
         return $response;
     }
 
-    
-
-
-
-
     private static function not_available(): \WP_Error {
         return new \WP_Error(
             'rest_no_route',
@@ -299,16 +152,7 @@ class Discovery {
         );
     }
 
-    
-
-
-
-
     private function enforce_transport_security() {
-        
-        
-        
-        
         if ( null === Token_Endpoint::enforce_transport_security() ) {
             return null;
         }
@@ -319,12 +163,6 @@ class Discovery {
         );
     }
 
-    
-
-
-
-
-
     private function add_security_headers( \WP_REST_Response $response ) {
         $response->header( 'Referrer-Policy', 'no-referrer' );
         $response->header( 'X-Content-Type-Options', 'nosniff' );
@@ -332,12 +170,6 @@ class Discovery {
         $response->header( 'Pragma', 'no-cache' );
         $response->header( 'Strict-Transport-Security', 'max-age=31536000' );
     }
-
-    
-
-
-
-
 
     private function add_cors_headers( \WP_REST_Response $response ) {
         $response->header( 'Access-Control-Allow-Origin', '*' );

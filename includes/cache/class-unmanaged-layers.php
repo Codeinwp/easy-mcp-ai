@@ -1,32 +1,12 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 final class Unmanaged_Layers {
-
-    
-
-
-
-
 
     const LAYERS = array(
         'cloudflare' => array(
@@ -61,13 +41,6 @@ final class Unmanaged_Layers {
         ),
     );
 
-    
-
-
-
-
-
-
     public static function detect( Vendor_Calls $calls, array $layers ): array {
         $handled = array();
         foreach ( $layers as $layer ) {
@@ -91,13 +64,6 @@ final class Unmanaged_Layers {
         }
         return $found;
     }
-
-    
-
-
-
-
-
 
     private static function evidence( Vendor_Calls $calls, array $headers ): string {
         foreach ( $headers as $key ) {

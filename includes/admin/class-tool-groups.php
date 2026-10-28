@@ -1,12 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,20 +8,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Tool_Groups {
 
-    
     private $tool_registry;
-
-    
-
 
     public function __construct( $tool_registry ) {
         $this->tool_registry = $tool_registry;
     }
-
-    
-
-
-
 
     const CORE_CATEGORY_LABELS = array(
         'posts'     => 'Posts',
@@ -54,33 +38,17 @@ class Tool_Groups {
         'audit'     => 'Audit Log',
         'site_health' => 'Site Health, Cron & Error Log',
         'skills'    => 'Skills',
-        
         'cli'       => 'WP-CLI commands',
-        
         'rest'      => 'REST Routes (plugins and core)',
-        
         'cache'     => 'Cache',
-        
         'mail'      => 'Email',
-        
         'builders'  => 'Page Builders',
         'general'   => 'General',
     );
 
-    
-
-
-
-
-
-
-
-
-
     public function build() {
         $core_category_labels = self::CORE_CATEGORY_LABELS;
 
-        
         $known_plugins = array(
             'woocommerce'     => array( 'label' => 'WooCommerce',                 'class' => 'WooCommerce',             'fn' => 'WC' ),
             'acf'             => array( 'label' => 'Advanced Custom Fields (ACF)','class' => 'ACF',                     'fn' => 'acf' ),
@@ -97,22 +65,17 @@ class Tool_Groups {
             'the-seo-framework' => array( 'label' => 'The SEO Framework',   'class' => '',                  'fn' => 'tsf' ),
         );
 
-        
-        
-        
         $known_external = array(
             'gsc' => array( 'label' => 'Google Search Console', 'option' => 'easy_mcp_ai_gsc_service_account_json' ),
             'ga'  => array( 'label' => 'Google Analytics',      'option' => 'easy_mcp_ai_ga_service_account_json' ),
             'dfs' => array( 'label' => 'DataforSEO',             'option' => 'easy_mcp_ai_dfs_login' ),
             'semrush' => array( 'label' => 'Semrush',             'option' => 'easy_mcp_ai_semrush_api_key' ),
             'seranking' => array( 'label' => 'SE Ranking',         'option' => 'easy_mcp_ai_seranking_api_key' ),
-            
             'ahrefs' => array( 'label' => 'Ahrefs (DR)',        'option' => 'easy_mcp_ai_ahrefs_api_key' ),
         );
 
         $tools_by_category = $this->tool_registry->get_tools_by_category();
 
-        
         $core           = array();
         $total          = 0;
         $ability_defs   = array();
@@ -120,10 +83,6 @@ class Tool_Groups {
         $allowed_patterns = (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() );
         $off_tools = \Easy_MCP_AI\Tools\Tool_State::off_names( $this->tool_registry );
 
-        
-        
-        
-        
         $is_tool_active = function ( $tool ) use ( $off_tools, $allowed_patterns ) {
             $name = $tool['name'];
             if ( in_array( $name, $off_tools, true ) ) {
@@ -142,7 +101,6 @@ class Tool_Groups {
             }
         }
 
-        
         $plugins = array();
         foreach ( $known_plugins as $category => $info ) {
             $installed = ( ! empty( $info['class'] ) && \class_exists( $info['class'] ) )
@@ -166,10 +124,8 @@ class Tool_Groups {
             );
         }
 
-        
         $external = array();
         foreach ( $known_external as $category => $info ) {
-            
             $configured = \Easy_MCP_AI\Provider_Credentials::is_configured( $category );
             $tools      = isset( $tools_by_category[ $category ] )
                 ? array_values( array_filter( $tools_by_category[ $category ], $is_tool_active ) )
@@ -190,7 +146,6 @@ class Tool_Groups {
             );
         }
 
-        
         $abilities = array();
 
         $ability_def_by_name = array();
@@ -198,12 +153,10 @@ class Tool_Groups {
             $ability_def_by_name[ $def['name'] ] = $def;
         }
 
-        
         $normalize_slug = function ( $s ) {
             return strtolower( preg_replace( '/[^a-z0-9]/i', '', (string) $s ) );
         };
 
-        
         $resolve_ability = function ( $ability, $enabled_abilities ) use ( $ability_def_by_name ) {
             return self::resolve_ability_tool_def( $ability->get_name(), $enabled_abilities, $ability_def_by_name );
         };
@@ -212,8 +165,6 @@ class Tool_Groups {
             $wp_abilities      = \wp_get_abilities();
             $enabled_abilities = (array) \get_option( 'easy_mcp_ai_enabled_abilities', array() );
 
-            
-            
             $by_prefix = array();
             foreach ( $wp_abilities as $ability ) {
                 $name        = $ability->get_name();
@@ -226,7 +177,6 @@ class Tool_Groups {
                 $by_prefix[ $prefix_norm ]['abilities'][] = $ability;
             }
 
-            
             if ( isset( $by_prefix['core'] ) ) {
                 $tools        = array();
                 $any_not_enabled = false;
@@ -244,14 +194,12 @@ class Tool_Groups {
                 unset( $by_prefix['core'] );
             }
 
-            
             $known_norms = array();
             foreach ( $known_plugins as $category => $info ) {
                 $known_norms[ $normalize_slug( $info['label'] ) ] = true;
                 $known_norms[ $normalize_slug( $category ) ]      = true;
             }
 
-            
             $matched_prefixes = array();
 
             if ( function_exists( 'get_plugins' ) ) {
@@ -271,7 +219,6 @@ class Tool_Groups {
                         : pathinfo( $plugin_path, PATHINFO_FILENAME );
                     $folder_norm = $normalize_slug( $folder );
 
-                    
                     $tools           = array();
                     $has_abilities   = false;
                     $any_not_enabled = false;
@@ -297,7 +244,6 @@ class Tool_Groups {
                 }
             }
 
-            
             foreach ( $by_prefix as $prefix_norm => $data ) {
                 if ( isset( $matched_prefixes[ $prefix_norm ] ) ) { continue; }
                 $label = ucwords( str_replace( array( '-', '_' ), ' ', $data['raw_prefix'] ) );
@@ -318,7 +264,6 @@ class Tool_Groups {
                 );
             }
 
-            
             $core_entry = isset( $abilities['Core'] ) ? $abilities['Core'] : null;
             unset( $abilities['Core'] );
             ksort( $abilities );
@@ -326,7 +271,6 @@ class Tool_Groups {
                 $abilities = array_merge( array( 'Core' => $core_entry ), $abilities );
             }
         } else {
-            
             $abilities['Core'] = array(
                 'tools'           => $ability_defs,
                 'is_known'        => false,
@@ -335,16 +279,10 @@ class Tool_Groups {
             );
         }
 
-        
-        
-        
-        
         $bucket_disables       = \Easy_MCP_AI\Admin\External_Data_Admin::merge_disabled_tool_buckets();
         $settings_only_disabled = array_diff( $disabled_tools, $bucket_disables );
         $has_global_overrides   = ! empty( $settings_only_disabled ) || ! empty( $allowed_patterns );
 
-        
-        
         $disabled_abilities_present = false;
         foreach ( $abilities as $g ) {
             if ( ! empty( $g['any_not_enabled'] ) ) {
@@ -353,8 +291,6 @@ class Tool_Groups {
             }
         }
 
-        
-        
         $enabled_plugin_groups     = (array) \get_option( 'easy_mcp_ai_enabled_plugin_groups', array() );
         $disabled_plugin_tools_raw = (array) \get_option( 'easy_mcp_ai_disabled_plugin_tools', array() );
         $disabled_plugin_tools_present = false;
@@ -362,12 +298,10 @@ class Tool_Groups {
             if ( ! Plugin_Integration_Registry::is_installed( $group ) ) {
                 continue;
             }
-            
             if ( ! in_array( $group['slug'], $enabled_plugin_groups, true ) ) {
                 $disabled_plugin_tools_present = true;
                 break;
             }
-            
             $group_tool_names = array_column( $group['tools'], 'name' );
             if ( ! empty( array_intersect( $disabled_plugin_tools_raw, $group_tool_names ) ) ) {
                 $disabled_plugin_tools_present = true;
@@ -375,7 +309,6 @@ class Tool_Groups {
             }
         }
 
-        
         $ga_configured       = \Easy_MCP_AI\Provider_Credentials::is_configured( 'ga' );
         $gsc_configured      = \Easy_MCP_AI\Provider_Credentials::is_configured( 'gsc' );
         $dfs_configured      = \Easy_MCP_AI\Provider_Credentials::is_configured( 'dfs' );
@@ -387,13 +320,11 @@ class Tool_Groups {
         $disabled_semrush_present   = $semrush_configured && ! empty( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_semrush_tools', array() ) );
         $disabled_seranking_present = $seranking_configured && ! empty( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_seranking_tools', array() ) );
 
-        
         $ga_missing       = ! $ga_configured;
         $gsc_missing      = ! $gsc_configured;
         $dfs_missing      = ! $dfs_configured;
         $semrush_missing  = ! $semrush_configured;
         $seranking_missing = ! $seranking_configured;
-        
         $ahrefs_disabled  = ! \Easy_MCP_AI\Provider_Credentials::is_configured( 'ahrefs' )
             || ! (bool) \get_option( 'easy_mcp_ai_ahrefs_enabled', false );
 
@@ -422,23 +353,6 @@ class Tool_Groups {
             ),
         );
     }
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function resolve_ability_tool_def( $ability_name, array $enabled_abilities, array $ability_def_by_name ) {
         $is_enabled = in_array( $ability_name, $enabled_abilities, true );

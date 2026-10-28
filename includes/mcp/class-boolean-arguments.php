@@ -1,56 +1,17 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\MCP;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Boolean_Arguments {
-
-    
-
-
-
-
-
 
     public static function normalize( array $arguments, array $schema ): array {
         $normalized = self::at( $arguments, $schema );
         return is_array( $normalized ) ? $normalized : $arguments;
     }
-
-    
-
-
-
-
-
 
     private static function at( $value, $node ) {
         if ( ! is_array( $node ) ) {
@@ -77,21 +38,9 @@ final class Boolean_Arguments {
         return $value;
     }
 
-    
-
-
-
-
-
-
     private static function boolean( string $value ) {
         return \rest_is_boolean( $value ) ? \rest_sanitize_boolean( $value ) : $value;
     }
-
-    
-
-
-
 
     private static function is_list( array $value ): bool {
         $expected = 0;

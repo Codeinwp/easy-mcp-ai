@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,35 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Woocommerce extends Cache_Adapter {
 
-    
     const PRODUCT_TYPES = array( 'product', 'product_variation' );
 
-    
     const ANALYTICS = 'Automattic\\WooCommerce\\Admin\\API\\Reports\\Cache';
 
     public function id(): string {
@@ -61,12 +31,6 @@ final class Woocommerce extends Cache_Adapter {
     public function tier(): int {
         return self::TIER_DATA;
     }
-
-    
-
-
-
-
 
     public function scopes(): array {
         return array( Purge_Request::SCOPE_SITE, Purge_Request::SCOPE_POSTS );
@@ -117,11 +81,6 @@ final class Woocommerce extends Cache_Adapter {
         $calls->call( array( 'WC_Cache_Helper', 'get_transient_version' ), array( 'product_query', true ) );
         return $this->sent( sprintf( 'WooCommerce cleared the cached data of %d product(s) (variation prices, children, related products) and its product lists.', count( $products ) ) );
     }
-
-    
-
-
-
 
     private function missing_helper(): string {
         $calls = $this->calls();

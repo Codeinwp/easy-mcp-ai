@@ -58,14 +58,6 @@ class Delete_Revision extends Base_Tool {
         $rest_base   = $this->resolve_post_rest_base( $post_id );
         $revision_id = $this->parse_required_id( $arguments['revision_id'], 'revision_id' );
 
-        
-        
-        
-        
-        
-        
-        
-        
         $revision = get_post( $revision_id );
         if ( $revision && 'revision' === $revision->post_type && (int) $revision->post_parent === $post_id
             && current_user_can( 'delete_post', $post_id ) && ! current_user_can( 'delete_post', $revision_id ) ) {

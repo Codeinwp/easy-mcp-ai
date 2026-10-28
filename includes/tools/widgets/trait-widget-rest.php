@@ -5,83 +5,21 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Widget_Rest {
-
-    
-
-
-
-
 
     protected static function block_theme_hint(): string {
         return 'This theme has no classic widget areas (sidebars). On a block theme, headers, footers and sidebars are template parts: use wp_list_templates with type "template_part" to find them, wp_get_template to read one and wp_update_template to change it.';
     }
 
-    
-
-
-
-
-
-
     protected function theme_supports_widgets(): bool {
         return (bool) current_theme_supports( 'widgets' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function require_widget_support(): void {
         if ( ! $this->theme_supports_widgets() ) {
             throw new \RuntimeException( 'The active theme does not support widgets, so there are no widget areas to manage (Appearance > Widgets refuses the same way). ' . self::block_theme_hint() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function widget_type_status( string $id_base ): string {
         global $wp_widget_factory, $wp_registered_widget_updates;
@@ -99,16 +37,6 @@ trait Widget_Rest {
         return 'unknown';
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function legacy_widget_error( string $id_base ): \RuntimeException {
         return new \RuntimeException(
             sprintf(
@@ -117,13 +45,6 @@ trait Widget_Rest {
             )
         );
     }
-
-    
-
-
-
-
-
 
     protected function position_argument( array $arguments ): ?int {
         if ( ! isset( $arguments['position'] ) || '' === $arguments['position'] ) {
@@ -143,13 +64,6 @@ trait Widget_Rest {
         return $position;
     }
 
-    
-
-
-
-
-
-
     protected function instance_argument( $value ): array {
         if ( is_object( $value ) ) {
             $value = (array) $value;
@@ -161,37 +75,14 @@ trait Widget_Rest {
         return $settings;
     }
 
-    
-
-
-
-
-
-
     protected function raw_instance( array $settings ): array {
         return array( 'raw' => empty( $settings ) ? new \stdClass() : $settings );
     }
-
-    
-
-
-
-
-
-
 
     protected function sidebar_widget_ids( string $sidebar_id ): array {
         $data = $this->rest_request( 'GET', '/wp/v2/sidebars/' . $sidebar_id, array( 'context' => 'edit' ), 'id,widgets' );
         return $this->widget_ids( isset( $data['widgets'] ) ? $data['widgets'] : array() );
     }
-
-    
-
-
-
-
-
-
 
     protected function widget_ids( $widgets ): array {
         $ids = array();
@@ -204,27 +95,6 @@ trait Widget_Rest {
         }
         return $ids;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function apply_widget_position( string $widget_id, string $sidebar_id, int $position ): array {
         try {
@@ -254,14 +124,6 @@ trait Widget_Rest {
         }
     }
 
-    
-
-
-
-
-
-
-
     protected function with_position_result( array $result, array $position, string $verb ): array {
         if ( $position['applied'] ) {
             $result['position']        = $position['position'];
@@ -277,17 +139,6 @@ trait Widget_Rest {
         );
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected function shape_widget( array $data, bool $with_rendered ): array {
         $editable = isset( $data['instance'] ) && is_array( $data['instance'] ) && array_key_exists( 'raw', $data['instance'] );

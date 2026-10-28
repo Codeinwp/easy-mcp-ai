@@ -11,54 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Db_Handler extends Command_Handler {
 
-    
     const NOT_CAPTURED_MAINTENANCE = 'Table maintenance: OPTIMIZE TABLE and REPAIR TABLE rebuild storage without changing rows, so change history has nothing to record.';
 
-    
     const EXTRA_ARGUMENT = "Parameter errors:\n --%s parameter is not available through wp_cli_run: WP-CLI passes it to the mysqlcheck binary, which wp_cli_run does not run; it runs %s TABLE on each table through WordPress's own database connection.";
 
-    
     const COLUMNS_WILDCARD = "wp_cli_run refuses '%s' for 'db columns': WP-CLI would send the pattern itself to SHOW COLUMNS, which fails, and print an empty table. Name one table, as `db tables` prints it.";
 
-    
     const ROW_CAP = 1000;
 
-    
     const MAINTENANCE_CAP = 200;
 
     const OVER_ROW_CAP_TABLES = "wp_cli_run lists at most %1\$d tables in one 'db tables', and %2\$d match. Narrow it with <table> patterns (wildcards * and ?) or --scope, or leave out --network, --all-tables and --all-tables-with-prefix.";
@@ -67,7 +29,6 @@ class Db_Handler extends Command_Handler {
 
     const OVER_MAINTENANCE_CAP = "wp_cli_run runs %1\$s TABLE on at most %2\$d tables in one 'db %3\$s', and this database has %4\$d; every statement runs in this one web request. Run 'wp db %3\$s' on the server instead.";
 
-    
     const DIVISORS = array(
         'TB'  => 1000 ** 4,
         'GB'  => 1000 ** 3,
@@ -83,23 +44,11 @@ class Db_Handler extends Command_Handler {
         'KiB' => 1024,
     );
 
-    
     const MAINTENANCE = array(
         'check'    => array( 'CHECK', 'Database checked.' ),
         'optimize' => array( 'OPTIMIZE', 'Database optimized.' ),
         'repair'   => array( 'REPAIR', 'Database repaired.' ),
     );
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     public function preflight_maintenance( Invocation $inv, Context $ctx ): void {
         $verb  = $this->verb( $inv );
@@ -116,21 +65,18 @@ class Db_Handler extends Command_Handler {
         }
     }
 
-    
     public function preflight_tables( Invocation $inv, Context $ctx ): void {
         if ( $this->network_form( $inv->assoc, false ) ) {
             $ctx->require_network( 'manage_network_options' );
         }
     }
 
-    
     public function preflight_size( Invocation $inv, Context $ctx ): void {
         if ( $this->network_form( $inv->assoc, true ) ) {
             $ctx->require_network( 'manage_network_options' );
         }
     }
 
-    
     public function preflight_columns( Invocation $inv, Context $ctx ): void {
         $table = (string) ( $inv->args[0] ?? '' );
         if ( false !== strpos( $table, '*' ) || false !== strpos( $table, '?' ) ) {
@@ -141,16 +87,10 @@ class Db_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function prefix( Invocation $inv, Context $ctx ): void {
         $ctx->out->log( (string) $this->wpdb_value( 'prefix' ) );
     }
 
-    
     public function tables( Invocation $inv, Context $ctx ): void {
         $args       = array_values( $inv->args );
         $assoc_args = $inv->assoc;
@@ -164,7 +104,6 @@ class Db_Handler extends Command_Handler {
 
         $tables = $this->table_names( $args, $assoc_args, $ctx->out );
 
-        
         if ( count( $tables ) > self::ROW_CAP ) {
             $ctx->out->error( sprintf( self::OVER_ROW_CAP_TABLES, self::ROW_CAP, count( $tables ) ) );
         }
@@ -177,11 +116,6 @@ class Db_Handler extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
 
     public function size( Invocation $inv, Context $ctx ): void {
         $args       = array_values( $inv->args );
@@ -213,18 +147,6 @@ class Db_Handler extends Command_Handler {
         $this->formatter( $ctx, $formatter_args, array( 'Name', 'Size' ) )->display_items( $rows );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function size_scope( array $args, array $assoc_args, $size_format, $human_readable, Context $ctx ): array {
         if ( ! is_null( $size_format ) && $human_readable ) {
             $ctx->out->error( 'Cannot use --size_format and --human-readable arguments at the same time.' );
@@ -238,23 +160,11 @@ class Db_Handler extends Command_Handler {
         return $assoc_args;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function size_rows( array $args, array $assoc_args, bool $tables, string $default_unit, Context $ctx ): array {
         $db_name = $this->db_name();
 
         if ( $tables || Read_Value::flag( $assoc_args, 'all-tables' ) || Read_Value::flag( $assoc_args, 'all-tables-with-prefix' ) ) {
             $table_names = $this->table_names( $args, $assoc_args, $ctx->out );
-            
             if ( count( $table_names ) > self::ROW_CAP ) {
                 $ctx->out->error( sprintf( self::OVER_ROW_CAP_SIZE, self::ROW_CAP, count( $table_names ) ) );
             }
@@ -286,21 +196,10 @@ class Db_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function format_sizes( array &$rows, $size_format, bool $human_readable, $decimals ): string {
         $size_format_display = '';
         foreach ( $rows as $index => $row ) {
             if ( $human_readable ) {
-                
-                
                 $bytes       = (float) $row['Size'];
                 $size_key    = $bytes > 0 ? (int) floor( log( $bytes ) / log( 1000 ) ) : 0;
                 $sizes       = array( 'B', 'KB', 'MB', 'GB', 'TB' );
@@ -313,27 +212,10 @@ class Db_Handler extends Command_Handler {
         return $size_format_display;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function prints_bare_size( $size_format, bool $tables, $format, $human_readable, array $assoc_args ): bool {
         return ! empty( $size_format ) && ! $tables && ! $format && ! $human_readable
             && true !== Read_Value::flag( $assoc_args, 'all-tables' ) && true !== Read_Value::flag( $assoc_args, 'all-tables-with-prefix' );
     }
-
-    
-
-
-
-
-
-
 
     private static function sort_size_rows( array &$rows, $order, $orderby ): void {
         if ( ! $orderby ) {
@@ -344,7 +226,6 @@ class Db_Handler extends Command_Handler {
             static function ( array $a, array $b ) use ( $order, $orderby ): int {
                 list( $first, $second ) = 'asc' === $order ? array( $a, $b ) : array( $b, $a );
                 if ( 'size' === $orderby ) {
-                    
                     return (int) ( $first['Bytes'] > $second['Bytes'] );
                 }
                 return strcmp( $first['Name'], $second['Name'] );
@@ -352,43 +233,31 @@ class Db_Handler extends Command_Handler {
         );
     }
 
-    
     public function columns( Invocation $inv, Context $ctx ): void {
         $format = Read_Value::flag( $inv->assoc, 'format' );
         $table  = (string) $inv->args[0];
 
         $this->table_names( array( $table ), array( 'all-tables' => true ), $ctx->out );
 
-        
         $columns = $this->q_results( 'SHOW COLUMNS FROM ' . self::ident( $table ) );
 
         $formatter_args = array( 'format' => $format );
         $this->formatter( $ctx, $formatter_args, array( 'Field', 'Type', 'Null', 'Key', 'Default', 'Extra' ) )->display_items( $columns );
     }
 
-    
     public function check( Invocation $inv, Context $ctx ): void {
         $this->maintenance( 'check', $ctx );
     }
 
-    
     public function optimize( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED_MAINTENANCE );
         $this->maintenance( 'optimize', $ctx );
     }
 
-    
     public function repair( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED_MAINTENANCE );
         $this->maintenance( 'repair', $ctx );
     }
-
-    
-
-
-
-
-
 
     public function describe_maintenance( Invocation $inv ): array {
         $op    = self::MAINTENANCE[ $this->verb( $inv ) ][0];
@@ -405,20 +274,6 @@ class Db_Handler extends Command_Handler {
         }
         return $lines;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
 
     public function table_names( array $args, array $assoc_args, Output $out ): array {
         if ( Read_Value::flag( $assoc_args, 'all-tables' ) ) {
@@ -438,15 +293,6 @@ class Db_Handler extends Command_Handler {
         return $tables;
     }
 
-    
-
-
-
-
-
-
-
-
     private function registered_tables( array $assoc_args ): array {
         $scope = Read_Value::flag( $assoc_args, 'scope', 'all' );
 
@@ -461,19 +307,11 @@ class Db_Handler extends Command_Handler {
         }
 
         if ( ! $wp_tables ) {
-            
             return array();
         }
         $placeholders = implode( ', ', array_fill( 0, count( $wp_tables ), '%s' ) );
         return $this->q_col( 'SHOW TABLES WHERE ' . self::ident( 'Tables_in_' . (string) $this->wpdb_value( 'dbname' ) ) . " IN ({$placeholders})", array_values( $wp_tables ) );
     }
-
-    
-
-
-
-
-
 
     private function network_tables( $scope ): array {
         $network_global_scope = in_array( $scope, array( 'all', 'global', 'ms_global' ), true ) ? ( 'all' === $scope ? 'global' : $scope ) : '';
@@ -486,15 +324,6 @@ class Db_Handler extends Command_Handler {
         }
         return $wp_tables;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function matching_tables( array $tables, array $args, Output $out ): array {
         $args_tables = array();
@@ -522,22 +351,9 @@ class Db_Handler extends Command_Handler {
         return $tables;
     }
 
-    
-
-
-
-
-
-
     public function view_names(): array {
         return array_values( array_map( 'strval', $this->q_col( "SHOW FULL TABLES WHERE Table_type = 'VIEW'" ) ) );
     }
-
-    
-
-
-
-
 
     public function is_own_table( string $table ): bool {
         $prefix  = (string) $this->blog_prefix();
@@ -552,18 +368,6 @@ class Db_Handler extends Command_Handler {
         return ! ( $prefix === $base && preg_match( '/^' . preg_quote( $base, '/' ) . '\d+_/', $table ) );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     private function maintenance( string $verb, Context $ctx ): void {
         list( $op, $success ) = self::MAINTENANCE[ $verb ];
         foreach ( $this->base_tables() as $name ) {
@@ -575,12 +379,6 @@ class Db_Handler extends Command_Handler {
         }
         $ctx->out->success( $success );
     }
-
-    
-
-
-
-
 
     public static function print_result( array $rows, Output $out ): void {
         $prev = '';
@@ -607,16 +405,6 @@ class Db_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     private function base_tables(): array {
         $names = array();
         foreach ( $this->q_results( 'SHOW FULL TABLES', array(), 'ARRAY_N' ) as $row ) {
@@ -628,19 +416,10 @@ class Db_Handler extends Command_Handler {
         return $names;
     }
 
-    
     private function verb( Invocation $inv ): string {
         $verb = (string) substr( $inv->command, 3 );
         return isset( self::MAINTENANCE[ $verb ] ) ? $verb : 'check';
     }
-
-    
-
-
-
-
-
-
 
     private function network_form( array $assoc, bool $size ): bool {
         if ( ! $this->multisite() ) {
@@ -655,43 +434,21 @@ class Db_Handler extends Command_Handler {
         return $size && empty( $assoc['tables'] );
     }
 
-    
     private static function divisor( string $size_format ): float {
         return (float) ( self::DIVISORS[ $size_format ] ?? 1 );
     }
 
-    
     public static function ident( string $name ): string {
         return '`' . str_replace( '`', '``', $name ) . '`';
     }
 
-    
     private function esc_like( string $text ): string {
         return addcslashes( $text, '_%\\' );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     protected function call( string $name, array $args, callable $real ) {
         return $real();
     }
-
-    
-
-
-
-
 
     protected function q_col( string $sql, array $params = array() ): array {
         return (array) $this->call(
@@ -705,11 +462,6 @@ class Db_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
     protected function q_var( string $sql, array $params = array() ): ?string {
         return $this->call(
             __FUNCTION__,
@@ -722,13 +474,6 @@ class Db_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     protected function q_results( string $sql, array $params = array(), string $output = 'ARRAY_A' ): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -740,12 +485,6 @@ class Db_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
 
     protected function maintain( string $op, string $table ): ?array {
         $result = $this->call(
@@ -769,11 +508,6 @@ class Db_Handler extends Command_Handler {
         return is_array( $result ) ? $result : null;
     }
 
-    
-
-
-
-
     protected function wpdb_tables( string $scope, int $blog_id = 0 ): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -784,11 +518,6 @@ class Db_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
 
     protected function wpdb_value( string $property ) {
         return $this->call(
@@ -842,7 +571,6 @@ class Db_Handler extends Command_Handler {
         );
     }
 
-    
     protected function global_terms_enabled(): bool {
         return (bool) $this->call(
             __FUNCTION__,

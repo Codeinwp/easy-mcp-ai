@@ -8,10 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Activate_Plugin extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -65,10 +61,6 @@ class Activate_Plugin extends Base_Tool {
 
         $this->load_plugin_admin_functions();
 
-        
-        
-        
-        
         if ( ! current_user_can( 'activate_plugin', $plugin ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to activate this plugin.' );
         }
@@ -100,64 +92,28 @@ class Activate_Plugin extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
     private function refuse_site_level_conflicts( string $plugin ) {
         if ( ! is_multisite() ) {
             return;
         }
-        
-        
-        
-        
         if ( is_network_only_plugin( $plugin ) ) {
             throw new \RuntimeException( 'This plugin can only be activated network-wide. A super admin must activate it with network_wide: true.' );
         }
-        
-        
-        
         if ( is_plugin_active_for_network( $plugin ) ) {
             throw new \RuntimeException( 'This plugin is already network-active; it cannot also be activated for a single site.' );
         }
     }
 
-    
-
-
-
-
-
-
-
     private function activate( string $plugin, bool $network_wide ) {
-        
-        
-        
         $activated = activate_plugin( $plugin, '', $network_wide );
         if ( ! is_wp_error( $activated ) ) {
             return null;
         }
-        
-        
-        
-        
         if ( 'unexpected_output' === $activated->get_error_code() && $this->is_active_in_scope( $plugin, $network_wide ) ) {
             return $activated->get_error_message();
         }
         throw new \RuntimeException( $activated->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
 
     private function forget_recently_activated( string $plugin, bool $network_wide ) {
         if ( $network_wide ) {
@@ -170,12 +126,6 @@ class Activate_Plugin extends Base_Tool {
         unset( $recent[ $plugin ] );
         update_option( 'recently_activated', $recent, false );
     }
-
-    
-
-
-
-
 
     private function result( string $plugin, bool $network_wide, bool $changed ): array {
         $installed = get_plugins();

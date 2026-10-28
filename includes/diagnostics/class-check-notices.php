@@ -1,27 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Check_Notices {
-
-    
-
 
     public static function run() {
         if ( ! class_exists( '\Easy_MCP_AI\Admin\Admin_Page' ) ) {
@@ -48,26 +23,6 @@ class Check_Notices {
             self::evaluate_oauth_transport( \Easy_MCP_AI\Admin\Admin_Page::oauth_transport_problem() ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_permalinks( $are_plain, $routed = false ) {
         $label = self::permalink_label();
@@ -97,29 +52,9 @@ class Check_Notices {
         );
     }
 
-    
-
-
-
-
-
     private static function plain_routes_in_place() {
         return Htaccess_Plain_Routes::is_in_place();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_oauth_transport( $problem ) {
         $label = self::transport_label();

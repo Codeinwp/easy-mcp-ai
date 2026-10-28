@@ -56,8 +56,6 @@ class Delete_Tag extends Base_Tool {
 
         $tag_id = $this->parse_required_id( $arguments['tag_id'], 'tag_id' );
 
-        
-        
         $args = array();
         if ( isset( $arguments['reassign'] ) ) {
             $reassign_id = absint( $arguments['reassign'] );

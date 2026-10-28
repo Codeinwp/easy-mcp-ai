@@ -5,49 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Comment_Moderation {
-
-    
-
-
-
-
-
-
-
 
     private static $comment_status_actions = array(
         'approved' => 'approve',
@@ -60,30 +18,9 @@ trait Comment_Moderation {
         'untrash'  => 'untrash',
     );
 
-    
-
-
-
-
-
-
-
     protected static function status_sent( array $arguments ): bool {
         return isset( $arguments['status'] ) && '' !== $arguments['status'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     protected function comment_status_to_action( string $status, array $allowed = array() ): string {
         $key = sanitize_key( $status );
@@ -93,35 +30,9 @@ trait Comment_Moderation {
         return self::$comment_status_actions[ $key ];
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function empty_trash_days() {
         return defined( 'EMPTY_TRASH_DAYS' ) ? EMPTY_TRASH_DAYS : 30;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function refuse_trash_when_disabled() {
         if ( ! $this->empty_trash_days() ) {
@@ -130,22 +41,6 @@ trait Comment_Moderation {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function load_moderatable_comment( $comment_id ) {
         $comment = get_comment( $comment_id );
@@ -157,16 +52,10 @@ trait Comment_Moderation {
             throw new \RuntimeException( sprintf( 'Sorry, you are not allowed to moderate comment %d: moderating a comment requires permission to edit the post it belongs to.', $comment_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
         if ( isset( $comment->comment_type ) && 'note' === $comment->comment_type ) {
             throw new \RuntimeException( sprintf( 'Comment %d is a block editor note, not a comment. The comment moderation tools do not act on notes.', $comment_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
         $post = get_post( (int) $comment->comment_post_ID );
         if ( $post && 'trash' === $post->post_status ) {
             throw new \RuntimeException( 'You cannot moderate this comment because the associated post is in the Trash. Restore the post first, then try again.' );
@@ -174,16 +63,6 @@ trait Comment_Moderation {
 
         return $comment;
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function comment_rest_status( $comment ) {
         $approved = (string) $comment->comment_approved;
@@ -195,22 +74,6 @@ trait Comment_Moderation {
         }
         return $approved;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function comment_action_is_noop( $comment, $action ) {
         $approved = (string) $comment->comment_approved;
@@ -230,19 +93,6 @@ trait Comment_Moderation {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     protected function run_core_status_change( $comment, $action ) {
         switch ( $action ) {
@@ -276,14 +126,6 @@ trait Comment_Moderation {
         }
     }
 
-    
-
-
-
-
-
-
-
     protected function apply_comment_action( $comment, $action ) {
         if ( 'trash' === $action ) {
             $this->refuse_trash_when_disabled();
@@ -297,14 +139,6 @@ trait Comment_Moderation {
         return true;
     }
 
-    
-
-
-
-
-
-
-
     protected function moderate_single_comment( array $arguments, $action ) {
         $this->validate_required( $arguments, array( 'comment_id' ) );
         $comment_id = $this->parse_required_id( $arguments['comment_id'], 'comment_id' );
@@ -312,8 +146,6 @@ trait Comment_Moderation {
         $comment = $this->load_moderatable_comment( $comment_id );
         $changed = $this->apply_comment_action( $comment, $action );
 
-        
-        
         $data = $this->rest_request( 'GET', '/wp/v2/comments/' . $comment_id, array( 'context' => 'edit' ) );
 
         $out            = Get_Comment::format( $data );

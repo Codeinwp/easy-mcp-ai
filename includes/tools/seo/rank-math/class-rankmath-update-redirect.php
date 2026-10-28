@@ -7,27 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Rankmath_Update_Redirect extends Base_Tool {
 
 	use Rank_Math_Redirects;
-
-	
-
-
-
 
 	const FIELDS = array( 'sources', 'target', 'code', 'status' );
 
@@ -110,12 +92,8 @@ class Rankmath_Update_Redirect extends Base_Tool {
 
 		$links = $this->object_links( $id );
 		$model->save();
-		
-		
 		$this->restore_object_links( $id, $links );
 
-		
-		
 		$stored = self::normalise( $this->require_redirect( $id ) );
 		$missed = self::differing_fields( $stored, $intended );
 		if ( array() !== $missed ) {
@@ -129,18 +107,9 @@ class Rankmath_Update_Redirect extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
-
 	private function merged( array $current, array $arguments ): array {
 		$code    = isset( $arguments['code'] ) ? $this->parse_code( $arguments['code'] ) : (int) $current['header_code'];
 		$target  = isset( $arguments['target'] ) ? (string) $arguments['target'] : (string) $current['url_to'];
-		
-		
 		if ( in_array( $code, self::$rm_error_codes, true ) && ! isset( $arguments['target'] ) ) {
 			$target = '';
 		}
@@ -162,17 +131,6 @@ class Rankmath_Update_Redirect extends Base_Tool {
 		return $data;
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
 	private function model_with_stored_sources( array $data ): \RankMath\Redirections\Redirection {
 		$sources = $this->raw_sources( $data['id'] );
 		if ( null === $sources || array() === $sources ) {
@@ -182,14 +140,6 @@ class Rankmath_Update_Redirect extends Base_Tool {
 		$model->add_destination( $data['url_to'] );
 		return $model;
 	}
-
-	
-
-
-
-
-
-
 
 	private static function intended( \RankMath\Redirections\Redirection $model ): array {
 		return self::normalise(
@@ -201,13 +151,6 @@ class Rankmath_Update_Redirect extends Base_Tool {
 			)
 		);
 	}
-
-	
-
-
-
-
-
 
 	private static function differing_fields( array $a, array $b ): array {
 		$fields = array();

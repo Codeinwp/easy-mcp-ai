@@ -7,20 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
 class Rankmath_List_Redirects extends Base_Tool {
 
 	use Rank_Math_Redirects;
-
-	
-
-
-
-
 
 	const STATUSES = array( 'any', 'active', 'inactive', 'trashed' );
 
@@ -87,8 +76,6 @@ class Rankmath_List_Redirects extends Base_Tool {
 				'limit'  => $per_page,
 				'paged'  => $page,
 				'search' => isset( $arguments['search'] ) ? sanitize_text_field( (string) $arguments['search'] ) : '',
-				
-				
 				'status' => $status,
 			)
 		);

@@ -52,7 +52,6 @@ class Delete_Page extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id = isset( $arguments['page_id'] ) ? (int) $arguments['page_id'] : 0;
         $page = $id > 0 ? $this->peek( '/wp/v2/pages/' . $id, 'id,title,status' ) : null;
@@ -68,7 +67,6 @@ class Delete_Page extends Base_Tool {
         );
     }
 
-    
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'page_id', 'page', 'delete' );
     }
@@ -88,7 +86,6 @@ class Delete_Page extends Base_Tool {
 
         $data = $this->rest_request( 'DELETE', '/wp/v2/pages/' . $page_id, $params );
 
-        
         $page = $force ? ( $data['previous'] ?? array() ) : $data;
 
         return array(

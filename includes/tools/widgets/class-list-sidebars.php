@@ -11,12 +11,6 @@ class List_Sidebars extends Base_Tool {
 
     use Widget_Rest;
 
-    
-
-
-
-
-
     const MARKUP_FIELDS = array( 'class', 'before_widget', 'after_widget', 'before_title', 'after_title' );
 
     public function get_name() {
@@ -58,9 +52,6 @@ class List_Sidebars extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
-        
         if ( ! $this->theme_supports_widgets() ) {
             return $this->empty_result();
         }
@@ -77,9 +68,6 @@ class List_Sidebars extends Base_Tool {
         }
         list( $registered, $active ) = self::count_areas( $sidebars );
 
-        
-        
-        
         if ( 0 === $registered ) {
             return $this->empty_result();
         }
@@ -88,22 +76,11 @@ class List_Sidebars extends Base_Tool {
             'sidebars' => $sidebars,
             'total'    => count( $sidebars ),
         );
-        
-        
-        
         if ( 0 === $active ) {
             $result['hint'] = 'None of these widget areas is active: the theme registers them but does not display them. ' . self::block_theme_hint();
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
 
     private function sidebar_row( array $sidebar, bool $markup ): array {
         $row = array(
@@ -121,13 +98,6 @@ class List_Sidebars extends Base_Tool {
         return $row;
     }
 
-    
-
-
-
-
-
-
     private static function count_areas( array $sidebars ): array {
         $registered = 0;
         $active     = 0;
@@ -142,11 +112,6 @@ class List_Sidebars extends Base_Tool {
         }
         return array( $registered, $active );
     }
-
-    
-
-
-
 
     private function empty_result(): array {
         return array(

@@ -1,27 +1,12 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Rest_Routes;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 final class Dedicated_Tools {
-
-    
-
-
 
     const MAP = array(
         'GET /wp/v2/posts'                           => 'wp_list_posts',
@@ -98,22 +83,12 @@ final class Dedicated_Tools {
         'GET /wp/v2/taxonomies'                      => 'wp_get_taxonomies',
         'GET /wp/v2/block-types'                     => 'wp_list_block_types',
         'GET /wp/v2/block-patterns/patterns'         => 'wp_list_patterns',
-        
         'GET /contact-form-7/v1/contact-forms'       => 'wp_cf7_list_forms',
         'POST /contact-form-7/v1/contact-forms'      => 'wp_cf7_create_form',
         'GET /contact-form-7/v1/contact-forms/{id}'  => 'wp_cf7_get_form',
         'WRITE /contact-form-7/v1/contact-forms/{id}' => 'wp_cf7_update_form',
         'DELETE /contact-form-7/v1/contact-forms/{id}' => 'wp_cf7_delete_form',
     );
-
-    
-
-
-
-
-
-
-
 
     public static function for_call( string $method, string $pattern ): ?string {
         $tool = self::tool_for( $method, $pattern );
@@ -125,13 +100,6 @@ final class Dedicated_Tools {
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     public static function tool_for( string $method, string $pattern ): ?string {
         $route = strtolower( Route_Catalogue::display( $pattern ) );

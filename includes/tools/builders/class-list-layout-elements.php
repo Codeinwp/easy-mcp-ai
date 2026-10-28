@@ -9,10 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class List_Layout_Elements extends Base_Tool {
 
     public function get_name() {
@@ -96,13 +92,6 @@ class List_Layout_Elements extends Base_Tool {
             'types'           => $types,
         );
     }
-
-    
-
-
-
-
-
 
     private function adapter( string $id ): Layout_Adapter {
         $present = Builder_Registry::present();

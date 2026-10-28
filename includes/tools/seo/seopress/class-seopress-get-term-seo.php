@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -71,9 +68,6 @@ class Seopress_Get_Term_Seo extends Base_Tool {
 			throw new \InvalidArgumentException( sprintf( 'Term %d does not exist in taxonomy "%s".', $term_id, $taxonomy ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
-		
-		
-		
 		$get = static function ( $key ) use ( $term_id ) {
 			$v = get_term_meta( $term_id, $key, true );
 			return ( '' === $v || false === $v ) ? null : $v;

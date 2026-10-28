@@ -5,39 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class OAuth_Token_Validator {
-
-    
-
-
 
     const ERROR_INVALID_AUDIENCE = 'invalid_audience';
 
-    
-
-
     private $token_manager;
-
-    
-
 
     public function __construct( OAuth_Token_Manager $token_manager ) {
         $this->token_manager = $token_manager;
     }
-
-    
-
-
-
-
-
-
 
     public function authenticate( \WP_REST_Request $request ) {
         $auth_header = $request->get_header( 'Authorization' );
@@ -50,7 +26,6 @@ class OAuth_Token_Validator {
             );
         }
 
-        
         if ( 0 !== strpos( $auth_header, 'Bearer ' ) ) {
             return new \WP_Error(
                 'invalid_token_format',
@@ -61,7 +36,6 @@ class OAuth_Token_Validator {
 
         $raw_token = substr( $auth_header, 7 );
 
-        
         if ( 0 !== strpos( $raw_token, OAuth_Token_Manager::TOKEN_PREFIX ) ) {
             return new \WP_Error(
                 'invalid_token_prefix',
@@ -70,7 +44,6 @@ class OAuth_Token_Validator {
             );
         }
 
-        
         $token_data = $this->token_manager->validate_access_token( $raw_token );
 
         if ( false === $token_data ) {
@@ -81,22 +54,12 @@ class OAuth_Token_Validator {
             );
         }
 
-        
-        
-        
         $canonical_uri  = $this->get_canonical_resource_uri();
         $token_resource = isset( $token_data['resource'] ) && '' !== $token_data['resource']
             ? $token_data['resource']
             : $canonical_uri;
 
-        
-        
-        
-        
         if ( ! Token_Endpoint::resource_matches( $token_resource, $canonical_uri ) ) {
-            
-            
-            
             return new \WP_Error(
                 self::ERROR_INVALID_AUDIENCE,
                 __( 'Token audience does not match this MCP server.', 'easy-mcp-ai' ),
@@ -109,7 +72,6 @@ class OAuth_Token_Validator {
             );
         }
 
-        
         $scope         = isset( $token_data['scope'] ) ? $token_data['scope'] : '';
         $allowed_tools = Scope_Map::resolve_allowed_tools( $scope );
 
@@ -118,15 +80,9 @@ class OAuth_Token_Validator {
             'wp_user_id'    => (int) $token_data['wp_user_id'],
             'client_id'     => isset( $token_data['client_id'] ) ? (string) $token_data['client_id'] : null,
             'allowed_tools' => $allowed_tools,
-            
             'scope'         => (string) $scope,
         );
     }
-
-    
-
-
-
 
     private function get_canonical_resource_uri(): string {
         return rest_url( 'easy-mcp-ai/v1/mcp' );

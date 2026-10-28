@@ -1,21 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -40,8 +24,6 @@ $emai_db = static function ( string $method, bool $write, array $params, array $
 $emai_db_maintenance = static function ( string $method, bool $write ) use ( $emai_db ): array {
     $extra = array(
         'network'        => 'manage_network_options',
-        
-        
         'generic'        => true,
         'refused_params' => array(
             'dbuser'   => 'wp_cli_run does not run the mysqlcheck binary; it checks the tables through the database connection WordPress already has, so there is no other database user to log in as',

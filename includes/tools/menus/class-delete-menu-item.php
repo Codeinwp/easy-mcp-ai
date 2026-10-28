@@ -11,7 +11,6 @@ class Delete_Menu_Item extends Base_Tool {
 
     use Menu_Item_Refusal;
 
-    
     const IDS_IN_MESSAGE = 8;
 
     public function get_name() {
@@ -63,13 +62,9 @@ class Delete_Menu_Item extends Base_Tool {
         $item_id  = $this->parse_required_id( $arguments['item_id'], 'item_id' );
         $reparent = isset( $arguments['reparent_children'] ) && rest_sanitize_boolean( $arguments['reparent_children'] );
 
-        
-        
         $plan = $reparent ? $this->plan_reparent( $item_id ) : null;
 
         $request = new \WP_REST_Request( 'DELETE', '/wp/v2/menu-items/' . $item_id );
-        
-        
         $request->set_param( 'force', true );
 
         $response = rest_do_request( $request );
@@ -117,28 +112,6 @@ class Delete_Menu_Item extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function plan_reparent( int $item_id ): array {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/menu-items/' . $item_id );
         $request->set_param( 'context', 'edit' );
@@ -151,8 +124,6 @@ class Delete_Menu_Item extends Base_Tool {
         $parent  = isset( $item['parent'] ) ? (int) $item['parent'] : 0;
         $menu_id = isset( $item['menus'] ) ? (int) $item['menus'] : 0;
 
-        
-        
         if ( $menu_id < 1 ) {
             return array(
                 'parent'   => $parent,
@@ -179,22 +150,6 @@ class Delete_Menu_Item extends Base_Tool {
             'children' => $children,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function children_of( int $menu_id, int $item_id ): array {
         $found = array();
@@ -229,14 +184,6 @@ class Delete_Menu_Item extends Base_Tool {
         }
         return array( $children, $denied, $unread, $unsaveable );
     }
-
-    
-
-
-
-
-
-
 
     private static function throw_rest_error( \WP_REST_Response $response ): void {
         $wp_error = $response->as_error();

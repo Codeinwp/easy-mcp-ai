@@ -1,48 +1,20 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Elementor_Adapter extends Layout_Adapter {
 
-    
     const EDIT_MODE_KEY = '_elementor_edit_mode';
 
-    
     const DATA_KEY = '_elementor_data';
 
-    
     const LIBRARY_TYPE = 'elementor_library';
 
-    
     const V4_ABILITY = 'elementor/manage-elements';
-
-    
-
-
 
     const ROLES = array(
         'heading'        => array( 'text' => 'title', 'link' => 'link' ),
@@ -59,13 +31,10 @@ final class Elementor_Adapter extends Layout_Adapter {
         'e-image'        => array( 'image' => 'image', 'link' => 'link' ),
     );
 
-    
     const FALLBACK_TEXT = array( 'title', 'text', 'editor', 'title_text', 'description_text', 'description', 'content', 'caption' );
 
-    
     const UI_CONTROLS = array( 'section', 'tab', 'tabs', 'heading', 'notice', 'raw_html', 'deprecated_notice', 'alert', 'divider', 'button', 'hidden' );
 
-    
     const CONTROL_KINDS = array(
         'text'     => 'text',
         'textarea' => 'text',
@@ -86,19 +55,9 @@ final class Elementor_Adapter extends Layout_Adapter {
         'repeater' => 'list',
     );
 
-    
     private $widgets_manager;
 
-    
     private $documents;
-
-    
-
-
-
-
-
-
 
     public function __construct( ?callable $widgets_manager = null, ?callable $documents = null ) {
         $this->widgets_manager = $widgets_manager;
@@ -126,14 +85,6 @@ final class Elementor_Adapter extends Layout_Adapter {
             || 'builder' === get_post_meta( $post->ID, self::EDIT_MODE_KEY, true );
     }
 
-    
-
-
-
-
-
-
-
     public function renders_post_content( object $post ): bool {
         try {
             return array() === self::tree( (int) $post->ID );
@@ -142,14 +93,9 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
     }
 
-    
     public function released_by( array $meta ): bool {
         return array_key_exists( self::EDIT_MODE_KEY, $meta ) && is_scalar( $meta[ self::EDIT_MODE_KEY ] ) && '' === (string) $meta[ self::EDIT_MODE_KEY ];
     }
-
-    
-
-
 
     public function layout_meta_keys(): array {
         return array( self::DATA_KEY );
@@ -164,13 +110,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $this->build( self::tree( (int) $post->ID ) );
     }
 
-    
-
-
-
-
-
-
     private static function tree( int $post_id ): array {
         $raw = get_post_meta( $post_id, self::DATA_KEY, true );
         if ( '' === $raw || array() === $raw ) {
@@ -182,12 +121,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return $tree;
     }
-
-    
-
-
-
-
 
     private function build( array $elements ): array {
         $nodes = array();
@@ -220,12 +153,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $nodes;
     }
 
-    
-
-
-
-
-
     private static function fallback_text( array $settings ): ?string {
         foreach ( self::FALLBACK_TEXT as $key ) {
             $value = self::plain( $settings[ $key ] ?? null );
@@ -235,13 +162,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     private static function plain( $value ) {
         if ( is_array( $value ) && array_key_exists( '$$type', $value ) && array_key_exists( 'value', $value ) ) {
@@ -253,12 +173,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $value;
     }
 
-    
-
-
-
-
-
     private static function has_transformables( array $settings ): bool {
         foreach ( $settings as $value ) {
             if ( is_array( $value ) && array_key_exists( '$$type', $value ) ) {
@@ -267,13 +181,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return false;
     }
-
-    
-
-
-
-
-
 
     private static function image( $media ): ?array {
         if ( ! is_array( $media ) ) {
@@ -291,13 +198,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return array() === $image ? null : $image;
     }
-
-    
-
-
-
-
-
 
     private static function link( $link ): ?string {
         if ( is_string( $link ) && '' !== $link ) {
@@ -359,7 +259,6 @@ final class Elementor_Adapter extends Layout_Adapter {
             if ( ! empty( $control['options'] ) && is_array( $control['options'] ) ) {
                 $field['options'] = array_values( array_map( 'strval', array_keys( $control['options'] ) ) );
             }
-            
             if ( 'switcher' === $control['type'] && isset( $control['return_value'] ) && is_scalar( $control['return_value'] ) && 'yes' !== (string) $control['return_value'] ) {
                 $field['on_value'] = (string) $control['return_value'];
             }
@@ -370,11 +269,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return $fields;
     }
-
-    
-
-
-
 
     public function edit_refusal( object $post ): ?string {
         if ( ! $this->is_present() ) {
@@ -390,14 +284,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         $repeated = Elementor_Editor::repeated_ids( self::tree( (int) $post->ID ) );
         return array() === $repeated ? null : Elementor_Editor::repeated_message( $repeated );
     }
-
-    
-
-
-
-
-
-
 
     public function edit( object $post, array $ops, bool $dry_run, ?callable $fence = null ): array {
         $post_id = (int) $post->ID;
@@ -415,8 +301,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         if ( array() !== $plan['errors'] ) {
             throw self::refusal( $plan['errors'] );
         }
-        
-        
         $encoded = wp_json_encode( $plan['data'] );
         if ( false === $encoded ) {
             throw self::refusal( array( 'The edited layout cannot be stored as JSON (a value is not a finite number or not valid UTF-8), so nothing was saved.' ) );
@@ -436,7 +320,6 @@ final class Elementor_Adapter extends Layout_Adapter {
             $warnings[] = $open;
         }
 
-        
         $changed = wp_json_encode( $original ) !== $encoded;
         if ( $dry_run || ! $changed ) {
             return array(
@@ -450,7 +333,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         if ( null !== $fence ) {
             $fence();
         }
-        
         wp_cache_delete( $post_id, 'post_meta' );
         if ( wp_json_encode( array_values( self::tree( $post_id ) ) ) !== wp_json_encode( $original ) ) {
             throw new \RuntimeException( sprintf( 'The layout of post %d changed while this edit was being prepared, so nothing was saved. Read it again with wp_get_page_layout and redo the edit.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -471,17 +353,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function read_back( array $results, array $stored, array &$warnings ): array {
         $settings = array();
         foreach ( self::flatten( $stored ) as $element ) {
@@ -489,8 +360,6 @@ final class Elementor_Adapter extends Layout_Adapter {
                 $settings[ (string) $element['id'] ] = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
             }
         }
-        
-        
         $last = array();
         foreach ( $results as $index => $result ) {
             foreach ( array_keys( self::asked( $result ) ) as $field ) {
@@ -515,31 +384,9 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $results;
     }
 
-    
-
-
-
-
-
     private static function asked( array $result ): array {
         return 'set_fields' === $result['op'] ? (array) $result['after'] : array( (string) $result['field'] => $result['after'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function save_problems( object $document, array $data, array $results, bool $unfiltered ): array {
         $predicted = self::predicted_save( $document, $data, $unfiltered );
@@ -578,7 +425,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         foreach ( array_diff_key( $kept, $planned ) as $id => $entry ) {
             $problems[] = sprintf( 'Elementor\'s save would add element "%s" (%s).', $id, $entry['type'] );
         }
-        
         foreach ( self::reordered( $data, $predicted, array_map( 'strval', array_keys( $planned ) ) ) as $parent ) {
             $problems[] = '' === $parent ? 'Elementor\'s save would reorder the top-level elements.' : sprintf( 'Elementor\'s save would reorder the elements inside "%s".', $parent );
         }
@@ -587,16 +433,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return $problems;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function differences( array $planned, array $stored ): array {
         $tags   = array();
@@ -622,15 +458,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function reordered( array $planned, array $predicted, array $ids ): array {
         $before = self::child_order( $planned );
         $after  = self::child_order( $predicted );
@@ -644,13 +471,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return $moved;
     }
-
-    
-
-
-
-
-
 
     private static function child_order( array $elements, string $parent = '' ): array {
         $order = array( $parent => array() );
@@ -667,15 +487,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $order;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function predicted_save( object $document, array $data, bool $unfiltered ) {
         if ( ! method_exists( $document, 'get_elements_raw_data' ) || ! method_exists( $document, 'set_is_saving' ) ) {
             return 'This Elementor version cannot report what its save keeps (Document::get_elements_raw_data() is missing), so nothing was saved.';
@@ -687,7 +498,6 @@ final class Elementor_Adapter extends Layout_Adapter {
                 $filtered = self::kses_deep( $filtered );
             }
             $elements = isset( $filtered['elements'] ) && is_array( $filtered['elements'] ) ? $filtered['elements'] : array();
-            
             $document->set_is_saving( true );
             try {
                 $kept = $document->get_elements_raw_data( $elements );
@@ -699,14 +509,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return is_array( $kept ) ? $kept : array();
     }
-
-    
-
-
-
-
-
-
 
     private static function kses_deep( array $data ): array {
         if ( is_callable( array( 'Elementor\\Utils', 'kses_post_deep' ) ) ) {
@@ -724,26 +526,12 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $data;
     }
 
-    
-
-
-
-
-
-
-
     private static function same_value( $planned, $stored ): bool {
         if ( is_string( $planned ) && is_string( $stored ) ) {
             return html_entity_decode( $planned, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) === html_entity_decode( $stored, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
         }
         return wp_json_encode( $planned ) === wp_json_encode( $stored );
     }
-
-    
-
-
-
-
 
     private static function written_fields( array $results ): array {
         $written = array();
@@ -754,14 +542,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return $written;
     }
-
-    
-
-
-
-
-
-
 
     private static function inventory( array $elements, string $parent = '' ): array {
         $all = array();
@@ -783,13 +563,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $all;
     }
 
-    
-
-
-
-
-
-
     private static function leaves( array $settings, string $prefix ): array {
         $leaves = array();
         foreach ( $settings as $key => $value ) {
@@ -802,12 +575,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return $leaves;
     }
-
-    
-
-
-
-
 
     private static function flatten( array $elements ): array {
         $all = array();
@@ -823,12 +590,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $all;
     }
 
-    
-
-
-
-
-
     private function document( int $post_id ): ?object {
         $manager = null;
         if ( null !== $this->documents ) {
@@ -843,8 +604,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         if ( ! is_object( $document ) || ! method_exists( $document, 'is_editable_by_current_user' ) || ! method_exists( $document, 'save' ) ) {
             return null;
         }
-        
-        
         $opened = method_exists( $document, 'get_post' ) ? $document->get_post() : null;
         return is_object( $opened ) && isset( $opened->ID ) && (int) $opened->ID === $post_id ? $document : null;
     }
@@ -855,10 +614,6 @@ final class Elementor_Adapter extends Layout_Adapter {
             return null;
         }
         $off = array();
-        
-        
-        
-        
         if ( ! self::ability_registered( self::V4_ABILITY ) ) {
             $off[] = \Easy_MCP_AI\Compat\Elementor_Abilities::group_enabled()
                 ? 'Elementor’s abilities are not registered although Elementor is switched on in Easy MCP AI › Tools › Abilities: they need Elementor 4.3 or later on WordPress 6.9 or later, and a change in Elementor’s code or an error while registering them also stops them (an error is written to the PHP error log)'
@@ -878,21 +633,9 @@ final class Elementor_Adapter extends Layout_Adapter {
         );
     }
 
-    
-
-
-
-
     private static function ability_registered( string $name ): bool {
-        
         return function_exists( 'wp_get_abilities' ) && isset( ( (array) wp_get_abilities() )[ $name ] );
     }
-
-    
-
-
-
-
 
     private static function any_atomic( array $nodes ): bool {
         foreach ( $nodes as $node ) {
@@ -902,11 +645,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         return false;
     }
-
-    
-
-
-
 
     private function widgets(): array {
         $manager = null;

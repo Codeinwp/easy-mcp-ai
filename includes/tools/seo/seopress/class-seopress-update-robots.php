@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -99,10 +96,6 @@ class Seopress_Update_Robots extends Base_Tool {
 			'no_snippet'     => '_seopress_robots_snippet',
 		);
 		foreach ( $bool_map as $arg => $key ) {
-			
-			
-			
-			
 			if ( isset( $arguments[ $arg ] ) ) {
 				$body[ $key ] = rest_sanitize_boolean( $arguments[ $arg ] ) ? 'yes' : '';
 			}
@@ -119,8 +112,6 @@ class Seopress_Update_Robots extends Base_Tool {
 		}
 
 		$this->rest_request( 'PUT', '/seopress/v1/posts/' . $post_id . '/meta-robot-settings', $body );
-		
-		
 		if ( array() !== $body ) {
 			$this->clear_page_cache( array( $post_id ) );
 		}

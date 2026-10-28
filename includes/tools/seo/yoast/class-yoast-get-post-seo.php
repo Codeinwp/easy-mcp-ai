@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,11 +10,6 @@ use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
 
 class Yoast_Get_Post_Seo extends Base_Tool {
-
-	
-
-
-
 
 	const META_KEYS = array(
 		'seo_title'           => '_yoast_wpseo_title',
@@ -31,11 +23,6 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 		'twitter_image'       => '_yoast_wpseo_twitter-image',
 		'is_cornerstone'      => '_yoast_wpseo_is_cornerstone',
 	);
-
-	
-
-
-
 
 	const STORED_FIELDS = array( 'seo_title', 'meta_description', 'focus_keyword', 'is_cornerstone' );
 
@@ -100,7 +87,6 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 			$rest_base = self::own_rest_base( (string) $post->post_type );
 		}
 
-		
 		$rest_error = null;
 		if ( $rest_base ) {
 			try {
@@ -109,33 +95,17 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 					return $this->head_result( $post_id, $data['yoast_head_json'] );
 				}
 			} catch ( \Exception $e ) {
-				
 				$rest_error = $e;
 			}
 		}
 
 		$this->guard_fallback( $post_id, $rest_error );
 
-		
-		
-		
-		
 		return array(
 			'post_id'             => $post_id,
 			'yoast_meta_fallback' => $this->fallback_meta( $post_id ),
 		);
 	}
-
-	
-
-
-
-
-
-
-
-
-
 
 	private static function own_rest_base( string $post_type ): ?string {
 		$object = get_post_type_object( $post_type );
@@ -145,14 +115,6 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 		$served = Post_Type_Rest_Base::served_type( $object->rest_base );
 		return null !== $served && $served[0] === $post_type ? $object->rest_base : null;
 	}
-
-	
-
-
-
-
-
-
 
 	private function head_result( $post_id, $yoast_head_json ) {
 		$result = array(
@@ -166,15 +128,6 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 		return $result;
 	}
 
-	
-
-
-
-
-
-
-
-
 	private function guard_fallback( $post_id, $rest_error ) {
 		if ( current_user_can( 'edit_post', $post_id ) ) {
 			return;
@@ -184,12 +137,6 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 		}
 		throw new \RuntimeException( sprintf( 'Sorry, you are not allowed to edit post %d, so its stored Yoast SEO values cannot be read.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 	}
-
-	
-
-
-
-
 
 	private function fallback_meta( $post_id ) {
 		$yoast_data = array();
@@ -201,21 +148,6 @@ class Yoast_Get_Post_Seo extends Base_Tool {
 		}
 		return $yoast_data;
 	}
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	private function stored_meta( $post_id ) {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {

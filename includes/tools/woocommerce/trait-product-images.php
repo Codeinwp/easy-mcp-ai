@@ -5,33 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Product_Images {
-
-    
-
-
-
 
     protected function image_item_schema(): array {
         return array(
@@ -57,13 +31,6 @@ trait Product_Images {
         );
     }
 
-    
-
-
-
-
-
-
     protected function product_images_param( $raw ): array {
         $images = $this->parse_json_param( $raw, 'images' );
         if ( array_values( $images ) !== $images ) {
@@ -75,15 +42,6 @@ trait Product_Images {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
 
     protected function image_param( $raw, string $label, bool $empty_removes = false ): array {
         $image = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
@@ -109,8 +67,6 @@ trait Product_Images {
             }
             throw new \InvalidArgumentException( sprintf( '%s needs `id` (an image already in the media library) or `src` (an image URL).', $label ) . ( $empty_removes ? ' To remove the image, send {}.' : '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
-        
         foreach ( array( 'alt', 'name' ) as $key ) {
             if ( isset( $image[ $key ] ) && is_scalar( $image[ $key ] ) && ! empty( $image[ $key ] ) ) {
                 $param[ $key ] = (string) $image[ $key ];
@@ -125,20 +81,6 @@ trait Product_Images {
         return $param;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function without_unchanged_text( array $param ): array {
         if ( isset( $param['alt'] ) ) {
             $stored = (string) get_post_meta( $param['id'], '_wp_attachment_image_alt', true );
@@ -152,16 +94,6 @@ trait Product_Images {
         return $param;
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function variation_gallery_param( $raw ): array {
         $ids = $this->parse_json_param( $raw, 'gallery_image_ids' );
         if ( array_values( $ids ) !== $ids ) {
@@ -170,7 +102,6 @@ trait Product_Images {
         $params = array();
         foreach ( $ids as $index => $raw_id ) {
             $id = $this->image_id( $raw_id );
-            
             if ( null === $id || 0 === $id || ! wp_attachment_is_image( $id ) ) {
                 throw new \InvalidArgumentException( sprintf( 'gallery_image_ids[%d] is not the ID of an image in the media library.', $index ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
@@ -179,12 +110,6 @@ trait Product_Images {
         return $params;
     }
 
-    
-
-
-
-
-
     private function image_id( $value ): ?int {
         if ( is_int( $value ) ) {
             return $value >= 0 ? $value : null;
@@ -192,30 +117,12 @@ trait Product_Images {
         return is_string( $value ) && ctype_digit( $value ) ? (int) $value : null;
     }
 
-    
-
-
-
-
-
-
-
-
-
     protected function require_variation_gallery_support( int $product_id ): void {
         $options = $this->rest_request( 'OPTIONS', '/wc/v3/products/' . $product_id . '/variations' );
         if ( ! isset( $options['schema']['properties']['gallery_image_ids'] ) ) {
             throw new \RuntimeException( 'This WooCommerce version has no variation galleries (added in WooCommerce 11.1), so gallery_image_ids cannot be saved. Nothing was changed.' );
         }
     }
-
-    
-
-
-
-
-
-
 
     protected function with_variation_images( array $params, array $data, array $reply ): array {
         if ( isset( $params['image'] ) ) {
@@ -226,12 +133,6 @@ trait Product_Images {
         }
         return $reply;
     }
-
-    
-
-
-
-
 
     protected function images_reply( $images ): array {
         if ( ! is_array( $images ) ) {
@@ -246,12 +147,6 @@ trait Product_Images {
         }
         return $reply;
     }
-
-    
-
-
-
-
 
     protected function image_reply( $image ): ?array {
         if ( ! is_array( $image ) || empty( $image['id'] ) ) {

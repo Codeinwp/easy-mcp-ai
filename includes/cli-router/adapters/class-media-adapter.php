@@ -12,39 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Media_Adapter extends Command_Handler {
 
     const TOOL = 'wp_upload_media_from_url';
@@ -53,7 +20,6 @@ class Media_Adapter extends Command_Handler {
     const FEATURED_NO_POST = 'wp_cli_run refuses --featured_image without --post_id: the featured image is set on that post, and WP-CLI would import the file and set nothing.';
     const POST_MISSING     = 'wp_cli_run refuses --post_id=%1$s: no post has that ID, and WP-CLI would import the file unattached. Nothing was imported.';
 
-    
     public function preflight_import( Invocation $inv, Context $ctx ): void {
         foreach ( $inv->args as $file ) {
             if ( '' === (string) self::host( (string) $file ) ) {
@@ -69,12 +35,6 @@ class Media_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     public function plan_import( Invocation $inv ): array {
         $plan = array();
         foreach ( $inv->args as $file ) {
@@ -85,12 +45,6 @@ class Media_Adapter extends Command_Handler {
         }
         return $plan;
     }
-
-    
-
-
-
-
 
     public function import( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
@@ -122,12 +76,6 @@ class Media_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private function import_one( Invocation $inv, Context $ctx, Batch $batch, string $file, ?string $porcelain, ?string $post_id ): string {
         $result = $batch->delegate( self::TOOL, self::arguments( $inv, $file ) );
         if ( Batch::is_rate_limited( $result ) ) {
@@ -150,14 +98,6 @@ class Media_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    
-
-
-
-
-
-
-
     private static function porcelain_mode( array $assoc ): ?string {
         $porcelain = Read_Value::flag( $assoc, 'porcelain' );
         if ( ! $porcelain ) {
@@ -165,13 +105,6 @@ class Media_Adapter extends Command_Handler {
         }
         return 'url' === strtolower( (string) $porcelain ) ? 'url' : 'id';
     }
-
-    
-
-
-
-
-
 
     private static function imported_text( array $assoc, string $file, ?string $post_id ): string {
         $text = '';
@@ -186,16 +119,6 @@ class Media_Adapter extends Command_Handler {
         }
         return $text;
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public static function arguments( Invocation $inv, string $file ): array {
         $assoc = $inv->assoc;
@@ -213,14 +136,6 @@ class Media_Adapter extends Command_Handler {
         return $args;
     }
 
-    
-
-
-
-
-
-
-
     private static function text_arguments( array $assoc ): array {
         $args = array();
         foreach ( array( 'title' => 'title', 'caption' => 'caption', 'desc' => 'description', 'post_name' => 'slug' ) as $flag => $key ) {
@@ -234,38 +149,19 @@ class Media_Adapter extends Command_Handler {
         return $args;
     }
 
-    
-
-
-
-
     public static function import_name( string $file, string $slug ): string {
         $name = (string) strtok( self::basename( $file ), '?' );
         return $slug . '.' . pathinfo( $name, PATHINFO_EXTENSION );
     }
 
-    
     private static function basename( string $path ): string {
         return urldecode( basename( str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) ) ) );
     }
 
-    
     private static function host( string $file ): string {
         $host = function_exists( 'wp_parse_url' ) ? \wp_parse_url( $file, PHP_URL_HOST ) : parse_url( $file, PHP_URL_HOST ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- fallback, as WP-CLI.
         return is_string( $host ) ? $host : '';
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
 
     protected function call( string $name, array $args, callable $real ) {
         return $real();
@@ -281,7 +177,6 @@ class Media_Adapter extends Command_Handler {
         );
     }
 
-    
     protected function original_url( int $id, string $fallback ): string {
         return (string) $this->call(
             __FUNCTION__,

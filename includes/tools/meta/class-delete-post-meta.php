@@ -74,13 +74,8 @@ class Delete_Post_Meta extends Base_Tool {
         }
         $this->authorize_key( $key, $post_id );
         $this->refuse_restricted_integration_field( $key, $post_id );
-        
-        
-        
         $parent = wp_is_post_revision( $post_id );
         $this->refuse_builder_owned_write( $parent ? (int) $parent : $post_id, false, array( $exact_key ? $key : wp_unslash( $key ) => null ) );
-        
-        
         $target         = $exact_key ? wp_slash( $key ) : $key;
         $value_provided = array_key_exists( 'value', $arguments );
         if ( $value_provided ) {
@@ -89,8 +84,6 @@ class Delete_Post_Meta extends Base_Tool {
             $deleted = delete_post_meta( $post_id, $target );
         }
         if ( $deleted ) {
-            
-            
             $this->clear_page_cache( array( $post_id ) );
         }
         return array(
@@ -100,27 +93,6 @@ class Delete_Post_Meta extends Base_Tool {
             'value_provided' => $value_provided,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function authorize_key( string $key, int $post_id ): void {
         $cap = 'delete_post_meta';
@@ -139,15 +111,6 @@ class Delete_Post_Meta extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function key_is_claimed( string $key, string $post_type ): bool {
         if ( function_exists( 'get_registered_meta_keys' ) ) {
             foreach ( array( $post_type, '' ) as $subtype ) {
@@ -159,21 +122,6 @@ class Delete_Post_Meta extends Base_Tool {
         }
         return (bool) has_filter( "auth_post_meta_{$key}_for_{$post_type}" ) || (bool) has_filter( "auth_post_meta_{$key}" );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_restricted_integration_field( string $key, int $post_id ): void {
         if ( ! class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {

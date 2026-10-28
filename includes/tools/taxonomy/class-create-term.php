@@ -7,13 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 class Create_Term extends Base_Tool {
 
     public function get_name() {
@@ -29,11 +22,6 @@ class Create_Term extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
-        
-        
         return 'read';
     }
 
@@ -87,18 +75,11 @@ class Create_Term extends Base_Tool {
         }
         $this->refuse_non_rest_taxonomy( $taxonomy, $tax_obj );
 
-        
-        
-        
-        
-        
         $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
         $rest_base = $this->validate_rest_route_segment( $rest_base, 'rest_base' );
 
         $params = $this->term_params( $arguments );
 
-        
-        
         $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
 
         $data = $this->rest_request( 'POST', '/' . $namespace . '/' . $rest_base, $params );
@@ -113,13 +94,6 @@ class Create_Term extends Base_Tool {
             'taxonomy'    => $taxonomy,
         );
     }
-
-    
-
-
-
-
-
 
     private function term_params( array $arguments ): array {
         $params = array(

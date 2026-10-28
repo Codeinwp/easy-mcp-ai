@@ -1,22 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -52,7 +35,6 @@ return array(
     'cache pluck'       => $emai_cache( 'pluck', false, array( 'key', 'key-path', 'group', 'format' ), 'preflight_group_flag', null ),
     'cache replace'     => $emai_cache( 'replace', true, array( 'key', 'value', 'group', 'expiration' ), 'preflight_group_third', 'describe_store' ),
     'cache set'         => $emai_cache( 'set', true, array( 'key', 'value', 'group', 'expiration' ), 'preflight_group_third', 'describe_store' ),
-    
     'cache supports'    => $emai_cache( 'supports', false, array( 'feature' ), null, null, array( 'answer' => true ) ),
     'cache type'        => $emai_cache( 'type', false, array(), null, null ),
 );

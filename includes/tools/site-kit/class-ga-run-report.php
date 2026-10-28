@@ -7,16 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class GA_Run_Report extends Base_Tool {
 
     use Site_Kit_Rest;
 
-    
     const MATCH_TYPES = array( 'EXACT', 'BEGINS_WITH', 'ENDS_WITH', 'CONTAINS', 'FULL_REGEXP', 'PARTIAL_REGEXP' );
 
     public function get_name() {
@@ -95,13 +89,6 @@ class GA_Run_Report extends Base_Tool {
         return $this->site_kit_get( '/modules/analytics-4/data/report', self::report_params( $arguments ) );
     }
 
-    
-
-
-
-
-
-
     public static function report_params( array $arguments ): array {
         $metrics = self::string_list( $arguments['metrics'] ?? null, 'metrics' );
         if ( empty( $metrics ) ) {
@@ -156,14 +143,6 @@ class GA_Run_Report extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private static function dimension_filters( $value ): array {
         if ( null === $value ) {
             return array();
@@ -197,13 +176,6 @@ class GA_Run_Report extends Base_Tool {
         }
         return $filters;
     }
-
-    
-
-
-
-
-
 
     private static function order_by( $value ): array {
         if ( null === $value ) {

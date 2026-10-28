@@ -24,12 +24,6 @@ class Delete_Term_Meta extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
-        
-        
-        
         return 'read';
     }
 
@@ -79,8 +73,6 @@ class Delete_Term_Meta extends Base_Tool {
         if ( ! $tax_obj ) {
             throw new \InvalidArgumentException( 'Invalid taxonomy.' );
         }
-        
-        
         if ( ! current_user_can( 'edit_term', $term_id ) ) {
             throw new \RuntimeException( sprintf( 'Insufficient capability for taxonomy %s: WordPress does not grant edit_term for term %d to the current user.', $term->taxonomy, $term_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }

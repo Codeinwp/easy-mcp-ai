@@ -1,37 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,10 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Transport {
 
-    
     const AUTH_RULE_MARKER = 'HTTP_AUTHORIZATION';
 
-    
     const CLEANUP_EVENTS = array(
         'easy_mcp_ai_cleanup_audit_log',
         'easy_mcp_ai_cleanup_oauth',
@@ -51,15 +17,7 @@ class Check_Transport {
         'easy_mcp_ai_cleanup_new_token_meta',
     );
 
-    
-
-
-
-
     const CRON_OVERDUE_AFTER = 2 * DAY_IN_SECONDS;
-
-    
-
 
     public static function run() {
         $server_software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '';
@@ -96,10 +54,6 @@ class Check_Transport {
         );
     }
 
-    
-
-
-
     public static function evaluate_sapi( $sapi, $server_software ) {
         $sapi     = strtolower( (string) $sapi );
         $label    = __( 'PHP server interface', 'easy-mcp-ai' );
@@ -124,26 +78,7 @@ class Check_Transport {
         return Diagnostic_Result::pass( 'a2', Diagnostic_Result::TIER_INFO, $label, $detail, $evidence );
     }
 
-    
-
-
-
     const FASTCGI_SAPIS = array( 'cgi-fcgi', 'fpm-fcgi' );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_htaccess_rule( $htaccess, $is_apache, $permalinks, $sapi = '', $is_multisite = false ) {
         $label = __( 'Authorization header rewrite present', 'easy-mcp-ai' );
@@ -166,9 +101,6 @@ class Check_Transport {
             );
         }
 
-        
-        
-        
         if ( '' === trim( (string) $permalinks ) ) {
             return Diagnostic_Result::unknown(
                 'a3',
@@ -189,15 +121,10 @@ class Check_Transport {
 
         $rule_present = self::has_active_auth_rule( $htaccess );
 
-        
         if ( in_array( strtolower( (string) $sapi ), self::FASTCGI_SAPIS, true ) ) {
             return self::evaluate_fastcgi_rule( $label, (string) $sapi, $rule_present );
         }
 
-        
-        
-        
-        
         if ( $rule_present ) {
             return Diagnostic_Result::pass( 'a3', Diagnostic_Result::TIER_WARNING, $label, '', array( 'rule_present' => true, 'sapi' => (string) $sapi ) );
         }
@@ -211,20 +138,6 @@ class Check_Transport {
             array( 'rule_present' => false, 'sapi' => (string) $sapi )
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function evaluate_fastcgi_rule( string $label, string $sapi, bool $rule_present ): Diagnostic_Result {
         $detail = $rule_present
@@ -248,30 +161,10 @@ class Check_Transport {
         );
     }
 
-    
-
-
-
     public static function evaluate_error_display( $display_errors, $wp_debug_display, $wp_debug = false ) {
         $label = __( 'PHP errors hidden from responses', 'easy-mcp-ai' );
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $effective_debug_display = (bool) $wp_debug && (bool) $wp_debug_display;
-        
-        
-        
-        
-        
-        
-        
         $evidence                = array(
             'display_errors'             => (bool) $display_errors,
             'wp_debug'                   => (bool) $wp_debug,
@@ -292,26 +185,6 @@ class Check_Transport {
 
         return Diagnostic_Result::pass( 'a4', Diagnostic_Result::TIER_WARNING, $label, '', $evidence );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_stray_output( array $heads, array $tails = array() ) {
         $label = __( 'No stray output before headers', 'easy-mcp-ai' );
@@ -382,27 +255,6 @@ class Check_Transport {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_proxy_ip( $remote_addr, $forwarding_header_present, $filter_hooked, $trusted_configured = false, $resolved_addr = null ) {
         $label    = __( 'Client IP resolves per visitor', 'easy-mcp-ai' );
         $evidence = array(
@@ -438,13 +290,6 @@ class Check_Transport {
         return Diagnostic_Result::pass( 'a6', Diagnostic_Result::TIER_WARNING, $label, '', $evidence );
     }
 
-    
-
-
-
-
-
-
     public static function evaluate_cron( array $unscheduled, $cron_disabled, array $overdue = array() ) {
         $label    = __( 'Scheduled cleanup is registered', 'easy-mcp-ai' );
         $evidence = array(
@@ -472,17 +317,6 @@ class Check_Transport {
             );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( ! empty( $overdue ) ) {
             return Diagnostic_Result::warn(
                 'b3',
@@ -509,22 +343,10 @@ class Check_Transport {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function overdue_events( array $next_runs, $now ) {
         $overdue = array();
 
         foreach ( $next_runs as $event => $timestamp ) {
-            
             if ( empty( $timestamp ) ) {
                 continue;
             }
@@ -536,12 +358,6 @@ class Check_Transport {
         return $overdue;
     }
 
-    
-
-
-
-
-
     public static function wp_config_candidates( $abspath ) {
         $abspath = rtrim( (string) $abspath, '/\\' ) . '/';
         return array(
@@ -549,23 +365,6 @@ class Check_Transport {
             dirname( rtrim( $abspath, '/\\' ) ) . '/wp-config.php',
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function htaccess_candidates( $home_path, $abspath ) {
         $home_path = rtrim( (string) $home_path, '/\\' ) . '/';
@@ -578,51 +377,14 @@ class Check_Transport {
         return $candidates;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function has_active_auth_rule( $htaccess ) {
         return Htaccess_Auth_Rule::has_effective_rule( $htaccess );
     }
-
-    
 
     private static function is_apache_like( $server_software ) {
         $s = strtolower( (string) $server_software );
         return false !== strpos( $s, 'apache' ) || false !== strpos( $s, 'litespeed' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function has_stray_prefix( $head ) {
         if ( '' === $head ) {
@@ -635,86 +397,14 @@ class Check_Transport {
             return false;
         }
         if ( '<?' === substr( $head, 0, 2 ) ) {
-            
             return ! self::short_open_tag_enabled();
         }
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function has_stray_suffix( $source ) {
         return self::emitted_output_bytes( $source ) > 0;
     }
-
-    
-
-
-
-
 
     private static function emitted_output_bytes( $source ) {
         $source = (string) $source;
@@ -722,13 +412,6 @@ class Check_Transport {
             return 0;
         }
 
-        
-        
-        
-        
-        
-        
-        
         if ( false === strpos( $source, '?' . '>' ) ) {
             return 0;
         }
@@ -751,7 +434,6 @@ class Check_Transport {
             }
 
             if ( T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0] ) {
-                
                 $depth++;
                 continue;
             }
@@ -772,12 +454,6 @@ class Check_Transport {
         return false === $contents ? null : $contents;
     }
 
-    
-
-
-
-
-
     private static function read_htaccess( $home_path, $abspath ) {
         foreach ( self::htaccess_candidates( $home_path, $abspath ) as $candidate ) {
             $contents = self::read_file( $candidate );
@@ -787,15 +463,6 @@ class Check_Transport {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function resolve_home_path() {
         if ( ! function_exists( 'get_home_path' ) ) {
@@ -815,13 +482,6 @@ class Check_Transport {
         return ABSPATH;
     }
 
-    
-
-
-
-
-
-
     private static function read_head_of_bootstrap_files() {
         $heads = array();
         $tails = array();
@@ -834,7 +494,7 @@ class Check_Transport {
                 if ( null !== $source ) {
                     $tails['wp-config.php'] = $source;
                 }
-                break; 
+                break;
             }
         }
 
@@ -873,12 +533,10 @@ class Check_Transport {
         return (bool) ini_get( 'short_open_tag' );
     }
 
-    
     private static function trusted_proxies_configured() {
         return count( \Easy_MCP_AI\Client_IP::trusted_proxies() ) > 0;
     }
 
-    
     private static function resolved_client_ip() {
         return (string) \Easy_MCP_AI\Client_IP::get();
     }
@@ -897,18 +555,6 @@ class Check_Transport {
             return false;
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( 0 === stripos( $ip, '::ffff:' ) ) {
             $candidate = substr( $ip, 7 );
             if ( false !== filter_var( $candidate, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
@@ -932,7 +578,6 @@ class Check_Transport {
         return $missing;
     }
 
-    
     private static function cleanup_event_next_runs() {
         $runs = array();
         foreach ( self::CLEANUP_EVENTS as $event ) {

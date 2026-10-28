@@ -1,31 +1,12 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 final class Post_Urls {
-
-    
-
-
-
-
 
     public static function expand( array $post_ids ): array {
         $rows    = array();
@@ -46,14 +27,6 @@ final class Post_Urls {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function add( array &$rows, array &$dropped, array $row ): void {
         if ( '' === $row['url'] ) {
             return;
@@ -61,8 +34,6 @@ final class Post_Urls {
         try {
             $row['url'] = Url_Guard::check( $row['url'] );
         } catch ( \InvalidArgumentException $e ) {
-            
-            
             $dropped[] = array(
                 'url'    => $row['url'],
                 'reason' => 'WordPress gives the post this address and the URL guard refused it, so caches that take only URLs are not sent it; a cache plugin\'s own post purge is not affected. Guard: ' . $e->getMessage(),
@@ -73,12 +44,6 @@ final class Post_Urls {
             $rows[ $row['url'] ] = $row;
         }
     }
-
-    
-
-
-
-
 
     private static function candidates( object $post ): array {
         $id   = (int) $post->ID;
@@ -109,14 +74,6 @@ final class Post_Urls {
         return array_merge( $list, self::archives( $post ) );
     }
 
-    
-
-
-
-
-
-
-
     private static function language_variants( string $url ): array {
         if ( '' === $url ) {
             return array();
@@ -143,12 +100,6 @@ final class Post_Urls {
         return array_values( array_diff( array_unique( $urls ), array( $url, '' ) ) );
     }
 
-    
-
-
-
-
-
     private static function permalink( object $post ): string {
         if ( in_array( $post->post_status, array( 'publish', 'private' ), true ) ) {
             return (string) \get_permalink( $post );
@@ -162,12 +113,6 @@ final class Post_Urls {
         $former->post_name   = (string) $name;
         return (string) \get_permalink( $former );
     }
-
-    
-
-
-
-
 
     private static function translations( object $post ): array {
         $ids = array();
@@ -188,12 +133,6 @@ final class Post_Urls {
         return array_values( array_diff( array_unique( $ids ), array( (int) $post->ID, 0 ) ) );
     }
 
-    
-
-
-
-
-
     private static function archives( object $post ): array {
         $list       = array();
         $posts_page = (int) \get_option( 'page_for_posts' );
@@ -206,7 +145,6 @@ final class Post_Urls {
         }
         foreach ( \get_object_taxonomies( $post->post_type ) as $taxonomy ) {
             $tax = \get_taxonomy( $taxonomy );
-            
             if ( ! $tax || empty( $tax->publicly_queryable ) ) {
                 continue;
             }

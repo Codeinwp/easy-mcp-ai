@@ -91,8 +91,6 @@ class Create_Venue extends Base_Tool {
             $this->refuse_existing_title( 'tribe_venue', $name, array( '_VenueAddress', '_VenueCity' ), 'venue', 'Pass that ID as `venue` to `wp_tec_create_event` or `wp_tec_update_event` to use it.', 'wp_tec_list_venues' );
         }
 
-        
-        
         $this->require_compat_shim( 'tec-no-duplicate-reuse', $arguments );
 
         $params = array(

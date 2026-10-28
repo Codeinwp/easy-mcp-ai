@@ -5,15 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
-
-
-
 class SeRanking_Client {
 
 	const OPTION_API_KEY = 'easy_mcp_ai_seranking_api_key';
@@ -22,7 +13,6 @@ class SeRanking_Client {
 
 	const ALLOWED_HOSTS = array( 'api.seranking.com' );
 
-	
 	const CIPHER_VERSION    = "v2\x00";
 	const CIPHER_PREFIX_LEN = 3;
 	const HKDF_INFO         = 'easy_mcp_ai_seranking_v2';
@@ -70,15 +60,10 @@ class SeRanking_Client {
 		return openssl_decrypt( $ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag );
 	}
 
-	
-
-
-
-
 	public function get_api_key(): string {
 		$deployed = \Easy_MCP_AI\Provider_Credentials::deployed_secret( self::OPTION_API_KEY );
 		if ( null !== $deployed ) {
-			return $deployed; 
+			return $deployed;
 		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {
@@ -91,24 +76,9 @@ class SeRanking_Client {
 		return $plain;
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
 	public function request( string $method, string $path, array $query = array(), array $body = array() ): array {
 		$url = self::BASE_URL . $path;
 
-		
 		$scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
 		$host   = \wp_parse_url( $url, PHP_URL_HOST );
 		if ( 'https' !== $scheme || ! in_array( $host, self::ALLOWED_HOSTS, true ) ) {
@@ -116,7 +86,7 @@ class SeRanking_Client {
 		}
 
 		if ( ! empty( $query ) ) {
-			$url = \add_query_arg( array_map( 'rawurlencode', $query ), $url ); 
+			$url = \add_query_arg( array_map( 'rawurlencode', $query ), $url );
 		}
 
 		$api_key = $this->get_api_key();
@@ -124,7 +94,7 @@ class SeRanking_Client {
 		$args = array(
 			'method'      => $method,
 			'timeout'     => 30,
-			'redirection' => 0, 
+			'redirection' => 0,
 			'headers'     => array(
 				'Authorization' => 'Token ' . $api_key,
 				'Accept'        => 'application/json',
@@ -137,11 +107,6 @@ class SeRanking_Client {
 			$args['body']                    = \wp_json_encode( $body );
 		}
 
-		
-		
-		
-		
-		
 		$max_attempts   = 3;
 		$retry_statuses = array( 500, 502, 503, 504 );
 		$response       = null;
@@ -152,7 +117,7 @@ class SeRanking_Client {
 
 			if ( \is_wp_error( $response ) ) {
 				if ( $attempt < $max_attempts ) {
-					usleep( 250000 * $attempt ); 
+					usleep( 250000 * $attempt );
 					continue;
 				}
 				$msg = str_replace( $api_key, '[REDACTED]', $response->get_error_message() );
@@ -177,13 +142,6 @@ class SeRanking_Client {
 		return is_array( $json ) ? $json : array();
 	}
 
-	
-
-
-
-
-
-
 	public function throw_api_error( int $http, ?array $json, string $key = '' ): void {
 		$err  = ( is_array( $json ) && isset( $json['error'] ) && is_array( $json['error'] ) ) ? $json['error'] : array();
 		$msg  = isset( $err['message'] ) ? (string) $err['message'] : '';
@@ -193,7 +151,6 @@ class SeRanking_Client {
 			try {
 				$key = $this->get_api_key();
 			} catch ( \RuntimeException $e ) {
-				
 			}
 		}
 		$redact = static function ( string $s ) use ( $key ): string {
@@ -221,12 +178,6 @@ class SeRanking_Client {
 		throw new \RuntimeException( 'SE Ranking API error ' . $http . ': ' . $msg . ( '' !== $desc ? ' — ' . $desc : '' ) ); // phpcs:ignore
 	}
 
-	
-
-
-
-
-
 	public function get_balance(): array {
 		$json = $this->request( 'GET', '/v1/account/subscription' );
 		$info = isset( $json['subscription_info'] ) && is_array( $json['subscription_info'] ) ? $json['subscription_info'] : array();
@@ -234,16 +185,10 @@ class SeRanking_Client {
 			'units_left'  => (int) ( $info['units_left'] ?? 0 ),
 			'units_limit' => (int) ( $info['units_limit'] ?? 0 ),
 			'status'      => (string) ( $info['status'] ?? '' ),
-			
-			
-			
 			'expiration_date' => (string) ( $info['expiration_date'] ?? ( $info['expiraton_date'] ?? '' ) ),
 			'fetched_at'      => gmdate( 'c' ),
 		);
 	}
-
-	
-
 
 	public function test_connection(): array {
 		$balance = $this->get_balance();

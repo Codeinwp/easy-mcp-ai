@@ -5,83 +5,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Privileged_Groups {
 
     const SCOPE_PREFIX        = 'mcp:privileged:';
     const CATEGORY            = 'privileged';
-    
     const TOOL_PREFIX         = 'wp_privileged_';
 
-    
     const TIMEOUT_SECONDS = 30;
-    
     const MEMORY_HEADROOM_BYTES = 134217728;
-    
     const OUTPUT_MAX_BYTES = 65536;
-    
-
-
-
-
-
     const RATE_LIMIT_PER_MINUTE = 60;
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const GROUPS = array(
         'files_read'     => array(
@@ -103,33 +36,14 @@ final class Privileged_Groups {
         ),
     );
 
-    
-
-
-
-
     const TOOL_CLASSES = array(
-        '\\Easy_MCP_AI\\Tools\\Privileged\\Search_Replace_Run', 
-        '\\Easy_MCP_AI\\Tools\\Privileged\\Files_Read_Query', 
+        '\\Easy_MCP_AI\\Tools\\Privileged\\Search_Replace_Run',
+        '\\Easy_MCP_AI\\Tools\\Privileged\\Files_Read_Query',
     );
 
-    
     const SITE_CAPABILITY_FILTER = 'easy_mcp_ai_search_replace_capability';
 
-    
     private static $tools = array();
-
-    
-    
-    
-
-    
-
-
-
-
-
-
 
     public static function group_of_name( $name ): ?string {
         if ( ! is_string( $name ) || 0 !== strpos( $name, self::TOOL_PREFIX ) ) {
@@ -144,22 +58,9 @@ final class Privileged_Groups {
         return null;
     }
 
-    
-
-
-
-
     public static function switch_source(): string {
         return \Easy_MCP_AI\Tools\Tool_State::override_source();
     }
-
-    
-
-
-
-
-
-
 
     public static function switched_on_names(): array {
         $names = array_merge( array_keys( \Easy_MCP_AI\Tools\Tool_State::overrides() ), \Easy_MCP_AI\Tools\Tool_State::enabled_list() );
@@ -180,47 +81,21 @@ final class Privileged_Groups {
         return $ordered;
     }
 
-    
-
-
-
-
     public static function switched_on_groups(): array {
         return array_keys( self::switched_on_names() );
     }
-
-    
-
-
-
 
     public static function is_enabled( $group ): bool {
         return is_string( $group ) && in_array( $group, self::switched_on_groups(), true );
     }
 
-    
     public static function enabled_groups(): array {
         return self::switched_on_groups();
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public static function capability( $group ): string {
         return isset( self::GROUPS[ $group ] ) ? self::GROUPS[ $group ]['capability'] : '';
     }
-
-    
-
-
-
-
 
     public static function group_for_capability( $cap ): ?string {
         foreach ( self::GROUPS as $group => $spec ) {
@@ -230,14 +105,6 @@ final class Privileged_Groups {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     public static function floor_passes( $group, $user_id ): bool {
         $user_id = (int) $user_id;
@@ -256,21 +123,9 @@ final class Privileged_Groups {
         return (bool) \user_can( $user_id, self::site_capability() );
     }
 
-    
-
-
-
-
-
     public static function is_read_only( $group ): bool {
         return is_string( $group ) && isset( self::GROUPS[ $group ] ) && ! empty( self::GROUPS[ $group ]['read_only'] );
     }
-
-    
-
-
-
-
 
     public static function site_capability(): string {
         $cap = function_exists( 'apply_filters' ) ? \apply_filters( self::SITE_CAPABILITY_FILTER, 'manage_options' ) : 'manage_options';
@@ -280,28 +135,9 @@ final class Privileged_Groups {
         return $cap;
     }
 
-    
-
-
-
-
-
     public static function user_holds( $group, $user_id ): bool {
         return self::is_enabled( $group ) && self::floor_passes( $group, $user_id );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function map_meta_cap( $caps, $cap, $user_id ) {
         $group = self::group_for_capability( $cap );
@@ -311,22 +147,6 @@ final class Privileged_Groups {
         return self::user_holds( $group, (int) $user_id ) ? array( 'exist' ) : array( 'do_not_allow' );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function admit_tool( $name, $group ): bool {
         if ( ! is_string( $group ) || self::group_of_name( $name ) !== $group ) {
             return false;
@@ -335,30 +155,13 @@ final class Privileged_Groups {
         return true;
     }
 
-    
-
-
-
-
     public static function is_privileged_tool( $name ): bool {
         return is_string( $name ) && isset( self::$tools[ $name ] );
     }
 
-    
-
-
-
-
-
     public static function group_of_tool( $name ): ?string {
         return is_string( $name ) && isset( self::$tools[ $name ] ) ? self::$tools[ $name ] : null;
     }
-
-    
-
-
-
-
 
     public static function tool_names( ?array $groups = null ): array {
         $names = array();
@@ -371,28 +174,13 @@ final class Privileged_Groups {
         return $names;
     }
 
-    
     public static function reset_tools(): void {
         self::$tools = array();
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public static function scope_for_group( string $group ): string {
         return self::SCOPE_PREFIX . $group;
     }
-
-    
-
-
-
 
     public static function group_label( $group ): string {
         switch ( $group ) {
@@ -408,20 +196,9 @@ final class Privileged_Groups {
         return '';
     }
 
-    
-
-
-
-
     public static function is_privileged_scope( $scope ): bool {
         return is_string( $scope ) && 0 === strpos( $scope, self::SCOPE_PREFIX );
     }
-
-    
-
-
-
-
 
     public static function group_for_scope( $scope ): ?string {
         if ( ! self::is_privileged_scope( $scope ) ) {
@@ -431,25 +208,9 @@ final class Privileged_Groups {
         return isset( self::GROUPS[ $group ] ) ? $group : null;
     }
 
-    
-
-
-
-
-
-
-
     public static function enabled_scopes(): array {
         return array_map( array( __CLASS__, 'scope_for_group' ), self::enabled_groups() );
     }
-
-    
-
-
-
-
-
-
 
     public static function tools_for_scopes( array $scopes ): array {
         $groups = array();
@@ -461,12 +222,6 @@ final class Privileged_Groups {
         }
         return empty( $groups ) ? array() : self::tool_names( $groups );
     }
-
-    
-
-
-
-
 
     public static function split_scopes( array $scopes ): array {
         $privileged = array();
@@ -480,21 +235,6 @@ final class Privileged_Groups {
         }
         return array( $privileged, $ordinary );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function apply_soft_limits(): array {
         $previous = array(
@@ -512,11 +252,6 @@ final class Privileged_Groups {
         return $previous;
     }
 
-    
-
-
-
-
     public static function restore_soft_limits( array $previous ): void {
         if ( isset( $previous['memory'] ) && false !== $previous['memory'] ) {
             ini_set( 'memory_limit', (string) $previous['memory'] ); // phpcs:ignore WordPress.PHP.IniSet.memory_limit_Disallowed -- restoring the request's own value.
@@ -526,7 +261,6 @@ final class Privileged_Groups {
         }
     }
 
-    
     private static function bytes( string $value ): int {
         $value = trim( $value );
         if ( '' === $value || '-1' === $value ) {
@@ -536,26 +270,13 @@ final class Privileged_Groups {
         switch ( strtolower( substr( $value, -1 ) ) ) {
             case 'g':
                 $number *= 1024;
-                
             case 'm':
                 $number *= 1024;
-                
             case 'k':
                 $number *= 1024;
         }
         return $number;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function cap_output( $result ) {
         $text = is_string( $result ) ? $result : \wp_json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -565,21 +286,6 @@ final class Privileged_Groups {
         $cut = function_exists( 'mb_strcut' ) ? mb_strcut( $text, 0, self::OUTPUT_MAX_BYTES, 'UTF-8' ) : substr( $text, 0, self::OUTPUT_MAX_BYTES );
         return $cut . "\n\n" . sprintf( '[Output truncated: %1$d of %2$d bytes shown.]', strlen( $cut ), strlen( $text ) );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function status(): array {
         $switched = self::switched_on_names();
@@ -605,7 +311,6 @@ final class Privileged_Groups {
         }
         return array(
             'source' => self::switch_source(),
-            
             'strict' => \Easy_MCP_AI\Tools\Tool_State::is_strict(),
             'groups' => $groups,
         );

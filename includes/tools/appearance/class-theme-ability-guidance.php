@@ -8,54 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Theme_Ability_Guidance {
 
-    
     const NONE = 'none';
-    
     const CALLABLE = 'callable';
-    
     const NOT_ALLOWED = 'not_allowed';
-    
     const NOT_ENABLED = 'not_enabled';
 
-    
     const LINE_LIMIT = 120;
-
-    
-
-
 
     public static function assess(): array {
         $out = array(
@@ -68,11 +28,8 @@ final class Theme_Ability_Guidance {
         if ( empty( $abilities ) || ! class_exists( '\\Easy_MCP_AI\\Tools\\Dynamic_Tool_Registrar' ) ) {
             return $out;
         }
-        
-        
         $server_loaded = class_exists( '\\Easy_MCP_AI\\MCP\\Server' );
 
-        
         $enabled     = (array) get_option( 'easy_mcp_ai_enabled_abilities', array() );
         $any_enabled = false;
         foreach ( $abilities as $name => $ability ) {
@@ -100,11 +57,6 @@ final class Theme_Ability_Guidance {
         return $out;
     }
 
-    
-
-
-
-
     public static function theme_abilities(): array {
         if ( ! function_exists( 'wp_get_abilities' ) ) {
             return array();
@@ -127,13 +79,6 @@ final class Theme_Ability_Guidance {
         return $out;
     }
 
-    
-
-
-
-
-
-
     public static function theme_prefixes(): array {
         $prefixes = array();
         foreach ( array_unique( array( (string) get_template(), (string) get_stylesheet() ) ) as $slug ) {
@@ -146,8 +91,6 @@ final class Theme_Ability_Guidance {
             if ( ! is_array( $metadata ) || ! isset( $metadata['ability_prefix'] ) ) {
                 continue;
             }
-            
-            
             foreach ( (array) $metadata['ability_prefix'] as $declared ) {
                 if ( is_string( $declared ) && preg_match( '/^[a-z0-9\-]+$/', $declared ) ) {
                     $prefixes[] = $declared;
@@ -156,12 +99,6 @@ final class Theme_Ability_Guidance {
         }
         return array_values( array_unique( $prefixes ) );
     }
-
-    
-
-
-
-
 
     public static function tool_lines( array $tools ): string {
         $lines = array();
@@ -178,7 +115,6 @@ final class Theme_Ability_Guidance {
         return implode( "\n", $lines );
     }
 
-    
     private static function theme_name(): string {
         $name  = '';
         $theme = function_exists( 'wp_get_theme' ) ? wp_get_theme() : null;
@@ -190,12 +126,6 @@ final class Theme_Ability_Guidance {
         }
         return mb_strlen( $name ) > 24 ? rtrim( mb_substr( $name, 0, 24 ) ) : $name;
     }
-
-    
-
-
-
-
 
     private static function clean( $text ): string {
         $text = wp_strip_all_tags( (string) $text );

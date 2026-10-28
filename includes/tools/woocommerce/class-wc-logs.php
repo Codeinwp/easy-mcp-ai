@@ -8,31 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Easy_MCP_AI\Text_Redactor;
 use Easy_MCP_AI\Tools\Site_Health\Site_Health_Guard;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class WC_Logs {
 
-    
     const SEVERITY = array(
         'emergency' => 800,
         'alert'     => 700,
@@ -48,43 +25,17 @@ class WC_Logs {
     const STORAGE_DATABASE = 'database';
     const STORAGE_OTHER    = 'other';
 
-    
     protected static int $db_batch = 500;
-
-    
-
-
-
-
 
     protected static int $db_max_rows = 5000;
 
-    
-
-
-
-
-
     protected static float $seconds = 10.0;
-
-    
-
-
-
 
     public static function seconds(): float {
         return static::$seconds;
     }
 
-    
     const DB_FIELD_BYTES = 8192;
-
-    
-
-
-
-
-
 
     public static function require_woocommerce(): void {
         if ( ! class_exists( 'WooCommerce' ) ) {
@@ -92,16 +43,10 @@ class WC_Logs {
         }
     }
 
-    
-
-
-
-
     public static function storage(): array {
         if ( self::util_has( 'get_default_handler' ) ) {
             $handler = \Automattic\WooCommerce\Utilities\LoggingUtil::get_default_handler();
         } else {
-            
             $handler = defined( 'WC_LOG_HANDLER' ) ? (string) constant( 'WC_LOG_HANDLER' ) : 'WC_Log_Handler_File';
         }
         return array(
@@ -110,24 +55,10 @@ class WC_Logs {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function util_has( string $method ): bool {
         return class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' )
             && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', $method );
     }
-
-    
-
-
-
-
 
     public static function storage_of( string $handler ): string {
         $handler = ltrim( $handler, '\\' );
@@ -142,12 +73,6 @@ class WC_Logs {
         return self::STORAGE_OTHER;
     }
 
-    
-
-
-
-
-
     public static function settings(): array {
         $util = '\Automattic\WooCommerce\Utilities\LoggingUtil';
         return array(
@@ -157,17 +82,8 @@ class WC_Logs {
         );
     }
 
-    
-
-
-
-
-
     public static function directory(): ?string {
         if ( self::util_has( 'get_log_directory' ) ) {
-            
-            
-            
             $takes_flag = ( new \ReflectionMethod( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'get_log_directory' ) )->getNumberOfParameters() > 0;
             $dir        = $takes_flag ? \Automattic\WooCommerce\Utilities\LoggingUtil::get_log_directory( false ) : self::settings_directory();
         } elseif ( defined( 'WC_LOG_DIR' ) ) {
@@ -178,14 +94,6 @@ class WC_Logs {
         $real = '' === $dir ? false : @realpath( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
         return false !== $real && is_dir( $real ) ? rtrim( $real, '/\\' ) : null;
     }
-
-    
-
-
-
-
-
-
 
     private static function settings_directory(): string {
         if ( defined( 'WC_LOG_DIR_CUSTOM' ) && true === constant( 'WC_LOG_DIR_CUSTOM' ) && defined( 'WC_LOG_DIR' ) ) {
@@ -198,31 +106,12 @@ class WC_Logs {
         return (string) \apply_filters( 'woocommerce_log_directory', $uploads['basedir'] . '/wc-logs/' ); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's own filter, applied as WooCommerce applies it.
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function require_site_scope( string $dir ): void {
         if ( ! function_exists( 'is_multisite' ) || ! \is_multisite() ) {
             return;
         }
         $uploads = function_exists( 'wp_upload_dir' ) ? \wp_upload_dir( null, false ) : array();
         $basedir = isset( $uploads['basedir'] ) ? (string) $uploads['basedir'] : '';
-        
-        
         $moved   = ! self::util_has( 'get_log_directory' )
             || ( defined( 'WC_LOG_DIR_CUSTOM' ) && true === constant( 'WC_LOG_DIR_CUSTOM' ) )
             || ( function_exists( 'has_filter' ) && false !== \has_filter( 'woocommerce_log_directory' ) )
@@ -236,18 +125,6 @@ class WC_Logs {
         throw new \RuntimeException( 'This site\'s WooCommerce log folder is not its own default folder (WC_LOG_DIR or the woocommerce_log_directory filter moved it), so on this multisite network it can hold every site\'s logs. Only a network administrator (super admin) can read it.' );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function uploads_moved( string $basedir ): bool {
         if ( ! function_exists( '_wp_upload_dir' ) ) {
             return true;
@@ -258,15 +135,6 @@ class WC_Logs {
         return false === $own || false === $now || $own !== $now;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function is_shared_directory( string $dir, string $basedir, bool $moved ): bool {
         if ( $moved || '' === $basedir ) {
             return true;
@@ -274,14 +142,6 @@ class WC_Logs {
         $default = @realpath( rtrim( $basedir, '/\\' ) . '/wc-logs' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
         return false === $default || rtrim( str_replace( '\\', '/', $default ), '/' ) !== rtrim( str_replace( '\\', '/', $dir ), '/' );
     }
-
-    
-
-
-
-
-
-
 
     public static function files( string $dir ): array {
         $names = @scandir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -314,21 +174,6 @@ class WC_Logs {
         return $files;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function parse_name( string $filename ): array {
         $segments = explode( '-', $filename );
         $date     = null;
@@ -341,8 +186,6 @@ class WC_Logs {
             }
         }
         if ( null === $date && count( $segments ) >= 2 && preg_match( '/^[0-9a-f]{32}\z/', (string) end( $segments ) ) ) {
-            
-            
             array_pop( $segments );
         }
         $source   = implode( '-', $segments );
@@ -361,12 +204,6 @@ class WC_Logs {
         );
     }
 
-    
-
-
-
-
-
     public static function public_file( array $file ): array {
         return array(
             'file_id'    => $file['file_id'],
@@ -378,14 +215,6 @@ class WC_Logs {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function line_severity( string $line ): ?int {
         if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}T\S+ ([A-Z]+) /', $line, $m ) ) {
             return null;
@@ -394,23 +223,10 @@ class WC_Logs {
         return isset( self::SEVERITY[ $level ] ) ? self::SEVERITY[ $level ] : null;
     }
 
-    
-
-
-
-
     public static function table(): string {
         global $wpdb;
         return $wpdb->prefix . 'woocommerce_log';
     }
-
-    
-
-
-
-
-
-
 
     public static function db_sources( string $prefix, int $limit ): array {
         global $wpdb;
@@ -435,20 +251,6 @@ class WC_Logs {
         }
         return array( 'sources' => $sources, 'total' => (int) $total );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function db_lines( string $source, ?string $date, int $min_severity, array &$scan ): \Generator {
         global $wpdb;
@@ -486,12 +288,6 @@ class WC_Logs {
         $scan['cut'] = true;
     }
 
-    
-
-
-
-
-
     private static function db_line( array $row ): string {
         $level   = array_search( (int) $row['level'], self::SEVERITY, true );
         $ts      = self::db_timestamp( (string) $row['timestamp'] );
@@ -500,24 +296,10 @@ class WC_Logs {
         $line   .= ' ' . self::one_line( (string) $row['message'] );
         $context = isset( $row['context'] ) ? (string) $row['context'] : '';
         if ( '' !== $context ) {
-            
-            
-            
             $line .= ' CONTEXT: ' . self::row_context( $context );
         }
         return $line;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function redact_line( string $line ): string {
         $at = strpos( $line, ' CONTEXT: ' );
@@ -532,37 +314,9 @@ class WC_Logs {
         return self::redact_text( $line );
     }
 
-    
     const MAX_DEPTH = 8;
 
-    
     const SERIALIZED_OMITTED = '[serialized context omitted: it could not be decoded]';
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function row_context( string $context ): string {
         $json = self::structured( $context );
@@ -580,19 +334,6 @@ class WC_Logs {
         return is_string( $decoded ) ? self::redact_text( self::one_line( $decoded ) ) : self::SERIALIZED_OMITTED;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function unserialized( string $data ) {
         if ( ! function_exists( 'is_serialized' ) || ! \is_serialized( $data ) || preg_match( '/[;{}][Rr]:\d+;/', $data ) ) {
             return null;
@@ -600,13 +341,6 @@ class WC_Logs {
         $decoded = @unserialize( $data, array( 'allowed_classes' => false, 'max_depth' => self::MAX_DEPTH ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
         return is_array( $decoded ) || is_string( $decoded ) ? $decoded : null;
     }
-
-    
-
-
-
-
-
 
     private static function structured( string $json ): ?string {
         $decoded = json_decode( $json, true );
@@ -616,16 +350,6 @@ class WC_Logs {
         $encoded = \wp_json_encode( self::redact_structure( $decoded ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
         return false === $encoded ? null : $encoded;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function redact_structure( $value, $key = '', int $depth = 0 ) {
         if ( '' !== (string) $key && ! is_int( $key ) && preg_match( Text_Redactor::SENSITIVE_KEY_PATTERN, (string) $key ) ) {
@@ -652,24 +376,7 @@ class WC_Logs {
         return Text_Redactor::redact_value( $value );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function redact_text( string $text ): string {
-        
-        
-        
         $best  = self::redact_layer( $text );
         $probe = $best;
         for ( $i = 0; $i < 3; $i++ ) {
@@ -678,8 +385,6 @@ class WC_Logs {
                 break;
             }
             $probe = self::redact_layer( $next );
-            
-            
             if ( $probe !== $next ) {
                 $best = $probe;
             }
@@ -687,77 +392,29 @@ class WC_Logs {
         return $best;
     }
 
-    
-
-
-
-
-
     private static function redact_layer( string $text ): string {
         $netted = self::net( $text );
         return Text_Redactor::MASK === $netted ? $netted : (string) Text_Redactor::redact( $netted );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function net( string $text ): string {
         $keys  = (string) preg_replace( '~^/(.*)/[a-z]*$~s', '$1', Text_Redactor::SENSITIVE_KEY_PATTERN );
         $value = '(?:\[[^\]]*(?:\]|$)|\{[^}]*(?:\}|$)|"(?:[^"\\\\]|\\\\.)*(?:"|$)|[^,}\]\s"]+)';
-        
-        
-        
-        
-        
         $out = preg_replace( '/((?<!\\\\)"(?=[^"\\\\]*(?:' . $keys . '))[^"\\\\]*+"\s*+:\s*+)' . $value . '/i', '$1"' . Text_Redactor::MASK . '"', $text );
         return null === $out ? Text_Redactor::MASK : $out;
     }
-
-    
-
-
-
-
 
     private static function one_line( string $text ): string {
         if ( false === strpbrk( $text, "\r\n" ) ) {
             return trim( $text );
         }
-        
-        
-        
         $parts = array_filter( array_map( 'trim', (array) preg_split( '/[\r\n]+/', $text ) ), 'strlen' );
         return implode( ' ', $parts );
     }
 
-    
-
-
-
-
-
-
-
     private static function db_timestamp( ?string $value ) {
         return null !== $value && '' !== $value ? strtotime( $value . ' UTC' ) : false;
     }
-
-    
-
-
-
-
-
 
     private static function require_db_read( $rows ): void {
         global $wpdb;

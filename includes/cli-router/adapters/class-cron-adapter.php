@@ -15,47 +15,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Cron_Adapter extends Command_Handler {
 
     const TOOL = 'wp_run_cron_event';
@@ -66,13 +25,7 @@ class Cron_Adapter extends Command_Handler {
 
     const NOTE_OUTPUT_CUT = "The output of the cron event '%s' was cut at 16 KB by wp_run_cron_event, which also masks secrets in it.";
 
-    
     const NOT_RECORDED = 'Cron: change history does not record the cron option, by design, so the removal and rescheduling of each event is not recorded; what a callback wrote is recorded under wp_run_cron_event.';
-
-    
-
-
-
 
     public function run( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, self::TOOL );
@@ -116,23 +69,9 @@ class Cron_Adapter extends Command_Handler {
             $batch->report();
         }
 
-        
-        
-        
-        
-        
-        
         $message = ( 1 === $executed ) ? 'Executed a total of %d cron event.' : 'Executed a total of %d cron events.';
         $ctx->out->success( sprintf( $message, $executed ) );
     }
-
-    
-
-
-
-
-
-
 
     private function run_one( object $event, array $later, callable $label, Batch $batch, Context $ctx ): string {
         $call = $batch->delegate( self::TOOL, self::arguments( $event ) );
@@ -142,7 +81,6 @@ class Cron_Adapter extends Command_Handler {
             }
             return Batch::FAILURE;
         }
-        
         $ctx->mark_changed();
         $payload = $call['payload'];
         $ctx->out->out( isset( $payload['output'] ) && is_string( $payload['output'] ) ? $payload['output'] : '' );
@@ -155,15 +93,6 @@ class Cron_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function stop_on_callback_error( object $event, array $payload, array $later, callable $label, Context $ctx ): void {
         if ( ! isset( $payload['error'] ) || '' === $payload['error'] ) {
             return;
@@ -173,14 +102,6 @@ class Cron_Adapter extends Command_Handler {
         }
         $ctx->out->error( sprintf( self::CALLBACK_ERROR, $event->hook, (string) $payload['error'] ) );
     }
-
-    
-
-
-
-
-
-
 
     public function plan_run( Invocation $inv ): array {
         if ( ! $this->caller_may_use() || null !== $this->network_refusal() ) {
@@ -210,28 +131,9 @@ class Cron_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     protected function seam( string $name, array $args, callable $real ) {
         return call_user_func_array( $real, $args );
     }
-
-    
-
-
-
-
 
     protected function cron_array() {
         return $this->seam(
@@ -243,7 +145,6 @@ class Cron_Adapter extends Command_Handler {
         );
     }
 
-    
     protected function schedules(): array {
         return (array) $this->seam(
             'wp_get_schedules',
@@ -284,11 +185,6 @@ class Cron_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
     protected function network_refusal(): ?string {
         $refusal = $this->seam(
             'network_refusal',
@@ -305,11 +201,6 @@ class Cron_Adapter extends Command_Handler {
         return is_string( $refusal ) ? $refusal : null;
     }
 
-    
-
-
-
-
     protected function caller_may_use(): bool {
         return (bool) $this->seam(
             'current_call_may_use',
@@ -322,16 +213,6 @@ class Cron_Adapter extends Command_Handler {
             }
         );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     private function selection( Invocation $inv, Output $out ): array {
         $clock  = array(
@@ -359,11 +240,6 @@ class Cron_Adapter extends Command_Handler {
         return (array) $events;
     }
 
-    
-
-
-
-
     private static function arguments( object $event ): array {
         return array(
             'hook' => (string) $event->hook,
@@ -371,23 +247,12 @@ class Cron_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
     private function guard( string $hook, Context $ctx ): void {
         $refusal = Self_Protection::cron_hook( $hook );
         if ( null !== $refusal ) {
             $ctx->out->error( $refusal );
         }
     }
-
-    
-
-
-
-
 
     private static function duplicate_recurring( array $events, int $now ): ?string {
         $seen = array();
@@ -408,10 +273,6 @@ class Cron_Adapter extends Command_Handler {
         }
         return null;
     }
-
-    
-
-
 
     private function refuse_duplicate_recurring( array $events, Context $ctx ): void {
         $hook = self::duplicate_recurring( $events, $this->now() );

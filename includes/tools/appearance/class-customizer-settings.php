@@ -1,108 +1,11 @@
 <?php
 namespace Easy_MCP_AI\Tools\Appearance;
 
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Customizer_Settings {
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const DENIED_REASONS = array(
         'nav_menu_locations' => 'Menu locations ("nav_menu_locations") cannot be changed with this tool. Assign menus to theme locations in wp-admin (Appearance → Menus → Manage Locations); the menus themselves are managed with wp_list_menus and wp_update_menu.',
@@ -110,26 +13,9 @@ final class Customizer_Settings {
         'custom_css'         => 'Additional CSS is not a theme mod. Use wp_get_custom_css and wp_update_custom_css.',
     );
 
-    
-
-
-
-
-
-
-
-
-
-
     const REGISTERED_ONLY_IN_SCREEN_HINT = 'If the setting appears in Appearance → Customize, the theme registers it only inside that screen and it cannot be changed through this tool.';
 
-    
     const VALID_KEY_LIST_LIMIT = 40;
-
-    
-
-
-
 
     const WP_DIE_HANDLER_FILTERS = array(
         'wp_die_handler',
@@ -140,91 +26,45 @@ final class Customizer_Settings {
         'wp_die_xml_handler',
     );
 
-    
     const WP_DIE_MESSAGE_LIMIT = 300;
 
-    
     const WHILE_LOADING = 'loading';
 
-    
     const WHILE_PUBLISHING = 'publishing';
-
-    
-
-
-
 
     const REFUSAL_TAILS = array(
         ' Nothing was changed: send this call in its own request.',
         ', so this tool cannot run on this site. Nothing was changed.',
     );
 
-    
     const MANAGER_FILE = 'class-wp-customize-manager.php';
 
-    
     const NO_CUSTOMIZER = 'This site has no Customizer (WordPress\'s Customizer files are missing), so theme mods and Additional CSS cannot be changed with these tools. Nothing was changed.';
 
-    
     private static $manager_factory = null;
 
-    
     private static $manager_built = false;
 
-    
     private static $request_before_save = null;
-
-    
-
-
-
 
     public static function reset_request_state(): void {
         self::$manager_built = false;
         self::restore_request();
     }
 
-    
-
-
-
-
-
     public static function set_manager_factory( ?callable $factory ): void {
         self::$manager_factory = $factory;
     }
 
-    
-
-
-
-
-
-
-
     public static function is_customizer_available(): bool {
         return null !== self::$manager_factory || is_readable( ABSPATH . WPINC . '/' . self::MANAGER_FILE );
     }
-
-    
-
-
-
-
-
 
     public static function base_of( string $key ): string {
         $key = str_replace( ']', '', $key );
         $pos = strpos( $key, '[' );
         return false === $pos ? $key : substr( $key, 0, $pos );
     }
-
-    
-
-
-
-
-
 
     public static function parse_key( $raw ): string {
         if ( ! is_string( $raw ) || '' === trim( $raw ) ) {
@@ -233,23 +73,10 @@ final class Customizer_Settings {
         return trim( $raw );
     }
 
-    
-
-
-
-
-
     public static function denied_reason( string $key ): ?string {
         $base = self::base_of( $key );
         return isset( self::DENIED_REASONS[ $base ] ) ? self::DENIED_REASONS[ $base ] : null;
     }
-
-    
-
-
-
-
-
 
     public static function assert_can_customize(): void {
         if ( ! current_user_can( 'customize' ) ) {
@@ -257,23 +84,12 @@ final class Customizer_Settings {
         }
     }
 
-    
-
-
-
-
-
-
-
     public static function with_manager( callable $fn ) {
         if ( isset( $GLOBALS['wp_customize'] ) && is_object( $GLOBALS['wp_customize'] ) ) {
             throw new \RuntimeException( 'This request is already running the Customizer (a preview or changeset request). Call the tool without Customizer parameters.' );
         }
         self::refuse_second_manager();
 
-        
-        
-        
         unset( $_POST['customized'], $_REQUEST['customized'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
         $had_global   = array_key_exists( 'wp_customize', $GLOBALS );
@@ -296,13 +112,6 @@ final class Customizer_Settings {
 
                 self::run_after_core_registration( $registered_before );
 
-                
-                
-                
-                
-                
-                
-                
                 if ( class_exists( '\WP_Customize_Setting', false ) && method_exists( '\WP_Customize_Setting', 'reset_aggregated_multidimensionals' ) ) {
                     \WP_Customize_Setting::reset_aggregated_multidimensionals();
                 }
@@ -315,11 +124,6 @@ final class Customizer_Settings {
 
             return $fn( $manager );
         } finally {
-            
-            
-            
-            
-            
             for ( $level = ob_get_level(); $level > $ob_level; $level-- ) {
                 try {
                     ob_end_clean();
@@ -337,24 +141,6 @@ final class Customizer_Settings {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_second_manager(): void {
         if ( self::$manager_built ) {
             throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error(
@@ -364,27 +150,6 @@ final class Customizer_Settings {
         }
         self::$manager_built = true;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function present_save_request( array $values ): void {
         if ( null === self::$request_before_save ) {
@@ -402,11 +167,6 @@ final class Customizer_Settings {
         $_REQUEST['customized'] = $customized;
     }
 
-    
-
-
-
-
     private static function restore_request(): void {
         if ( null === self::$request_before_save ) {
             return;
@@ -416,58 +176,15 @@ final class Customizer_Settings {
         self::$request_before_save = null;
     }
 
-    
-
-
-
-
     private static function current_filter_depth(): int {
         return isset( $GLOBALS['wp_current_filter'] ) && is_array( $GLOBALS['wp_current_filter'] ) ? count( $GLOBALS['wp_current_filter'] ) : 0;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function unwind_current_filter( int $depth ): void {
         if ( self::current_filter_depth() > $depth ) {
             array_splice( $GLOBALS['wp_current_filter'], $depth );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function trap_wp_die( string $while = self::WHILE_LOADING ): \Closure {
         $handler = static function ( $message, $title = '', $args = array() ) use ( $while ): void {
@@ -485,26 +202,11 @@ final class Customizer_Settings {
         return $filter;
     }
 
-    
-
-
-
-
-
     private static function release_wp_die( \Closure $filter ): void {
         foreach ( self::WP_DIE_HANDLER_FILTERS as $hook ) {
             remove_filter( $hook, $filter, PHP_INT_MAX );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function wp_die_refusal( $message, array $trace, string $while = self::WHILE_LOADING ): \Easy_MCP_AI\MCP\Detailed_Tool_Error {
         $text = '';
@@ -528,14 +230,6 @@ final class Customizer_Settings {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function cause_of( \Throwable $e ): string {
         $message = $e->getMessage();
         foreach ( self::REFUSAL_TAILS as $tail ) {
@@ -547,14 +241,6 @@ final class Customizer_Settings {
         $details = $e instanceof \Easy_MCP_AI\MCP\Detailed_Tool_Error ? trim( $e->get_details() ) : '';
         return '' === $details ? $message : $message . ' ' . $details;
     }
-
-    
-
-
-
-
-
-
 
     private static function wp_die_caller( array $trace ): string {
         foreach ( $trace as $i => $frame ) {
@@ -575,12 +261,6 @@ final class Customizer_Settings {
         return '';
     }
 
-    
-
-
-
-
-
     private static function code_roots(): array {
         $roots = array();
         if ( defined( 'WPMU_PLUGIN_DIR' ) ) {
@@ -595,20 +275,10 @@ final class Customizer_Settings {
         return $roots;
     }
 
-    
-
-
-
-
-
-
     private static function code_owner( string $file ): string {
         $normalize = static function ( string $path ): string {
             return trailingslashit( str_replace( '\\', '/', $path ) );
         };
-        
-        
-        
         $file = str_replace( '\\', '/', $file );
         foreach ( self::code_roots() as $label => $root ) {
             $resolved = realpath( $root );
@@ -621,12 +291,6 @@ final class Customizer_Settings {
         }
         return '';
     }
-
-    
-
-
-
-
 
     private static function customize_register_callbacks(): array {
         $out = array();
@@ -643,29 +307,6 @@ final class Customizer_Settings {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function run_after_core_registration( array $callbacks ): void {
         foreach ( $callbacks as $callback ) {
             if ( remove_action( 'customize_register', $callback[1], $callback[0] ) ) {
@@ -673,11 +314,6 @@ final class Customizer_Settings {
             }
         }
     }
-
-    
-
-
-
 
     private static function construct_manager(): \WP_Customize_Manager {
         if ( ! self::is_customizer_available() ) {
@@ -693,23 +329,9 @@ final class Customizer_Settings {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function resolve_writable_setting( object $manager, string $key ): object {
         $setting = $manager->get_setting( $key );
         if ( ! $setting ) {
-            
-            
-            
             $manager->add_dynamic_settings( array( $key ) );
             $setting = $manager->get_setting( $key );
         }
@@ -728,20 +350,10 @@ final class Customizer_Settings {
             throw new \InvalidArgumentException( sprintf( '"%s" is a Customizer setting of type "%s", not a theme mod, and cannot be changed with this tool.', $setting->id, $setting->type ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
-        
-        
         if ( 'WP_Customize_Filter_Setting' === get_class( $setting ) ) {
             throw new \InvalidArgumentException( sprintf( '"%s" is not stored by the Customizer on its own and cannot be changed with this tool.', $setting->id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
         if ( $setting->capability && ! current_user_can( $setting->capability ) ) {
             throw new \RuntimeException( sprintf( 'You do not have permission to change "%s" (it requires the "%s" capability).', $setting->id, is_array( $setting->capability ) ? implode( ', ', $setting->capability ) : $setting->capability ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -751,12 +363,6 @@ final class Customizer_Settings {
 
         return $setting;
     }
-
-    
-
-
-
-
 
     public static function editable_settings( object $manager ): array {
         $out = array();
@@ -779,13 +385,6 @@ final class Customizer_Settings {
         ksort( $out );
         return $out;
     }
-
-    
-
-
-
-
-
 
     public static function describe_editable( object $manager ): array {
         $settings = self::editable_settings( $manager );
@@ -828,22 +427,6 @@ final class Customizer_Settings {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function unknown_key_refusal( object $manager, string $key ): \Easy_MCP_AI\MCP\Detailed_Tool_Error {
         $ids      = array_keys( self::editable_settings( $manager ) );
@@ -888,15 +471,6 @@ final class Customizer_Settings {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function fit_message( string $format, string $key, string $theme ): string {
         $measure = static function ( $text ) {
             return strlen( class_exists( '\Easy_MCP_AI\Config' ) ? \Easy_MCP_AI\Config::brand( $text ) : $text );
@@ -910,19 +484,6 @@ final class Customizer_Settings {
         return $message;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function stored_value( object $setting ) {
         $data = $setting->id_data();
         $mods = get_theme_mods();
@@ -931,14 +492,6 @@ final class Customizer_Settings {
         }
         return self::walk( $mods[ $data['base'] ], $data['keys'] );
     }
-
-    
-
-
-
-
-
-
 
     private static function walk( $node, array $keys ) {
         foreach ( $keys as $k ) {
@@ -950,21 +503,9 @@ final class Customizer_Settings {
         return $node;
     }
 
-    
-
-
-
     public static function is_stored( object $setting ): bool {
         return null !== self::stored_value( $setting );
     }
-
-    
-
-
-
-
-
-
 
     public static function effective_value( object $setting ) {
         $data = $setting->id_data();
@@ -974,16 +515,6 @@ final class Customizer_Settings {
         $node = self::walk( get_theme_mod( $data['base'], null ), $data['keys'] );
         return null === $node ? $setting->default : $node;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function validate_value( object $manager, object $setting, $value ): void {
         $id = (string) $setting->id;
@@ -999,25 +530,11 @@ final class Customizer_Settings {
         );
         $validity   = isset( $validities[ $id ] ) ? $validities[ $id ] : true;
         if ( is_wp_error( $validity ) ) {
-            
-            
-            
-            
             $messages = array_filter( array_map( 'strval', $validity->get_error_messages() ) );
             $detail   = empty( $messages ) ? $validity->get_error_code() : implode( ' ', $messages );
             throw new \InvalidArgumentException( sprintf( 'WordPress rejected the value for "%s": %s', $id, html_entity_decode( wp_strip_all_tags( (string) $detail ), ENT_QUOTES, 'UTF-8' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function validate_and_save( object $manager, object $setting, $value ): void {
         $id = (string) $setting->id;
@@ -1028,40 +545,10 @@ final class Customizer_Settings {
 
         do_action( 'customize_save', $manager );
 
-        
-        
         if ( false === $setting->save() ) {
             throw new \RuntimeException( sprintf( 'WordPress did not save "%s" (the value was invalid after sanitizing, or the setting refused the write).', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function publish_changeset( object $manager, int $changeset_id, object $setting, array $values, bool &$saved = false ): bool {
         $data  = $setting->id_data();
@@ -1073,9 +560,6 @@ final class Customizer_Settings {
         };
         $hook  = 'customize_save_' . $data['base'];
 
-        
-        
-        
         $manager->unsanitized_post_values();
         self::present_save_request( $values );
 
@@ -1089,12 +573,6 @@ final class Customizer_Settings {
         }
         return $saved;
     }
-
-    
-
-
-
-
 
     public static function after_save( object $manager ): void {
         do_action( 'customize_save_after', $manager );

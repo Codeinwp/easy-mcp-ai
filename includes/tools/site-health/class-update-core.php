@@ -9,25 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Update_Core extends Base_Tool {
 
     use Lifecycle_Guard;
     use Package_Guard;
 
-    
     const CAPABILITY = 'update_core';
 
     public function get_name() {
@@ -66,7 +52,6 @@ class Update_Core extends Base_Tool {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -125,11 +110,9 @@ class Update_Core extends Base_Tool {
         $this->refuse_unless_may_update();
 
         $this->load_upgrader();
-        
         $this->refuse_unless_direct_filesystem( ABSPATH, 'the WordPress folder' );
         $this->raise_time_limit();
 
-        
         $installed = str_replace( '-src', '', $this->installed_wp_version() );
         $locale    = null === $request['locale'] ? (string) get_locale() : $request['locale'];
         $offers    = $this->core_update_offers();
@@ -163,14 +146,6 @@ class Update_Core extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
     private function refuse_unless_may_update(): void {
         $this->refuse_when_file_mods_are_off( 'WordPress cannot be updated' );
         if ( ! current_user_can( self::CAPABILITY ) ) {
@@ -179,30 +154,12 @@ class Update_Core extends Base_Tool {
         $this->refuse_unless_network_file_admin( 'manage_network_options', 'updating WordPress' );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_unmet_php( object $offer ): void {
         $needs_php = isset( $offer->php_version ) && is_string( $offer->php_version ) ? $offer->php_version : '';
         if ( '' !== $needs_php && version_compare( PHP_VERSION, $needs_php, '<' ) ) {
             throw new \RuntimeException( sprintf( 'WordPress %s requires PHP %s or higher; this server runs PHP %s. Nothing was changed.', (string) $offer->current, $needs_php, PHP_VERSION ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function run_core_upgrade( \WP_Ajax_Upgrader_Skin $skin, object $offer ): array {
         $upgrader = $this->new_core_upgrader( $skin );
@@ -219,15 +176,6 @@ class Update_Core extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private function unchanged_reason( $result ): ?string {
         if ( is_wp_error( $result ) ) {
             if ( 'up_to_date' === $result->get_error_code() ) {
@@ -243,13 +191,6 @@ class Update_Core extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     private function parse_request( array $arguments ): array {
         $version = self::version_argument( $arguments );
@@ -271,15 +212,6 @@ class Update_Core extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function version_argument( array $arguments ): string {
         if ( ! isset( $arguments['version'] ) ) {
             return 'latest';
@@ -298,13 +230,6 @@ class Update_Core extends Base_Tool {
         return str_replace( '-rc', '-RC', $version );
     }
 
-    
-
-
-
-
-
-
     private static function locale_argument( array $arguments ): ?string {
         if ( ! isset( $arguments['locale'] ) ) {
             return null;
@@ -316,29 +241,6 @@ class Update_Core extends Base_Tool {
         return trim( $raw );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function choose_offer( array $request, string $installed, string $locale, array $offers ) {
         if ( 'latest' === $request['version'] ) {
             return $this->latest_offer( $request['minor'], null !== $request['locale'], $installed, $locale, $offers );
@@ -346,22 +248,7 @@ class Update_Core extends Base_Tool {
         return self::requested_release( $request['version'], $installed, $locale, $offers );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function latest_offer( bool $minor, bool $explicit, string $installed, string $locale, array $offers ) {
-        
-        
-        
         if ( empty( $offers ) ) {
             throw new \RuntimeException( 'wordpress.org returned no update information for this site (the version check failed or was blocked), so nothing was changed. Try again later.' );
         }
@@ -382,17 +269,6 @@ class Update_Core extends Base_Tool {
         return array( $offer, 'wordpress.org update offer' );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function offer_pool( array $offers, bool $minor, string $installed ): array {
         $pool = array();
         foreach ( $offers as $offer ) {
@@ -407,31 +283,10 @@ class Update_Core extends Base_Tool {
         return $pool;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function installs_nothing_new( object $offer, string $installed ): bool {
         $current = isset( $offer->current ) ? (string) $offer->current : '';
         return ( isset( $offer->response ) && 'latest' === $offer->response ) || '' === $current || version_compare( $current, $installed, '<=' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function requested_release( string $version, string $installed, string $locale, array $offers ) {
         if ( 'nightly' !== $version ) {
@@ -449,15 +304,6 @@ class Update_Core extends Base_Tool {
         return array( self::archive_offer( $version, $locale ), 'wordpress.org release archive' );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function listed_offer( string $version, string $locale, array $offers ): ?object {
         foreach ( $offers as $offer ) {
             if ( isset( $offer->current, $offer->locale ) && $version === (string) $offer->current && $locale === (string) $offer->locale && ( ! isset( $offer->response ) || 'latest' !== $offer->response ) ) {
@@ -466,14 +312,6 @@ class Update_Core extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private static function archive_offer( string $version, string $locale ): object {
         $package = self::download_url( $version, 'nightly' === $version ? 'en_US' : $locale );
@@ -497,16 +335,6 @@ class Update_Core extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function offer_in_locale( array $pool, string $locale, bool $explicit ): ?object {
         $wanted = $explicit ? array( $locale ) : array_unique( array( $locale, 'en_US' ) );
         foreach ( $wanted as $code ) {
@@ -519,12 +347,6 @@ class Update_Core extends Base_Tool {
         return $explicit ? null : reset( $pool );
     }
 
-    
-
-
-
-
-
     private function locales_of( array $pool ): array {
         $codes = array();
         foreach ( $pool as $offer ) {
@@ -535,14 +357,6 @@ class Update_Core extends Base_Tool {
         return array_values( array_unique( $codes ) );
     }
 
-    
-
-
-
-
-
-
-
     private function is_patch_release( string $candidate, string $installed ): bool {
         if ( ! version_compare( $candidate, $installed, '>' ) ) {
             return false;
@@ -551,21 +365,6 @@ class Update_Core extends Base_Tool {
         $new  = explode( '.', explode( '-', $candidate )[0] );
         return isset( $have[1], $new[1] ) && $have[0] === $new[0] && $have[1] === $new[1];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function download_url( string $version, string $locale ): string {
         if ( 'nightly' === $version ) {
@@ -579,12 +378,6 @@ class Update_Core extends Base_Tool {
         return 'https://' . $subdomain . 'wordpress.org/wordpress-' . $version . $suffix . '.zip';
     }
 
-    
-
-
-
-
-
     private function unchanged( string $installed, string $locale, string $reason ): array {
         return array(
             'changed'     => false,
@@ -595,19 +388,12 @@ class Update_Core extends Base_Tool {
         );
     }
 
-    
     protected function installed_wp_version(): string {
         if ( function_exists( 'wp_get_wp_version' ) ) {
             return (string) wp_get_wp_version();
         }
         return isset( $GLOBALS['wp_version'] ) ? (string) $GLOBALS['wp_version'] : '';
     }
-
-    
-
-
-
-
 
     protected function core_update_offers(): array {
         if ( ! function_exists( 'wp_version_check' ) ) {
@@ -620,12 +406,6 @@ class Update_Core extends Base_Tool {
         }
         return array_values( array_filter( $from_api->updates, 'is_object' ) );
     }
-
-    
-
-
-
-
 
     protected function new_core_upgrader( \WP_Ajax_Upgrader_Skin $skin ): object {
         return new \Core_Upgrader( $skin );

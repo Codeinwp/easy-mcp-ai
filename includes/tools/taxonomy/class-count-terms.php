@@ -62,21 +62,6 @@ class Count_Terms extends Base_Tool {
         return array( 'taxonomy' => $taxonomy, 'total' => (int) $count );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function require_countable( string $taxonomy ): void {
         $tax_obj = get_taxonomy( $taxonomy );
         if ( ! empty( $tax_obj->public ) || ! empty( $tax_obj->show_in_rest ) ) {
@@ -89,17 +74,6 @@ class Count_Terms extends Base_Tool {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function holds( string $cap ): bool {
         if ( 'manage_links' === $cap ) {

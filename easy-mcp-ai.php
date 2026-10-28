@@ -3,7 +3,7 @@
  * Plugin Name: Easy MCP AI - Connector for Claude, ChatGPT & SEO Data
  * Plugin URI:  https://easymcpai.com
  * Description: Connect Claude, ChatGPT & any AI to WordPress. Manage your entire site by chat — content, media, GA4, Search Console, SEO & more. 243 tools. Free.
- * Version:     2.3.0
+ * Version:     2.3.1
  * Author:      EasyMCPAI
  * Author URI:  https://easymcpai.com/
  * License:     GPL-2.0-or-later
@@ -20,76 +20,22 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 require_once __DIR__ . '/includes/class-autoloader.php';
 Easy_MCP_AI\Autoloader::register();
 
-
 require_once __DIR__ . '/includes/functions.php';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 $GLOBALS['easy_mcp_ai_ini_memory_limit'] = ini_get( 'memory_limit' );
-
-
-
-
-
-
-
-
-
-
-
 
 if ( isset( $_SERVER['REQUEST_URI'] ) ) {
     $easy_mcp_ai_req = (string) $_SERVER['REQUEST_URI']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- read-only path match, not stored/output.
     $easy_mcp_ai_own = (
         false !== strpos( $easy_mcp_ai_req, '/.well-known/oauth-' )
         || false !== strpos( $easy_mcp_ai_req, '/.well-known/openid-configuration' )
-        
-        
-        
-        
-        
         || false !== strpos( $easy_mcp_ai_req, '/easy-mcp-ai/v1/' )
         || false !== strpos( $easy_mcp_ai_req, 'easy_mcp_ai_oauth=' )
-        
-        
         || false !== strpos( $easy_mcp_ai_req, '/easy-mcp-ai/authorize' )
     );
-
-    
-
-
-
-
-
-
 
     if ( ! $easy_mcp_ai_own ) {
         $easy_mcp_ai_path   = rtrim( (string) wp_parse_url( $easy_mcp_ai_req, PHP_URL_PATH ), '/' );
@@ -102,47 +48,6 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
         );
         unset( $easy_mcp_ai_path, $easy_mcp_ai_method, $easy_mcp_ai_ctype );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     if ( ! $easy_mcp_ai_own
         && (
@@ -158,34 +63,6 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
         unset( $easy_mcp_ai_decoded );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     if ( ! $easy_mcp_ai_own
         && isset( $_SERVER['REQUEST_METHOD'] )
         && 'POST' === strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- read-only comparison.
@@ -196,10 +73,6 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput -- read-only substring match; nothing is acted on, stored or output.
         $easy_mcp_ai_rt = (string) $_POST['redirect_to'];
 
-        
-        
-        
-        
         foreach ( array( $easy_mcp_ai_rt, rawurldecode( $easy_mcp_ai_rt ) ) as $easy_mcp_ai_candidate ) {
             if ( false !== strpos( $easy_mcp_ai_candidate, '/easy-mcp-ai/v1/' )
                 || false !== strpos( $easy_mcp_ai_candidate, 'easy_mcp_ai_oauth=' ) ) {
@@ -214,27 +87,6 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
         @ini_set( 'display_errors', '0' ); // phpcs:ignore WordPress.PHP.IniSet.display_errors_Disallowed, PluginCheck.CodeAnalysis.PHPErrorReporting.IniDirectiveDisplay_errors, WordPress.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- Intentional & request-scoped: stop other plugins' PHP notices from corrupting our OAuth/MCP JSON responses. Suppresses display only (logging unaffected).
         @ini_set( 'display_startup_errors', '0' ); // phpcs:ignore WordPress.PHP.IniSet.Risky, WordPress.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- See above; display suppression only, scoped to our own JSON endpoints.
 
-        
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
         $GLOBALS['easy_mcp_ai_server_had_auth_header'] = ! empty( $_SERVER['HTTP_AUTHORIZATION'] );
 
         if ( empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
@@ -244,18 +96,6 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
                 if ( null !== $easy_mcp_ai_bearer ) {
                     $_SERVER['HTTP_AUTHORIZATION'] = $easy_mcp_ai_bearer;
                 } elseif ( ! isset( $_SERVER['PHP_AUTH_USER'] ) && ! isset( $_SERVER['PHP_AUTH_PW'] ) ) {
-                    
-
-
-
-
-
-
-
-
-
-
-
                     $easy_mcp_ai_basic = Easy_MCP_AI\Auth_Header::recover_basic_api_key( $easy_mcp_ai_hdrs );
                     if ( null !== $easy_mcp_ai_basic ) {
                         $_SERVER['HTTP_AUTHORIZATION'] = $easy_mcp_ai_basic;
@@ -270,27 +110,11 @@ if ( isset( $_SERVER['REQUEST_URI'] ) ) {
     unset( $easy_mcp_ai_req, $easy_mcp_ai_own );
 }
 
-define( 'EASY_MCP_AI_VERSION', '2.3.0' );
+define( 'EASY_MCP_AI_VERSION', '2.3.1' );
 define( 'EASY_MCP_AI_PLUGIN_FILE', __FILE__ );
 define( 'EASY_MCP_AI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'EASY_MCP_AI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'EASY_MCP_AI_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 $easy_mcp_ai_autoload = EASY_MCP_AI_PLUGIN_DIR . 'vendor/autoload.php';
 if ( is_readable( $easy_mcp_ai_autoload ) ) {

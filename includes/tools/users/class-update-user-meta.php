@@ -87,10 +87,6 @@ class Update_User_Meta extends Base_Tool {
         if ( 'json' === $format ) {
             $value = self::decode_json_value( $value );
         }
-        
-        
-        
-        
         $slash = ( 'json' === $format || 'add' === $mode );
 
         $before = self::meta_rows( $user_id, $key );
@@ -101,14 +97,6 @@ class Update_User_Meta extends Base_Tool {
         return self::update_rows( $user_id, $key, $value, $slash, $before );
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_unless_editable( int $user_id ): void {
         if ( ! get_userdata( $user_id ) ) {
             throw new \InvalidArgumentException( 'User not found.' );
@@ -118,16 +106,6 @@ class Update_User_Meta extends Base_Tool {
             throw new \RuntimeException( 'You do not have permission to edit this user.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function writable_key( $raw ): string {
         $key = sanitize_text_field( (string) $raw );
@@ -155,14 +133,6 @@ class Update_User_Meta extends Base_Tool {
         return $key;
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_protected_key( string $key ): void {
         if ( ! current_user_can( 'manage_options' ) ) {
             throw new \RuntimeException( 'Protected meta keys require administrator privileges.' );
@@ -173,26 +143,10 @@ class Update_User_Meta extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private static function meta_rows( int $user_id, string $key ): array {
         $rows = get_user_meta( $user_id, $key );
         return is_array( $rows ) ? $rows : array();
     }
-
-    
-
-
-
-
-
-
-
 
     private static function add_row( int $user_id, string $key, $value, array $before ): array {
         $meta_id = add_user_meta( $user_id, $key, wp_slash( $value ), false );
@@ -208,17 +162,6 @@ class Update_User_Meta extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function update_rows( int $user_id, string $key, $value, bool $slash, array $before ): array {
         $result    = update_user_meta( $user_id, $key, $slash ? wp_slash( $value ) : $value );
         $after     = self::meta_rows( $user_id, $key );
@@ -232,15 +175,6 @@ class Update_User_Meta extends Base_Tool {
             'unchanged' => $unchanged,
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function decode_json_value( $value ) {
         if ( ! is_string( $value ) ) {
@@ -256,35 +190,11 @@ class Update_User_Meta extends Base_Tool {
         return $decoded;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function is_unchanged( $result, array $before, $stored ): bool {
         return false === $result && 1 === count( $before ) && self::same_meta_value( reset( $before ), $stored );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function same_meta_value( $stored, $sent ): bool {
-        
-        
-        
         if ( is_bool( $sent ) || null === $sent ) {
             $sent = $sent ? '1' : '';
         }

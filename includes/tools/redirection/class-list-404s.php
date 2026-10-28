@@ -11,11 +11,6 @@ class List_404s extends Base_Tool {
 
     use Redirection_Rest;
 
-    
-
-
-
-
     const GROUP_BY = array( 'url', 'ip', 'agent' );
 
     public function get_name() {
@@ -119,12 +114,6 @@ class List_404s extends Base_Tool {
         return array_merge( array( 'entries' => array_map( array( __CLASS__, 'entry' ), $rows ) ), $paging );
     }
 
-    
-
-
-
-
-
     private function group_by( array $arguments ): ?string {
         $group_by = null;
         if ( isset( $arguments['group_by'] ) && '' !== $arguments['group_by'] ) {
@@ -136,18 +125,10 @@ class List_404s extends Base_Tool {
             throw new \InvalidArgumentException( 'orderby "count" needs group_by: only grouped rows have a count.' );
         }
         if ( null !== $group_by && '' !== $orderby && 'count' !== $orderby ) {
-            
-            
             throw new \InvalidArgumentException( sprintf( 'orderby "%s" cannot be used with group_by: grouped rows are ordered by their count. Leave orderby out, or send "count".', is_scalar( $orderby ) ? (string) $orderby : gettype( $orderby ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $group_by;
     }
-
-    
-
-
-
-
 
     private static function filters( array $arguments ): array {
         $filters = array();
@@ -159,12 +140,6 @@ class List_404s extends Base_Tool {
         }
         return empty( $filters ) ? array() : array( 'filterBy' => $filters );
     }
-
-    
-
-
-
-
 
     private static function entry( array $row ): array {
         return array(

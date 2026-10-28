@@ -7,15 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class List_Shipping_Classes extends Base_Tool {
 
     use Store_Setup;
 
-    
     const PER_PAGE = 100;
 
     public function get_name() {

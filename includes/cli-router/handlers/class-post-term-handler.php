@@ -12,57 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Term_Handler extends Terms_Command {
 
-    
     protected $obj_type = 'post';
 
-    
     private $post = null;
 
     const MSG_ASSIGN_CAP = "Sorry, you are not allowed to do this: wp_cli_run needs the assign_term capability for term %d ('%s') in '%s'.";
-
-    
-
-
-
-
 
     public function preflight_ids( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
@@ -72,16 +28,6 @@ final class Post_Term_Handler extends Terms_Command {
         }
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     protected function get_object_type(): string {
         if ( null === $this->post ) {
             $this->post = Fetchers::of( 'post' )->get_check( $this->get_obj_id(), $this->ctx->out );
@@ -90,42 +36,18 @@ final class Post_Term_Handler extends Terms_Command {
         return (string) $this->post->post_type;
     }
 
-    
     protected function object_taxonomies( string $object_type ): array {
         return array_values( array_map( 'strval', (array) \get_object_taxonomies( $object_type ) ) );
     }
 
-    
-
-
-
-
-
-
-
     protected function get_object_terms( $object_id, array $taxonomies, array $args ) {
-        
         return \wp_get_object_terms( (int) $object_id, 1 === count( $taxonomies ) ? (string) reset( $taxonomies ) : $taxonomies, $args );
     }
-
-    
-
-
-
 
     protected function term_slug_by_id( $term_id, string $taxonomy ): ?string {
         $term = Fetchers::term_by( 'id', $term_id, $taxonomy );
         return $term ? (string) $term->slug : null;
     }
-
-    
-
-
-
-
-
-
-
 
     protected function set_object_terms( $object_id, $terms, string $taxonomy, bool $append ) {
         foreach ( (array) $terms as $term ) {
@@ -136,15 +58,6 @@ final class Post_Term_Handler extends Terms_Command {
         }
         return \wp_set_object_terms( (int) $object_id, $terms, $taxonomy, $append );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function remove_object_terms( $object_id, array $terms, string $taxonomy ) {
         $remove = array();
@@ -157,13 +70,6 @@ final class Post_Term_Handler extends Terms_Command {
         return $this->write_remaining( (int) $object_id, $taxonomy, $remove );
     }
 
-    
-
-
-
-
-
-
     protected function delete_object_term_relationships( $object_id, string $taxonomy ) {
         $remove = array();
         $terms  = \wp_get_object_terms( (int) $object_id, $taxonomy );
@@ -172,17 +78,6 @@ final class Post_Term_Handler extends Terms_Command {
         }
         return $this->write_remaining( (int) $object_id, $taxonomy, $remove );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     private function write_remaining( int $object_id, string $taxonomy, array $remove ) {
         $current = \wp_get_object_terms( $object_id, $taxonomy );
@@ -205,12 +100,6 @@ final class Post_Term_Handler extends Terms_Command {
         $result = \wp_set_object_terms( $object_id, $remaining, $taxonomy, false );
         return ( function_exists( 'is_wp_error' ) && \is_wp_error( $result ) ) ? $result : true;
     }
-
-    
-
-
-
-
 
     private function require_assign( int $term_id, string $taxonomy, string $name = '' ): void {
         if ( ! \current_user_can( 'assign_term', $term_id ) ) {

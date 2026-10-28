@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Tools\ACF;
 
 use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
@@ -14,17 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 trait Acf_Rest_Tool {
-
-    
-
 
     protected function require_acf() {
         if ( ! class_exists( 'ACF' ) ) {
@@ -32,32 +17,9 @@ trait Acf_Rest_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     protected function acf_post_base( $value ): string {
         return Post_Type_Rest_Base::resolve( $this->validate_rest_route_segment( $value, 'post_type' ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function acf_post_route( string $base, int $post_id, string $verb ): string {
         if ( null === Post_Type_Rest_Base::served_type( $base ) ) {
@@ -65,17 +27,6 @@ trait Acf_Rest_Tool {
         }
         return self::post_type_route( $base, $post_id, 'get' === $verb ? 'GET' : 'POST' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function not_a_post_type( string $base, int $id, string $verb ): string {
         if ( 0 === strcasecmp( 'users', $base ) ) {
@@ -94,14 +45,6 @@ trait Acf_Rest_Tool {
         return Post_Type_Tool_Hint::not_a_post_type( $base );
     }
 
-    
-
-
-
-
-
-
-
     private static function is_taxonomy_base( string $base ): bool {
         if ( ! function_exists( 'get_taxonomies' ) ) {
             return false;
@@ -118,14 +61,6 @@ trait Acf_Rest_Tool {
         return false;
     }
 
-    
-
-
-
-
-
-
-
     protected function acf_read( $type, $id, $route ) {
         $call = Acf_Rest_Call::run(
             function () use ( $route ) {
@@ -139,15 +74,6 @@ trait Acf_Rest_Tool {
         return array( 'acf_fields' => $call['data']['acf'] ?? array() )
             + Acf_Rest_Call::read_report( $call['data'], $call['opened'], $type );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function acf_write( $type, $id, $route, array $fields ) {
         $call = Acf_Rest_Call::run(

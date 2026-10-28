@@ -7,14 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Get_Term extends Base_Tool {
 
     public function get_name() {
@@ -30,9 +22,6 @@ class Get_Term extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
         return 'read';
     }
 
@@ -84,8 +73,6 @@ class Get_Term extends Base_Tool {
             throw new \InvalidArgumentException( 'Term not found.' );
         }
 
-        
-        
         $url = get_term_link( $term );
 
         return array(

@@ -31,45 +31,22 @@ class Change_Context {
         self::$active = false;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function note_recorded_fields( $type, $id, array $fields = array() ) {
         if ( ! self::$active ) {
             return;
         }
         $key = (string) $type . ':' . (string) $id;
         $cur = self::$data['_recorded_fields'][ $key ] ?? array();
-        
-        
-        
-        
         self::$data['_recorded_fields'][ $key ] = array_values( array_unique( array_merge( $cur, array_map( 'strval', $fields ) ) ) );
     }
-
-    
-
-
 
     public static function object_was_recorded( $type, $id ) {
         return isset( self::$data['_recorded_fields'][ (string) $type . ':' . (string) $id ] );
     }
 
-    
     public static function recorded_fields( $type, $id ) {
         return self::$data['_recorded_fields'][ (string) $type . ':' . (string) $id ] ?? array();
     }
-
-    
-
-
-
 
     public static function increment_rows_written() {
         if ( ! self::$active ) {
@@ -82,33 +59,12 @@ class Change_Context {
         return (int) ( self::$data['_rows_written'] ?? 0 );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function expect_refresh_only( $type, $id ) {
         if ( ! self::$active ) {
             return;
         }
         self::$data['_refresh_only'][ (string) $type . ':' . (string) $id ] = true;
     }
-
-    
-
-
-
-
-
 
     public static function consume_refresh_only( $type, $id ) {
         $key = (string) $type . ':' . (string) $id;
@@ -119,30 +75,12 @@ class Change_Context {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function expect_scoped_option( $name, array $path ) {
         if ( ! self::$active ) {
             return;
         }
         self::$data['_scoped_option'][ (string) $name ] = array_map( 'strval', array_values( $path ) );
     }
-
-    
-
-
-
-
 
     public static function consume_scoped_option( $name ) {
         $name = (string) $name;
@@ -154,26 +92,6 @@ class Change_Context {
         return $path;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function note_prior_roles( $user_id, array $roles ) {
         if ( ! self::$active ) {
             return;
@@ -181,7 +99,6 @@ class Change_Context {
         self::$data['_prior_roles'][ (int) $user_id ] = array_values( $roles );
     }
 
-    
     public static function prior_roles( $user_id ) {
         return self::$data['_prior_roles'][ (int) $user_id ] ?? null;
     }

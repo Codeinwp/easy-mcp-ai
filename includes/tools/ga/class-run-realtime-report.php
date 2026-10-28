@@ -125,9 +125,6 @@ class Run_Realtime_Report extends Base_Tool {
             $data = GA_Client::post( "https://analyticsdata.googleapis.com/v1beta/{$property}:runRealtimeReport", $body );
         } catch ( \Exception $e ) {
             $msg = $e->getMessage();
-            
-            
-            
             if ( false !== stripos( $msg, 'minuteRange' ) || false !== stripos( $msg, 'minute_range' ) ) {
                 $msg .= ' (Hint: standard GA4 properties limit startMinutesAgo to 29. Only GA 360 supports up to 59.)';
             }

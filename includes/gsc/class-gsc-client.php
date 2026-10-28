@@ -20,16 +20,6 @@ class GSC_Client extends Abstract_Google_Client {
         return 'Google Search Console';
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function validate_site_url( string $value ): string {
         $trimmed = trim( $value );
         if ( '' === $trimmed ) {
@@ -40,14 +30,6 @@ class GSC_Client extends Abstract_Google_Client {
         }
         return $trimmed;
     }
-
-    
-
-
-
-
-
-
 
     public static function request( string $method, string $url, ?array $body = null, bool $admin_context = false ): array {
         $scheme = \wp_parse_url( $url, PHP_URL_SCHEME );
@@ -70,8 +52,6 @@ class GSC_Client extends Abstract_Google_Client {
                 'Content-Type'  => 'application/json',
             ),
             'timeout'             => 20,
-            
-            
             'limit_response_size' => 8388608,
         );
         if ( null !== $body ) {
@@ -130,7 +110,6 @@ class GSC_Client extends Abstract_Google_Client {
     public static function default_site_url(): string {
         $url = (string) \Easy_MCP_AI\Config::get( self::OPTION_SITE_URL, '' );
         if ( empty( $url ) && in_array( \Easy_MCP_AI\Config::constant_name( self::OPTION_SITE_URL ), \Easy_MCP_AI\Config_Admin::invalid_settings(), true ) ) {
-            
             throw new \RuntimeException(
                 'No site_url provided, and EASY_MCP_AI_GSC_DEFAULT_SITE_URL is not a valid Search Console property. Set it to a URL-prefix property (https://example.com/) or a domain property (sc-domain:example.com), or pass site_url.'
             );

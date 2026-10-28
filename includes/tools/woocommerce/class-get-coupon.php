@@ -7,23 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Get_Coupon extends Base_Tool {
 
     public function get_name() {

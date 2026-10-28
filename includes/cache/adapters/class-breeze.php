@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,30 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Breeze extends Cache_Adapter {
 
-    
     const CDN_CONSTANTS = array( 'CDN_SITE_ID', 'CDN_SITE_TOKEN' );
 
     public function id(): string {
@@ -90,15 +63,6 @@ final class Breeze extends Cache_Adapter {
         return true !== $calls->call( 'is_main_site' ) && filter_var( $calls->get_option( 'breeze_inherit_settings', '0' ), FILTER_VALIDATE_BOOLEAN );
     }
 
-    
-
-
-
-
-
-
-
-
     public function purge( Purge_Request $request ): Layer_Result {
         if ( $this->request_widens_to_network() ) {
             return $this->skip( 'network_scope', 'This request carries Breeze\'s is-network flag or a network-admin referer, which would make Breeze purge every site of the network.' );
@@ -128,12 +92,6 @@ final class Breeze extends Cache_Adapter {
         return $this->sent( sprintf( 'Breeze cleared %d post(s) with their related pages.', count( $request->post_ids ) ) );
     }
 
-    
-
-
-
-
-
     private function cloudflare_on(): bool {
         $calls = $this->calls();
         if ( ! $calls->class_exists( 'Breeze_CloudFlare_Helper' ) ) {
@@ -146,13 +104,6 @@ final class Breeze extends Cache_Adapter {
         }
         return true;
     }
-
-    
-
-
-
-
-
 
     private function request_widens_to_network(): bool {
         $calls = $this->calls();

@@ -1,5 +1,4 @@
 <?php
-
 namespace Easy_MCP_AI;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -9,23 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Config_Admin {
     public static function register() {
         \add_action( 'admin_init', array( __CLASS__, 'guard_page' ), 0 );
-        
-        
         \add_action( 'admin_head', array( __CLASS__, 'hide_menus' ), PHP_INT_MAX );
         \add_action( 'admin_notices', array( __CLASS__, 'invalid_notice' ) );
         \add_filter( 'all_plugins', array( __CLASS__, 'plugin_rows' ) );
         \add_filter( 'gettext_easy-mcp-ai', array( __CLASS__, 'brand_text' ), 10, 2 );
         \add_filter( 'ngettext_easy-mcp-ai', array( __CLASS__, 'brand_text' ), 10, 2 );
-        
         foreach ( Config::settings() as $suffix => $spec ) {
             $option = 'easy_mcp_ai_' . $suffix;
             \add_filter( 'pre_update_option_' . $option, static function ( $value, $old ) use ( $option ) {
-                
-                
-                
-                
-                
-                
                 if ( \doing_action( 'activate_' . EASY_MCP_AI_PLUGIN_BASENAME ) ) {
                     return $value;
                 }
@@ -43,13 +33,6 @@ class Config_Admin {
         return Config::brand( $translated );
     }
 
-    
-
-
-
-
-
-
     public static function is_plugin_page( $slug ) {
         if ( 'easy-mcp-ai' === $slug || 0 === strpos( $slug, 'easy-mcp-ai-' ) ) {
             return true;
@@ -58,8 +41,6 @@ class Config_Admin {
     }
 
     public static function guard_page() {
-        
-        
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing.
         $page = isset( $_GET['page'] ) && is_string( $_GET['page'] ) ? \plugin_basename( \wp_unslash( $_GET['page'] ) ) : '';
         if ( true === Config::get( 'hide_admin' ) && self::is_plugin_page( $page ) ) {
@@ -71,7 +52,6 @@ class Config_Admin {
         if ( ! Config::get( 'hide_admin' ) ) {
             return;
         }
-        
         \remove_menu_page( 'easy-mcp-ai' );
         global $submenu;
         foreach ( (array) $submenu as $parent => $items ) {
@@ -90,7 +70,6 @@ class Config_Admin {
         return $plugins;
     }
 
-    
     public static function field_start( $option ) {
         if ( ! Config::is_locked( $option ) ) {
             return;

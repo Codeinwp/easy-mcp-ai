@@ -1,72 +1,24 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Compat;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Elementor_Abilities extends Vendor_Abilities {
 
-    
     const GROUP = 'elementor';
 
-    
     const MODULE_CLASS = 'Elementor\\Modules\\Mcp\\Module';
 
-    
     const CATEGORY = 'elementor';
 
-    
     const PREFIX = 'elementor/';
 
-    
     const VENDOR = 'Elementor';
 
-    
     const ENABLE_PENDING_OPTION = 'easy_mcp_ai_elementor_enable_pending';
-
-    
-
-
-
-
 
     public static function register_abilities( string $class = self::MODULE_CLASS ): void {
         if ( ! self::active() || ! function_exists( 'wp_has_ability_category' ) || ! function_exists( 'wp_get_abilities' ) ) {

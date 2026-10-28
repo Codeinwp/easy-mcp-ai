@@ -10,38 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Theme_Mod_Handler extends Command_Handler {
 
     const MASK = '[REDACTED]';
@@ -52,35 +20,19 @@ class Theme_Mod_Handler extends Command_Handler {
 
     const NOT_CAPTURED = 'Theme mods live in the theme_mods_<theme> option, which change history records only while it records every option (not in allowlist mode); wp_history_apply cannot restore it.';
 
-    
     const TOOL = 'wp_delete_theme_mod';
 
     const REFUSE_TOOL = "'wp theme mod remove' would remove the Customizer settings %s, which the wp_delete_theme_mod tool changes, and this connection cannot use it: the tool is switched off, not granted to this API key or OAuth grant, or needs a capability your WordPress user lacks.";
 
-    
-
-
-
-
     public function get( Invocation $inv, Context $ctx ): void {
         $this->get_mods( array_values( array_map( 'strval', $inv->args ) ), $inv->assoc, $ctx );
     }
-
-    
-
-
-
 
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc        = $inv->assoc;
         $assoc['all'] = 1;
         $this->get_mods( array(), $assoc, $ctx );
     }
-
-    
-
-
-
 
     public function remove( Invocation $inv, Context $ctx ): void {
         $args = array_values( array_map( 'strval', $inv->args ) );
@@ -103,14 +55,6 @@ class Theme_Mod_Handler extends Command_Handler {
         self::remove_named( $args, $ctx );
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_owned_without_tool( Invocation $inv, Context $ctx, array $args ): void {
         $removed = Read_Value::flag( $inv->assoc, 'all' ) ? array_map( 'strval', array_keys( (array) Theme_Handler::wp( 'theme_mods' ) ) ) : $args;
         $owned   = $removed ? array_values( (array) Theme_Handler::wp( 'customizer_owned', array( array_values( array_unique( $removed ) ) ) ) ) : array();
@@ -118,13 +62,6 @@ class Theme_Mod_Handler extends Command_Handler {
             $ctx->out->error( sprintf( self::REFUSE_TOOL, "'" . implode( "', '", array_map( 'strval', $owned ) ) . "'" ) );
         }
     }
-
-    
-
-
-
-
-
 
     private static function remove_named( array $args, Context $ctx ): void {
         $not_stored = array();
@@ -147,16 +84,6 @@ class Theme_Mod_Handler extends Command_Handler {
         $ctx->out->success( sprintf( $success_message, $count ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function delegates_remove( Invocation $inv ): bool {
         $args = array_values( array_unique( array_map( 'strval', $inv->args ) ) );
         if ( Read_Value::flag( $inv->assoc, 'all' ) || ! $args ) {
@@ -170,13 +97,6 @@ class Theme_Mod_Handler extends Command_Handler {
         return ! class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' )
             || false !== \Easy_MCP_AI\MCP\Server::current_call_may_use( self::TOOL );
     }
-
-    
-
-
-
-
-
 
     public function describe_remove( Invocation $inv ): array {
         $mods  = (array) Theme_Handler::wp( 'theme_mods' );
@@ -200,13 +120,6 @@ class Theme_Mod_Handler extends Command_Handler {
         return $lines ? $lines : array( 'No theme mod named → nothing changes' );
     }
 
-    
-
-
-
-
-
-
     private function get_mods( array $args, array $assoc, Context $ctx ): void {
         if ( ! Read_Value::flag( $assoc, 'all' ) && empty( $args ) ) {
             $ctx->out->error( 'You must specify at least one mod or use --all.' );
@@ -221,14 +134,12 @@ class Theme_Mod_Handler extends Command_Handler {
             $mods = array();
         }
         foreach ( $mods as $k => $v ) {
-            
             if ( ! empty( $args ) && ! in_array( $k, $args, true ) ) {
                 continue;
             }
             $list = array_merge( $list, self::mod_rows( $k, $v, $ctx ) );
         }
 
-        
         foreach ( $args as $mod ) {
             if ( ! isset( $mods[ $mod ] ) ) {
                 $list[] = array(
@@ -240,17 +151,6 @@ class Theme_Mod_Handler extends Command_Handler {
 
         $this->formatter( $ctx, $assoc, array( 'key', 'value' ), 'thememods' )->display_items( $list );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function mod_rows( $key, $value, Context $ctx ): array {
         $secret = Option_Handler::key_is_secret( (string) $key );
@@ -287,11 +187,6 @@ class Theme_Mod_Handler extends Command_Handler {
         return $rows;
     }
 
-    
-
-
-
-
     private static function preview( string $key, $value ): string {
         if ( Option_Handler::key_is_secret( $key ) ) {
             return self::MASK;
@@ -299,14 +194,6 @@ class Theme_Mod_Handler extends Command_Handler {
         $json = (string) json_encode( self::mask_nested( $value, $key, null ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR );
         return strlen( $json ) > 200 ? substr( $json, 0, 197 ) . '...' : $json;
     }
-
-    
-
-
-
-
-
-
 
     private static function mask_nested( $value, string $path, ?Context $ctx ) {
         if ( ! is_array( $value ) ) {

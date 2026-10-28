@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class Rest_Read extends Rest_Route_Tool {
 
     public function get_name() {

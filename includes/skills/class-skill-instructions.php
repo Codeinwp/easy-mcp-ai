@@ -1,22 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,21 +10,7 @@ final class Skill_Instructions {
 
     const MAX_LENGTH = 2000;
 
-    
     const DESCRIPTION_LENGTH = 100;
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function build( Skill_Set $served, bool $can_use_tool, string $base, int $reserve = 0 ): string {
         if ( $served->is_empty() ) {

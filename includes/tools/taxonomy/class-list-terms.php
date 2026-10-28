@@ -7,23 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 class List_Terms extends Base_Tool {
 
-    
     const META_COMPARE = array( '=', '!=', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'EXISTS', 'NOT EXISTS', 'REGEXP', 'NOT REGEXP', 'RLIKE' );
 
-    
     const QUERY_ORDERBY = array( 'parent', 'term_taxonomy_id', 'none', 'meta_value', 'meta_value_num' );
 
     public function get_name() {
@@ -39,9 +26,6 @@ class List_Terms extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
         return 'read';
     }
 
@@ -182,10 +166,6 @@ class List_Terms extends Base_Tool {
 
         $params = $this->basic_params( $arguments );
 
-        
-        
-        
-        
         $query_args = $this->term_query_args( $arguments, $tax_obj, $taxonomy );
 
         $this->apply_orderby( $arguments, $params, $query_args );
@@ -224,15 +204,6 @@ class List_Terms extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function listable_taxonomy( string $taxonomy ): object {
         $tax_obj = get_taxonomy( $taxonomy );
         if ( ! $tax_obj ) {
@@ -252,13 +223,6 @@ class List_Terms extends Base_Tool {
         }
         return $tax_obj;
     }
-
-    
-
-
-
-
-
 
     private function basic_params( array $arguments ): array {
         $params = array();
@@ -281,18 +245,6 @@ class List_Terms extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function apply_orderby( array $arguments, array &$params, array &$query_args ): void {
         if ( empty( $arguments['orderby'] ) ) {
             return;
@@ -305,21 +257,8 @@ class List_Terms extends Base_Tool {
             $query_args['orderby'] = $orderby;
             return;
         }
-        
-        
-        
         $params['orderby'] = 'term_id' === $orderby ? 'id' : $orderby;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function with_collection_filters( array $arguments, array $params, array $query_args ): array {
         foreach ( array( 'include', 'exclude' ) as $key ) {
@@ -338,16 +277,6 @@ class List_Terms extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function empty_page_or_refusal( \WP_REST_Response $response, string $taxonomy, array $params ): array {
         $error = $response->as_error();
         if ( $this->is_invalid_page_error( $error ) ) {
@@ -362,15 +291,6 @@ class List_Terms extends Base_Tool {
         throw new \RuntimeException( $error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
-
-
-
-
-
-
-
-
     private function term_row( array $term, string $taxonomy, bool $include_url ): array {
         $row = array_merge(
             array(
@@ -384,21 +304,10 @@ class List_Terms extends Base_Tool {
             $this->term_object_fields( (int) $term['id'], $taxonomy )
         );
         if ( $include_url ) {
-            
             $row['url'] = isset( $term['link'] ) && is_string( $term['link'] ) ? $term['link'] : null;
         }
         return $row;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function term_object_fields( int $term_id, string $taxonomy ): array {
         $object  = get_term( $term_id, $taxonomy );
@@ -408,32 +317,6 @@ class List_Terms extends Base_Tool {
             'term_group'       => $is_term && isset( $object->term_group ) ? (int) $object->term_group : null,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function dispatch( \WP_REST_Request $request, string $taxonomy, array $query_args ): \WP_REST_Response {
         if ( empty( $query_args ) ) {
@@ -475,17 +358,6 @@ class List_Terms extends Base_Tool {
         return $response;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function apply_tree_count( \WP_REST_Response $response, \WP_REST_Request $request, array $final ): void {
         $count_args = $final;
         unset( $count_args['number'], $count_args['offset'] );
@@ -499,33 +371,10 @@ class List_Terms extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     protected function count_matching_terms( array $args ): ?int {
         $ids = get_terms( $args );
         return is_array( $ids ) ? count( $ids ) : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function term_query_args( array $arguments, object $tax_obj, string $taxonomy ): array {
         $args = $this->id_and_name_args( $arguments );
@@ -539,13 +388,6 @@ class List_Terms extends Base_Tool {
 
         return array_merge( $args, $this->meta_query_args( $arguments, $tax_obj, $taxonomy ) );
     }
-
-    
-
-
-
-
-
 
     private function id_and_name_args( array $arguments ): array {
         $args = array();
@@ -563,31 +405,16 @@ class List_Terms extends Base_Tool {
         return $args;
     }
 
-    
-
-
-
-
-
-
     private function child_of_arg( array $arguments ): ?int {
         if ( ! array_key_exists( 'child_of', $arguments ) || null === $arguments['child_of'] ) {
             return null;
         }
         $child_of = $this->parse_required_id( $arguments['child_of'], 'child_of' );
-        
-        
         if ( isset( $arguments['parent'] ) && absint( $arguments['parent'] ) > 0 ) {
             throw new \InvalidArgumentException( 'child_of cannot be combined with a parent above 0: WordPress ignores child_of when parent is set. Use one of them.' );
         }
         return $child_of;
     }
-
-    
-
-
-
-
 
     private function flag_args( array $arguments ): array {
         $args = array();
@@ -598,13 +425,6 @@ class List_Terms extends Base_Tool {
         }
         return $args;
     }
-
-    
-
-
-
-
-
 
     private function like_args( array $arguments ): array {
         $args = array();
@@ -619,24 +439,6 @@ class List_Terms extends Base_Tool {
         }
         return $args;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function meta_query_args( array $arguments, object $tax_obj, string $taxonomy ): array {
         $key     = $this->scalar_string_arg( $arguments, 'meta_key' );
@@ -666,29 +468,11 @@ class List_Terms extends Base_Tool {
             $this->refuse_ignored_meta_value( $value, $upper );
             $vars['meta_value'] = $value; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
         } elseif ( null !== $upper && ! in_array( $upper, array( 'EXISTS', 'NOT EXISTS' ), true ) ) {
-            
             throw new \InvalidArgumentException( sprintf( 'meta_compare %s needs a meta_value: without one WordPress ignores the operator and matches every term with the key.', $upper ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
         return $vars;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_unaddressable_meta_key( string $key ): void {
         if ( '0' === $key ) {
@@ -698,15 +482,6 @@ class List_Terms extends Base_Tool {
             throw new \InvalidArgumentException( 'Invalid meta_key: use the key in plain printable ASCII with no spaces, as WordPress stores it.' );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function refuse_unreadable_meta_key( string $key, object $tax_obj, string $taxonomy ): void {
         if ( false === $this->caller_may_read_term_meta() ) {
@@ -720,17 +495,8 @@ class List_Terms extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private function refuse_ignored_meta_value( string $value, ?string $upper ): void {
         if ( '' === $value ) {
-            
             throw new \InvalidArgumentException( 'meta_value cannot be empty: WordPress ignores an empty value and would match every term with the key. To match any value, use meta_compare EXISTS.' );
         }
         if ( 'NOT EXISTS' === $upper ) {
@@ -741,30 +507,12 @@ class List_Terms extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     protected function caller_may_read_term_meta(): ?bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) ) {
             return null;
         }
         return \Easy_MCP_AI\MCP\Server::current_call_may_use( 'wp_get_term_meta' );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function id_list_arg( array $arguments, string $key, bool $non_empty ): ?array {
         if ( ! array_key_exists( $key, $arguments ) || null === $arguments[ $key ] ) {
@@ -780,15 +528,6 @@ class List_Terms extends Base_Tool {
         }
         return $ids;
     }
-
-    
-
-
-
-
-
-
-
 
     private function string_list_arg( array $arguments, string $key ): ?array {
         if ( ! array_key_exists( $key, $arguments ) || null === $arguments[ $key ] ) {
@@ -808,15 +547,6 @@ class List_Terms extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private function scalar_string_arg( array $arguments, string $key ): ?string {
         if ( ! array_key_exists( $key, $arguments ) || null === $arguments[ $key ] ) {
             return null;
@@ -831,27 +561,6 @@ class List_Terms extends Base_Tool {
         return $value;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function taxonomy_rest_namespace( object $tax_obj, string $taxonomy ): string {
         $namespace = isset( $tax_obj->rest_namespace ) && is_string( $tax_obj->rest_namespace )
             ? trim( $tax_obj->rest_namespace, '/' )
@@ -859,11 +568,6 @@ class List_Terms extends Base_Tool {
         if ( '' === $namespace ) {
             return 'wp/v2';
         }
-        
-        
-        
-        
-        
         foreach ( explode( '/', $namespace ) as $segment ) {
             if ( '' === $segment || ! preg_match( '/^[A-Za-z0-9][A-Za-z0-9_.-]*$/', $segment ) ) {
                 throw new \RuntimeException(

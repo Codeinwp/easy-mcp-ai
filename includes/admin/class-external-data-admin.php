@@ -8,26 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class External_Data_Admin {
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function disabled_tool_bucket_options() {
         return array(
@@ -41,12 +22,6 @@ class External_Data_Admin {
         );
     }
 
-    
-
-
-
-
-
     public static function merge_disabled_tool_buckets( array $base = array() ) {
         $merged = $base;
         foreach ( self::disabled_tool_bucket_options() as $option ) {
@@ -59,25 +34,10 @@ class External_Data_Admin {
 
     const OPTION_GA_PROPS_CACHE  = 'easy_mcp_ai_ga_properties_cache';
 
-    
-
-
-
-
-
-
-
     const CACHE_OWNER_OPTIONS = array(
         'ga'  => 'easy_mcp_ai_ga_properties_cache_owner',
         'gsc' => 'easy_mcp_ai_gsc_sites_cache_owner',
     );
-
-    
-
-
-
-
-
 
     public static function cache_is_current( string $provider ): bool {
         $owner = isset( self::CACHE_OWNER_OPTIONS[ $provider ] ) ? \get_option( self::CACHE_OWNER_OPTIONS[ $provider ], null ) : null;
@@ -87,27 +47,15 @@ class External_Data_Admin {
         return hash_equals( $owner, \Easy_MCP_AI\Provider_Credentials::fingerprint( $provider ) );
     }
 
-    
     private static function mark_cache_owner( string $provider ): void {
         \update_option( self::CACHE_OWNER_OPTIONS[ $provider ], \Easy_MCP_AI\Provider_Credentials::fingerprint( $provider ), false );
     }
-
-    
-
-
-
-
 
     private static function may_seed_default( string $provider, string $option ): bool {
         return ! \Easy_MCP_AI\Config::is_locked( $option )
             && ! \Easy_MCP_AI\Provider_Credentials::is_deployed( $provider )
             && '' === \get_option( $option, '' );
     }
-
-    
-
-
-
 
     public static function write_gsc_sites_cache( array $data ): void {
         $sites = array();
@@ -123,11 +71,6 @@ class External_Data_Admin {
             \update_option( GSC_Client::OPTION_SITE_URL, $sites[0] );
         }
     }
-
-    
-
-
-
 
     public static function write_ga_properties_cache( array $data ): void {
         $properties = array();
@@ -153,19 +96,7 @@ class External_Data_Admin {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function purge_transients_by_prefix( string $prefix ): void {
-        
-        
         if ( ! \current_user_can( 'manage_options' ) ) {
             return;
         }
@@ -174,17 +105,6 @@ class External_Data_Admin {
         $like_timeout = $wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%';
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $like_value, $like_timeout ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function compute_disabled_tools( array $all_names, array $checked ): array {
         $disabled = array();

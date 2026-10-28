@@ -23,7 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Wpdb_Database implements Database {
 
-    
     private $wpdb;
 
     public function __construct( $wpdb = null ) {
@@ -71,12 +70,6 @@ final class Wpdb_Database implements Database {
         }
         return $out;
     }
-
-    
-
-
-
-
 
     public static function text_column( string $name, string $type ): ?array {
         $type = strtolower( trim( $type ) );
@@ -133,11 +126,6 @@ final class Wpdb_Database implements Database {
         return false !== $result;
     }
 
-    
-
-
-
-
     private function where( string $column, array $needles, array $conditions ): array {
         $likes  = array();
         $values = array();
@@ -159,14 +147,6 @@ final class Wpdb_Database implements Database {
         }
         return array( $where, $values );
     }
-
-    
-
-
-
-
-
-
 
     public static function keyset( array $pk, array $after ): array {
         $ors    = array();

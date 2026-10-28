@@ -9,13 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Menu_Items extends Base_Tool {
 
-    
     const LOAD_PER_PAGE = 100;
-
-    
-
-
-
 
     const LOAD_MAX_PAGES = 100;
 
@@ -102,16 +96,6 @@ class List_Menu_Items extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function empty_page_or_throw( \WP_Error $error, int $page, int $per_page ): array {
         if ( $this->is_invalid_page_error( $error ) ) {
             return array_merge(
@@ -121,15 +105,6 @@ class List_Menu_Items extends Base_Tool {
         }
         throw new \RuntimeException( $error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
-
 
     private static function item_row( array $item ): array {
         return array(
@@ -151,57 +126,13 @@ class List_Menu_Items extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function text_field( array $item, string $field ): string {
         return isset( $item[ $field ] ) ? (string) $item[ $field ] : '';
     }
 
-    
-
-
-
-
-
-
-
     private static function list_field( array $item, string $field ): array {
         return isset( $item[ $field ] ) && is_array( $item[ $field ] ) ? array_values( $item[ $field ] ) : array();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function every_item( int $menu_id ): array {
         $items = array();
@@ -228,38 +159,10 @@ class List_Menu_Items extends Base_Tool {
         return $items;
     }
 
-    
-
-
-
-
-
-
-
     public static function by_menu_order_then_id( array $a, array $b ): int {
         $order = (int) $a['menu_order'] - (int) $b['menu_order'];
         return 0 !== $order ? $order : (int) $a['id'] - (int) $b['id'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function stored_items( int $menu_id ): array {
         $posts = get_posts(
@@ -292,15 +195,6 @@ class List_Menu_Items extends Base_Tool {
         return $items;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function items_page( int $menu_id, int $page ): \WP_REST_Response {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/menu-items' );
         $request->set_param( 'menus', $menu_id );
@@ -315,28 +209,12 @@ class List_Menu_Items extends Base_Tool {
         if ( $response->is_error() ) {
             $error = $response->as_error();
             if ( 'rest_no_route' === $error->get_error_code() ) {
-                
                 throw new \RuntimeException( 'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.' );
             }
             throw new \RuntimeException( sprintf( 'The items of menu %d could not be read: %s', $menu_id, self::rest_error_message( $error ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $response;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function unsaveable( array $item ): bool {
         $type = isset( $item['type'] ) ? (string) $item['type'] : '';

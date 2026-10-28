@@ -8,14 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Get_Post_Full extends Base_Tool {
 
     const DEFAULT_MAX_TERMS_PER_TAXONOMY = 100;
@@ -23,7 +15,6 @@ class Get_Post_Full extends Base_Tool {
     const DEFAULT_MAX_TAXONOMIES         = 30;
     const ALLOWED_SECTIONS               = array( 'meta', 'terms', 'thumbnail', 'author' );
 
-    
     const META_WITHHELD = 'This post is password-protected and you cannot edit it, so its custom fields are withheld, as WordPress withholds its content. Fields registered for the REST API are in post.meta.';
 
     public function get_name() {
@@ -122,7 +113,6 @@ class Get_Post_Full extends Base_Tool {
         list( $include, $exclude ) = self::sections( $arguments );
         $options                   = $this->section_options( $arguments, $context, $include );
 
-        
         $post = $this->strip_response_noise(
             $this->rest_request(
                 'GET',
@@ -131,25 +121,18 @@ class Get_Post_Full extends Base_Tool {
             )
         );
 
-        
         foreach ( $exclude as $key ) {
             unset( $post[ $key ] );
         }
 
         $result = array( 'post' => $post );
 
-        
         $post_object = get_post( $post_id );
         if ( ! $post_object ) {
-            
             return $result;
         }
         $this->refuse_another_object( $post_object, $post_type );
 
-        
-        
-        
-        
         if ( $options['raw_post'] ) {
             $result['raw_post'] = get_object_vars( $post_object );
         }
@@ -158,7 +141,6 @@ class Get_Post_Full extends Base_Tool {
             self::refuse_unregistered_taxonomies( $options['terms_taxonomies'], $post_object->post_type );
         }
 
-        
         if ( in_array( 'meta', $include, true ) ) {
             $result = array_merge(
                 $result,
@@ -168,38 +150,20 @@ class Get_Post_Full extends Base_Tool {
             );
         }
 
-        
         if ( in_array( 'terms', $include, true ) ) {
             $result = array_merge( $result, self::terms_section( $post_id, $post_object->post_type, $options['terms_taxonomies'], $options['full_terms'] ) );
         }
 
-        
         if ( in_array( 'thumbnail', $include, true ) ) {
             $result['thumbnail'] = self::thumbnail_section( $post_id );
         }
 
-        
         if ( in_array( 'author', $include, true ) ) {
             $result['author'] = self::author_section( $post_object );
         }
 
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_another_object( object $post_object, string $rest_base ): void {
         $served = Post_Type_Rest_Base::require_served_type( $rest_base );
@@ -208,18 +172,7 @@ class Get_Post_Full extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function read_context( array $arguments, int $post_id ): string {
-        
         $context = isset( $arguments['context'] ) && '' !== $arguments['context'] ? $arguments['context'] : 'view';
         $this->refuse_unless_one_of( 'context', $context, array( 'view', 'edit' ), $context, 'view or edit' );
 
@@ -229,14 +182,6 @@ class Get_Post_Full extends Base_Tool {
         return $context;
     }
 
-    
-
-
-
-
-
-
-
     private static function sections( array $arguments ): array {
         $include = isset( $arguments['include'] ) && is_array( $arguments['include'] )
             ? array_map( 'strval', $arguments['include'] )
@@ -245,28 +190,12 @@ class Get_Post_Full extends Base_Tool {
             ? array_map( 'strval', $arguments['exclude'] )
             : array();
 
-        
-        
-        
-        
-        
         $unknown_include = array_values( array_diff( $include, self::ALLOWED_SECTIONS ) );
         if ( ! empty( $unknown_include ) ) {
             throw new \InvalidArgumentException( 'Unknown include value(s): ' . implode( ', ', $unknown_include ) . '. Allowed: ' . implode( ', ', self::ALLOWED_SECTIONS ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return array( $include, $exclude );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function section_options( array $arguments, string $context, array $include ): array {
         $options = array(
@@ -281,16 +210,6 @@ class Get_Post_Full extends Base_Tool {
         return $options;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_options_out_of_place( array $options, string $context, array $include ): void {
         if ( $options['raw_post'] && 'edit' !== $context ) {
             throw new \InvalidArgumentException( 'raw_post needs context edit: the raw columns include the post password and unfiltered content, which WordPress shows only to users who can edit the post.' );
@@ -302,15 +221,6 @@ class Get_Post_Full extends Base_Tool {
             throw new \InvalidArgumentException( 'terms_taxonomies and full_terms apply to the terms section; add terms to include.' );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function refuse_protected_meta_keys( ?array $meta_keys, string $context ): void {
         if ( null === $meta_keys || 'edit' === $context ) {
@@ -326,14 +236,6 @@ class Get_Post_Full extends Base_Tool {
             throw new \InvalidArgumentException( 'meta_keys names protected meta (' . implode( ', ', $protected ) . '), which is returned only with context edit.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function refuse_unregistered_taxonomies( array $terms_taxonomies, string $post_type ): void {
         $registered = get_object_taxonomies( $post_type, 'names' );
@@ -351,34 +253,9 @@ class Get_Post_Full extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function meta_is_withheld( object $post_object ): bool {
         return post_password_required( $post_object ) && ! current_user_can( 'edit_post', (int) $post_object->ID );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function meta_section( int $post_id, string $context, ?array $meta_keys, bool $meta_all_values ): array {
         $meta_cap = (int) apply_filters( 'easy_mcp_ai_post_full_max_meta_keys', self::DEFAULT_MAX_META_KEYS );
@@ -387,13 +264,10 @@ class Get_Post_Full extends Base_Tool {
             $all_meta = array();
         }
 
-        
         if ( 'edit' !== $context ) {
             $all_meta = self::without_protected_meta( $all_meta );
         }
 
-        
-        
         if ( null !== $meta_keys ) {
             $all_meta = array_intersect_key( $all_meta, array_flip( $meta_keys ) );
         }
@@ -413,12 +287,6 @@ class Get_Post_Full extends Base_Tool {
         return $section;
     }
 
-    
-
-
-
-
-
     private static function without_protected_meta( array $all_meta ): array {
         foreach ( array_keys( $all_meta ) as $key ) {
             if ( is_protected_meta( $key, 'post' ) ) {
@@ -427,14 +295,6 @@ class Get_Post_Full extends Base_Tool {
         }
         return $all_meta;
     }
-
-    
-
-
-
-
-
-
 
     private function normalized_meta( array $all_meta, bool $meta_all_values ): array {
         $normalized = array();
@@ -452,17 +312,6 @@ class Get_Post_Full extends Base_Tool {
         }
         return $normalized;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function terms_section( int $post_id, string $post_type, ?array $terms_taxonomies, bool $full_terms ): array {
         $terms_cap                          = (int) apply_filters( 'easy_mcp_ai_post_full_max_terms_per_taxonomy', self::DEFAULT_MAX_TERMS_PER_TAXONOMY );
@@ -491,14 +340,6 @@ class Get_Post_Full extends Base_Tool {
         return $section;
     }
 
-    
-
-
-
-
-
-
-
     private static function taxonomies_to_read( string $post_type, ?array $terms_taxonomies ): array {
         $tax_cap    = (int) apply_filters( 'easy_mcp_ai_post_full_max_taxonomies', self::DEFAULT_MAX_TAXONOMIES );
         $taxonomies = null !== $terms_taxonomies ? $terms_taxonomies : get_object_taxonomies( $post_type, 'names' );
@@ -509,20 +350,9 @@ class Get_Post_Full extends Base_Tool {
         return array( $taxonomies, false );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function taxonomy_terms( int $post_id, string $taxonomy, int $terms_cap, bool $full_terms ): ?array {
         $args = array( 'fields' => 'all' );
         if ( $terms_cap > 0 ) {
-            
             $args['number'] = $terms_cap + 1;
         }
         $terms = wp_get_object_terms( $post_id, $taxonomy, $args );
@@ -546,14 +376,6 @@ class Get_Post_Full extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function term_row( object $t, bool $full_terms ): array {
         $one = array(
             'id'   => (int) $t->term_id,
@@ -570,12 +392,6 @@ class Get_Post_Full extends Base_Tool {
         return $one;
     }
 
-    
-
-
-
-
-
     private static function thumbnail_section( int $post_id ): ?array {
         $thumb_id = (int) get_post_thumbnail_id( $post_id );
         if ( $thumb_id <= 0 ) {
@@ -590,12 +406,6 @@ class Get_Post_Full extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private static function author_section( object $post_object ): ?array {
         $author_id = (int) $post_object->post_author;
         $user      = $author_id > 0 ? get_userdata( $author_id ) : false;
@@ -609,13 +419,6 @@ class Get_Post_Full extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function normalize_meta_value( $value ) {
         if ( is_scalar( $value ) || null === $value ) {
             return $value;
@@ -627,14 +430,6 @@ class Get_Post_Full extends Base_Tool {
         $decoded = json_decode( $encoded, true );
         return null === $decoded && 'null' !== $encoded ? (string) $value : $decoded;
     }
-
-    
-
-
-
-
-
-
 
     private function string_list( array $arguments, string $key ): ?array {
         if ( ! isset( $arguments[ $key ] ) ) {

@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,34 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Clearfy extends Cache_Adapter {
 
-    
     const HELPERS = 'WCL_Cache_Helpers';
 
-    
     const PLUGIN = 'WCL_Plugin';
 
     public function id(): string {
@@ -110,12 +81,6 @@ final class Clearfy extends Cache_Adapter {
         }
         return $this->sent( sprintf( 'Clearfy cleared %d post(s) with the home, author, sitemap and term archive pages. %s', $sent, $note ) )->with( array( 'needs' => 'scope=site' ) );
     }
-
-    
-
-
-
-
 
     private function widens( int $post_id ): string {
         $calls = $this->calls();

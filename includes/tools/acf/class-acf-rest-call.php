@@ -1,80 +1,18 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Tools\ACF;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Acf_Rest_Call {
 
-    
     const EDIT_CAPS = array(
         'post' => 'edit_post',
         'term' => 'edit_term',
         'user' => 'edit_user',
     );
-
-    
-
-
-
-
-
-
-
-
 
     public static function run( callable $call, $type, $id, $route, $write ) {
         $id     = (int) $id;
@@ -96,7 +34,6 @@ final class Acf_Rest_Call {
             return $check;
         };
 
-        
         $hooks = array( array( 'acf/pre_update_value', $record, 10, 4 ) );
         if ( $write ) {
             $hooks[] = array(
@@ -132,12 +69,6 @@ final class Acf_Rest_Call {
         );
     }
 
-    
-
-
-
-
-
     private static function set_aside_acf_fields() {
         global $wp_rest_additional_fields;
         $taken = array(
@@ -156,12 +87,6 @@ final class Acf_Rest_Call {
         return $taken;
     }
 
-    
-
-
-
-
-
     private static function restore_acf_fields( array $taken ) {
         global $wp_rest_additional_fields;
         if ( is_array( $wp_rest_additional_fields ) ) {
@@ -179,16 +104,6 @@ final class Acf_Rest_Call {
             $wp_rest_additional_fields[ $base ]['acf'] = $entry;
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function add_acf_argument( $endpoints, $route ) {
         if ( ! is_array( $endpoints ) || ! class_exists( 'WP_REST_Server' ) ) {
@@ -221,13 +136,6 @@ final class Acf_Rest_Call {
         return $endpoints;
     }
 
-    
-
-
-
-
-
-
     private static function object_route( $type, $id ) {
         if ( 'post' === $type && function_exists( 'rest_get_route_for_post' ) ) {
             return (string) rest_get_route_for_post( $id );
@@ -241,16 +149,6 @@ final class Acf_Rest_Call {
         return '';
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function is_sub_field( array $field ) {
         $parent = isset( $field['parent'] ) ? $field['parent'] : 0;
         if ( is_numeric( $parent ) ) {
@@ -259,22 +157,9 @@ final class Acf_Rest_Call {
         return 0 === strpos( (string) $parent, 'field_' );
     }
 
-    
-
-
-
-
     public static function rest_on() {
         return true;
     }
-
-    
-
-
-
-
-
-
 
     public static function expose_groups( $groups ) {
         if ( ! is_array( $groups ) ) {
@@ -288,15 +173,6 @@ final class Acf_Rest_Call {
         return $groups;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function read_report( $response, $opened, $object ) {
         if ( is_array( $response ) && array_key_exists( 'acf', $response ) ) {
             return array();
@@ -304,20 +180,7 @@ final class Acf_Rest_Call {
         return array( 'notice' => sprintf( 'ACF did not add its "acf" field to the REST response for this %s, so no ACF value could be read. %s', $object, self::missing_acf_cause( $opened, $object ) ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function write_report( array $sent, array $saved, $response, $opened, $object ) {
-        
-        
         $key_map = ( isset( $sent['_acf_field_key_map'] ) && is_array( $sent['_acf_field_key_map'] ) ) ? $sent['_acf_field_key_map'] : array();
 
         $ignored = array();
@@ -364,11 +227,6 @@ final class Acf_Rest_Call {
             'notice'         => implode( ' ', $parts ),
         );
     }
-
-    
-
-
-
 
     private static function missing_acf_cause( $opened, $object ) {
         if ( $opened ) {

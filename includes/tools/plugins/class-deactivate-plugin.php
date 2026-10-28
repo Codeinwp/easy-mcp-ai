@@ -8,10 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Deactivate_Plugin extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -65,13 +61,10 @@ class Deactivate_Plugin extends Base_Tool {
 
         $this->load_plugin_admin_functions();
 
-        
         if ( ! current_user_can( 'deactivate_plugin', $plugin ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to deactivate this plugin.' );
         }
 
-        
-        
         if ( $this->is_own_plugin( $plugin ) ) {
             throw new \RuntimeException( 'Easy MCP AI cannot deactivate itself: this MCP connection runs through it. Deactivate it from wp-admin → Plugins instead.' );
         }
@@ -79,17 +72,10 @@ class Deactivate_Plugin extends Base_Tool {
         if ( $network_wide ) {
             $this->assert_network_wide_allowed();
         } elseif ( is_plugin_active_for_network( $plugin ) ) {
-            
-            
             throw new \RuntimeException( 'This plugin is network-active. Only a super admin can deactivate it, with network_wide: true.' );
         }
 
         if ( ! $this->is_active_in_scope( $plugin, $network_wide ) ) {
-            
-            
-            
-            
-            
             if ( ! isset( get_plugins()[ $plugin ] ) ) {
                 throw new \RuntimeException(
                     sprintf( 'Plugin "%s" is not installed. Use wp_list_plugins to see installed plugins.', $plugin ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -98,11 +84,8 @@ class Deactivate_Plugin extends Base_Tool {
             return $this->result( $plugin, $network_wide, false );
         }
 
-        
-        
         deactivate_plugins( $plugin, false, $network_wide );
 
-        
         if ( $network_wide ) {
             update_site_option( 'recently_activated', array( $plugin => time() ) + (array) get_site_option( 'recently_activated' ) );
         } else {
@@ -111,12 +94,6 @@ class Deactivate_Plugin extends Base_Tool {
 
         return $this->result( $plugin, $network_wide, true );
     }
-
-    
-
-
-
-
 
     private function result( string $plugin, bool $network_wide, bool $changed ): array {
         $installed = get_plugins();

@@ -17,7 +17,6 @@ class History_Get extends Base_Tool {
     public function get_required_capability() { return 'read'; }
 
     public function get_annotations() {
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => true,
@@ -41,9 +40,6 @@ class History_Get extends Base_Tool {
             throw new \RuntimeException( 'History entry not found' );
         }
 
-        
-        
-        
         $can_view_all = \current_user_can( 'easy_mcp_ai_view_all_history' );
         if ( ! $can_view_all && (int) ( $row['wp_user_id'] ?? 0 ) !== (int) \get_current_user_id() ) {
             throw new \RuntimeException( 'History entry not found' );
@@ -66,8 +62,6 @@ class History_Get extends Base_Tool {
             'auth_source'     => $row['auth_source'] ?? null,
             'created_at'      => $row['created_at'] ?? null,
             'truncated'       => ! empty( $row['truncated'] ),
-            
-            
             'capture_mode'    => ( isset( $row['capture_mode'] ) && '' !== $row['capture_mode'] ) ? $row['capture_mode'] : 'hooked',
         );
         if ( $can_view_all && isset( $row['ip_address'] ) ) {
@@ -76,10 +70,6 @@ class History_Get extends Base_Tool {
 
         $content_code = 'post' === $out['object_type'] ? $this->add_content_before( $out, $can_view_all ) : null;
 
-        
-        
-        
-        
         $after_payload = is_array( $out['after_value'] ?? null ) ? $out['after_value'] : array();
         if ( ! $out['revision_id'] && isset( $after_payload['content_capture'] ) ) {
             $out['revision_content_unavailable'] = (string) $after_payload['content_capture'];
@@ -87,17 +77,6 @@ class History_Get extends Base_Tool {
 
         if ( $out['revision_id'] && function_exists( '\wp_get_post_revision' ) ) {
             $rev = \wp_get_post_revision( $out['revision_id'] );
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             if ( ! $rev ) {
                 $out['revision_content_unavailable'] = __( 'unavailable — the linked revision no longer exists; it was pruned by the revision limit, or removed with its parent post', 'easy-mcp-ai' );
             }
@@ -119,26 +98,6 @@ class History_Get extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function add_content_before( array &$out, $can_view_all ) {
         $post_id  = (int) $out['object_id'];
         $can_read = $can_view_all || ( $post_id > 0 && \current_user_can( 'read_post', $post_id ) );
@@ -153,7 +112,6 @@ class History_Get extends Base_Tool {
             }
         }
 
-        
         if ( 'revision' === ( $out['object_subtype'] ?? '' ) ) {
             return null;
         }
@@ -161,7 +119,7 @@ class History_Get extends Base_Tool {
         $is_delete    = 'delete' === $out['action'];
         $body_changed = in_array( 'post_content', $changed, true );
         if ( ! $is_delete && ! $body_changed ) {
-            return null; 
+            return null;
         }
 
         $hidden = __( 'hidden — you cannot read this post now', 'easy-mcp-ai' );
@@ -197,25 +155,6 @@ class History_Get extends Base_Tool {
         return 'not_recorded';
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function unrecoverable( array $out, $row_truncated, $content_code ) {
         $before = $out['before_value'];
         if ( ! is_array( $before ) ) {
@@ -246,13 +185,6 @@ class History_Get extends Base_Tool {
         ksort( $map );
         return $map;
     }
-
-    
-
-
-
-
-
 
     private function collect_markers( $value, $path, $row_truncated, $max, array &$map ) {
         if ( is_array( $value ) ) {

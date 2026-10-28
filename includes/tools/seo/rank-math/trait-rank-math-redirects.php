@@ -5,48 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Rank_Math_Redirects {
-
-	
-
-
-
 
 	protected static $rm_redirect_cap = 'rank_math_redirections';
 
-	
-
-
-
-
 	protected static $rm_comparisons = array( 'exact', 'contains', 'start', 'end', 'regex' );
 
-	
-
-
-
-
 	protected static $rm_redirect_codes = array( 301, 302, 307 );
-
-	
-
-
-
 
 	protected static $rm_error_codes = array( 410, 451 );
 
@@ -54,27 +19,14 @@ trait Rank_Math_Redirects {
 		return 'rank-math';
 	}
 
-	
-
-
-
-
 	public function get_required_capability() {
 		return function_exists( 'rank_math' ) ? self::$rm_redirect_cap : 'manage_options';
 	}
-
-	
-
-
-
-
 
 	protected function require_rank_math_redirects(): void {
 		if ( ! function_exists( 'rank_math' ) || ! class_exists( '\\RankMath\\Helper' ) ) {
 			throw new \RuntimeException( 'Rank Math SEO is not active on this site. Install and activate Rank Math SEO to manage its redirects.' );
 		}
-		
-		
 		if ( is_callable( array( '\\RankMath\\Helper', 'is_invalid_registration' ) ) && \RankMath\Helper::is_invalid_registration() ) {
 			throw new \RuntimeException( 'Rank Math is installed but its setup is not finished, so it loads none of its modules. Connect or skip the account step of its setup wizard under Rank Math in wp-admin.' );
 		}
@@ -86,21 +38,10 @@ trait Rank_Math_Redirects {
 		}
 	}
 
-	
-
-
-
-
-
 	protected function find_redirect( int $id ): ?array {
 		$row = \RankMath\Redirections\DB::get_redirection_by_id( $id );
 		return is_array( $row ) && isset( $row['id'] ) ? $row : null;
 	}
-
-	
-
-
-
 
 	protected function require_redirect( int $id ): array {
 		$row = $this->find_redirect( $id );
@@ -109,17 +50,6 @@ trait Rank_Math_Redirects {
 		}
 		return $row;
 	}
-
-	
-
-
-
-
-
-
-
-
-
 
 	protected function object_links( int $id ): array {
 		$rows  = \RankMath\Admin\Database\Database::table( 'rank_math_redirections_cache' )
@@ -137,14 +67,6 @@ trait Rank_Math_Redirects {
 		return $links;
 	}
 
-	
-
-
-
-
-
-
-
 	protected function restore_object_links( int $id, array $links ): void {
 		$exact = array();
 		foreach ( $this->raw_sources( $id ) ?? array() as $source ) {
@@ -159,13 +81,6 @@ trait Rank_Math_Redirects {
 		}
 	}
 
-	
-
-
-
-
-
-
 	protected function raw_sources( int $id ): ?array {
 		$row = \RankMath\Admin\Database\Database::table( 'rank_math_redirections' )->where( 'id', $id )->one( ARRAY_A );
 		if ( ! is_array( $row ) ) {
@@ -174,13 +89,6 @@ trait Rank_Math_Redirects {
 		$sources = maybe_unserialize( $row['sources'] ?? '' );
 		return is_array( $sources ) ? array_values( $sources ) : array();
 	}
-
-	
-
-
-
-
-
 
 	protected function parse_sources( $value ): array {
 		if ( ! is_array( $value ) || array() === $value ) {
@@ -200,8 +108,6 @@ trait Rank_Math_Redirects {
 				throw new \InvalidArgumentException( sprintf( 'sources[%d].comparison must be one of: %s.', $i, implode( ', ', self::$rm_comparisons ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
 			$ignore_case = ! empty( $source['ignore_case'] ) && rest_sanitize_boolean( $source['ignore_case'] );
-			
-			
 			if ( $ignore_case && 'exact' !== $comparison ) {
 				throw new \InvalidArgumentException( sprintf( 'sources[%d].ignore_case works only with comparison "exact": Rank Math ignores it for the others. For a regex, start the pattern with (?i).', $i ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
@@ -213,15 +119,6 @@ trait Rank_Math_Redirects {
 		}
 		return $sources;
 	}
-
-	
-
-
-
-
-
-
-
 
 	protected function build_model( array $data ): \RankMath\Redirections\Redirection {
 		$dropped = array();
@@ -236,24 +133,11 @@ trait Rank_Math_Redirects {
 		return \RankMath\Redirections\Redirection::from( $data );
 	}
 
-	
-
-
-
-
-
-
 	protected function refuse_loop( \RankMath\Redirections\Redirection $model ): void {
 		if ( $model->is_infinite_loop() ) {
 			throw new \InvalidArgumentException( 'The target is the same address as a source, so the redirect would loop. Rank Math refuses it too.' );
 		}
 	}
-
-	
-
-
-
-
 
 	protected function parse_code( $value ): int {
 		$code = is_numeric( $value ) ? (int) $value : 0;
@@ -262,14 +146,6 @@ trait Rank_Math_Redirects {
 		}
 		return $code;
 	}
-
-	
-
-
-
-
-
-
 
 	protected function check_target( int $code, string $target ): void {
 		if ( in_array( $code, self::$rm_error_codes, true ) ) {
@@ -282,16 +158,6 @@ trait Rank_Math_Redirects {
 			throw new \InvalidArgumentException( sprintf( 'A %d redirect needs a target: the URL or path to send visitors to.', $code ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
-
-	
-
-
-
-
-
-
-
-
 
 	protected static function normalise( array $row ): array {
 		$sources = $row['sources'] ?? array();
@@ -323,12 +189,6 @@ trait Rank_Math_Redirects {
 			'last_accessed' => '' === $last_accessed || '0000-00-00 00:00:00' === $last_accessed ? null : $last_accessed,
 		);
 	}
-
-	
-
-
-
-
 
 	protected static function decoded_sources( $sources ): array {
 		$out = array();

@@ -22,7 +22,7 @@ class Get_Post extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'edit_posts'; 
+        return 'edit_posts';
     }
 
     public function get_annotations() {

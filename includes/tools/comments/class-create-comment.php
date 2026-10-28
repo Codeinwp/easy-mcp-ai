@@ -9,17 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Create_Comment extends Base_Tool {
 
-    
-    
     use Comment_Moderation;
-
-    
-
-
-
-
-
-
 
     const PASSTHROUGH_STRINGS = array( 'author_url', 'author_ip', 'author_user_agent', 'date', 'date_gmt' );
 
@@ -115,8 +105,6 @@ class Create_Comment extends Base_Tool {
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'post', 'content' ) );
 
-        
-        
         $status = self::status_sent( $arguments ) ? (string) $arguments['status'] : null;
         if ( null !== $status ) {
             $this->comment_status_to_action( $status, array( 'approve', 'unapprove', 'spam', 'trash' ) );
@@ -139,8 +127,6 @@ class Create_Comment extends Base_Tool {
             $params['status'] = sanitize_key( $status );
         }
 
-        
-        
         $params    = array_merge( $params, $this->extra_fields( $arguments, $params['post'] ) );
         $meta_sent = $this->apply_meta_argument( $arguments, $params );
 
@@ -160,23 +146,6 @@ class Create_Comment extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function extra_fields( array $arguments, int $post_id ): array {
         $out = $this->passthrough_strings( $arguments );
 
@@ -195,13 +164,6 @@ class Create_Comment extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
     private function passthrough_strings( array $arguments ): array {
         $out = array();
         foreach ( self::PASSTHROUGH_STRINGS as $key ) {
@@ -219,15 +181,6 @@ class Create_Comment extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private function comment_id_arg( $value, string $label, int $min ): int {
         if ( is_int( $value ) ) {
             $id = $value;
@@ -242,17 +195,6 @@ class Create_Comment extends Base_Tool {
         }
         return $id;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function refuse_bad_parent( int $parent, int $post_id ): void {
         $comment = get_comment( $parent );

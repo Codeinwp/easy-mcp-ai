@@ -19,7 +19,6 @@ class Scheduled_Posts_Resource extends Base_Resource {
         return 'All posts scheduled for future publication, ordered by publish date ascending.';
     }
 
-    
     public function get_required_tool(): string {
         return 'wp_list_posts';
     }
@@ -31,15 +30,9 @@ class Scheduled_Posts_Resource extends Base_Resource {
             'posts_per_page' => 50,
             'orderby'        => 'date',
             'order'          => 'ASC',
-            
-            
-            
-            
-            
             'ignore_sticky_posts' => true,
         );
 
-        
         if ( ! current_user_can( 'edit_others_posts' ) ) {
             $args['author'] = get_current_user_id();
         }

@@ -6,20 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Change_Log_Schema {
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     const DB_VERSION  = '1.2.0';
     const OPTION_NAME = 'easy_mcp_ai_change_log_db_version';
 
@@ -38,23 +24,10 @@ class Change_Log_Schema {
             \version_compare( (string) \get_option( self::OPTION_NAME, '0' ), self::DB_VERSION, '>=' )
         );
 
-        
-        
         if ( '0' !== $installed && \version_compare( $installed, '1.2.0', '<' ) ) {
             self::migrate_sql_tier_object_type();
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function migrate_sql_tier_object_type() {
         global $wpdb;
@@ -64,9 +37,6 @@ class Change_Log_Schema {
         $table = $wpdb->prefix . 'easy_mcp_ai_change_log';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; no user input in the statement.
         return (int) $wpdb->query(
-            
-            
-            
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is prefix + a constant name, never input.
             "UPDATE `{$table}` SET object_type = 'db_sql' WHERE capture_mode = 'db_sql' AND object_type = 'db_row'"
         );
@@ -76,13 +46,6 @@ class Change_Log_Schema {
         global $wpdb;
         $table           = $wpdb->prefix . 'easy_mcp_ai_change_log';
         $charset_collate = method_exists( $wpdb, 'get_charset_collate' ) ? $wpdb->get_charset_collate() : '';
-        
-        
-        
-        
-        
-        
-        
         $sql = "CREATE TABLE {$table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             audit_id bigint(20) unsigned DEFAULT NULL,
@@ -117,12 +80,6 @@ class Change_Log_Schema {
         }
         \dbDelta( $sql );
 
-        
-        
-        
-        
-        
-        
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table existence check.
         $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
         if ( ! \Easy_MCP_AI\Schema_Guard::table_found( $exists, $table ) ) {

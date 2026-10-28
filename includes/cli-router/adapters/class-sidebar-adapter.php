@@ -9,36 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Sidebar_Adapter extends Command_Handler {
 
-    
     const FIELDS = array( 'name', 'id', 'description' );
 
-    
     public function list_sidebars( Invocation $inv, Context $ctx ): void {
         $result = $ctx->delegate( 'wp_list_sidebars', array( 'include_markup' => true ) );
         if ( ! $result['ok'] ) {
@@ -62,15 +36,6 @@ final class Sidebar_Adapter extends Command_Handler {
         }
         $this->formatter( $ctx, $assoc, self::FIELDS )->display_items( $sidebars );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function inactive_row(): array {
         return array(

@@ -15,80 +15,26 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Plugin_Handler extends Command_Handler {
 
-    
     const OBJ_FIELDS = array( 'name', 'status', 'update', 'version', 'update_version', 'auto_update' );
 
-    
     const GET_FIELDS = array( 'name', 'title', 'author', 'version', 'description', 'status' );
 
-    
     const INVALID_VERSION_MESSAGE = 'version higher than expected';
 
-    
     const NOT_CAPTURED_AUTO_SINGLE  = 'The auto_update_plugins option is recorded by change history only while it records every option (not in allowlist mode); wp_history_apply cannot restore it.';
     const NOT_CAPTURED_AUTO_NETWORK = 'The auto_update_plugins network option (wp_sitemeta) is recorded by change history only while its meta capture setting is on (the default), and a deleted network option is recorded without its previous value; wp_history_apply cannot restore it.';
 
-    
     const AUTO_UPDATE_OPTION = 'auto_update_plugins';
 
-    
     const PLUGIN_CHECKSUMS_ENDPOINT = 'https://downloads.wordpress.org/plugin-checksums/';
     const CORE_CHECKSUMS_ENDPOINT   = 'https://api.wordpress.org/core/checksums/1.0/';
 
-    
     const STATUS_TEMPLATE = "Plugin %9{{slug}}%n details:\n    Name: {{name}}\n    Status: {{status}}%n\n    Version: {{version}}\n    Author: {{author}}\n    Description: {{description}}\n";
 
-    
     const COLOR_TOKENS = array( '%y', '%g', '%b', '%r', '%p', '%m', '%c', '%w', '%k', '%n', '%Y', '%G', '%B', '%R', '%P', '%M', '%C', '%W', '%K', '%N', '%3', '%2', '%4', '%1', '%5', '%6', '%7', '%0', '%F', '%U', '%8', '%9', '%_' );
 
-    
     const STATUS_SHORT = array(
         'inactive'       => 'I',
         'active'         => 'A',
@@ -122,30 +68,18 @@ final class Plugin_Handler extends Command_Handler {
     const MSG_MU_HIDDEN      = 'Must-use and drop-in plugins are not listed: on a multisite network WordPress shows them only in Network Admin, which needs the manage_network_plugins capability.';
     const MSG_ADVANCED_FILTERED = 'The %s plugins are not listed: a show_advanced_plugins filter on this site hides them from the Plugins screen.';
 
-    
-    
-    
-
-    
     public static function load_plugin_admin(): void {
         if ( ( ! function_exists( 'get_plugins' ) || ! function_exists( 'get_plugin_data' ) || ! function_exists( 'is_plugin_active_for_network' ) ) && defined( 'ABSPATH' ) && is_readable( ABSPATH . 'wp-admin/includes/plugin.php' ) ) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
     }
 
-    
     public static function plugin_name( string $basename ): string {
         if ( false === strpos( $basename, '/' ) ) {
             return basename( $basename, '.php' );
         }
         return dirname( $basename );
     }
-
-    
-
-
-
-
 
     public static function all_plugins(): array {
         self::load_plugin_admin();
@@ -154,7 +88,6 @@ final class Plugin_Handler extends Command_Handler {
         return is_array( $plugins ) ? $plugins : array();
     }
 
-    
     public static function status_of( string $file ): string {
         self::load_plugin_admin();
         if ( \is_plugin_active_for_network( $file ) ) {
@@ -165,17 +98,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return 'inactive';
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function check_optional_args_and_all( Output $out, array $args, bool $all, string $verb = 'install', $exclude = null ): array {
         if ( $all ) {
@@ -202,10 +124,6 @@ final class Plugin_Handler extends Command_Handler {
         return $args;
     }
 
-    
-
-
-
     public static function caller_sees( string $file ): bool {
         if ( ! \is_multisite() ) {
             return true;
@@ -222,11 +140,6 @@ final class Plugin_Handler extends Command_Handler {
         return ! \is_plugin_active_for_network( $file );
     }
 
-    
-
-
-
-
     public static function find( string $name ) {
         $plugin = Fetchers::of( 'plugin' )->get( $name );
         if ( $plugin && ! self::caller_sees( (string) $plugin->file ) ) {
@@ -235,12 +148,6 @@ final class Plugin_Handler extends Command_Handler {
         return $plugin;
     }
 
-    
-
-
-
-
-
     public static function find_check( string $name, Output $out ): object {
         $plugin = self::find( $name );
         if ( ! $plugin ) {
@@ -248,12 +155,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return $plugin;
     }
-
-    
-
-
-
-
 
     public static function find_many( array $names, Output $out ): array {
         $found = array();
@@ -268,27 +169,15 @@ final class Plugin_Handler extends Command_Handler {
         return $found;
     }
 
-    
-
-
-
-
-
     public static function plugin_data( string $file ): array {
         self::load_plugin_admin();
         $data = \get_plugin_data( WP_PLUGIN_DIR . '/' . $file, false, false );
         return is_array( $data ) ? $data : array();
     }
 
-    
     public static function may_see_updates(): bool {
         return \current_user_can( 'update_plugins' );
     }
-
-    
-
-
-
 
     public static function hidden_updates_warning(): string {
         if ( function_exists( 'wp_is_file_mod_allowed' ) && ! \wp_is_file_mod_allowed( 'capability_update_core' ) ) {
@@ -300,16 +189,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return sprintf( 'Plugin updates are not shown and no update check was made: %s.', $cause );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function item_list( bool $see_updates ): array {
         $items           = array();
@@ -326,7 +205,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         $recently_active_files = array_keys( (array) $recently_active );
 
-        
         $reason = null;
         foreach ( self::all_plugins() as $file => $details ) {
             $file            = (string) $file;
@@ -346,27 +224,9 @@ final class Plugin_Handler extends Command_Handler {
         return $items;
     }
 
-    
-
-
-
-
-
-
     private static function update_info( $all_update_info, string $file ): ?array {
         return ( is_object( $all_update_info ) && isset( $all_update_info->response[ $file ] ) && null !== $all_update_info->response[ $file ] ) ? (array) $all_update_info->response[ $file ] : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function item_row( string $file, array $details, ?array $update_info, array $auto_updates, array $recently_active_files, ?string &$reason ): array {
         $update = self::item_update( $file, $update_info, $reason );
@@ -392,17 +252,6 @@ final class Plugin_Handler extends Command_Handler {
             'update_unavailable_reason' => isset( $reason ) ? $reason : '',
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function item_update( string $file, ?array $update_info, ?string &$reason ): array {
         $plugin_data  = self::plugin_data( $file );
@@ -432,36 +281,13 @@ final class Plugin_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     private static function offer_field( ?array $update_info, string $key ) {
         return isset( $update_info ) && isset( $update_info[ $key ] ) ? $update_info[ $key ] : null;
     }
 
-    
-
-
-
-
-
     private static function non_empty_header( array $plugin_data, string $key ): string {
         return ! empty( $plugin_data[ $key ] ) ? (string) $plugin_data[ $key ] : '';
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function apply_no_update( array &$item, object $all_update_info, string $file ): void {
         global $wp_version;
@@ -490,24 +316,12 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     private static function no_update_requires( object $plugin_update_info ): array {
         return array(
             'requires'     => isset( $plugin_update_info->requires ) ? $plugin_update_info->requires : null,
             'requires_php' => isset( $plugin_update_info->requires_php ) ? $plugin_update_info->requires_php : null,
         );
     }
-
-    
-
-
-
-
-
 
     private static function rename_duplicates( array &$items, array $duplicate_names ): void {
         foreach ( $duplicate_names as $name => $files ) {
@@ -520,11 +334,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $plugin     = self::find_check( isset( $inv->args[0] ) ? (string) $inv->args[0] : '', $ctx->out );
@@ -552,12 +361,10 @@ final class Plugin_Handler extends Command_Handler {
         $formatter->display_item( $plugin_obj );
     }
 
-    
     public function is_installed( Invocation $inv, Context $ctx ): void {
         $ctx->out->halt( self::find( isset( $inv->args[0] ) ? (string) $inv->args[0] : '' ) ? 0 : 1 );
     }
 
-    
     public function is_active( Invocation $inv, Context $ctx ): void {
         $network_wide = Read_Value::flag( $inv->assoc, 'network' );
         $plugin       = self::find( isset( $inv->args[0] ) ? (string) $inv->args[0] : '' );
@@ -567,7 +374,6 @@ final class Plugin_Handler extends Command_Handler {
         $ctx->out->halt( ( $network_wide ? 'active-network' : 'active' ) === self::status_of( (string) $plugin->file ) ? 0 : 1 );
     }
 
-    
     public function path( Invocation $inv, Context $ctx ): void {
         $path = \untrailingslashit( WP_PLUGIN_DIR );
 
@@ -585,12 +391,6 @@ final class Plugin_Handler extends Command_Handler {
         $ctx->note( $inside ? self::NOTE_PATH : self::NOTE_PATH_OUTSIDE );
     }
 
-    
-
-
-
-
-
     public static function display_path( string $path ): array {
         $path = str_replace( '\\', '/', $path );
         $root = rtrim( str_replace( '\\', '/', (string) ABSPATH ), '/' ) . '/';
@@ -604,15 +404,9 @@ final class Plugin_Handler extends Command_Handler {
         return array( basename( $path ), false );
     }
 
-    
-    
-    
-
-    
     public function status( Invocation $inv, Context $ctx ): void {
         $see = self::may_see_updates();
         if ( $see ) {
-            
             \wp_update_plugins();
         } else {
             $ctx->out->warning( self::hidden_updates_warning() );
@@ -625,7 +419,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
     private function status_all( Context $ctx, bool $see ): void {
         $items = self::all_items( $ctx->out, $see );
 
@@ -661,7 +454,6 @@ final class Plugin_Handler extends Command_Handler {
         $ctx->out->line( 'Legend: ' . self::decolorize( implode( ', ', $legend_line ) ) );
     }
 
-    
     private function status_single( string $name, Context $ctx, bool $see ): void {
         $plugin = self::find_check( $name, $ctx->out );
         $file   = (string) $plugin->file;
@@ -688,15 +480,8 @@ final class Plugin_Handler extends Command_Handler {
             '{{author}}'      => isset( $details['Author'] ) ? (string) $details['Author'] : '',
             '{{description}}' => isset( $details['Description'] ) ? (string) $details['Description'] : '',
         );
-        
         $ctx->out->out( self::decolorize( strtr( self::STATUS_TEMPLATE, $values ) ) );
     }
-
-    
-
-
-
-
 
     public static function all_items( Output $out, bool $see ): array {
         $items = self::item_list( $see );
@@ -723,11 +508,6 @@ final class Plugin_Handler extends Command_Handler {
         return $items;
     }
 
-    
-
-
-
-
     private static function add_mu_rows( array &$items ): void {
         foreach ( (array) \get_mu_plugins() as $file => $mu_plugin ) {
             $file           = (string) $file;
@@ -751,11 +531,6 @@ final class Plugin_Handler extends Command_Handler {
             );
         }
     }
-
-    
-
-
-
 
     private static function add_dropin_rows( array &$items ): void {
         $raw_data = \_get_dropins();
@@ -782,29 +557,21 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
     private static function format_status( string $status, string $format ): string {
         $map = 'short' === $format ? self::STATUS_SHORT : self::STATUS_LONG;
         return ( isset( self::STATUS_COLOR[ $status ] ) ? self::STATUS_COLOR[ $status ] : '' ) . ( isset( $map[ $status ] ) ? $map[ $status ] : '' );
     }
 
-    
     public static function decolorize( string $text ): string {
         $text = str_replace( '%%', "%\u{be}", $text );
         $text = str_replace( self::COLOR_TOKENS, '', $text );
         return str_replace( "%\u{be}", '%', $text );
     }
 
-    
-    
-    
-
-    
     public function preflight_search( Invocation $inv, Context $ctx ): void {
         self::require_file_cap( $ctx, 'install_plugins', 'searching the plugin directory', 'the Add Plugins screen', 'plugin installs' );
     }
 
-    
     public function search( Invocation $inv, Context $ctx ): void {
         $term = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
 
@@ -843,13 +610,6 @@ final class Plugin_Handler extends Command_Handler {
         $formatter->display_items( $items );
     }
 
-    
-
-
-
-
-
-
     private static function query_plugins( array $api_args, Context $ctx ): object {
         if ( ! function_exists( 'plugins_api' ) && is_readable( ABSPATH . 'wp-admin/includes/plugin-install.php' ) ) {
             require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
@@ -867,11 +627,6 @@ final class Plugin_Handler extends Command_Handler {
         return $api;
     }
 
-    
-
-
-
-
     private static function add_plugin_urls( iterable $items ): void {
         foreach ( $items as $item_object ) {
             if ( $item_object instanceof \stdClass ) {
@@ -880,11 +635,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function preflight_auto_updates( Invocation $inv, Context $ctx ): void {
         self::require_file_cap( $ctx, 'update_plugins', 'plugin auto-updates', 'the auto-update toggle on the Plugins screen', 'plugin auto-updates' );
         if ( ! function_exists( 'wp_is_auto_update_enabled_for_type' ) && is_readable( ABSPATH . 'wp-admin/includes/update.php' ) ) {
@@ -895,25 +645,17 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
     public function preflight_auto_updates_read( Invocation $inv, Context $ctx ): void {
         self::require_file_cap( $ctx, 'update_plugins', 'plugin auto-updates', 'the auto-update column on the Plugins screen', 'plugin auto-updates' );
     }
 
-    
     public function auto_updates_enable( Invocation $inv, Context $ctx ): void {
         $this->toggle_auto_updates( $inv, $ctx, true );
     }
 
-    
     public function auto_updates_disable( Invocation $inv, Context $ctx ): void {
         $this->toggle_auto_updates( $inv, $ctx, false );
     }
-
-    
-
-
-
 
     public function describe_auto_updates( Invocation $inv ): array {
         $enable = 'plugin auto-updates enable' === $inv->command;
@@ -941,24 +683,10 @@ final class Plugin_Handler extends Command_Handler {
         return $lines;
     }
 
-    
-
-
-
-
     private static function stored_auto_updates(): array {
         $auto_updates = \get_site_option( self::AUTO_UPDATE_OPTION );
         return is_array( $auto_updates ) ? $auto_updates : array();
     }
-
-    
-
-
-
-
-
-
-
 
     private static function auto_update_targets( Invocation $inv, Output $out, bool $enable ): array {
         $all  = (bool) Read_Value::flag( $inv->assoc, 'all', false );
@@ -977,7 +705,6 @@ final class Plugin_Handler extends Command_Handler {
         $plugins = self::find_many( $args, $out );
         $missing = array();
         if ( ! $all ) {
-            
             $remaining = array();
             foreach ( $plugins as $plugin ) {
                 $remaining[] = (string) $plugin->name;
@@ -998,16 +725,6 @@ final class Plugin_Handler extends Command_Handler {
             'empty'   => false,
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function walk_auto_updates( array $plugins, array $auto_updates, bool $enable, bool $only ): array {
         $events    = array();
@@ -1044,12 +761,6 @@ final class Plugin_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     private function toggle_auto_updates( Invocation $inv, Context $ctx, bool $enable ): void {
         $plan = self::auto_update_targets( $inv, $ctx->out, $enable );
         if ( $plan['empty'] ) {
@@ -1070,11 +781,6 @@ final class Plugin_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'plugin auto-update', $enable ? 'enable' : 'disable', $walk['count'] + $missing, $walk['successes'], $walk['count'] - $walk['successes'] + $missing );
     }
 
-    
-
-
-
-
     private static function warn_already( array $events, bool $enable, Output $out ): void {
         foreach ( $events as $event ) {
             if ( 'already' === $event['action'] ) {
@@ -1082,16 +788,6 @@ final class Plugin_Handler extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function store_auto_updates( array $list, bool $enable, $before, Context $ctx ): void {
         $ctx->not_captured( \is_multisite() ? self::NOT_CAPTURED_AUTO_NETWORK : self::NOT_CAPTURED_AUTO_SINGLE );
@@ -1105,7 +801,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
     public function auto_updates_status( Invocation $inv, Context $ctx ): void {
         $assoc_args    = $inv->assoc;
         $all           = (bool) Read_Value::flag( $assoc_args, 'all', false );
@@ -1136,14 +831,6 @@ final class Plugin_Handler extends Command_Handler {
         $formatter->display_items( $results );
     }
 
-    
-
-
-
-
-
-
-
     private static function status_rows( array $plugins, array $auto_updates, bool $enabled_only, bool $disabled_only ): array {
         $results = array();
         foreach ( $plugins as $plugin ) {
@@ -1162,14 +849,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return $results;
     }
-
-    
-    
-    
-
-    
-
-
 
     public function verify_checksums( Invocation $inv, Context $ctx ): void {
         $assoc_args  = $inv->assoc;
@@ -1220,14 +899,6 @@ final class Plugin_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'plugin', 'verify', $total, $successes, $failures, $skips );
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_over_cap( Invocation $inv, Context $ctx, array $plugins, array $exclude_list ): void {
         $checked = 0;
         foreach ( $plugins as $plugin ) {
@@ -1240,16 +911,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function version_to_check( object $plugin, $version_arg, ?array &$plugins_data ) {
         if ( ! empty( $version_arg ) ) {
             return $version_arg;
@@ -1260,16 +921,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return array_key_exists( $plugin->file, $plugins_data ) ? $plugins_data[ $plugin->file ]['Version'] : false;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function verify_plugin( Context $ctx, object $plugin, $version, bool $strict, array &$errors ): bool {
         if ( false === $version ) {
@@ -1293,15 +944,6 @@ final class Plugin_Handler extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function verify_plugin_files( object $plugin, array $checksums, bool $strict, array &$errors ): void {
         foreach ( self::get_plugin_files( (string) $plugin->file ) as $file ) {
             if ( ! array_key_exists( $file, $checksums ) ) {
@@ -1319,7 +961,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
     private static function checksum_error( string $plugin_name, string $file, string $message ): array {
         return array(
             'plugin_name' => $plugin_name,
@@ -1327,13 +968,6 @@ final class Plugin_Handler extends Command_Handler {
             'message'     => $message,
         );
     }
-
-    
-
-
-
-
-
 
     private function verify_hello_dolly_from_core( Context $ctx, array &$errors ): void {
         $file       = 'hello.php';
@@ -1367,12 +1001,6 @@ final class Plugin_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private static function get_plugin_checksums( string $plugin, string $version ) {
         $response = self::json_get_request( sprintf( '%s%s/%s.json', self::PLUGIN_CHECKSUMS_ENDPOINT, $plugin, $version ) );
         if ( ! is_array( $response ) || ! isset( $response['files'] ) || ! is_array( $response['files'] ) ) {
@@ -1380,12 +1008,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return $response['files'];
     }
-
-    
-
-
-
-
 
     private static function json_get_request( string $url ) {
         $response = \wp_remote_get(
@@ -1409,12 +1031,6 @@ final class Plugin_Handler extends Command_Handler {
         return $data;
     }
 
-    
-
-
-
-
-
     private static function all_plugin_names(): array {
         self::load_plugin_admin();
         $names = array();
@@ -1423,14 +1039,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return $names;
     }
-
-    
-
-
-
-
-
-
 
     private static function unfiltered_many( array $names, Output $out ): array {
         self::load_plugin_admin();
@@ -1455,14 +1063,6 @@ final class Plugin_Handler extends Command_Handler {
         }
         return $found;
     }
-
-    
-
-
-
-
-
-
 
     private static function get_plugin_files( string $path ): array {
         $folder = dirname( WP_PLUGIN_DIR . '/' . $path );
@@ -1489,12 +1089,6 @@ final class Plugin_Handler extends Command_Handler {
         return $filtered;
     }
 
-    
-
-
-
-
-
     private static function check_file_checksum( string $path, $checksums ) {
         $absolute = WP_PLUGIN_DIR . '/' . $path;
         if ( is_array( $checksums ) && array_key_exists( 'sha256', $checksums ) ) {
@@ -1507,16 +1101,6 @@ final class Plugin_Handler extends Command_Handler {
 
         return in_array( hash_file( 'md5', $absolute ), (array) $checksums['md5'], true );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     private static function require_file_cap( Context $ctx, string $cap, string $what, string $screen, string $withheld ): void {
         if ( function_exists( 'wp_is_file_mod_allowed' ) && ! \wp_is_file_mod_allowed( 'capability_update_core' ) ) {

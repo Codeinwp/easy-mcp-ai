@@ -1,16 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,33 +10,13 @@ abstract class Admin_Rest_Controller {
 
     const REST_NAMESPACE = 'easy-mcp-ai-admin/v1';
 
-    
     const CAPABILITY = 'manage_options';
-
-    
-
-
-
-
 
     const UPDATABLE = 'POST, PATCH';
 
-    
-
-
-
-
     abstract public function register_routes();
 
-    
-
-
-
-
-
-
     public function permission() {
-        
         if ( true === \Easy_MCP_AI\Config::get( 'hide_admin' ) ) {
             return $this->fail(
                 'easy_mcp_ai_admin_hidden',
@@ -65,34 +34,13 @@ abstract class Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
-
     protected function ok( $data, $status = 200 ) {
         return new \WP_REST_Response( array( 'data' => $data ), $status );
     }
 
-    
-
-
-
-
-
-
-
-
     protected function fail( $code, $message, $status, array $extra = array() ) {
         return new \WP_Error( $code, $message, array_merge( $extra, array( 'status' => (int) $status ) ) );
     }
-
-    
-
-
-
 
     protected static function id_args() {
         return array(
@@ -103,15 +51,6 @@ abstract class Admin_Rest_Controller {
             ),
         );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function register_route( $route, $methods, $callback, array $args = array() ) {
         \register_rest_route(
@@ -125,16 +64,6 @@ abstract class Admin_Rest_Controller {
             )
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function register_delete_route( string $route, callable $callback, array $args = array() ): void {
         $this->register_route( $route, \WP_REST_Server::DELETABLE, $callback, $args );

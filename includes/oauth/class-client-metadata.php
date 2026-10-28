@@ -5,83 +5,30 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Client_Metadata {
 
-    
     const MAX_URL_LENGTH = 1024;
 
-    
     const MAX_BYTES = 65536;
 
-    
     const TIMEOUT = 5;
 
-    
     const MIN_TTL     = 300;
     const MAX_TTL     = 86400;
     const DEFAULT_TTL = 3600;
 
-    
     const STALE_GRACE = 86400;
 
-    
     const MAX_REDIRECT_URIS = 20;
 
-    
     const GRANT_TYPES = array( 'authorization_code', 'refresh_token' );
 
-    
     const REASON_INVALID_URL      = 'cimd_invalid_url';
     const REASON_FETCH_FAILED     = 'cimd_fetch_failed';
     const REASON_INVALID          = 'cimd_invalid';
     const REASON_UNSUPPORTED_AUTH = 'cimd_unsupported_auth';
     const REASON_CLIENT_CAP       = 'cimd_client_cap';
     const REASON_STORE_FAILED     = 'cimd_store_failed';
-
-    
-
-
-
-
-
 
     const SPECIAL_USE = array(
         '0.0.0.0/8',
@@ -112,43 +59,13 @@ final class Client_Metadata {
         'ff00::/8',
     );
 
-    
-
-
-
-
-
-
-
     private static $resolver = null;
 
-    
-
-
-
-
-
     private static $ipv6_lookup_off = false;
-
-    
-
-
-
-
-
 
     public static function is_url( string $client_id ): bool {
         return 0 === strpos( $client_id, 'https://' );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function storage_id( string $client_id ): string {
         if ( self::is_url( $client_id ) && Client_Metadata_Support::resolves() ) {
@@ -157,23 +74,11 @@ final class Client_Metadata {
         return $client_id;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function valid_url( string $url ): bool {
         if ( strlen( $url ) > self::MAX_URL_LENGTH ) {
             return false;
         }
         $label = '[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?';
-        
         $host = '((?:' . $label . '\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?)';
         if ( ! preg_match( '#^https://' . $host . '(?::443)?(/[A-Za-z0-9\-._~!$&\'()*+,;=:@/]*)$#D', $url, $m ) ) {
             return false;
@@ -189,48 +94,13 @@ final class Client_Metadata {
         return true;
     }
 
-    
-
-
-
-
-
-
     public static function host( string $url ): string {
         return (string) wp_parse_url( $url, PHP_URL_HOST );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function is_local_redirect( string $redirect_uri ): bool {
         return 'https' !== strtolower( (string) wp_parse_url( $redirect_uri, PHP_URL_SCHEME ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function for_authorization( string $url, string $redirect_uri, bool $accept_new = true ) {
         if ( ! self::valid_url( $url ) ) {
@@ -253,8 +123,6 @@ final class Client_Metadata {
                 Client_Metadata_Support::record_fetch( true );
             }
             if ( $fetched['retryable'] && $usable ) {
-                
-                
                 $current = self::stored_row( $id );
                 if ( null !== $current && self::is_usable( $current, $url ) && self::within_grace( $current, time() ) ) {
                     return $current;
@@ -275,23 +143,10 @@ final class Client_Metadata {
         return self::store( $url, $id, $checked['fields'], $fetched['ttl'], $row );
     }
 
-    
-
-
-
-
-
-
     public static function is_stored( string $url ): bool {
         $row = self::stored_row( hash( 'sha256', $url ) );
         return null !== $row && self::is_usable( $row, $url );
     }
-
-    
-
-
-
-
 
     public static function probe( string $url ): string {
         if ( ! self::valid_url( $url ) ) {
@@ -304,22 +159,6 @@ final class Client_Metadata {
         $checked = self::validate_document( $url, $fetched['body'] );
         return $checked['ok'] ? '' : $checked['reason'] . ':' . $checked['detail'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function validate_document( string $url, string $body ): array {
         $doc = json_decode( $body, true );
@@ -385,36 +224,14 @@ final class Client_Metadata {
         );
     }
 
-    
-
-
-
-
-
-
     public static function can_read_ipv6(): bool {
         return ! self::$ipv6_lookup_off && function_exists( 'dns_get_record' ) && defined( 'DNS_AAAA' );
     }
-
-    
-
-
-
-
-
-
 
     public static function host_is_public( string $host ): bool {
         $addresses = self::resolve( $host );
         return null !== $addresses && self::all_public( $addresses );
     }
-
-    
-
-
-
-
-
 
     public static function is_public_ip( string $ip ): bool {
         $packed = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A malformed value warns; false is the answer.
@@ -434,17 +251,9 @@ final class Client_Metadata {
         return true;
     }
 
-    
-
-    
-
-
-
     private static function fetch( string $url ): array {
         $addresses = self::resolve( self::host( $url ) );
         if ( null === $addresses ) {
-            
-            
             return self::fetch_failure( 'ipv6_unchecked', true, true );
         }
         if ( ! self::all_public( $addresses ) ) {
@@ -456,8 +265,6 @@ final class Client_Metadata {
                 'timeout'             => self::TIMEOUT,
                 'redirection'         => 0,
                 'limit_response_size' => self::MAX_BYTES + 1,
-                
-                
                 'user-agent'          => 'EasyMCPAI-OAuth/' . ( defined( 'EASY_MCP_AI_VERSION' ) ? EASY_MCP_AI_VERSION : '0' ),
                 'headers'             => array( 'Accept' => 'application/json' ),
             )
@@ -467,7 +274,6 @@ final class Client_Metadata {
         }
         $code = (int) wp_remote_retrieve_response_code( $response );
         if ( 200 !== $code ) {
-            
             return self::fetch_failure( 'http_' . $code, false, $code >= 500 || 429 === $code );
         }
         $body = (string) wp_remote_retrieve_body( $response );
@@ -481,13 +287,6 @@ final class Client_Metadata {
         );
     }
 
-    
-
-
-
-
-
-
     private static function fetch_failure( string $detail, bool $transport, bool $retryable, string $reason = self::REASON_FETCH_FAILED ): array {
         return array(
             'ok'        => false,
@@ -497,14 +296,6 @@ final class Client_Metadata {
             'retryable' => $retryable,
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function ttl( $header ): int {
         $value = strtolower( is_array( $header ) ? implode( ',', $header ) : (string) $header );
@@ -516,12 +307,6 @@ final class Client_Metadata {
         }
         return self::DEFAULT_TTL;
     }
-
-    
-
-
-
-
 
     private static function all_public( array $addresses ): bool {
         if ( array() === $addresses ) {
@@ -535,15 +320,6 @@ final class Client_Metadata {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function resolve( string $host ): ?array {
         if ( null !== self::$resolver ) {
             $addresses = call_user_func( self::$resolver, $host );
@@ -555,18 +331,6 @@ final class Client_Metadata {
         }
         return self::addresses( gethostbynamel( $host ), $aaaa );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function addresses( $ipv4, $aaaa ): ?array {
         $addresses = is_array( $ipv4 ) ? array_values( array_filter( $ipv4, 'is_string' ) ) : array();
@@ -581,12 +345,6 @@ final class Client_Metadata {
         return $addresses;
     }
 
-    
-
-
-
-
-
     private static function same_prefix( string $a, string $b, int $bits ): bool {
         $bytes = intdiv( $bits, 8 );
         if ( 0 !== strncmp( $a, $b, $bytes ) ) {
@@ -599,12 +357,6 @@ final class Client_Metadata {
         $mask = ( 0xff << ( 8 - $rest ) ) & 0xff;
         return ( ord( $a[ $bytes ] ) & $mask ) === ( ord( $b[ $bytes ] ) & $mask );
     }
-
-    
-
-
-
-
 
     private static function refusal( string $reason, string $detail, string $url ): \WP_Error {
         $host = self::host( $url );
@@ -647,10 +399,6 @@ final class Client_Metadata {
         );
     }
 
-    
-
-
-
     private static function invalid( string $detail ): array {
         return array(
             'ok'     => false,
@@ -658,12 +406,6 @@ final class Client_Metadata {
             'detail' => $detail,
         );
     }
-
-    
-
-
-
-
 
     private static function stored_row( string $id ) {
         global $wpdb;
@@ -674,46 +416,19 @@ final class Client_Metadata {
         return is_object( $row ) ? $row : null;
     }
 
-    
-
-
-
-
     private static function is_usable( $row, string $url ): bool {
         return 1 === (int) ( $row->is_active ?? 0 ) && isset( $row->metadata_url ) && $url === (string) $row->metadata_url;
     }
-
-    
-
-
-
 
     private static function is_fresh( $row, int $now ): bool {
         $expires = isset( $row->metadata_expires_at ) ? strtotime( (string) $row->metadata_expires_at . ' UTC' ) : false;
         return false !== $expires && $expires > $now;
     }
 
-    
-
-
-
-
     private static function within_grace( $row, int $now ): bool {
         $fetched = isset( $row->metadata_fetched_at ) ? strtotime( (string) $row->metadata_fetched_at . ' UTC' ) : false;
         return false !== $fetched && $now - $fetched <= self::STALE_GRACE;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function forget( $row ): void {
         if ( null === $row || ! isset( $row->client_id ) ) {
@@ -734,25 +449,10 @@ final class Client_Metadata {
         );
     }
 
-    
-
-
-
-
     private static function lists( $row, string $redirect_uri ): bool {
         $registered = json_decode( (string) ( $row->redirect_uris ?? '' ), true );
         return is_array( $registered ) && Client_Registry::redirect_uri_is_registered( $redirect_uri, $registered );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function store( string $url, string $id, array $fields, int $ttl, $row ) {
         global $wpdb;
@@ -771,10 +471,6 @@ final class Client_Metadata {
         $formats = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );
 
         if ( null === $row && self::at_client_cap() ) {
-            
-            
-            
-            
             $row = self::stored_row( $id );
             if ( null === $row ) {
                 return self::refusal( self::REASON_CLIENT_CAP, '', $url );
@@ -793,15 +489,10 @@ final class Client_Metadata {
                 ) + $data,
                 array_merge( array( '%s', '%s', '%s', '%s' ), $formats )
             );
-            
-            
             if ( false !== $inserted ) {
                 $data = array();
             }
         }
-        
-        
-        
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table write.
         if ( array() !== $data && false === $wpdb->update( $table, $data, array( 'client_id' => $id ), $formats, array( '%s' ) ) ) {
             self::forget( $row );
@@ -811,11 +502,6 @@ final class Client_Metadata {
         $stored = self::stored_row( $id );
         return null !== $stored && self::is_usable( $stored, $url ) ? $stored : self::refusal( self::REASON_STORE_FAILED, '', $url );
     }
-
-    
-
-
-
 
     private static function at_client_cap(): bool {
         global $wpdb;

@@ -5,67 +5,23 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Ability_Seed {
 
-    
     const PENDING_OPTION = 'easy_mcp_ai_abilities_seed_pending';
 
-    
-
-
-
-
-
-
     const EXCLUDED_PREFIXES = array( 'woocommerce/' );
-
-    
-
-
 
     public static function mark_pending(): void {
         \add_option( self::PENDING_OPTION, 1 );
     }
 
-    
-
-
-
     public static function maybe_run(): void {
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( ! \delete_option( self::PENDING_OPTION ) ) {
             return;
         }
         if ( ! \function_exists( 'wp_get_abilities' ) ) {
             return;
         }
-        
-        
         $current = \get_option( 'easy_mcp_ai_enabled_abilities', array() );
         if ( ! empty( $current ) ) {
             return;
@@ -77,21 +33,12 @@ class Ability_Seed {
         $write = static function () use ( $seed ) {
             \update_option( 'easy_mcp_ai_enabled_abilities', $seed );
         };
-        
-        
-        
         if ( \class_exists( '\\Easy_MCP_AI\\MCP\\Option_Guard' ) ) {
             \Easy_MCP_AI\MCP\Option_Guard::while_suspended( $write );
             return;
         }
         $write();
     }
-
-    
-
-
-
-
 
     public static function select( array $annotations_by_name ): array {
         $seed = array();
@@ -103,15 +50,6 @@ class Ability_Seed {
         return $seed;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function is_seedable( string $name, $annotations ): bool {
         if ( '' === $name ) {
             return false;
@@ -121,9 +59,6 @@ class Ability_Seed {
                 return false;
             }
         }
-        
-        
-        
         if ( Tools\Ability_Input_Policy::applies_to( $name ) ) {
             return false;
         }
@@ -131,12 +66,6 @@ class Ability_Seed {
             && array_key_exists( 'destructive', $annotations )
             && false === $annotations['destructive'];
     }
-
-    
-
-
-
-
 
     private static function annotations_by_name( array $abilities ): array {
         $out = array();

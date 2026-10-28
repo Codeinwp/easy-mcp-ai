@@ -1,82 +1,33 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Elementor_Editor {
 
-    
     const OPS = array( 'set_text', 'set_link', 'set_image', 'set_fields' );
 
-    
     const MAX_OPS = 50;
 
-    
     const TEXT_KINDS = array( 'text', 'html' );
 
-    
     const FIELD_KINDS = array( 'text', 'html', 'code', 'select', 'number', 'boolean', 'color' );
 
-    
     const CONTAINERS = array( 'section', 'column', 'container' );
 
-    
     const DYNAMIC_KEY = '__dynamic__';
     const GLOBALS_KEY = '__globals__';
 
-    
     private $fields_of;
 
-    
     private $media;
 
-    
     private $unfiltered;
 
-    
     private $kses;
-
-    
-
-
-
-
 
     public function __construct( callable $fields_of, callable $media, bool $unfiltered, ?callable $kses = null ) {
         $this->fields_of  = $fields_of;
@@ -84,15 +35,6 @@ final class Elementor_Editor {
         $this->unfiltered = $unfiltered;
         $this->kses       = $kses ?? 'wp_kses_post';
     }
-
-    
-
-
-
-
-
-
-
 
     public function plan( array $data, array $ops ): array {
         $errors = array();
@@ -131,20 +73,9 @@ final class Elementor_Editor {
         );
     }
 
-    
-
-
-
-
     public static function repeated_message( array $repeated ): string {
         return sprintf( 'This layout has more than one element with the id %s, so no element can be addressed safely. Open the page in Elementor and save it once, which gives every element its own id.', implode( ', ', $repeated ) );
     }
-
-    
-
-
-
-
 
     public static function repeated_ids( array $data ): array {
         $seen     = array();
@@ -162,13 +93,6 @@ final class Elementor_Editor {
         return array_map( 'strval', array_keys( $repeated ) );
     }
 
-    
-
-
-
-
-
-
     private static function refused( array $data, array $errors ): array {
         return array(
             'data'    => $data,
@@ -176,13 +100,6 @@ final class Elementor_Editor {
             'errors'  => $errors,
         );
     }
-
-    
-
-
-
-
-
 
     private function apply( array $data, array $op ) {
         $name    = isset( $op['op'] ) && is_string( $op['op'] ) ? $op['op'] : '';
@@ -230,7 +147,6 @@ final class Elementor_Editor {
             $after[ $field ]    = $value;
             $settings[ $field ] = $value;
         }
-        
         $single = 'set_fields' !== $name;
         return array(
             'data'   => self::replace_settings( $data, $address, $settings ),
@@ -246,13 +162,6 @@ final class Elementor_Editor {
         );
     }
 
-    
-
-
-
-
-
-
     private static function element_refusal( array $element, string $type, string $address ): ?string {
         $settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
         if ( 0 === strpos( $type, 'e-' ) || self::has_transformables( $settings ) ) {
@@ -263,16 +172,6 @@ final class Elementor_Editor {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function single_change( string $name, array $op, array $fields, array $settings, string $type ) {
         $writes = array(
@@ -309,14 +208,6 @@ final class Elementor_Editor {
         return $this->image_value( $op, $settings[ $field ] ?? null, $field );
     }
 
-    
-
-
-
-
-
-
-
     private function field_changes( array $op, array $fields, string $type ) {
         if ( ! isset( $op['fields'] ) || ! is_array( $op['fields'] ) || array() === $op['fields'] ) {
             return 'set_fields needs `fields`, an object of field name to value.';
@@ -343,13 +234,6 @@ final class Elementor_Editor {
         return $changes;
     }
 
-    
-
-
-
-
-
-
     private function field_value( array $spec, $value ) {
         $kind = $spec['kind'];
         if ( ! in_array( $kind, self::FIELD_KINDS, true ) ) {
@@ -368,14 +252,12 @@ final class Elementor_Editor {
         }
         if ( 'number' === $kind ) {
             $number = is_numeric( $value ) && ! is_bool( $value ) ? $value + 0 : null;
-            
             return is_int( $number ) || ( is_float( $number ) && is_finite( $number ) ) ? $number : array( 'error' => 'must be a finite number' );
         }
         if ( 'boolean' === $kind ) {
             if ( ! is_bool( $value ) ) {
                 return array( 'error' => 'must be true or false' );
             }
-            
             return $value ? ( $spec['on_value'] ?? 'yes' ) : '';
         }
         if ( 'color' === $kind ) {
@@ -389,13 +271,6 @@ final class Elementor_Editor {
         return is_array( $checked ) ? array( 'error' => lcfirst( $checked['error'] ) ) : $checked;
     }
 
-    
-
-
-
-
-
-
     private function html_value( string $value, string $kind ) {
         if ( $this->unfiltered ) {
             return $value;
@@ -403,8 +278,6 @@ final class Elementor_Editor {
         if ( 'code' === $kind ) {
             return array( 'error' => 'Holds code (HTML or script), which only accounts that may post unfiltered HTML can change.' );
         }
-        
-        
         $clean = (string) ( $this->kses )( $value );
         if ( ! self::same_text( $clean, $value ) ) {
             return array( 'error' => 'Holds HTML this account cannot save (it may not post unfiltered HTML), so WordPress would cut part of it. Send it without scripts, styles, iframes or event attributes.' );
@@ -412,24 +285,9 @@ final class Elementor_Editor {
         return $clean;
     }
 
-    
-
-
-
-
-
     private static function same_text( string $clean, string $original ): bool {
         return html_entity_decode( $clean, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) === html_entity_decode( $original, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
     }
-
-    
-
-
-
-
-
-
-
 
     private function link_value( array $op, $current, string $field ) {
         if ( ! isset( $op['url'] ) || ! is_string( $op['url'] ) ) {
@@ -452,16 +310,6 @@ final class Elementor_Editor {
         return array( $field => $link );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function image_value( array $op, $current, string $field ) {
         $id = isset( $op['attachment_id'] ) && is_numeric( $op['attachment_id'] ) ? (int) $op['attachment_id'] : 0;
         if ( $id <= 0 ) {
@@ -479,13 +327,6 @@ final class Elementor_Editor {
         return array( $field => $image );
     }
 
-    
-
-
-
-
-
-
     private static function bound_fields( array $settings, array $names ): array {
         $bound = array();
         foreach ( $names as $name ) {
@@ -498,15 +339,6 @@ final class Elementor_Editor {
         }
         return $bound;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function default_field( string $type, string $role, array $kinds, array $fields ): string {
         $roles = Elementor_Adapter::ROLES[ $type ] ?? array();
@@ -521,11 +353,6 @@ final class Elementor_Editor {
         return '';
     }
 
-    
-
-
-
-
     private static function field_spec( array $fields, string $name ): ?array {
         foreach ( $fields as $spec ) {
             if ( $spec['name'] === $name ) {
@@ -535,16 +362,10 @@ final class Elementor_Editor {
         return null;
     }
 
-    
-
-
     private static function type_of( array $element ): string {
         $el_type = isset( $element['elType'] ) && is_scalar( $element['elType'] ) ? (string) $element['elType'] : '';
         return 'widget' === $el_type && isset( $element['widgetType'] ) && is_scalar( $element['widgetType'] ) ? (string) $element['widgetType'] : $el_type;
     }
-
-    
-
 
     private static function has_transformables( array $settings ): bool {
         foreach ( $settings as $value ) {
@@ -555,16 +376,9 @@ final class Elementor_Editor {
         return false;
     }
 
-    
     private static function quoted( string $value ): string {
         return '"' . $value . '"';
     }
-
-    
-
-
-
-
 
     private static function elements( array $data ): array {
         $all = array();
@@ -581,13 +395,6 @@ final class Elementor_Editor {
         return $all;
     }
 
-    
-
-
-
-
-
-
     private static function find( array $data, string $address ): ?array {
         foreach ( self::elements( $data ) as $element ) {
             if ( isset( $element['id'] ) && is_scalar( $element['id'] ) && (string) $element['id'] === $address ) {
@@ -596,14 +403,6 @@ final class Elementor_Editor {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private static function replace_settings( array $data, string $address, array $settings ): array {
         foreach ( $data as $index => $element ) {

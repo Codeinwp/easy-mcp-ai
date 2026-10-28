@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Create_Shipping_Zone extends Base_Tool {
 
     use Store_Setup;

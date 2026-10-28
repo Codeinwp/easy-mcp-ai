@@ -9,7 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Delete_Theme_Mod extends Base_Tool {
 
-    
     const MAX_KEYS = 50;
 
     public function get_name() {
@@ -76,9 +75,6 @@ class Delete_Theme_Mod extends Base_Tool {
 
         $removed = Customizer_Settings::with_manager(
             static function ( object $manager ) use ( $keys, $raw_ok ): array {
-                
-                
-                
                 $targets = array();
                 foreach ( $keys as $key ) {
                     $targets[ $key ] = $raw_ok && ! self::is_registered( $manager, $key ) ? null : Customizer_Settings::resolve_writable_setting( $manager, $key );
@@ -101,12 +97,6 @@ class Delete_Theme_Mod extends Base_Tool {
         return $removed[0];
     }
 
-    
-
-
-
-
-
     private static function keys_of( $raw ): array {
         if ( ! is_array( $raw ) || array() === $raw ) {
             throw new \InvalidArgumentException( 'keys must be a non-empty list of theme mod names.' );
@@ -121,7 +111,6 @@ class Delete_Theme_Mod extends Base_Tool {
         return $keys;
     }
 
-    
     private static function is_registered( object $manager, string $key ): bool {
         if ( $manager->get_setting( $key ) ) {
             return true;
@@ -129,12 +118,6 @@ class Delete_Theme_Mod extends Base_Tool {
         $manager->add_dynamic_settings( array( $key ) );
         return (bool) $manager->get_setting( $key );
     }
-
-    
-
-
-
-
 
     private static function remove_setting( object $setting ): array {
         $previous = Customizer_Settings::effective_value( $setting );
@@ -152,11 +135,6 @@ class Delete_Theme_Mod extends Base_Tool {
         if ( empty( $data['keys'] ) ) {
             remove_theme_mod( $data['base'] );
         } else {
-            
-            
-            
-            
-            
             $mods = get_theme_mods();
             $root = $mods[ $data['base'] ];
             self::unset_path( $root, $data['keys'] );
@@ -171,13 +149,6 @@ class Delete_Theme_Mod extends Base_Tool {
             'customizer' => true,
         );
     }
-
-    
-
-
-
-
-
 
     private static function remove_stored( string $name ): array {
         $mods     = get_theme_mods();
@@ -194,13 +165,6 @@ class Delete_Theme_Mod extends Base_Tool {
             'customizer' => false,
         );
     }
-
-    
-
-
-
-
-
 
     private static function unset_path( array &$root, array $keys ): void {
         $last = array_pop( $keys );

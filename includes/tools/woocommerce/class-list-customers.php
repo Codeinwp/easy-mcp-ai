@@ -114,11 +114,6 @@ class List_Customers extends Base_Tool {
                 'last_name'    => $customer['last_name'],
                 'username'     => $customer['username'],
                 'date_created' => $customer['date_created'],
-                
-                
-                
-                
-                
             );
             return Row_Extension::apply( Row_Extension::WC_CUSTOMER, $row, $customer, $tool, true );
         }, $data );

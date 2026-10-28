@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -252,8 +249,6 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			$updated[] = 'primary_term';
 		}
 
-		
-		
 		if ( array() !== $updated ) {
 			$this->clear_page_cache( array( $post_id ) );
 		}
@@ -264,17 +259,6 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			'fields'         => self::stored_fields( $post_id, $arguments, array_merge( $meta_map, $url_meta_map ) ),
 		);
 	}
-
-	
-
-
-
-
-
-
-
-
-
 
 	private static function stored_fields( int $post_id, array $arguments, array $text_keys ): array {
 		$keys = array_merge(
@@ -291,10 +275,8 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			)
 		);
 		if ( isset( $arguments['primary_term'], $arguments['taxonomy'] ) ) {
-			
 			$keys['primary_term'] = '_yoast_wpseo_primary_' . trim( (string) $arguments['taxonomy'] );
 		}
-		
 		$meta_id = (int) ( wp_is_post_revision( $post_id ) ?: $post_id );
 		$fields  = array();
 		foreach ( $keys as $field => $meta_key ) {

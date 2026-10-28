@@ -90,13 +90,6 @@ class Get_Theme_Mods extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
     private function lookup( array $mods, string $key ) {
         $base = Customizer_Settings::base_of( $key );
         if ( ! array_key_exists( $base, $mods ) ) {

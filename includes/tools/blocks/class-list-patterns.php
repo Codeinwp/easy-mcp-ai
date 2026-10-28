@@ -22,7 +22,7 @@ class List_Patterns extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'edit_posts'; 
+        return 'edit_posts';
     }
 
     public function get_annotations() {
@@ -74,10 +74,6 @@ class List_Patterns extends Base_Tool {
         $per_page = isset( $arguments['per_page'] ) ? min( 100, max( 1, absint( $arguments['per_page'] ) ) ) : 20;
         $page     = isset( $arguments['page'] ) ? max( 1, absint( $arguments['page'] ) ) : 1;
 
-        
-        
-        
-        
         $patterns = $this->rest_request( 'GET', '/wp/v2/block-patterns/patterns' );
         if ( ! is_array( $patterns ) ) {
             $patterns = array();
@@ -131,12 +127,6 @@ class List_Patterns extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private function format_summary( array $pattern ) {
         return array(
             'slug'        => (string) $pattern['name'],
@@ -148,21 +138,6 @@ class List_Patterns extends Base_Tool {
             'source'      => $this->pattern_source( $pattern ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function pattern_source( array $pattern ) {
         if ( isset( $pattern['source'] ) && is_string( $pattern['source'] ) && '' !== $pattern['source'] ) {
@@ -182,13 +157,6 @@ class List_Patterns extends Base_Tool {
         return in_array( $prefix, $theme_dirs, true ) ? 'theme' : 'plugin';
     }
 
-    
-
-
-
-
-
-
     private function format_single( array $pattern ) {
         $content = isset( $pattern['content'] ) ? (string) $pattern['content'] : '';
 
@@ -202,14 +170,6 @@ class List_Patterns extends Base_Tool {
             )
         );
     }
-
-    
-
-
-
-
-
-
 
     private function required_blocks( $content ) {
         if ( '' === $content || ! function_exists( 'parse_blocks' ) ) {
@@ -258,7 +218,6 @@ class List_Patterns extends Base_Tool {
         return false;
     }
 
-    
     private function string_list( $value ) {
         if ( ! is_array( $value ) ) {
             return array();

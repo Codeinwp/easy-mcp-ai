@@ -9,18 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 class Uninstall_Plugin extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -39,8 +27,6 @@ class Uninstall_Plugin extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'delete_plugins';
     }
 
@@ -57,7 +43,6 @@ class Uninstall_Plugin extends Base_Tool {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -119,7 +104,6 @@ class Uninstall_Plugin extends Base_Tool {
 
         $routine = $this->uninstall_routine( $plugin );
         if ( $skip_delete && 'none' === $routine ) {
-            
             return $this->result( $plugin, $data, false, $routine, false, false, false, 'The plugin has no uninstall routine (no uninstall.php and no registered uninstall hook), so with skip_delete nothing ran and nothing changed.' );
         }
         $this->refuse_second_uninstall_file( $routine, $label );
@@ -143,32 +127,11 @@ class Uninstall_Plugin extends Base_Tool {
         return $this->result( $plugin, $data, $deactivated, $routine, true, true, '' !== ( $deact_printed . $printed ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function refuse_second_uninstall_file( string $routine, string $label ): void {
         if ( 'uninstall.php' === $routine && $this->uninstall_constant_defined() ) {
             throw new \RuntimeException( sprintf( 'Plugin "%s" was not uninstalled: another uninstall routine already ran in this request (WP_UNINSTALL_PLUGIN is set). Uninstall it in a call of its own.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function deactivate_first( string $plugin, string $label ): string {
         list( $still_active, $printed ) = $this->without_output(
@@ -182,17 +145,6 @@ class Uninstall_Plugin extends Base_Tool {
         }
         return $printed;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function delete_files( string $plugin, string $label, string $routine, bool $deactivated ): string {
         list( $outcome, $printed ) = $this->without_output(
@@ -208,26 +160,9 @@ class Uninstall_Plugin extends Base_Tool {
         return $printed;
     }
 
-    
-
-
-
-
     private function parse_flag( array $arguments, string $name ): bool {
         return isset( $arguments[ $name ] ) && rest_sanitize_boolean( $arguments[ $name ] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_active( string $plugin, string $label, bool $deactivate ): bool {
         if ( is_plugin_active_for_network( $plugin ) ) {
@@ -239,20 +174,11 @@ class Uninstall_Plugin extends Base_Tool {
         if ( ! $deactivate ) {
             throw new \RuntimeException( sprintf( 'Plugin "%s" is active. Pass deactivate: true to deactivate it first, or use wp_deactivate_plugin.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
         if ( ! current_user_can( 'deactivate_plugin', $plugin ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to deactivate this plugin, so it cannot be uninstalled while active.' );
         }
         return true;
     }
-
-    
-
-
-
-
-
-
 
     protected function uninstall_routine( string $plugin ): string {
         if ( file_exists( WP_PLUGIN_DIR . '/' . dirname( $plugin ) . '/uninstall.php' ) ) {
@@ -262,41 +188,17 @@ class Uninstall_Plugin extends Base_Tool {
         return isset( $registered[ $plugin ] ) ? 'uninstall hook' : 'none';
     }
 
-    
     protected function uninstall_constant_defined(): bool {
         return defined( 'WP_UNINSTALL_PLUGIN' );
     }
-
-    
-
-
 
     protected function run_uninstall_routine( string $plugin ) {
         return uninstall_plugin( $plugin );
     }
 
-    
-
-
-
-
-
-
-
     protected function run_delete_plugins( string $plugin ) {
         return delete_plugins( array( $plugin ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function result( string $plugin, array $data, bool $deactivated, string $routine, bool $files_deleted, bool $changed, bool $printed, string $reason = '' ): array {
         $result = array(

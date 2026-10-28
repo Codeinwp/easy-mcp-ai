@@ -5,12 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 final class Privileged_Admin {
 
     public static function register_cli() {
@@ -19,13 +13,6 @@ final class Privileged_Admin {
         }
         \WP_CLI::add_command( 'easy-mcp-ai privileged status', array( __CLASS__, 'cli_status' ) );
     }
-
-    
-
-
-
-
-
 
     public static function cli_status( $args, $assoc_args ) {
         $status = Privileged_Groups::status();
@@ -48,8 +35,6 @@ final class Privileged_Admin {
                 'tools_on' => implode( ',', $on ),
             );
         }
-        
-        
         \WP_CLI\Utils\format_items( 'table', $rows, array( 'group', 'enabled', 'tools_on' ) );
     }
 }

@@ -7,60 +7,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Client_Metadata_Support {
 
-    
     const SCHEMA_VERSION = '1.0.11';
 
-    
     const HOOK = 'easy_mcp_ai_oauth_cimd_probe';
 
-    
     const OPTION_STATE = 'easy_mcp_ai_oauth_cimd_state';
-
-    
-
-
-
-
-
-
-
 
     const PROBE_URLS = array(
         'https://claude.ai/oauth/mcp-oauth-client-metadata',
@@ -69,68 +22,34 @@ final class Client_Metadata_Support {
         'https://vscode.dev/oauth/client-metadata.json',
     );
 
-    
     const PROBE_VALID = 604800;
 
-    
     const PROBE_INTERVAL = 72000;
 
-    
     const WITHDRAW_AFTER = 3;
 
-    
     const WRITE_ATTEMPTS = 5;
-
-    
-
-
-
-
-
 
     public static function switched_on(): bool {
         $on = true === Config::get( 'oauth_cimd' );
-        
-
-
-
-
-
         return true === apply_filters( 'easy_mcp_ai_oauth_cimd', $on );
     }
-
-    
-
-
-
-
-
 
     public static function schema_ready(): bool {
         return version_compare( (string) get_option( OAuth_Schema::VERSION_OPTION, '0' ), self::SCHEMA_VERSION, '>=' );
     }
 
-    
     public static function resolves(): bool {
         return self::switched_on() && self::schema_ready();
     }
 
-    
     public static function accepts_sign_ins(): bool {
         return self::resolves() && Client_Registry::is_dcr_enabled();
     }
 
-    
     public static function advertised(): bool {
         return 'advertised' === self::status()['reason'];
     }
-
-    
-
-
-
-
-
 
     public static function status(): array {
         $state  = self::state();
@@ -160,12 +79,6 @@ final class Client_Metadata_Support {
         return $status;
     }
 
-    
-
-
-
-
-
     public static function arm(): bool {
         if ( ! self::accepts_sign_ins() ) {
             return false;
@@ -179,11 +92,6 @@ final class Client_Metadata_Support {
         }
         return true;
     }
-
-    
-
-
-
 
     public static function run_probe(): string {
         if ( ! self::accepts_sign_ins() ) {
@@ -201,7 +109,6 @@ final class Client_Metadata_Support {
             $results[ $url ] = '' === $outcome ? 'ok' : $outcome;
             $passed          = $passed && '' === $outcome;
         }
-        
         $passed = $passed && array() !== $results;
 
         $tested_at = time();
@@ -210,8 +117,6 @@ final class Client_Metadata_Support {
                 $now['probe_at'] = $tested_at;
                 $now['probe_ok'] = $passed;
                 $now['results']  = $results;
-                
-                
                 if ( $passed ) {
                     $now['failures'] = 0;
                 }
@@ -220,15 +125,6 @@ final class Client_Metadata_Support {
         );
         return $passed ? 'passed' : 'failed';
     }
-
-    
-
-
-
-
-
-
-
 
     public static function record_fetch( bool $transport_failed ): void {
         self::change(
@@ -246,20 +142,7 @@ final class Client_Metadata_Support {
         );
     }
 
-    
-
-
-
-
-
-
     public static function probe_urls(): array {
-        
-
-
-
-
-
         $urls = apply_filters( 'easy_mcp_ai_oauth_cimd_probe_urls', self::PROBE_URLS );
         if ( ! is_array( $urls ) ) {
             return array();
@@ -273,13 +156,6 @@ final class Client_Metadata_Support {
         return array_values( array_unique( $valid ) );
     }
 
-    
-
-
-
-
-
-
     public static function state( bool $fresh = false ): array {
         if ( ! $fresh ) {
             return self::validated( get_option( self::OPTION_STATE, array() ) );
@@ -287,10 +163,6 @@ final class Client_Metadata_Support {
         $stored = self::stored();
         return self::validated( null === $stored ? array() : maybe_unserialize( $stored ) );
     }
-
-    
-
-
 
     private static function validated( $raw ): array {
         $raw   = is_array( $raw ) ? $raw : array();
@@ -310,32 +182,12 @@ final class Client_Metadata_Support {
         return $state;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function stored(): ?string {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A compare-and-swap reads the row itself, past the options cache.
         $row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1", self::OPTION_STATE ) );
         return is_object( $row ) && isset( $row->option_value ) ? (string) $row->option_value : null;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function change( callable $change ): void {
         global $wpdb;
@@ -363,21 +215,9 @@ final class Client_Metadata_Support {
         }
     }
 
-    
-
-
-
-
-
     private static function autoload(): string {
         return function_exists( 'wp_autoload_values_to_autoload' ) ? 'on' : 'yes';
     }
-
-    
-
-
-
-
 
     private static function forget_cached(): void {
         wp_cache_delete( self::OPTION_STATE, 'options' );

@@ -49,8 +49,6 @@ class Get_User extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
         if ( ! array_key_exists( 'user_id', $arguments ) ) {
             throw new \InvalidArgumentException( 'Missing required parameters: user_id' );
         }
@@ -76,29 +74,16 @@ class Get_User extends Base_Tool {
             'url'             => $data['url'],
         );
 
-        
-        
         foreach ( array( 'slug', 'nickname', 'locale', 'link' ) as $field ) {
             $result[ $field ] = isset( $data[ $field ] ) ? $data[ $field ] : null;
         }
         $result['capabilities']       = self::capability_map( isset( $data['capabilities'] ) ? $data['capabilities'] : null );
         $result['extra_capabilities'] = self::capability_map( isset( $data['extra_capabilities'] ) ? $data['extra_capabilities'] : null );
 
-        
-        
-        
         $result = array_merge( $result, self::user_columns( (int) $data['id'] ) );
 
         return Row_Extension::apply( Row_Extension::USER, $result, $data, $this->get_name(), false );
     }
-
-    
-
-
-
-
-
-
 
     public static function user_columns( int $user_id ): array {
         $user    = $user_id > 0 ? get_userdata( $user_id ) : false;
@@ -117,15 +102,6 @@ class Get_User extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function user_column( $user, string $column, string $type ) {
         if ( ! $user || ! isset( $user->$column ) ) {
             return null;
@@ -138,13 +114,6 @@ class Get_User extends Base_Tool {
         }
         return (bool) (int) $user->$column;
     }
-
-    
-
-
-
-
-
 
     public static function capability_map( $map ): ?\stdClass {
         if ( null === $map ) {

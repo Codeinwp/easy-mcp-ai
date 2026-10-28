@@ -1,34 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\OAuth;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,42 +8,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Root_Fallback {
 
-    
     const STATE_OPTION = 'easy_mcp_ai_oauth_root_discovery';
 
-    
     const FILTER = 'easy_mcp_ai_oauth_root_fallback';
 
-    
     const GRANT_TYPES = array(
         'authorization_code',
         'refresh_token',
         'urn:ietf:params:oauth:grant-type:device_code',
     );
 
-    
     const ENDPOINT_METHODS = array(
         '/authorize' => 'GET',
         '/register'  => 'POST',
         '/token'     => 'POST',
     );
 
-    
-
-
-
-
-
     public static function mode(): string {
         $mode = \Easy_MCP_AI\Config::get( 'oauth_root_fallback' );
         $mode = \apply_filters( self::FILTER, $mode );
         return in_array( $mode, array( 'auto', 'on', 'off' ), true ) ? $mode : 'auto';
     }
-
-    
-
-
-
 
     public static function is_armed(): bool {
         $mode = self::mode();
@@ -85,11 +41,6 @@ class Root_Fallback {
         return true === self::root_discovery_blocked();
     }
 
-    
-
-
-
-
     public static function root_discovery_blocked(): ?bool {
         $state = \get_option( self::STATE_OPTION, null );
         if ( ! is_array( $state ) || ! array_key_exists( 'blocked', $state ) || ! is_bool( $state['blocked'] ) ) {
@@ -98,15 +49,6 @@ class Root_Fallback {
         return $state['blocked'];
     }
 
-    
-
-
-
-
-
-
-
-
     public static function mcp_path_discovery_reachable(): bool {
         $state = \get_option( self::STATE_OPTION, null );
         return is_array( $state )
@@ -114,15 +56,6 @@ class Root_Fallback {
             && true === $state['blocked']
             && true === $state['mcp_path'];
     }
-
-    
-
-
-
-
-
-
-
 
     public static function record_root_discovery( $blocked, $mcp_path = null ): void {
         $state = array(
@@ -134,17 +67,6 @@ class Root_Fallback {
         }
         \update_option( self::STATE_OPTION, $state, false );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function endpoint_for( $method, $path, array $query, array $body, $content_type, $home_path = '' ): ?string {
         $path = \Easy_MCP_AI\Plugin::strip_home_path( (string) $path, (string) $home_path );
@@ -166,25 +88,12 @@ class Root_Fallback {
         return $ok ? $endpoint : null;
     }
 
-    
-
-
-
-
-
     private static function is_authorize_request( array $query ): bool {
         return isset( $query['response_type'] )
             && 'code' === $query['response_type']
             && self::is_non_empty_string( $query, 'client_id' )
             && self::is_non_empty_string( $query, 'code_challenge' );
     }
-
-    
-
-
-
-
-
 
     private static function is_registration( array $body, string $content_type ): bool {
         return 0 === stripos( trim( $content_type ), 'application/json' )
@@ -193,24 +102,9 @@ class Root_Fallback {
             && ! empty( $body['redirect_uris'] );
     }
 
-    
-
-
-
-
-
-
     private static function is_non_empty_string( array $params, string $key ): bool {
         return isset( $params[ $key ] ) && is_string( $params[ $key ] ) && '' !== $params[ $key ];
     }
-
-    
-
-
-
-
-
-
 
     public static function client_id_from( array $params, $basic_user = '', $auth_header = '' ): string {
         if ( isset( $params['client_id'] ) && is_string( $params['client_id'] ) && '' !== $params['client_id'] ) {
@@ -228,17 +122,6 @@ class Root_Fallback {
         return '';
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function defers_to_other_route( $matched_query, array $core_vars ): bool {
         if ( '' === (string) $matched_query ) {
             return false;
@@ -251,16 +134,6 @@ class Root_Fallback {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function dispatch( \WP $wp ): void {
         $uri  = isset( $_SERVER['REQUEST_URI'] ) ? (string) \wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared, never output.
@@ -275,27 +148,16 @@ class Root_Fallback {
         if ( null === $endpoint ) {
             return;
         }
-        
         if ( 'register' !== $endpoint && ! self::is_our_client( self::request_client_id( $request ) ) ) {
             return;
         }
 
         if ( 'authorize' === $endpoint ) {
-            
-            
             \Easy_MCP_AI\Plugin::instance()->serve_oauth_authorize( 'none' );
             return;
         }
         $wp->query_vars['rest_route'] = '/easy-mcp-ai/v1/oauth/' . $endpoint;
     }
-
-    
-
-
-
-
-
-
 
     private static function may_answer( \WP $wp, string $path ): bool {
         if ( ! preg_match( '#/(authorize|register|token)/?$#', $path ) ) {
@@ -310,12 +172,6 @@ class Root_Fallback {
         $matched_query = isset( $wp->matched_query ) ? $wp->matched_query : '';
         return ! self::defers_to_other_route( $matched_query, ( new \WP() )->public_query_vars );
     }
-
-    
-
-
-
-
 
     private static function read_request(): array {
         $method       = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( \sanitize_text_field( \wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
@@ -336,12 +192,6 @@ class Root_Fallback {
         );
     }
 
-    
-
-
-
-
-
     private static function request_client_id( array $request ): string {
         return self::client_id_from(
             array_merge( $request['query'], $request['body'] ),
@@ -349,12 +199,6 @@ class Root_Fallback {
             isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? (string) \wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) : '' // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- decoded, looked up with a prepared statement only.
         );
     }
-
-    
-
-
-
-
 
     private static function is_our_client( string $client_id ): bool {
         if ( '' === $client_id || strlen( $client_id ) > 191 ) {

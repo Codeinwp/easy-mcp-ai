@@ -47,9 +47,6 @@ class Domain_Overview extends Base_Tool {
 			$query = array(
 				'source'          => $source,
 				'domain'          => $domain,
-				
-				
-				
 				'with_subdomains' => rest_sanitize_boolean( $arguments['with_subdomains'] ?? true ) ? 1 : 0,
 			);
 			if ( isset( $arguments['url'] ) && '' !== $arguments['url'] ) {

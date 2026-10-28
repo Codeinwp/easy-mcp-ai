@@ -59,9 +59,6 @@ class List_Widget_Types extends Base_Tool {
                 'name'              => isset( $type['name'] ) ? (string) $type['name'] : '',
                 'description'       => isset( $type['description'] ) ? (string) $type['description'] : '',
                 'is_multi'          => ! empty( $type['is_multi'] ),
-                
-                
-                
                 'settings_editable' => 'editable' === $this->widget_type_status( $id ),
             );
         }

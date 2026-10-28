@@ -5,35 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Rebuild_Planner {
 
-    
     const MAX_CALLS = 50;
 
-    
     const NEW_ID = '{new_id}';
 
-    
     const SITE_SETTINGS = array(
         'blogname'        => 'title',
         'blogdescription' => 'description',
@@ -46,20 +23,12 @@ class Rebuild_Planner {
         'page_for_posts'  => 'page_for_posts',
     );
 
-    
-
-
-
-
     const FRONT_PAGE_OPTIONS = array( 'show_on_front', 'page_on_front', 'page_for_posts' );
 
-    
     const PAGE_OPTIONS = array( 'page_on_front', 'page_for_posts' );
 
-    
     const INTEGER_SETTINGS = array( 'posts_per_page', 'page_on_front', 'page_for_posts' );
 
-    
     const UNSUPPORTED_POST_TYPES = array(
         'revision', 'nav_menu_item', 'wp_template', 'wp_template_part', 'wp_global_styles',
         'wp_navigation', 'wp_block', 'customize_changeset', 'oembed_cache', 'user_request',
@@ -67,40 +36,19 @@ class Rebuild_Planner {
         'shop_order_refund', 'shop_coupon',
     );
 
-    
     private $new_ids = array( 'post' => array(), 'term' => array(), 'comment' => array() );
 
-    
     private $own_term_rows = array();
-
-    
-
-
 
     private $recreated_post_types = array();
 
-    
     private $deleted_in_call = array();
 
-    
     private $rest_meta_fields = array();
-
-    
-
-
 
     private $role_rows = array();
 
-    
-
-
-
-
-
     private $front_page = null;
-
-    
-
 
     public function __construct( array $rows = array() ) {
         foreach ( $rows as $row ) {
@@ -119,13 +67,6 @@ class Rebuild_Planner {
         }
     }
 
-    
-
-
-
-
-
-
     private static function is_front_page_row( array $row ): bool {
         if ( 'option' !== ( $row['object_type'] ?? '' ) || 'update' !== ( $row['action'] ?? '' )
             || ! in_array( (string) ( $row['object_id'] ?? '' ), self::FRONT_PAGE_OPTIONS, true )
@@ -136,13 +77,6 @@ class Rebuild_Planner {
         return ! isset( $before['value_unavailable'] ) && array_key_exists( 'value', $before )
             && null === self::value_problem( $row, $before['value'] );
     }
-
-    
-
-
-
-
-
 
     private function remember_front_page_row( array $row ): void {
         $id   = (int) $row['id'];
@@ -162,14 +96,6 @@ class Rebuild_Planner {
         }
     }
 
-    
-
-
-
-
-
-
-
     private function remember_role_row( array $row ) {
         $user = (int) $row['object_id'];
         $id   = (int) $row['id'];
@@ -186,35 +112,19 @@ class Rebuild_Planner {
         }
     }
 
-    
-
-
-
     private static function roles_of( array $snapshot ) {
         return array_values( array_filter( (array) ( $snapshot['roles'] ?? array() ), 'is_string' ) );
     }
 
-    
     public function remember_new_id( $kind, $old, $new ) {
         if ( isset( $this->new_ids[ $kind ] ) && (int) $old > 0 && (int) $new > 0 ) {
             $this->new_ids[ $kind ][ (int) $old ] = (int) $new;
         }
     }
 
-    
     public function id( $kind, $old ) {
         return $this->new_ids[ $kind ][ (int) $old ] ?? (int) $old;
     }
-
-    
-
-    
-
-
-
-
-
-
 
     public function plan( array $row ) {
         $type   = (string) ( $row['object_type'] ?? '' );
@@ -278,12 +188,6 @@ class Rebuild_Planner {
         return self::refuse( sprintf( __( 'wp_history_apply does not rebuild %s entries', 'easy-mcp-ai' ), $type ) );
     }
 
-    
-
-
-
-
-
     public static function count_calls( array $plans ) {
         $n = 0;
         foreach ( $plans as $plan ) {
@@ -291,14 +195,6 @@ class Rebuild_Planner {
         }
         return $n;
     }
-
-    
-
-    
-
-
-
-
 
     public static function post_tools( $post_type ) {
         if ( 'post' === $post_type ) {
@@ -321,7 +217,6 @@ class Rebuild_Planner {
         return array( 'update' => 'wp_update_cpt_item', 'create' => 'wp_create_cpt_item', 'id_arg' => 'item_id', 'kind' => 'cpt', 'rest_base' => $rest_base );
     }
 
-    
     private static function post_field_map( $kind ) {
         $map = array(
             'post_title'   => 'title',
@@ -369,10 +264,6 @@ class Rebuild_Planner {
 
         foreach ( $changed as $field ) {
             if ( 'post_content' === $field && 'attachment' !== $kind ) {
-                
-                
-                
-                
                 $body = $this->body_before( $row, $before );
                 if ( isset( $body['content'] ) ) {
                     $args['content'] = $body['content'];
@@ -430,20 +321,8 @@ class Rebuild_Planner {
         return self::restore( $calls, $not_restored, $restore );
     }
 
-    
-
-
-
-
-
-
-
     private function body_before( array $row, array $before ) {
         if ( isset( $before['content_revision_id'] ) ) {
-            
-            
-            
-            
             $revision_id = (int) $before['content_revision_id'];
             $revision    = \function_exists( '\wp_get_post_revision' ) ? \wp_get_post_revision( $revision_id ) : null;
             if ( ! $revision ) {
@@ -465,8 +344,6 @@ class Rebuild_Planner {
             if ( '' === (string) $before['post_content'] ) {
                 return array( 'reason' => __( 'the previous body was empty, and the tool keeps the current body when given an empty string', 'easy-mcp-ai' ) );
             }
-            
-            
             if ( '0' === (string) $before['post_content'] ) {
                 return array( 'reason' => __( 'the previous body was "0", and WordPress\'s REST update stores that as an empty body', 'easy-mcp-ai' ) );
             }
@@ -572,8 +449,6 @@ class Rebuild_Planner {
         }
         $not_restored['post_password'] = __( 'redacted: if the post had a password, set it again by hand', 'easy-mcp-ai' );
 
-        
-        
         $terms   = is_array( $before['terms'] ?? null ) ? $before['terms'] : array();
         $follow  = array();
         foreach ( $terms as $taxonomy => $ids ) {
@@ -607,7 +482,6 @@ class Rebuild_Planner {
         return self::restore( $calls, $not_restored, array( '*' ), 'post' );
     }
 
-    
     private static function format_from_term( $term_id ) {
         if ( ! \function_exists( '\get_term' ) ) {
             return null;
@@ -623,8 +497,6 @@ class Rebuild_Planner {
         /* translators: %s: post type */
         return self::refuse( sprintf( __( 'wp_history_apply does not rebuild "%s" posts', 'easy-mcp-ai' ), (string) ( $row['object_subtype'] ?? '' ) ) );
     }
-
-    
 
     private function plan_meta( array $row ) {
         $type  = (string) $row['object_type'];
@@ -645,11 +517,6 @@ class Rebuild_Planner {
         if ( ! empty( $before['multiple'] ) ) {
             return self::refuse( __( 'the key held several values; the meta tools write one', 'easy-mcp-ai' ) );
         }
-        
-        
-        
-        
-        
         if ( isset( $before['value_unavailable'] ) || ! array_key_exists( 'value', $before ) || null === $before['value'] ) {
             return self::refuse( __( 'the previous value was not captured', 'easy-mcp-ai' ), array( 'value' => 'value_unavailable' ) );
         }
@@ -680,22 +547,15 @@ class Rebuild_Planner {
         if ( null === $tools ) {
             return self::unsupported_post_type( array( 'object_subtype' => $type ) );
         }
-        
         if ( '_thumbnail_id' === $key || '_wp_page_template' === $key ) {
             if ( ! in_array( $tools['kind'], array( 'post', 'page' ), true ) ) {
                 /* translators: %s: tool name */
                 return self::refuse( sprintf( __( '%s has no argument for it', 'easy-mcp-ai' ), $tools['update'] ) );
             }
-            
-            
-            
             $template = 'default' === (string) $value ? '' : (string) $value;
             $arg      = '_thumbnail_id' === $key ? array( 'featured_media' => (int) $value ) : array( 'template' => $template );
             return self::restore( array( array( 'tool' => $tools['update'], 'arguments' => array( $tools['id_arg'] => $post_id ) + $arg ) ), array(), array( 'value' ) );
         }
-        
-        
-        
         if ( ! $this->rest_writes_meta( $type, $key ) ) {
             return self::refuse( __( 'the key is not registered for the REST API on this post type, so wp_update_post_meta cannot write it', 'easy-mcp-ai' ) );
         }
@@ -703,27 +563,12 @@ class Rebuild_Planner {
             array( array(
                 'tool'        => 'wp_update_post_meta',
                 'arguments'   => array( 'post_id' => $post_id, 'meta' => array( $key => $value ), 'post_type' => $tools['rest_base'] ),
-                
-                
                 'ignored_key' => $key,
             ) ),
             array(),
             array( 'value' )
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function rest_writes_meta( $post_type, $key ) {
         if ( ! class_exists( '\\WP_REST_Post_Meta_Fields' ) ) {
@@ -735,8 +580,6 @@ class Rebuild_Planner {
         }
         return array_key_exists( $key, $this->rest_meta_fields[ $post_type ] );
     }
-
-    
 
     private function plan_object_terms( array $row ) {
         $parts = explode( ':', (string) $row['object_id'], 2 );
@@ -766,7 +609,6 @@ class Rebuild_Planner {
         );
     }
 
-    
     private function term_ids( $ids ) {
         $out = array();
         foreach ( (array) $ids as $id ) {
@@ -776,8 +618,6 @@ class Rebuild_Planner {
         sort( $out );
         return $out;
     }
-
-    
 
     private function plan_term_update( array $row ) {
         $before   = self::before( $row );
@@ -834,9 +674,6 @@ class Rebuild_Planner {
             $not_restored['term_group'] = __( 'wp_create_term has no argument for it', 'easy-mcp-ai' );
         }
 
-        
-        
-        
         $calls    = array( array( 'tool' => 'wp_create_term', 'arguments' => $args ) );
         $post_tax = self::taxonomy_is_for_posts( $taxonomy );
         $missing  = 0;
@@ -885,8 +722,6 @@ class Rebuild_Planner {
         return false;
     }
 
-    
-
     private function plan_user_update( array $row ) {
         $before       = self::before( $row );
         $not_restored = array();
@@ -926,9 +761,6 @@ class Rebuild_Planner {
         return self::restore( array( array( 'tool' => 'wp_update_user', 'arguments' => $args ) ), $not_restored, $restore );
     }
 
-    
-
-    
     private static function comment_status( $approved ) {
         $map = array( '1' => 'approve', '0' => 'hold', 'spam' => 'spam' );
         return $map[ (string) $approved ] ?? null;
@@ -954,10 +786,6 @@ class Rebuild_Planner {
                 'content' => $content,
             );
             if ( '' !== (string) ( $before['comment_author'] ?? '' ) ) {
-                
-                
-                
-                
                 if ( \function_exists( '\get_option' ) && \get_option( 'require_name_email' ) ) {
                     return self::refuse( __( 'this site requires a name and an email for a new comment (Settings > Discussion), and the change history never keeps the email', 'easy-mcp-ai' ), array( 'author_email' => 'redacted' ) );
                 }
@@ -1017,8 +845,6 @@ class Rebuild_Planner {
         return self::restore( array( array( 'tool' => 'wp_update_comment', 'arguments' => $args ) ), $not_restored, $restore );
     }
 
-    
-
     private function plan_option( array $row ) {
         $name = (string) $row['object_id'];
         if ( false !== strpos( (string) ( $row['object_subtype'] ?? '' ), ':' ) ) {
@@ -1049,16 +875,6 @@ class Rebuild_Planner {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function plan_front_page( array $row ): array {
         $kept_off = $this->front_page_ids_kept_off();
         $name     = (string) $row['object_id'];
@@ -1073,15 +889,10 @@ class Rebuild_Planner {
         $args = array();
         foreach ( $this->front_page_written() as $option ) {
             $value           = self::setting_value( $option, $this->front_page['before'][ $option ] );
-            $args[ $option ] = 'show_on_front' === $option ? $value : $this->id( 'post', $value ); 
+            $args[ $option ] = 'show_on_front' === $option ? $value : $this->id( 'post', $value );
         }
         return self::restore( array( array( 'tool' => 'wp_update_site_settings', 'arguments' => $args ) ), array(), array( 'value' ) );
     }
-
-    
-
-
-
 
     private function front_page_written(): array {
         $kept_off = $this->front_page_ids_kept_off();
@@ -1090,11 +901,6 @@ class Rebuild_Planner {
         } ) );
     }
 
-    
-
-
-
-
     private function front_page_carrier(): int {
         $written = $this->front_page_written();
         $ids     = array_keys( array_filter( $this->front_page['rows'], function ( $option ) use ( $written ) {
@@ -1102,15 +908,6 @@ class Rebuild_Planner {
         } ) );
         return max( $ids );
     }
-
-    
-
-
-
-
-
-
-
 
     private function front_page_ids_kept_off(): array {
         $before = $this->front_page['before'];
@@ -1126,23 +923,9 @@ class Rebuild_Planner {
         return $kept_off;
     }
 
-    
-
-
-
-
-
-
     private static function setting_value( string $name, $value ) {
         return in_array( self::SITE_SETTINGS[ $name ], self::INTEGER_SETTINGS, true ) ? (int) $value : (string) $value;
     }
-
-    
-
-
-
-
-
 
     private function plan_sticky( array $row ) {
         $before = self::before( $row );
@@ -1189,7 +972,6 @@ class Rebuild_Planner {
         return self::restore( $calls, $not_restored, array( 'value' ) );
     }
 
-    
     private static function post_ids( $value ) {
         $ids = array();
         foreach ( (array) $value as $id ) {
@@ -1202,13 +984,6 @@ class Rebuild_Planner {
         return $ids;
     }
 
-    
-
-
-
-
-
-
     private static function timestamps_only( array $row ) {
         foreach ( array( self::before( $row ), self::after( $row ) ) as $side ) {
             if ( array_key_exists( 'value', $side ) && null !== $side['value'] && ! ( is_scalar( $side['value'] ) && ctype_digit( (string) $side['value'] ) ) ) {
@@ -1217,14 +992,6 @@ class Rebuild_Planner {
         }
         return true;
     }
-
-    
-
-
-
-
-
-
 
     private static function incidental_reason( array $row ) {
         $type = (string) ( $row['object_type'] ?? '' );
@@ -1239,11 +1006,6 @@ class Rebuild_Planner {
             }
             return null;
         }
-        
-        
-        
-        
-        
         if ( 'user_meta' === $type && 'last_update' === ( explode( ':', $id, 2 )[1] ?? '' )
             && \function_exists( '\wc_set_user_last_update_time' ) && self::timestamps_only( $row ) ) {
             return __( 'WooCommerce\'s record of when the customer last changed; it stamps it again on the next profile update', 'easy-mcp-ai' );
@@ -1257,20 +1019,6 @@ class Rebuild_Planner {
         }
         return null;
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public function drift( array $row, array $plan, $can_view_all ) {
         $type   = (string) $row['object_type'];
@@ -1373,7 +1121,6 @@ class Rebuild_Planner {
 
             case 'option':
                 if ( 'sticky_posts' === (string) $row['object_id'] ) {
-                    
                     $moved = array();
                     foreach ( (array) ( $plan['calls'] ?? array() ) as $call ) {
                         $post_id = (int) ( $call['arguments']['post_id'] ?? 0 );
@@ -1388,7 +1135,6 @@ class Rebuild_Planner {
                     return self::moved_if( $moved );
                 }
                 if ( null !== $this->front_page && (int) $row['id'] === $this->front_page_carrier() ) {
-                    
                     $moved = array();
                     foreach ( $this->front_page_written() as $name ) {
                         $value = $this->front_page['after'][ $name ];
@@ -1414,16 +1160,9 @@ class Rebuild_Planner {
         return self::unreadable();
     }
 
-    
-
-
-
-
-
-
     private function body_after( array $row, array $after ) {
         if ( array_key_exists( 'post_content', $after ) ) {
-            return (string) $after['post_content']; 
+            return (string) $after['post_content'];
         }
         $revision_id = (int) ( $row['revision_id'] ?? 0 );
         if ( $revision_id <= 0 || ! \function_exists( '\wp_get_post_revision' ) ) {
@@ -1432,14 +1171,6 @@ class Rebuild_Planner {
         $revision = \wp_get_post_revision( $revision_id );
         return $revision ? (string) ( $revision->post_content ?? '' ) : null;
     }
-
-    
-
-
-
-
-
-
 
     private static function compare( array $fields, array $after, array $live ) {
         $moved = array();
@@ -1453,15 +1184,6 @@ class Rebuild_Planner {
         }
         return $moved;
     }
-
-    
-
-    
-
-
-
-
-
 
     public static function value_problem( array $row, $value ) {
         if ( '[REDACTED]' === $value ) {
@@ -1482,12 +1204,6 @@ class Rebuild_Planner {
         }
         return null;
     }
-
-    
-
-
-
-
 
     private static function delete_tool_for( array $row ) {
         switch ( (string) ( $row['object_type'] ?? '' ) ) {
@@ -1510,36 +1226,17 @@ class Rebuild_Planner {
         return null;
     }
 
-    
-
-
-
     private static function before( array $row ) {
         return is_array( $row['before_value'] ?? null ) ? $row['before_value'] : array();
     }
-
-    
-
-
 
     private static function after( array $row ) {
         return is_array( $row['after_value'] ?? null ) ? $row['after_value'] : array();
     }
 
-    
-
-
-
     private static function changed( array $row ) {
         return array_values( array_map( 'strval', is_array( $row['changed_fields'] ?? null ) ? $row['changed_fields'] : array() ) );
     }
-
-    
-
-
-
-
-
 
     private static function restore( array $calls, array $not_restored, array $restore_fields, $new_id_kind = null ) {
         return array(
@@ -1552,29 +1249,13 @@ class Rebuild_Planner {
         );
     }
 
-    
-
-
-
     private static function skip( $reason ) {
         return array( 'status' => 'skip', 'reason' => $reason, 'calls' => array(), 'not_restored' => array(), 'restore_fields' => array(), 'new_id_kind' => null );
     }
 
-    
-
-
-
     private static function incidental( $reason ) {
         return array( 'status' => 'incidental', 'reason' => $reason, 'calls' => array(), 'not_restored' => array(), 'restore_fields' => array(), 'new_id_kind' => null );
     }
-
-    
-
-
-
-
-
-
 
     private static function is_role_key( $key ) {
         global $wpdb;
@@ -1590,23 +1271,13 @@ class Rebuild_Planner {
         return false;
     }
 
-    
-
-
-
-
     private static function refuse( $reason, array $not_restored = array() ) {
         return array( 'status' => 'refuse', 'reason' => $reason, 'calls' => array(), 'not_restored' => $not_restored, 'restore_fields' => array(), 'new_id_kind' => null );
     }
 
-    
     private static function unreadable() {
         return array( 'readable' => false, 'moved' => array() );
     }
-
-    
-
-
 
     private static function moved_if( array $moved ) {
         return array( 'readable' => true, 'moved' => array_values( array_unique( $moved ) ) );

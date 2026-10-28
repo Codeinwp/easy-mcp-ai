@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,29 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Litespeed_Cache extends Cache_Adapter {
 
@@ -64,16 +36,9 @@ final class Litespeed_Cache extends Cache_Adapter {
         return $this->calls()->defined( 'LSCWP_V' );
     }
 
-
     public function reaches_network( Purge_Request $request ): bool {
         return Purge_Request::SCOPE_SITE === $request->scope && $this->empties_server();
     }
-
-    
-
-
-
-
 
     public function noise_options(): array {
         return array( 'litespeed.admin_display.messages', 'litespeed.crawler._summary', 'litespeed.purge.queue' );
@@ -115,13 +80,6 @@ final class Litespeed_Cache extends Cache_Adapter {
         return $this->delivered( sprintf( 'LiteSpeed Cache cleared %d post(s) with their related pages, and %d page(s).', count( $request->post_ids ), count( $request->urls ) ) );
     }
 
-    
-
-
-
-
-
-
     private function delivered( string $detail ): Layer_Result {
         if ( $this->calls()->defined( 'LITESPEED_CLI' ) ) {
             return $this->parked( $detail );
@@ -129,22 +87,9 @@ final class Litespeed_Cache extends Cache_Adapter {
         return $this->sent( $detail, 'after_response' );
     }
 
-    
-
-
-
-
-
     private function empties_server(): bool {
         return ! empty( $this->calls()->constant( 'LSWCP_EMPTYCACHE' ) );
     }
-
-    
-
-
-
-
-
 
     private function conf( string $id ): bool {
         $calls = $this->calls();

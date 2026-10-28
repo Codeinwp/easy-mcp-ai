@@ -5,35 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class Site_Health_Guard {
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function require_network_admin_on_multisite( $what ) {
         if ( ! function_exists( 'is_multisite' ) || ! \is_multisite() ) {
@@ -44,15 +16,6 @@ class Site_Health_Guard {
         }
         throw new \RuntimeException( sprintf( 'On a multisite network only a network administrator (super admin) can %s: it affects every site on the network.', $what ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
-
 
     public static function flag( array $arguments, $name, $default ) {
         if ( ! array_key_exists( $name, $arguments ) || null === $arguments[ $name ] ) {
@@ -65,15 +28,6 @@ class Site_Health_Guard {
         return (bool) $v;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function cron_events() {
         $crons = function_exists( '_get_cron_array' ) ? \_get_cron_array() : array();
         if ( ! is_array( $crons ) ) {
@@ -82,7 +36,7 @@ class Site_Health_Guard {
         $rows = array();
         foreach ( $crons as $timestamp => $hooks ) {
             if ( ! is_numeric( $timestamp ) || ! is_array( $hooks ) ) {
-                continue; 
+                continue;
             }
             foreach ( $hooks as $hook => $instances ) {
                 if ( ! is_array( $instances ) ) {
@@ -96,8 +50,6 @@ class Site_Health_Guard {
                         'timestamp' => (int) $timestamp,
                         'hook'      => (string) $hook,
                         'key'       => (string) $key,
-                        
-                        
                         'schedule'  => ! empty( $event['schedule'] ) && is_string( $event['schedule'] ) ? $event['schedule'] : false,
                         'interval'  => isset( $event['interval'] ) ? (int) $event['interval'] : 0,
                         'args'      => isset( $event['args'] ) && is_array( $event['args'] ) ? $event['args'] : array(),
@@ -110,14 +62,6 @@ class Site_Health_Guard {
         } );
         return $rows;
     }
-
-    
-
-
-
-
-
-
 
     public static function describe_schedule( $schedule, $interval ) {
         if ( false === $schedule ) {
@@ -134,26 +78,12 @@ class Site_Health_Guard {
         );
     }
 
-    
-
-
-
-
-
     public static function iso_utc( $ts ) {
         if ( null === $ts || false === $ts || ! is_numeric( $ts ) ) {
             return null;
         }
         return gmdate( 'Y-m-d\TH:i:s\Z', (int) $ts );
     }
-
-    
-
-
-
-
-
-
 
     public static function display_path( $path ) {
         $path = str_replace( '\\', '/', (string) $path );

@@ -12,65 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Widget_Adapter extends Command_Handler {
 
-    
     const INACTIVE = 'wp_inactive_widgets';
 
-    
     const LIST_FIELDS = array( 'name', 'id', 'position', 'options' );
 
     const LEGACY_TYPE  = "wp_cli_run refuses 'wp widget add' for the widget type '%s': it has no REST representation (show_instance_in_rest), so wp_create_widget cannot store its settings. Add it in Appearance > Widgets.";
@@ -78,14 +23,8 @@ final class Widget_Adapter extends Command_Handler {
     const STRING_FLAG  = "--%s needs a value (--%s=<%s>) when wp_cli_run runs 'wp %s'.";
     const OVER_CAP     = "wp_cli_run moves at most %d widgets in one 'wp %s' command, and these sidebars hold %d. Reset fewer sidebars at a time.";
 
-    
     private static $reader = null;
 
-    
-    
-    
-
-    
     public function list_widgets( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_list_widgets' );
         $sidebar = (string) $inv->args[0];
@@ -108,12 +47,6 @@ final class Widget_Adapter extends Command_Handler {
         $this->formatter( $ctx, $assoc, self::LIST_FIELDS )->display_items( $widgets );
     }
 
-    
-
-
-
-
-
     private static function widget_rows( array $rows, string $sidebar ): array {
         $widgets = array();
         foreach ( $rows as $row ) {
@@ -124,15 +57,6 @@ final class Widget_Adapter extends Command_Handler {
         }
         return $widgets;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function widget_row( array $row, int $listed ): object {
         $id                    = (string) $row['id'];
@@ -146,11 +70,6 @@ final class Widget_Adapter extends Command_Handler {
         );
     }
 
-    
-    
-    
-
-    
     public function add( Invocation $inv, Context $ctx ): void {
         $id_base  = (string) $inv->args[0];
         $sidebar  = (string) $inv->args[1];
@@ -187,7 +106,6 @@ final class Widget_Adapter extends Command_Handler {
         $ctx->out->success( 'Added widget to sidebar.' );
     }
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_update_widget' );
         $widget_id = (string) $inv->args[0];
@@ -213,7 +131,6 @@ final class Widget_Adapter extends Command_Handler {
         $ctx->out->success( 'Widget updated.' );
     }
 
-    
     public function move( Invocation $inv, Context $ctx ): void {
         $given    = self::given_flag( $inv, 'position', $ctx );
         $position = null === $given ? null : self::position( $given, $inv, $ctx );
@@ -249,13 +166,6 @@ final class Widget_Adapter extends Command_Handler {
         $ctx->out->success( 'Widget moved.' );
     }
 
-    
-
-
-
-
-
-
     private static function given_flag( Invocation $inv, string $flag, Context $ctx ): ?string {
         if ( ! array_key_exists( $flag, $inv->assoc ) || empty( $inv->assoc[ $flag ] ) ) {
             return null;
@@ -266,24 +176,16 @@ final class Widget_Adapter extends Command_Handler {
         return $inv->assoc[ $flag ];
     }
 
-    
-
-
-
-
-
     private static function move_index( ?int $position, string $new_sidebar, array $current ): int {
         if ( null !== $position ) {
             return $position - 1;
         }
         if ( $new_sidebar !== $current['sidebar'] ) {
-            
             return 0;
         }
         return $current['index'];
     }
 
-    
     public function deactivate( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_delete_widget' );
         $batch = new Batch( $inv, $ctx, 'widget', 'deactivate' );
@@ -307,7 +209,6 @@ final class Widget_Adapter extends Command_Handler {
         $batch->report();
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_delete_widget' );
         $batch = new Batch( $inv, $ctx, 'widget', 'delete' );
@@ -326,7 +227,6 @@ final class Widget_Adapter extends Command_Handler {
         $batch->report();
     }
 
-    
     public function reset( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_delete_widget' );
         $all        = Read_Value::flag( $inv->assoc, 'all', false );
@@ -338,15 +238,10 @@ final class Widget_Adapter extends Command_Handler {
         if ( $all ) {
             $sidebars = array_map( 'strval', array_keys( $registered ) );
         }
-        
-        
-        
         if ( empty( $sidebars ) ) {
             $ctx->out->error( 'No sidebar registered.' );
         }
 
-        
-        
         $stored = self::sidebars_widgets();
         $moving = 0;
         foreach ( array_unique( $sidebars ) as $sidebar_id ) {
@@ -369,13 +264,6 @@ final class Widget_Adapter extends Command_Handler {
         );
         $batch->report();
     }
-
-    
-
-
-
-
-
 
     private static function reset_one( string $sidebar_id, array $registered, Batch $batch, Context $ctx ): string {
         if ( ! array_key_exists( $sidebar_id, $registered ) ) {
@@ -405,35 +293,12 @@ final class Widget_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    
-
-
-
-
-
-
-
     private static function resettable_widgets( string $sidebar_id, array $registered, array $stored ): array {
         if ( ! array_key_exists( $sidebar_id, $registered ) || empty( $stored[ $sidebar_id ] ) || ! is_array( $stored[ $sidebar_id ] ) ) {
             return array();
         }
         return array_values( array_map( 'strval', $stored[ $sidebar_id ] ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function plan_reset( Invocation $inv ): array {
         if ( ! self::plan_may_read() ) {
@@ -457,11 +322,6 @@ final class Widget_Adapter extends Command_Handler {
         return count( $plan ) > Batch::cap( $inv ) ? array() : $plan;
     }
 
-    
-
-
-
-
     private static function plan_may_read(): bool {
         if ( class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) && method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' )
             && false === \Easy_MCP_AI\MCP\Server::current_call_may_use( 'wp_delete_widget' ) ) {
@@ -470,50 +330,18 @@ final class Widget_Adapter extends Command_Handler {
         return \current_user_can( 'edit_theme_options' );
     }
 
-    
-
-
-
-
-
-
     public function plan_deactivate( Invocation $inv ): array {
         return self::plan_remove( $inv, false );
     }
-
-    
-
-
-
 
     public function plan_delete( Invocation $inv ): array {
         return self::plan_remove( $inv, true );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public static function registered_sidebars(): array {
         $sidebars = self::wp( 'registered_sidebars', array(), array( __CLASS__, 'live_registered_sidebars' ) );
         return is_array( $sidebars ) ? $sidebars : array();
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function wp( string $key, array $args, callable $live ) {
         if ( null !== self::$reader ) {
@@ -522,21 +350,10 @@ final class Widget_Adapter extends Command_Handler {
         return call_user_func_array( $live, $args );
     }
 
-    
-
-
-
-
-
     public static function use_reader( ?callable $reader ): void {
         self::$reader = $reader;
     }
 
-    
-    
-    
-
-    
     public static function live_registered_sidebars(): array {
         global $wp_registered_sidebars;
         $sidebars = array();
@@ -548,12 +365,6 @@ final class Widget_Adapter extends Command_Handler {
         return $sidebars;
     }
 
-    
-
-
-
-
-
     public static function live_sidebars_widgets(): array {
         $sidebars_widgets = \get_option( 'sidebars_widgets', array() );
         if ( is_array( $sidebars_widgets ) && isset( $sidebars_widgets['array_version'] ) ) {
@@ -561,12 +372,6 @@ final class Widget_Adapter extends Command_Handler {
         }
         return is_array( $sidebars_widgets ) ? $sidebars_widgets : array();
     }
-
-    
-
-
-
-
 
     public static function live_widget_type( string $id_base ): string {
         global $wp_widget_factory;
@@ -581,32 +386,14 @@ final class Widget_Adapter extends Command_Handler {
         return ! empty( $widget->widget_options['show_instance_in_rest'] ) ? 'editable' : 'legacy';
     }
 
-    
-
-
-
-
-
-
     public static function live_widget_instance( string $name, string $number ) {
         $options = \get_option( 'widget_' . $name );
         return is_array( $options ) && array_key_exists( $number, $options ) ? $options[ $number ] : null;
     }
 
-    
-    
-    
-
-    
     public static function item_label( string $widget_id ): string {
         return 'widget ' . (string) $widget_id;
     }
-
-    
-
-
-
-
 
     private static function validate_sidebar( string $sidebar_id, Context $ctx ): void {
         if ( self::INACTIVE !== $sidebar_id && ! array_key_exists( $sidebar_id, self::registered_sidebars() ) ) {
@@ -614,19 +401,10 @@ final class Widget_Adapter extends Command_Handler {
         }
     }
 
-    
     private static function sidebars_widgets(): array {
         $stored = self::wp( 'sidebars_widgets', array(), array( __CLASS__, 'live_sidebars_widgets' ) );
         return is_array( $stored ) ? $stored : array();
     }
-
-    
-
-
-
-
-
-
 
     private static function locate( string $widget_id ): ?array {
         foreach ( self::sidebars_widgets() as $sidebar_id => $widgets ) {
@@ -652,15 +430,10 @@ final class Widget_Adapter extends Command_Handler {
         return null;
     }
 
-    
     public static function live_registered_widgets(): array {
         global $wp_registered_widgets;
         return is_array( $wp_registered_widgets ) ? array_map( 'strval', array_keys( $wp_registered_widgets ) ) : array();
     }
-
-    
-
-
 
     private static function remove_one( string $widget_id, bool $force, Batch $batch, Context $ctx ): ?string {
         $result = $batch->delegate(
@@ -681,7 +454,6 @@ final class Widget_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    
     private static function plan_remove( Invocation $inv, bool $force ): array {
         $plan = array();
         foreach ( $inv->args as $widget_id ) {
@@ -696,11 +468,6 @@ final class Widget_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
-
-
-
-
     private static function position( string $value, Invocation $inv, Context $ctx ): int {
         if ( ! preg_match( '/^[0-9]+\z/', $value ) || (int) $value < 1 ) {
             $ctx->out->error( sprintf( self::BAD_POSITION, $value, $inv->command ) );
@@ -708,23 +475,11 @@ final class Widget_Adapter extends Command_Handler {
         return (int) $value;
     }
 
-    
-
-
-
-
-
     private static function split_id( string $widget_id ): array {
         $parts  = explode( '-', $widget_id );
         $number = (string) array_pop( $parts );
         return array( implode( '-', $parts ), $number );
     }
-
-    
-
-
-
-
 
     private static function payload_warning( array $payload, Context $ctx ): void {
         if ( isset( $payload['position_applied'] ) && false === $payload['position_applied'] && isset( $payload['warning'] ) && is_string( $payload['warning'] ) ) {

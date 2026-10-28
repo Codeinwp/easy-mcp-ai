@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
 class Rankmath_Get_Redirect extends Base_Tool {
 
 	use Rank_Math_Redirects;

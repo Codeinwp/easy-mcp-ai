@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,32 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Cloudflare extends Cache_Adapter {
 
-    
     const CHUNK = 30;
 
     public function id(): string {
@@ -70,14 +41,6 @@ final class Cloudflare extends Cache_Adapter {
     public function also_clears( Purge_Request $request ): array {
         return Purge_Request::SCOPE_SITE === $request->scope ? array( self::ALSO_CDN ) : array();
     }
-
-    
-
-
-
-
-
-
 
     public function purge( Purge_Request $request ): Layer_Result {
         $domain = strtolower( $this->zone_domain() );
@@ -130,17 +93,9 @@ final class Cloudflare extends Cache_Adapter {
             return $this->helper_missing( 'Hooks::purgeCacheByRelevantURLs()' );
         }
         $ids = $request->post_ids;
-        
         $this->calls()->call( array( $this->hooks(), 'purgeCacheByRelevantURLs' ), array( 1 === count( $ids ) ? $ids[0] : $ids ) );
         return $this->sent( sprintf( 'Cloudflare cleared the related URLs of %d post(s).', count( $ids ) ) );
     }
-
-    
-
-
-
-
-
 
     private function file_batches( array $urls ): array {
         $batches = array_chunk( $urls, self::CHUNK );
@@ -161,12 +116,6 @@ final class Cloudflare extends Cache_Adapter {
         return $batches;
     }
 
-    
-
-
-
-
-
     private function zone_domain(): string {
         $constant = $this->calls()->constant( 'CLOUDFLARE_DOMAIN_NAME' );
         if ( is_string( $constant ) && '' !== $constant ) {
@@ -175,14 +124,6 @@ final class Cloudflare extends Cache_Adapter {
         $cached = $this->calls()->get_option( 'cloudflare_cached_domain_name', null );
         return is_string( $cached ) ? $cached : '';
     }
-
-    
-
-
-
-
-
-
 
     private function setting_on( string $name ): bool {
         $setting = $this->calls()->get_option( $name, null );
@@ -193,12 +134,6 @@ final class Cloudflare extends Cache_Adapter {
         return false !== $value && 'off' !== $value;
     }
 
-    
-
-
-
-
-
     private function hooks() {
         $global = $this->calls()->global_value( 'cloudflareHooks' );
         if ( is_object( $global ) && $this->calls()->method_exists( $global, 'purgeCacheEverything' ) && $this->calls()->method_exists( $global, 'purgeCacheByRelevantURLs' ) ) {
@@ -206,13 +141,6 @@ final class Cloudflare extends Cache_Adapter {
         }
         return $this->calls()->instantiate( $this->vendor_namespace() . 'WordPress\\Hooks' );
     }
-
-    
-
-
-
-
-
 
     private function client() {
         $ns          = $this->vendor_namespace();
@@ -224,12 +152,6 @@ final class Cloudflare extends Cache_Adapter {
         $integration = $calls->instantiate( $ns . 'Integration\\DefaultIntegration', array( $config, $api, $store, $logger ) );
         return $calls->instantiate( $ns . 'WordPress\\WordPressClientAPI', array( $integration ) );
     }
-
-    
-
-
-
-
 
     private function missing_client_api(): string {
         $ns = $this->vendor_namespace();
@@ -245,11 +167,6 @@ final class Cloudflare extends Cache_Adapter {
         }
         return '';
     }
-
-    
-
-
-
 
     private function vendor_namespace(): string {
         foreach ( array( 'Cloudflare\\APO\\', 'CF\\' ) as $ns ) {

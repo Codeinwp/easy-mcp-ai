@@ -5,66 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Redactor {
 
     const MASK = '[REDACTED]';
 
-    
     const SECRET_POSITIONALS = array(
         'user check-password'  => array( 1 ),
         'user session destroy' => array( 1 ),
     );
-
-    
-
-
-
-
-
 
     const KEYED_VALUES = array(
         'option add'          => array( 0, 1 ),
@@ -107,15 +55,11 @@ final class Redactor {
         'site meta patch'     => array( 2, 3 ),
     );
 
-    
     const URL_POSITIONALS = array(
         'media import'         => 0,
         'embed fetch'          => 0,
         'embed provider match' => 0,
     );
-
-    
-
 
     public static function mask_command( string $command ): array {
         try {
@@ -140,14 +84,6 @@ final class Redactor {
         return array( $text, array_values( array_unique( $names ) ) );
     }
 
-    
-
-
-
-
-
-
-
     private static function mask_word( string $word, array $replace, array &$names ): string {
         if ( preg_match( '|^--([^=]+)=(.*)\z|s', $word, $m ) ) {
             return self::mask_flag_value( $word, $m[1], $m[2], $names );
@@ -162,15 +98,6 @@ final class Redactor {
         return self::quote( $word );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function mask_flag_value( string $word, string $name, string $value, array &$names ): string {
         if ( '' !== $value && self::key_is_secret( $name ) ) {
             $names[] = '--' . $name;
@@ -183,15 +110,6 @@ final class Redactor {
         return self::quote( $word );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function positional_replacements( array $words, array &$names ): array {
         $found = self::find_leaf( $words );
         if ( null === $found ) {
@@ -200,8 +118,6 @@ final class Redactor {
         $command = (string) $found['leaf']['command'];
         $rest    = array_values( array_map( 'strval', $found['rest'] ) );
 
-        
-        
         return array_replace(
             self::secret_positionals( $command, $found['leaf'], $rest, $names ),
             self::keyed_value_secrets( $command, $rest, $names ),
@@ -209,21 +125,11 @@ final class Redactor {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function find_leaf( array $words ): ?array {
         try {
             $globals = Catalog::global_parameters();
         } catch ( \RuntimeException $e ) {
-            return null; 
+            return null;
         }
         $parsed     = Argv::parse( $words, $globals );
         $positional = array_map( 'strval', $parsed['positional'] );
@@ -233,19 +139,10 @@ final class Redactor {
         try {
             $found = Catalog::find( $positional );
         } catch ( \RuntimeException $e ) {
-            return null; 
+            return null;
         }
         return null === $found['leaf'] ? null : $found;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function secret_positionals( string $command, array $leaf, array $rest, array &$names ): array {
         if ( ! isset( self::SECRET_POSITIONALS[ $command ] ) ) {
@@ -262,14 +159,6 @@ final class Redactor {
         return $replace;
     }
 
-    
-
-
-
-
-
-
-
     private static function keyed_value_secrets( string $command, array $rest, array &$names ): array {
         if ( ! isset( self::KEYED_VALUES[ $command ] ) ) {
             return array();
@@ -284,14 +173,6 @@ final class Redactor {
         return self::is_patch( $command ) ? self::secret_path_value( $rest, $key_index, $value_index, $names ) : array();
     }
 
-    
-
-
-
-
-
-
-
     private static function secret_key_values( array $rest, int $key_index, int $value_index, array &$names ): array {
         $replace = array();
         foreach ( array_slice( $rest, $value_index ) as $value ) {
@@ -304,16 +185,6 @@ final class Redactor {
         }
         return $replace;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function secret_path_value( array $rest, int $key_index, int $value_index, array &$names ): array {
         $tail  = array_slice( $rest, $value_index );
@@ -330,13 +201,6 @@ final class Redactor {
         return array();
     }
 
-    
-
-
-
-
-
-
     private static function url_secrets( string $command, array $rest, array &$names ): array {
         if ( ! isset( self::URL_POSITIONALS[ $command ] ) ) {
             return array();
@@ -352,23 +216,13 @@ final class Redactor {
         return $replace;
     }
 
-    
-
-
-
-
     private static function key_is_secret( string $key ): bool {
         return Handlers\Option_Handler::key_is_secret( $key );
     }
 
-    
     private static function is_patch( string $command ): bool {
         return ' patch' === substr( $command, -6 );
     }
-
-    
-
-
 
     private static function json_has_secret_key( string $word ): bool {
         if ( '' === $word || ( '{' !== $word[0] && '[' !== $word[0] ) ) {
@@ -377,11 +231,6 @@ final class Redactor {
         $decoded = json_decode( $word, true );
         return is_array( $decoded ) && self::has_secret_key( $decoded );
     }
-
-    
-
-
-
 
     private static function has_secret_key( array $data ): bool {
         foreach ( $data as $key => $value ) {
@@ -395,10 +244,6 @@ final class Redactor {
         return false;
     }
 
-    
-
-
-
     private static function strip_url_secrets( string $value ): ?string {
         if ( ! preg_match( '#^[a-z][a-z0-9+.\-]*://#i', $value ) ) {
             return null;
@@ -409,12 +254,6 @@ final class Redactor {
         }
         return self::quote( substr( $value, 0, $cut + 1 ) ) . self::MASK;
     }
-
-    
-
-
-
-
 
     private static function fail_closed( string $command ): array {
         $plain = array();
@@ -438,15 +277,6 @@ final class Redactor {
         return array( $kept . self::MASK, array( 'unparseable' ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function fail_closed_refused( array $words ): array {
         $kept  = array();
         $names = array();
@@ -469,12 +299,6 @@ final class Redactor {
         return array( \Easy_MCP_AI\Text_Redactor::redact( implode( ' ', $kept ) ), array_values( array_unique( $names ) ) );
     }
 
-    
-
-
-
-
-
     private static function positional_names( array $leaf ): array {
         $names = array();
         foreach ( isset( $leaf['params'] ) ? (array) $leaf['params'] : array() as $param ) {
@@ -485,12 +309,10 @@ final class Redactor {
         return $names;
     }
 
-    
     private static function is_assoc( string $word ): bool {
         return 1 === preg_match( '|^--[^=]|', $word );
     }
 
-    
     private static function quote( string $word ): string {
         if ( '' === $word ) {
             return "''";

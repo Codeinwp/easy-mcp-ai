@@ -9,32 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Comment extends Base_Tool {
 
-    
-    
-    
-    
     use Comment_Moderation;
-
-    
-
-
-
-
 
     const CLEARABLE_STRINGS = array( 'author_name', 'author_email', 'author_url' );
 
-    
-
-
-
-
-
-
     const VALUE_STRINGS = array( 'author_ip', 'author_user_agent', 'date', 'date_gmt' );
-
-    
-
-
 
     const SNAPSHOT_COLUMNS = array( 'comment_post_ID', 'comment_author', 'comment_author_email', 'comment_author_url', 'comment_author_IP', 'comment_date', 'comment_date_gmt', 'comment_content', 'comment_karma', 'comment_approved', 'comment_agent', 'comment_type', 'comment_parent', 'user_id' );
 
@@ -58,7 +37,7 @@ class Update_Comment extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
@@ -137,17 +116,13 @@ class Update_Comment extends Base_Tool {
 
         $comment_id = $this->parse_required_id( $arguments['comment_id'], 'comment_id' );
 
-        
         $action = self::status_sent( $arguments ) ? $this->comment_status_to_action( (string) $arguments['status'] ) : null;
 
-        
-        
         $fields    = $this->field_params( $arguments, $comment_id );
         $meta_sent = $this->apply_meta_argument( $arguments, $fields );
 
         if ( ! isset( $arguments['content'] ) && ! $fields ) {
             if ( null === $action ) {
-                
                 throw new \InvalidArgumentException( 'Nothing to update: pass content or status. Any other field this tool takes (author_name, author_email, author_url, author_ip, author_user_agent, date, date_gmt, parent, post, author, meta) also counts.' );
             }
             return $this->update_status_only( $comment_id, $action );
@@ -162,9 +137,6 @@ class Update_Comment extends Base_Tool {
 
         $data = $this->rest_request( 'POST', '/wp/v2/comments/' . $comment_id, $params );
 
-        
-        
-        
         $after = self::snapshot( get_comment( $comment_id ), $comment_id, $meta_keys );
 
         $result = array(
@@ -180,15 +152,6 @@ class Update_Comment extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private function with_content_and_status( array $arguments, array $fields, ?string $action ): array {
         $params = $fields;
         if ( isset( $arguments['content'] ) ) {
@@ -201,53 +164,12 @@ class Update_Comment extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function with_stored_ip( array $params, ?object $existing ): array {
         if ( ! isset( $params['author_ip'] ) && $existing && '' !== (string) $existing->comment_author_IP && rest_is_ip_address( (string) $existing->comment_author_IP ) ) {
             $params['author_ip'] = (string) $existing->comment_author_IP;
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function field_params( array $arguments, int $comment_id ): array {
         $out = array_merge(
@@ -264,13 +186,6 @@ class Update_Comment extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
     private function clearable_strings( array $arguments ): array {
         $out = array();
         foreach ( self::CLEARABLE_STRINGS as $key ) {
@@ -284,14 +199,6 @@ class Update_Comment extends Base_Tool {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
 
     private function value_strings( array $arguments ): array {
         $out = array();
@@ -314,16 +221,6 @@ class Update_Comment extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function post_and_parent( array $arguments, int $comment_id ): array {
         $out    = array();
         $post   = $this->optional_int( $arguments, 'post', 1 );
@@ -343,15 +240,6 @@ class Update_Comment extends Base_Tool {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
 
     private function optional_int( array $arguments, string $key, int $min ): ?int {
         if ( ! isset( $arguments[ $key ] ) || '' === $arguments[ $key ] ) {
@@ -375,15 +263,6 @@ class Update_Comment extends Base_Tool {
         return $int;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_bad_parent( int $parent, int $comment_id, int $post_id ): void {
         if ( $parent === $comment_id ) {
             throw new \RuntimeException( 'A comment cannot be its own parent.' );
@@ -402,17 +281,6 @@ class Update_Comment extends Base_Tool {
         self::refuse_reply_cycle( $parent, $comment_id, (int) $candidate->comment_parent );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function refuse_reply_cycle( int $parent, int $comment_id, int $cursor ): void {
         $seen = array();
         while ( $cursor > 0 && ! isset( $seen[ $cursor ] ) && count( $seen ) < 1000 ) {
@@ -424,15 +292,6 @@ class Update_Comment extends Base_Tool {
             $cursor          = $ancestor ? (int) $ancestor->comment_parent : 0;
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function snapshot( ?object $comment, int $comment_id, array $meta_keys ): ?array {
         if ( ! $comment ) {
@@ -447,27 +306,6 @@ class Update_Comment extends Base_Tool {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function update_status_only( int $comment_id, string $action ): array {
         $comment = get_comment( $comment_id );
@@ -484,9 +322,6 @@ class Update_Comment extends Base_Tool {
             $changed = true;
         }
 
-        
-        
-        
         if ( ! get_comment( $comment_id ) ) {
             return array(
                 'id'      => $comment_id,

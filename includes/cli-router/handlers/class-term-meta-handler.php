@@ -10,44 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Term_Meta_Handler extends Meta_Command {
 
     use \Easy_MCP_AI\Tools\Taxonomy\Term_Meta_Auth_Guard;
 
-    
     protected $meta_type = 'term';
 
     const NOT_FOUND = 'Could not find the term with ID %s.';
@@ -56,30 +22,17 @@ final class Term_Meta_Handler extends Meta_Command {
 
     const BLOCKED = 'This meta key cannot be modified via MCP.';
 
-    
-
-
-
-
     public function preflight_id( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
         Ids::require_digits( $ctx, isset( $args[0] ) ? $args[0] : '', 'a term ID' );
     }
 
-    
     public function add( Invocation $inv, Context $ctx ): void {
         foreach ( (array) ( $inv->route['not_captured'] ?? array() ) as $phrase ) {
             $ctx->not_captured( (string) $phrase );
         }
         parent::add( $inv, $ctx );
     }
-
-    
-
-
-
-
-
 
     protected function check_object_id( $object_id, string $subcommand ) {
         $term = self::term( $object_id );
@@ -89,22 +42,9 @@ final class Term_Meta_Handler extends Meta_Command {
         return (int) $term->term_id;
     }
 
-    
-
-
-
-
-
     protected function get_metadata( $object_id, string $meta_key = '', bool $single = false ) {
         return \get_term_meta( (int) $object_id, $meta_key, $single );
     }
-
-    
-
-
-
-
-
 
     protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool {
         $term_id = (int) $object_id;
@@ -121,45 +61,16 @@ final class Term_Meta_Handler extends Meta_Command {
             $this->ctx->out->error( $refusal );
         }
         $result = \add_term_meta( $term_id, $meta_key, $meta_value );
-        
-        
         return ! ( function_exists( 'is_wp_error' ) && \is_wp_error( $result ) ) && false !== $result && null !== $result;
     }
-
-    
-
-
-
-
-
 
     protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool {
         throw new \LogicException( 'term meta update is Adapters\\Term_Meta_Adapter.' );
     }
 
-    
-
-
-
-
-
-
     protected function delete_metadata( $object_id, string $meta_key, $meta_value = '' ): bool {
         throw new \LogicException( 'term meta delete is Adapters\\Term_Meta_Adapter.' );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     public static function term( $object_id ): ?object {
         if ( ! is_scalar( $object_id ) || ! function_exists( 'get_term' ) ) {
@@ -171,11 +82,6 @@ final class Term_Meta_Handler extends Meta_Command {
         }
         return $term;
     }
-
-    
-
-
-
 
     public static function integration_refusal( string $key ): ?string {
         if ( 0 === strpos( $key, '_yoast_wpseo_' ) && class_exists( 'WPSEO_Taxonomy_Meta' ) ) {

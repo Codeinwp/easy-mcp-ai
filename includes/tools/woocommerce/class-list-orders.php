@@ -110,10 +110,6 @@ class List_Orders extends Base_Tool {
             $params['before'] = sanitize_text_field( $arguments['before'] );
         }
 
-        
-        
-        
-        
         $request = new \WP_REST_Request( 'GET', '/wc/v3/orders' );
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
@@ -123,7 +119,6 @@ class List_Orders extends Base_Tool {
 
         if ( $response->is_error() ) {
             $error = $response->as_error();
-            
             if ( $this->is_invalid_page_error( $error ) ) {
                 return array_merge(
                     array( 'orders' => array() ),

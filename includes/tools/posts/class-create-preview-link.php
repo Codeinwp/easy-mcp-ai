@@ -8,11 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Create_Preview_Link extends Base_Tool {
 
     public function get_name() {
@@ -28,7 +23,7 @@ class Create_Preview_Link extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'edit_posts'; 
+        return 'edit_posts';
     }
 
     public function get_annotations() {
@@ -108,15 +103,6 @@ class Create_Preview_Link extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function parse_minutes( array $arguments ): int {
         if ( ! isset( $arguments['expires_in_minutes'] ) || '' === $arguments['expires_in_minutes'] ) {
             return Preview_Link::DEFAULT_MINUTES;
@@ -129,26 +115,12 @@ class Create_Preview_Link extends Base_Tool {
         return $minutes;
     }
 
-    
-
-
-
-
-
-
     private static function whole_number( $value ): ?int {
         if ( is_int( $value ) ) {
             return $value;
         }
         return is_string( $value ) && ctype_digit( $value ) ? (int) $value : null;
     }
-
-    
-
-
-
-
-
 
     private function refuse_unpreviewable( object $post ): void {
         $id = (int) $post->ID;

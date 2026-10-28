@@ -1,11 +1,5 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Compat\Shims;
 
 use Easy_MCP_AI\Compat\Compat_Shim;
@@ -14,80 +8,30 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Tec_No_Duplicate_Reuse extends Compat_Shim {
 
     const ID = 'tec-no-duplicate-reuse';
-
-    
-
-
 
     const TOOLS = array(
         'wp_tec_create_venue'     => array( 'venue', 'tribe_events_rest_venue_insert_avoid_duplicates', 'Venue' ),
         'wp_tec_create_organizer' => array( 'organizer', 'tribe_events_rest_organizer_insert_avoid_duplicates', 'Organizer' ),
     );
 
-    
-
-
     public function id() {
         return self::ID;
     }
-
-    
-
 
     public function applies_to( $tool ) {
         return is_object( $tool ) && method_exists( $tool, 'get_name' ) && isset( self::TOOLS[ $tool->get_name() ] );
     }
 
-    
-
-
     public function is_required() {
         return true;
     }
 
-    
-
-
     public function is_needed() {
         return class_exists( 'Tribe__Events__Main' );
     }
-
-    
-
-
-
 
     public function enter( array $arguments = array(), $tool = null ) {
         if ( ! $this->applies_to( $tool ) ) {
@@ -114,19 +58,9 @@ final class Tec_No_Duplicate_Reuse extends Compat_Shim {
         return $arming;
     }
 
-    
-
-
-
-
-
-
     private static function comparable( string $name ): string {
         return sanitize_text_field( wp_specialchars_decode( wp_unslash( $name ), ENT_QUOTES ) );
     }
-
-    
-
 
     public function leave( $state = null ): void {
         if ( ! is_object( $state ) || ! isset( $state->filter, $state->hook ) ) {

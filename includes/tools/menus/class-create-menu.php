@@ -60,8 +60,6 @@ class Create_Menu extends Base_Tool {
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'name' ) );
 
-        
-        
         $slug = ( isset( $arguments['slug'] ) && '' !== $arguments['slug'] ) ? $this->requested_menu_slug( $arguments['slug'], 0 ) : null;
 
         $request = new \WP_REST_Request( 'POST', '/wp/v2/menus' );
@@ -89,7 +87,6 @@ class Create_Menu extends Base_Tool {
             try {
                 $data['slug'] = $this->store_menu_slug( (int) $data['id'], $slug );
             } catch ( \RuntimeException $e ) {
-                
                 wp_delete_nav_menu( (int) $data['id'] );
                 throw new \RuntimeException( 'The menu was not created: ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }

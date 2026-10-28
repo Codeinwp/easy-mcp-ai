@@ -102,8 +102,6 @@ class Create_Event extends Base_Tool {
         );
 
         if ( isset( $arguments['description'] ) ) {
-            
-            
             $params['description'] = (string) $arguments['description'];
         }
         if ( isset( $arguments['url'] ) ) {

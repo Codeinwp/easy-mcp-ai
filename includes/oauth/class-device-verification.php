@@ -5,52 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Device_Verification {
 
-    
-
-
-
-
-
-
-
-
     const LOOKUP_LIMIT_PER_HOUR = 30;
-
-    
-
-
-
-
 
     public function handle_get( \WP_REST_Request $request ) {
         $tls_error = $this->enforce_transport_security();
@@ -64,8 +21,6 @@ class Device_Verification {
         }
 
         if ( ! is_user_logged_in() ) {
-            
-            
             $response = new \WP_REST_Response( null, 302 );
             $response->header( 'Location', wp_login_url( Device_Authorization::verification_uri() ) );
             $this->add_security_headers( $response );
@@ -79,12 +34,6 @@ class Device_Verification {
 
         return $this->render_code_form();
     }
-
-    
-
-
-
-
 
     public function handle_post( \WP_REST_Request $request ) {
         $tls_error = $this->enforce_transport_security();
@@ -118,16 +67,6 @@ class Device_Verification {
         return $this->handle_lookup( $request );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     private function handle_lookup( \WP_REST_Request $request ) {
         $nonce = sanitize_text_field( $request->get_param( '_wpnonce' ) );
         if ( ! wp_verify_nonce( $nonce, 'easy_mcp_ai_oauth_device_lookup' ) ) {
@@ -139,7 +78,6 @@ class Device_Verification {
             );
         }
 
-        
         if ( $this->lookup_rate_limited() ) {
             $this->log_event( 'auth_failure', 'lookup_rate_limited' );
             return $this->render_code_form( __( 'Too many attempts. Wait a while and try again.', 'easy-mcp-ai' ), 429 );
@@ -154,26 +92,12 @@ class Device_Verification {
 
         $client = ( new Client_Registry() )->get_client( (string) $row->client_id );
         if ( null === $client ) {
-            
-            
             $this->log_event( 'auth_failure', 'client_inactive', $row );
             return $this->render_code_form( __( 'The application that requested this code is no longer registered.', 'easy-mcp-ai' ) );
         }
 
         return $this->render_consent( $client, $row, $normalized );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function handle_decision( \WP_REST_Request $request ) {
         $normalized = Device_Authorization::normalize_user_code( $request->get_param( 'user_code' ) );
@@ -209,10 +133,6 @@ class Device_Verification {
 
         $scope_string = Authorization_Endpoint::resolve_granted_scope( (string) $row->scope, Authorization_Endpoint::submitted_scopes( $request->get_param( 'access_level' ), $request->get_param( 'scopes' ) ) );
 
-        
-        
-        
-        
         if ( '' === $scope_string ) {
             $this->log_event( 'auth_failure', 'approved_without_scopes', $row );
             $client = ( new Client_Registry() )->get_client( (string) $row->client_id );
@@ -222,15 +142,6 @@ class Device_Verification {
             return $this->render_consent( $client, $row, $normalized, __( 'No permissions were selected, so nothing was granted. Choose at least one permission and approve again.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $consent_id = Authorization_Endpoint::store_consent( (int) $user->ID, (string) $row->client_id, $scope_string );
         if ( $consent_id <= 0 ) {
             $this->log_event( 'auth_failure', 'consent_write_failed', $row );
@@ -239,12 +150,6 @@ class Device_Verification {
 
         $recorded = Device_Authorization::record_decision( (int) $row->id, true, (int) $user->ID, $scope_string, $consent_id );
         if ( ! $recorded ) {
-            
-            
-            
-            
-            
-            
             $this->log_event( 'auth_failure', 'decision_lost_race', $row );
             return $this->render_code_form( __( 'That code is no longer pending. It may have expired, or a decision was already recorded.', 'easy-mcp-ai' ) );
         }
@@ -258,12 +163,6 @@ class Device_Verification {
         );
     }
 
-    
-
-
-
-
-
     private static function live_pending_row( $normalized ) {
         if ( '' === $normalized ) {
             return null;
@@ -275,22 +174,7 @@ class Device_Verification {
         return $row;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     private function render_code_form( $error = '', $status = 200 ) {
-        
-        
-        
-        
         $script_nonce = wp_create_nonce( 'easy_mcp_ai_consent_script' );
         $html         = self::render_view(
             array(
@@ -306,15 +190,6 @@ class Device_Verification {
         $this->add_security_headers( $response, $script_nonce );
         return $response;
     }
-
-    
-
-
-
-
-
-
-
 
     private function render_consent( $client, $row, $normalized, $notice = '' ) {
         $user         = wp_get_current_user();
@@ -345,14 +220,6 @@ class Device_Verification {
         return $response;
     }
 
-    
-
-
-
-
-
-
-
     private function render_result( $approved, $title, $message ) {
         $html = self::render_view(
             array(
@@ -368,12 +235,6 @@ class Device_Verification {
         return $response;
     }
 
-    
-
-
-
-
-
     private static function render_view( array $vars ) {
         // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
         extract( $vars );
@@ -381,16 +242,6 @@ class Device_Verification {
         include __DIR__ . '/views/device.php';
         return (string) ob_get_clean();
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     private function enforce_min_capability( $log_reason ) {
         if ( \Easy_MCP_AI\Auth\Connect_Policy::current_user_can_connect( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_DEVICE ) ) {
@@ -403,11 +254,6 @@ class Device_Verification {
             array( 'status' => 403 )
         );
     }
-
-    
-
-
-
 
     private function lookup_rate_limited() {
         $ip   = \Easy_MCP_AI\Client_IP::get();
@@ -431,11 +277,6 @@ class Device_Verification {
         return $limited;
     }
 
-    
-
-
-
-
     private function enforce_transport_security() {
         $result = Token_Endpoint::enforce_transport_security();
         if ( null !== $result ) {
@@ -443,17 +284,6 @@ class Device_Verification {
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function add_security_headers( \WP_REST_Response $response, $script_nonce = null ) {
         $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, private' );
@@ -470,28 +300,6 @@ class Device_Verification {
             $response->header( 'Strict-Transport-Security', 'max-age=31536000' );
         }
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function log_event( $result_status, $reason, $row = null, $scope = '' ) {
         if ( ! \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_enabled', true ) ) {
@@ -517,7 +325,6 @@ class Device_Verification {
                 'arguments'       => wp_json_encode( $details ),
                 'result_status'   => (string) $result_status,
                 'ip_address'      => class_exists( '\\Easy_MCP_AI\\Client_IP' ) ? \Easy_MCP_AI\Client_IP::get() : '',
-                
                 'auth_source'     => 'oauth',
                 'wp_user_id'      => ! empty( $details['wp_user_id'] ) ? (int) $details['wp_user_id'] : null,
                 'oauth_client_id' => ! empty( $details['client_id'] ) ? (string) $details['client_id'] : null,

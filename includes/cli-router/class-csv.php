@@ -5,42 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 final class Csv {
 
-    
     private static $stream = null;
-
-    
-
-
-
-
 
     public static function write( Output $out, array $rows, array $headers = array() ): void {
         self::write_each( $out, $rows, $headers );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function write_each( Output $out, iterable $rows, array $headers = array(), ?callable $map = null ): void {
         if ( ! empty( $headers ) ) {
@@ -64,18 +35,11 @@ final class Csv {
         }
     }
 
-    
-
-
-
-
-
     public static function escape_value( $value ): string {
         if ( null === $value ) {
             return '';
         }
 
-        
         $value = (string) $value;
 
         if (
@@ -90,12 +54,6 @@ final class Csv {
 
         return $value;
     }
-
-    
-
-
-
-
 
     public static function line( array $fields ): string {
         if ( null === self::$stream ) {

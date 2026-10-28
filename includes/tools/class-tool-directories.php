@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Tools;
 
 use Easy_MCP_AI\Autoloader;
@@ -13,46 +8,22 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Tool_Directories {
 
-    
     const ALWAYS_ON = array(
         'posts', 'pages', 'media', 'taxonomy', 'comments',
         'users', 'site', 'menus', 'plugins', 'themes',
         'revisions', 'meta', 'search', 'blocks', 'cpt', 'templates', 'styles',
         'appearance', 'widgets', 'history', 'audit', 'site-health', 'approvals',
         'feedback',
-        
         'cache',
-        
         'mail',
-        
         'skills',
-        
         'rest',
-        
         'privileged',
-        
-        
         'cli',
     );
 
-    
     const PLUGIN_GROUPS = array(
         'woocommerce'         => 'woocommerce',
         'acf'                 => 'acf',
@@ -69,49 +40,23 @@ final class Tool_Directories {
         'the-seo-framework'   => 'seo/the-seo-framework',
     );
 
-    
     const EXTERNAL_DATA = array( 'ahrefs', 'gsc', 'ga', 'dfs', 'semrush', 'seranking' );
 
-    
     const BUILDERS = 'builders';
-
-    
-
-
-
 
     public static function enabled(): array {
         return array_values( array_unique( array_merge( self::ALWAYS_ON, self::external_data(), self::plugin_groups(), self::builders() ) ) );
     }
 
-    
-
-
-
-
-
     public static function all(): array {
         return array_values( array_unique( array_merge( self::ALWAYS_ON, self::EXTERNAL_DATA, array_values( self::PLUGIN_GROUPS ), array( self::BUILDERS ) ) ) );
     }
 
-    
-
-
-
-
-
     public static function external_data(): array {
         $tool_dirs = array();
-        
-        
-        
-        
         if ( \get_option( 'easy_mcp_ai_ahrefs_enabled', false ) ) {
             $tool_dirs[] = 'ahrefs';
         }
-        
-        
-        
         if ( \Easy_MCP_AI\Provider_Credentials::is_configured( 'gsc' ) ) {
             $tool_dirs[] = 'gsc';
         }
@@ -130,25 +75,9 @@ final class Tool_Directories {
         return $tool_dirs;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function builders(): array {
         return \Easy_MCP_AI\Builders\Builder_Registry::any_present() ? array( self::BUILDERS ) : array();
     }
-
-    
-
-
-
 
     public static function plugin_groups(): array {
         $dirs_on = array();
@@ -160,26 +89,10 @@ final class Tool_Directories {
         return array_keys( $dirs_on );
     }
 
-    
-
-
-
-
-
     public static function of( string $class ): ?string {
         $file = Autoloader::file_for( $class );
         return null === $file ? null : self::relative_dir( $file, __DIR__ );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function relative_dir( string $file, string $root ): ?string {
         $file = \wp_normalize_path( $file );

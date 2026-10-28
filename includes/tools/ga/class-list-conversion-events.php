@@ -47,20 +47,12 @@ class List_Conversion_Events extends Base_Tool {
         $size  = max( 1, min( 200, (int) ( $arguments['page_size'] ?? 200 ) ) );
         $token = isset( $arguments['page_token'] ) ? (string) $arguments['page_token'] : '';
 
-        
-        
-        
-        
-        
         $url = "https://analyticsadmin.googleapis.com/v1beta/{$property}/keyEvents?pageSize=" . $size;
         if ( '' !== $token ) {
             $url .= '&pageToken=' . rawurlencode( $token );
         }
         $data = GA_Client::get( $url );
 
-        
-        
-        
         $events = $data['keyEvents'] ?? array();
         $result = array(
             'keyEvents'     => $events,

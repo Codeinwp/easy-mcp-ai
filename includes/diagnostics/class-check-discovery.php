@@ -1,59 +1,16 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class Check_Discovery {
 
-    
     const TIMEOUT = 5;
 
-    
     const MAX_BODY_BYTES = 262144;
-
-    
-
 
     public static function run() {
         try {
@@ -65,19 +22,10 @@ class Check_Discovery {
             $slashed = array();
             foreach ( self::root_urls() as $name => $url ) {
                 $roots[ $name ] = self::probe( $url );
-                
-                
                 if ( self::is_trailing_slash_redirect( $roots[ $name ], $url ) ) {
                     $slashed[ $name ] = self::probe( $url . '/' );
                 }
             }
-            
-            
-            
-            
-            
-            
-            
             foreach ( self::mirror_urls() as $name => $url ) {
                 if ( self::needs_second_read( $mirrors[ $name ] ?? null, $roots[ $name ] ?? null, $slashed[ $name ] ?? null ) ) {
                     $again = self::probe( $url );
@@ -115,29 +63,6 @@ class Check_Discovery {
         }
         return array( $result );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function with_workaround( Diagnostic_Result $result, $mode, $armed, $mcp_path, $plain ) {
         $evidence = (array) $result->evidence();
@@ -196,12 +121,6 @@ class Check_Discovery {
         );
     }
 
-    
-
-
-
-
-
     public static function mcp_path_urls() {
         return array(
             'oauth-protected-resource'   => \rest_url( 'easy-mcp-ai/v1/mcp/.well-known/oauth-protected-resource' ),
@@ -209,22 +128,6 @@ class Check_Discovery {
             'openid-configuration'       => \rest_url( 'easy-mcp-ai/v1/mcp/.well-known/openid-configuration' ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function mcp_path_verdict( array $probes, $mcp_url ) {
         foreach ( array_keys( self::mcp_path_urls() ) as $name ) {
@@ -246,22 +149,6 @@ class Check_Discovery {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function root_blocked_verdict( Diagnostic_Result $result ): ?bool {
         $evidence = (array) $result->evidence();
         $reason   = isset( $evidence['reason'] ) ? $evidence['reason'] : '';
@@ -274,14 +161,6 @@ class Check_Discovery {
         return null;
     }
 
-    
-
-
-
-
-
-
-
     private static function record( Diagnostic_Result $result, $mcp_path = null ): void {
         $blocked = self::root_blocked_verdict( $result );
         if ( null === $blocked || ! defined( 'EASY_MCP_AI_PLUGIN_DIR' ) ) {
@@ -290,19 +169,7 @@ class Check_Discovery {
         \Easy_MCP_AI\OAuth\Root_Fallback::record_root_discovery( $blocked, $mcp_path );
     }
 
-    
-
-
-
-
-
     const SELF_CHANGING_KEYS = array( 'client_id_metadata_document_supported' );
-
-    
-
-
-
-
 
     const SIGN_IN_FIELDS = array(
         'issuer',
@@ -314,11 +181,6 @@ class Check_Discovery {
         'revocation_endpoint',
     );
 
-    
-
-
-
-
     public static function root_urls() {
         return array(
             'oauth-protected-resource'   => \home_url( '/.well-known/oauth-protected-resource' ),
@@ -326,42 +188,12 @@ class Check_Discovery {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function mirror_urls() {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         return array(
             'oauth-protected-resource'   => \rest_url( 'easy-mcp-ai/v1/discovery/oauth-protected-resource' ),
             'oauth-authorization-server' => \rest_url( 'easy-mcp-ai/v1/discovery/oauth-authorization-server' ),
         );
     }
-
-    
-
-
-
-
-
 
     public static function sign_in_fields_that_differ( array $root, array $mirror ) {
         $differ = array();
@@ -375,52 +207,20 @@ class Check_Discovery {
         return $differ;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function expected_marker() {
         return \home_url();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function is_our_document( $result ) {
         if ( ! is_array( $result ) || 200 !== (int) $result['status'] ) {
             return false;
         }
 
-        
-        
         $data = json_decode( (string) $result['body'], true );
         if ( ! is_array( $data ) ) {
             return false;
         }
 
-        
-        
         $marker = self::expected_marker();
         foreach ( array( 'issuer', 'resource' ) as $field ) {
             if ( isset( $data[ $field ] ) && is_string( $data[ $field ] )
@@ -433,23 +233,6 @@ class Check_Discovery {
             && $data['authorization_servers'][0] === $marker;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function looks_like_our_document( $result ) {
         if ( ! is_array( $result ) || 200 !== (int) $result['status'] ) {
             return false;
@@ -460,22 +243,14 @@ class Check_Discovery {
             return false;
         }
 
-        
-        
         return isset( $data['resource'] ) || isset( $data['issuer'] );
     }
-
-    
-
-
-
-
 
     public static function evaluate( array $mirrors, array $roots, array $slashed = array() ) {
         $label = self::label();
 
         $blocked  = array();
-        $stale    = array();   
+        $stale    = array();
         $measured = 0;
         $evidence = array();
 
@@ -487,8 +262,6 @@ class Check_Discovery {
                 ? (int) $root['status'] . ( '' !== $root['type'] ? ' ' . $root['type'] : '' )
                 : 'no response';
 
-            
-            
             if ( ! self::is_our_document( $mirror ) ) {
                 $evidence[ $name . '_mirror' ] = is_array( $mirror ) ? $mirror['status'] : 'no response';
                 continue;
@@ -500,25 +273,8 @@ class Check_Discovery {
                 continue;
             }
 
-            
-            
-            
-            
-            
-            
-            
             $a = json_decode( (string) $root['body'], true );
             $b = json_decode( (string) $mirror['body'], true );
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             self::ksort_recursive( $a );
             self::ksort_recursive( $b );
             if ( $a !== $b ) {
@@ -526,26 +282,8 @@ class Check_Discovery {
             }
         }
 
-        
         if ( 0 === $measured ) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             $redirected = false;
-            
-            
-            
-            
             $scanned = array_merge( array_values( (array) $mirrors ), array_values( (array) $roots ) );
             foreach ( $scanned as $result ) {
                 if ( is_array( $result ) && (int) $result['status'] >= 300 && (int) $result['status'] < 400 ) {
@@ -567,12 +305,6 @@ class Check_Discovery {
             );
         }
 
-        
-        
-        
-        
-        
-        
         $partial = '';
         if ( $measured < count( self::root_urls() ) ) {
             $unmeasured = array();
@@ -588,15 +320,8 @@ class Check_Discovery {
             );
         }
 
-        
-        
         if ( ! empty( $blocked ) ) {
             $evidence['reason'] = 'blocked';
-            
-            
-            
-            
-            
             $slash_only = true;
             foreach ( $blocked as $name ) {
                 if ( ! self::slash_form_is_current( $slashed[ $name ] ?? null, $mirrors[ $name ] ?? null ) ) {
@@ -639,11 +364,6 @@ class Check_Discovery {
                     sprintf(
                         /* translators: 1: document name(s), 2: comma-separated field names. */
                         __( 'The sign-in details published at this site\'s address are out of date, and the parts that differ are the ones a client needs to sign in: %2$s (in %1$s). These addresses are being served from a saved copy rather than by WordPress, and the copy no longer matches this site.', 'easy-mcp-ai' ),
-                        
-                        
-                        
-                        
-                        
                         implode( ', ', array_keys( $critical ) ),
                         implode( ', ', array_unique( call_user_func_array( 'array_merge', array_values( $critical ) ) ) )
                     ),
@@ -666,16 +386,6 @@ class Check_Discovery {
             );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $total = count( self::root_urls() );
         if ( $measured < $total ) {
             $unmeasured = array();
@@ -704,15 +414,6 @@ class Check_Discovery {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function is_trailing_slash_redirect( ?array $result, string $url ): bool {
         if ( null === $result ) {
             return false;
@@ -735,29 +436,10 @@ class Check_Discovery {
         return isset( $target['path'] ) && $target['path'] === $to['path'];
     }
 
-    
-
-
-
-
-
-
-
-
     private static function slash_form_is_current( ?array $slashed, ?array $mirror ): bool {
         return self::looks_like_our_document( $slashed ) && self::is_our_document( $mirror )
             && self::same_document( $slashed, $mirror );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function needs_second_read( ?array $mirror, ?array $root, ?array $slashed = null ): bool {
         if ( ! self::is_our_document( $mirror ) ) {
@@ -770,14 +452,6 @@ class Check_Discovery {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
 
     public static function only_self_changing_keys_differ( array $first, array $second ): bool {
         $a = json_decode( (string) $first['body'], true );
@@ -793,13 +467,6 @@ class Check_Discovery {
         return $a === $b;
     }
 
-    
-
-
-
-
-
-
     private static function same_document( array $a, array $b ): bool {
         $x = json_decode( (string) $a['body'], true );
         $y = json_decode( (string) $b['body'], true );
@@ -808,31 +475,15 @@ class Check_Discovery {
         return $x === $y;
     }
 
-    
     private static function slash_detail(): string {
         return __( 'Before an AI client can sign in, it has to read two small documents from this site\'s address. Your server redirects those addresses to the same address with a slash added. This site answers there, so a client that follows the redirect connects, but a client that does not follow redirects cannot begin.', 'easy-mcp-ai' );
     }
 
-    
     private static function slash_fix(): string {
         return __( 'Exclude /.well-known/ from the rule that adds a trailing slash to addresses. The rule is in your server configuration, in .htaccess, or in a redirect or SEO plugin; your host can tell you which. Nothing else is needed.', 'easy-mcp-ai' );
     }
 
-    
-
-
-
-
-
     public static function blocked_detail( array $blocked, array $roots = array() ) {
-        
-        
-        
-        
-        
-        
-        
-        
         $answered = false;
         foreach ( $blocked as $name ) {
             if ( isset( $roots[ $name ] ) && is_array( $roots[ $name ] ) ) {
@@ -856,14 +507,6 @@ class Check_Discovery {
         );
     }
 
-    
-
-    
-
-
-
-
-
     private static function probe( $url ): ?array {
         if ( ! function_exists( 'wp_remote_get' ) ) {
             return null;
@@ -874,16 +517,7 @@ class Check_Discovery {
             array(
                 'timeout'     => self::TIMEOUT,
                 'redirection' => 0,
-                
-                
-                
-                
-                
-                
                 'limit_response_size' => self::MAX_BODY_BYTES,
-                
-                
-                
                 'sslverify'   => false,
             )
         );
@@ -896,8 +530,6 @@ class Check_Discovery {
             'status'   => (int) \wp_remote_retrieve_response_code( $response ),
             'type'     => (string) \wp_remote_retrieve_header( $response, 'content-type' ),
             'body'     => (string) \wp_remote_retrieve_body( $response ),
-            
-            
             'location' => (string) \wp_remote_retrieve_header( $response, 'location' ),
         );
     }
@@ -910,17 +542,6 @@ class Check_Discovery {
         return Diagnostic_Result::unknown( 'a10', Diagnostic_Result::TIER_BLOCKER, self::label(), $reason, $evidence );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function ksort_recursive( &$value ) {
         if ( ! is_array( $value ) ) {
             return;
@@ -931,7 +552,6 @@ class Check_Discovery {
         }
         unset( $child );
 
-        
         if ( array_keys( $value ) !== range( 0, count( $value ) - 1 ) ) {
             ksort( $value );
         }

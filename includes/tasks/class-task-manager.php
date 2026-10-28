@@ -11,28 +11,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Task_Manager {
     const EXTENSION = 'io.modelcontextprotocol/tasks';
     const TICK_HOOK = Task_Scheduler::HOOK;
 
     const POLL_INTERVAL_MS      = 5000;
-    const WORKING_TTL_SECONDS   = 86400; 
-    const STATUS_MIN_INTERVAL   = 3;     
-    const STALL_SECONDS         = 30;    
+    const WORKING_TTL_SECONDS   = 86400;
+    const STATUS_MIN_INTERVAL   = 3;
+    const STALL_SECONDS         = 30;
     const LOCK_MARGIN_SECONDS   = 30;
     const MAX_RESULT_BYTES      = 1048576;
     const DEFAULT_BUDGET        = 20;
@@ -40,7 +26,6 @@ class Task_Manager {
     private $server;
     private $registry;
     private $store;
-    
     private $clock;
 
     public function __construct( Server $server, Tool_Registry $registry, Task_Store $store, $clock = null ) {
@@ -50,11 +35,6 @@ class Task_Manager {
         $this->clock    = is_callable( $clock ) ? $clock : 'time';
     }
 
-    
-    
-    
-
-    
     public function contract_for( $tool_name ) {
         $tool = is_string( $tool_name ) && '' !== $tool_name ? $this->registry->get_tool( $tool_name ) : null;
         if ( ! $tool || ! method_exists( $tool, 'get_task_contract' ) ) {
@@ -64,16 +44,6 @@ class Task_Manager {
         return is_array( $contract ) ? $contract : null;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function call( $id, $params, $token_id, $allowed_tools ) {
         $tool_name = isset( $params['name'] ) && is_string( $params['name'] ) ? $params['name'] : '';
         $contract  = $this->contract_for( $tool_name );
@@ -82,17 +52,10 @@ class Task_Manager {
         }
         $arguments = isset( $params['arguments'] ) ? $params['arguments'] : array();
         if ( ! is_array( $arguments ) ) {
-            return null; 
+            return null;
         }
 
         $started  = $this->now();
-        
-        
-        
-        
-        
-        
-        
         $response = $this->server->call_tool_internal( $id, $tool_name, $this->with_budget( $arguments, $contract ), $token_id, $allowed_tools, true, $arguments, is_array( $params ) ? $params : array() );
         $approval = $this->server->get_last_approval();
         if ( in_array( $approval['kind'], array( 'paused', 'refused', 'replay' ), true ) ) {
@@ -115,9 +78,6 @@ class Task_Manager {
             'approval_id'     => $approval['approval_id'],
         );
 
-        
-        
-        
         if ( $this->store->count_working( $row['auth_source'], $row['wp_user_id'], $row['token_id'], $row['oauth_client_id'] ) >= $this->max_per_credential() ) {
             return $response;
         }
@@ -138,7 +98,7 @@ class Task_Manager {
                 ), $started );
             }
             if ( null === $contract['status_ability'] || '' === $chunk['job_id'] ) {
-                return $response; 
+                return $response;
             }
             $job_id = $chunk['job_id'];
         } else {
@@ -148,9 +108,6 @@ class Task_Manager {
             }
         }
 
-        
-        
-        
         $status = $this->check_status( $contract, $job_id, $token_id, $allowed_tools );
         if ( null === $status || 'working' !== $status['state'] ) {
             return $response;
@@ -184,10 +141,6 @@ class Task_Manager {
         return JSON_RPC::success_response( $id, $result );
     }
 
-    
-    
-    
-
     public function get( $id, $params, $token_id, $allowed_tools ) {
         $row = $this->owned_task( $params, $token_id );
         if ( null === $row ) {
@@ -201,7 +154,6 @@ class Task_Manager {
         return JSON_RPC::success_response( $id, $this->present( $row ) );
     }
 
-    
     public function update( $id, $params, $token_id ) {
         $row = $this->owned_task( $params, $token_id );
         if ( null === $row ) {
@@ -221,8 +173,6 @@ class Task_Manager {
         if ( 'working' === $row['status'] ) {
             $contract = $this->contract_for( $row['tool_name'] );
             if ( 'poll' === $row['phase'] && is_array( $contract ) && null !== $contract['cancel_ability'] && '' !== (string) $row['job_id'] ) {
-                
-                
                 $cancel_tool = Dynamic_Tool_Registrar::build_tool_name( $contract['cancel_ability'] );
                 if ( $this->registry->get_tool( $cancel_tool ) ) {
                     $this->server->call_tool_internal( 0, $cancel_tool, array( 'job_id' => (string) $row['job_id'] ), $token_id, $allowed_tools, false, 'skip' );
@@ -232,10 +182,6 @@ class Task_Manager {
         }
         return JSON_RPC::success_response( $id, array() );
     }
-
-    
-
-
 
     private function owned_task( $params, $token_id ) {
         $task_id = is_array( $params ) && isset( $params['taskId'] ) && is_string( $params['taskId'] ) ? $params['taskId'] : '';
@@ -247,7 +193,7 @@ class Task_Manager {
             return null;
         }
         if ( strtotime( $row['expires_at'] . ' UTC' ) < $this->now() && 'working' !== $row['status'] ) {
-            return null; 
+            return null;
         }
         $identity = $this->server->get_request_identity();
         $source   = 'oauth' === $identity['auth_source'] ? 'oauth' : 'legacy';
@@ -255,7 +201,6 @@ class Task_Manager {
             return null;
         }
         if ( 'oauth' === $source ) {
-            
             if ( (string) $identity['client_id'] === '' || (string) $identity['client_id'] !== (string) $row['oauth_client_id'] ) {
                 return null;
             }
@@ -265,37 +210,18 @@ class Task_Manager {
         return $row;
     }
 
-    
-    
-    
-
     private function is_due( array $row ) {
         $idle = $this->now() - strtotime( $row['updated_at'] . ' UTC' );
         return 'poll' === $row['phase'] ? $idle >= self::STATUS_MIN_INTERVAL : $idle >= self::STALL_SECONDS;
     }
 
-    
-
-
-
-
-
     public function tick( $task_id, $token_id, $allowed_tools, $single = false ) {
         $now    = $this->now();
         $budget = $this->tick_budget();
         $lock   = bin2hex( random_bytes( 8 ) );
-        
-        
-        
         if ( $this->store->count_running( self::datetime( $now ) ) >= $this->max_concurrent_ticks() ) {
             return;
         }
-        
-        
-        
-        
-        
-        
         if ( Server::is_paused() ) {
             return;
         }
@@ -307,11 +233,8 @@ class Task_Manager {
             do {
                 $row = $this->store->find( $task_id );
                 if ( ! is_array( $row ) || 'working' !== $row['status'] || $row['lock_token'] !== $lock ) {
-                    return; 
+                    return;
                 }
-                
-                
-                
                 if ( ! self::signature_valid( $row ) ) {
                     $this->finish( $row, 'failed', 'The task failed its integrity check.', null, Error_Codes::INTERNAL_ERROR, array(), $lock );
                     return;
@@ -330,7 +253,6 @@ class Task_Manager {
         }
     }
 
-    
     private function tick_cursor( array $row, array $contract, $token_id, $allowed_tools, $remaining, $lock ) {
         $arguments = json_decode( (string) $row['arguments'], true );
         if ( ! is_array( $arguments ) ) {
@@ -338,7 +260,6 @@ class Task_Manager {
             return false;
         }
         $arguments['cursor'] = (string) $row['task_cursor'];
-        
         $response = $this->server->call_tool_internal( 0, $row['tool_name'], $this->with_budget( $arguments, $contract, $remaining ), $token_id, $allowed_tools, false, 'skip' );
         $outcome  = self::read_response( $response );
         if ( $outcome['failed'] ) {
@@ -352,7 +273,6 @@ class Task_Manager {
         }
         $merged = Task_Contract::merge_chunk( json_decode( (string) $row['result'], true ), $outcome['data'], $contract['results_key'] );
         if ( ! $chunk['done'] && $chunk['cursor'] === (string) $row['task_cursor'] ) {
-            
             $this->finish( $row, 'failed', 'The tool made no progress.', $merged, Error_Codes::INTERNAL_ERROR, array(), $lock );
             return false;
         }
@@ -365,8 +285,6 @@ class Task_Manager {
             'updated_at'       => self::datetime( $this->now() ),
         );
         if ( ! $chunk['done'] ) {
-            
-            
             return $this->store->update_working( $row['task_id'], $fields + array( 'task_cursor' => $chunk['cursor'] ), $lock );
         }
         if ( null !== $contract['status_ability'] && '' !== $chunk['job_id'] ) {
@@ -377,12 +295,9 @@ class Task_Manager {
         return false;
     }
 
-    
     private function tick_poll( array $row, array $contract, $token_id, $allowed_tools, $lock ) {
         $status = $this->check_status( $contract, (string) $row['job_id'], $token_id, $allowed_tools, $detail );
         if ( null === $status ) {
-            
-            
             $this->store->update_working( $row['task_id'], array( 'updated_at' => self::datetime( $this->now() ), 'ticks' => (int) $row['ticks'] + 1 ), $lock );
             return false;
         }
@@ -416,18 +331,12 @@ class Task_Manager {
         return Task_Contract::read_status( $outcome['data'] );
     }
 
-    
-
-
-
-
-
     private function finish( array $row, $status, $message, $result, $error_code, array $fields = array(), $lock = null ) {
         $now    = $this->now();
         $fields = array_merge( $fields, array(
             'status'         => $status,
             'status_message' => Task_Contract::stored_message( $message ),
-            'arguments'      => null, 
+            'arguments'      => null,
             'task_cursor'    => null,
             'updated_at'     => self::datetime( $now ),
             'completed_at'   => self::datetime( $now ),
@@ -449,18 +358,9 @@ class Task_Manager {
         $this->server->audit_task_event( (int) $row['token_id'], '_task_' . $status, array( 'task_id' => $row['task_id'], 'tool' => $row['tool_name'] ) );
     }
 
-    
-    
-    
-
     private function schedule( $task_id, $delay ) {
         Task_Scheduler::schedule( $task_id, $this->now() + (int) $delay, 0 === (int) $delay );
     }
-
-    
-
-
-
 
     public function run_background_tick( $task_id ) {
         $row = is_string( $task_id ) ? $this->store->find( $task_id ) : null;
@@ -468,7 +368,7 @@ class Task_Manager {
             return;
         }
         if ( strtotime( $row['created_at'] . ' UTC' ) + self::WORKING_TTL_SECONDS < $this->now() ) {
-            return; 
+            return;
         }
         $grant = $this->background_grant( $row );
         if ( null === $grant ) {
@@ -486,27 +386,15 @@ class Task_Manager {
         $after = $this->store->find( $row['task_id'] );
         if ( is_array( $after ) && 'working' === $after['status'] ) {
             $age = $this->now() - strtotime( $after['created_at'] . ' UTC' );
-            
-            
             $progressed = (int) $after['ticks'] > (int) $row['ticks'];
-            
-            
-            
             $this->schedule( $after['task_id'], 'poll' === $after['phase'] ? ( $age < 600 ? 60 : 300 ) : ( $progressed ? 0 : 15 ) );
         }
     }
-
-    
-
-
-
-
 
     private static function oauth_enabled(): bool {
         return (bool) \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) );
     }
 
-    
     private function background_grant( array $row ) {
         if ( (int) $row['wp_user_id'] <= 0 || ! \get_userdata( (int) $row['wp_user_id'] ) ) {
             return null;
@@ -518,12 +406,6 @@ class Task_Manager {
                 || ! self::oauth_enabled() ) {
                 return null;
             }
-            
-            
-            
-            
-            
-            
             if ( ! $this->oauth_audience_matches( isset( $token['resource'] ) ? (string) $token['resource'] : '' ) ) {
                 return null;
             }
@@ -539,7 +421,7 @@ class Task_Manager {
         if ( \Easy_MCP_AI\Auth\Token_Manager::is_bound_elsewhere( $token ) ) {
             return null;
         }
-        return array( 'allowed_tools' => null ); 
+        return array( 'allowed_tools' => null );
     }
 
     protected function oauth_audience_matches( $resource ) {
@@ -558,11 +440,6 @@ class Task_Manager {
         return is_array( $row ) ? $row : null;
     }
 
-    
-    
-    
-
-    
     public function cleanup() {
         $now = $this->now();
         $this->store->fail_stale(
@@ -577,7 +454,6 @@ class Task_Manager {
         return 86400 * ( $days >= 1 && $days <= 365 ? $days : 7 );
     }
 
-    
     public function tick_budget() {
         $configured = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_tasks_tick_budget_seconds', 0 );
         if ( $configured >= 1 && $configured <= 300 ) {
@@ -601,11 +477,6 @@ class Task_Manager {
         return $arguments;
     }
 
-    
-    
-    
-
-    
     public function present( array $row ) {
         $created = strtotime( $row['created_at'] . ' UTC' );
         $task    = array(
@@ -640,14 +511,12 @@ class Task_Manager {
         return $task;
     }
 
-    
     private function tool_result( array $row, $data ) {
         $value  = is_array( $data ) && empty( $data ) ? new \stdClass() : $data;
         $result = array(
             'content' => array( array( 'type' => 'text', 'text' => \wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ) ),
             'isError' => false,
         );
-        
         $tool = $this->registry->get_tool( $row['tool_name'] );
         if ( 'cursor' === $row['mode'] && 'cursor' === $row['phase'] && is_array( $data ) && $tool && method_exists( $tool, 'get_output_schema' ) && null !== $tool->get_output_schema() ) {
             $result['structuredContent'] = $value;
@@ -655,7 +524,6 @@ class Task_Manager {
         return $result;
     }
 
-    
     public static function read_response( $response ) {
         if ( ! is_array( $response ) || isset( $response['error'] ) || ! isset( $response['result'] ) ) {
             $error = is_array( $response ) && isset( $response['error'] ) && is_array( $response['error'] ) ? $response['error'] : array();
@@ -685,7 +553,6 @@ class Task_Manager {
         if ( is_string( $json ) && strlen( $json ) <= self::MAX_RESULT_BYTES ) {
             return $json;
         }
-        
         $summary = array();
         foreach ( is_array( $data ) ? $data : array() as $key => $value ) {
             if ( ! is_array( $value ) ) {
@@ -695,16 +562,6 @@ class Task_Manager {
         $summary['results_truncated'] = true;
         return \wp_json_encode( $summary );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function sign( array $row ) {
         $fields = array();
@@ -730,7 +587,6 @@ class Task_Manager {
         return $max >= 1 && $max <= 50 ? $max : 3;
     }
 
-    
     public static function generate_task_id() {
         $bytes    = random_bytes( 16 );
         $bytes[6] = chr( ( ord( $bytes[6] ) & 0x0f ) | 0x40 );

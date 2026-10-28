@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,28 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Seo_Sitemaps extends Cache_Adapter {
 
     const YOAST = 'yoast';
@@ -44,10 +17,8 @@ final class Seo_Sitemaps extends Cache_Adapter {
 
     const VALIDATOR = 'WPSEO_Sitemaps_Cache_Validator';
 
-    
     const INDEX = '1';
 
-    
     const NAMES = array(
         self::YOAST => 'Yoast SEO',
         self::TSF   => 'The SEO Framework',
@@ -56,11 +27,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
     public function id(): string {
         return 'seo-sitemaps';
     }
-
-    
-
-
-
 
     public function label(): string {
         $names = $this->names( $this->present() );
@@ -77,12 +43,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
     public function tier(): int {
         return self::TIER_DATA;
     }
-
-    
-
-
-
-
 
     public function scopes(): array {
         if ( array( self::YOAST ) === $this->present() ) {
@@ -133,12 +93,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
         return $this->sent( sprintf( 'Yoast SEO rotated its sitemap cache key for the index and %s sitemap(s).', implode( ', ', array_slice( $types, 1 ) ) ) );
     }
 
-    
-
-
-
-
-
     private function missing_helper( array $members ): string {
         foreach ( $members as $member ) {
             if ( self::YOAST === $member && ! $this->calls()->method_exists( self::VALIDATOR, 'invalidate_storage' ) ) {
@@ -151,11 +105,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
         return '';
     }
 
-    
-
-
-
-
     private function present(): array {
         $calls   = $this->calls();
         $members = array();
@@ -167,11 +116,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
         }
         return $members;
     }
-
-    
-
-
-
 
     private function tsf_cache(): ?object {
         $calls = $this->calls();
@@ -188,12 +132,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
         return is_object( $object ) ? $object : null;
     }
 
-    
-
-
-
-
-
     private function post_types( array $post_ids ): array {
         $types = array();
         foreach ( $post_ids as $post_id ) {
@@ -204,12 +142,6 @@ final class Seo_Sitemaps extends Cache_Adapter {
         }
         return array_values( array_unique( $types ) );
     }
-
-    
-
-
-
-
 
     private function names( array $members ): array {
         $names = array();

@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Delete_Tax_Rate extends Base_Tool {
 
     use Store_Setup;
@@ -53,7 +49,6 @@ class Delete_Tax_Rate extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id   = isset( $arguments['id'] ) ? (int) $arguments['id'] : 0;
         $rate = $id > 0 ? $this->peek( '/wc/v3/taxes/' . $id, 'id,name,rate,country,state,class' ) : null;

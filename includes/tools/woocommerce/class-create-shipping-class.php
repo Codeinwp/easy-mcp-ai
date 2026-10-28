@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Create_Shipping_Class extends Base_Tool {
 
     use Store_Setup;
@@ -67,8 +63,6 @@ class Create_Shipping_Class extends Base_Tool {
         if ( '' === $name ) {
             throw new \InvalidArgumentException( 'Missing required parameters: name' );
         }
-        
-        
         $this->refuse_backslash( $name, 'name' );
         $params = array( 'name' => sanitize_text_field( $name ) );
         if ( '' !== self::text_arg( $arguments, 'slug' ) ) {
@@ -82,21 +76,10 @@ class Create_Shipping_Class extends Base_Tool {
 
         $class = self::present_shipping_class( $this->rest_request( 'POST', '/wc/v3/products/shipping_classes', $params ) );
         if ( isset( $params['slug'] ) && $class['slug'] !== $params['slug'] ) {
-            
-            
-            
             throw new \RuntimeException( sprintf( 'Shipping class %1$d "%2$s" was created with the slug "%3$s", not "%4$s": WordPress gave it another slug. Delete it with wp_wc_delete_shipping_class or keep it.', $class['id'], $class['name'], $class['slug'], $params['slug'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $class;
     }
-
-    
-
-
-
-
-
-
 
     private function refuse_taken_slug( string $slug ): void {
         foreach ( (array) $this->rest_request( 'GET', '/wc/v3/products/shipping_classes', array( 'slug' => $slug ) ) as $class ) {

@@ -9,16 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 class Install_Plugin extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -49,12 +39,10 @@ class Install_Plugin extends Base_Tool {
         );
     }
 
-    
     public function is_disabled_by_default() {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -103,7 +91,6 @@ class Install_Plugin extends Base_Tool {
         $force   = $this->parse_force( $arguments );
 
         $this->refuse_when_file_mods_are_off( 'plugins cannot be installed' );
-        
         if ( ! current_user_can( 'install_plugins' ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to install plugins on this site.' );
         }
@@ -118,10 +105,6 @@ class Install_Plugin extends Base_Tool {
 
         $offer = $this->wporg_package( 'plugin', $slug, $version );
 
-        
-        
-        
-        
         $skin     = $this->new_upgrader_skin();
         $upgrader = $this->new_plugin_upgrader( $skin );
         $package  = $offer['package'];
@@ -136,35 +119,9 @@ class Install_Plugin extends Base_Tool {
         return $this->result( $slug, $offer, $upgrader, $skin, $replacing, '' !== $printed );
     }
 
-    
-
-
-
     private function parse_force( array $arguments ): bool {
         return isset( $arguments['force'] ) && rest_sanitize_boolean( $arguments['force'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function refuse_existing_install( string $slug, bool $force ): bool {
         self::refuse_self_reinstall( $slug, $force );
@@ -189,28 +146,12 @@ class Install_Plugin extends Base_Tool {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_self_reinstall( string $slug, bool $force ): void {
         $own = defined( 'EASY_MCP_AI_PLUGIN_BASENAME' ) ? (string) EASY_MCP_AI_PLUGIN_BASENAME : '';
         if ( $force && '' !== $own && false !== strpos( $own, '/' ) && dirname( $own ) === $slug ) {
             throw new \RuntimeException( 'Easy MCP AI cannot reinstall itself over MCP: replacing its files mid-request would cut off this connection. Use wp-admin → Plugins instead.' );
         }
     }
-
-    
-
-
-
-
-
 
     private static function plugin_in_folder( array $installed, string $slug ): ?string {
         foreach ( array_keys( $installed ) as $file ) {
@@ -220,16 +161,6 @@ class Install_Plugin extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function refuse_copy_in_another_folder( array $installed, string $slug ): void {
         $transient = get_site_transient( 'update_plugins' );
@@ -243,34 +174,13 @@ class Install_Plugin extends Base_Tool {
         }
     }
 
-    
-
-
-
     protected function plugin_folder_exists( string $slug ): bool {
         return is_dir( WP_PLUGIN_DIR . '/' . $slug );
     }
 
-    
-
-
-
-
-
     protected function new_plugin_upgrader( \WP_Ajax_Upgrader_Skin $skin ): object {
         return new \Plugin_Upgrader( $skin );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function result( string $slug, array $offer, object $upgrader, \WP_Ajax_Upgrader_Skin $skin, bool $replacing, bool $printed ): array {
         $file = self::installed_main_file( $upgrader );
@@ -295,23 +205,10 @@ class Install_Plugin extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
     private static function installed_main_file( object $upgrader ): ?string {
         $file = method_exists( $upgrader, 'plugin_info' ) ? $upgrader->plugin_info() : false;
         return is_string( $file ) && '' !== $file ? $file : null;
     }
-
-    
-
-
-
-
 
     private static function installed_headers( string $file ): array {
         $installed = get_plugins();

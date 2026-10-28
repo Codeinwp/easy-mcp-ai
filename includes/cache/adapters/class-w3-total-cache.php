@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,29 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class W3_Total_Cache extends Cache_Adapter {
 
@@ -81,15 +53,6 @@ final class W3_Total_Cache extends Cache_Adapter {
             && ( ! $calls->constant( 'SUBDOMAIN_INSTALL' ) || array() !== $this->also_clears( $request ) );
     }
 
-    
-
-
-
-
-
-
-
-
     public function stale_seconds(): int {
         return 30;
     }
@@ -127,24 +90,11 @@ final class W3_Total_Cache extends Cache_Adapter {
         return $this->run_delayed( sprintf( 'W3 Total Cache cleared %d post(s) with their related pages, and %d page(s).', count( $request->post_ids ), count( $request->urls ) ) );
     }
 
-    
-
-
-
-
-
     private function flush_urls( array $urls ): void {
         foreach ( $urls as $url ) {
             $this->calls()->call( 'w3tc_flush_url', array( $this->is_home_url( $url ) ? rtrim( $url, '/' ) . '/' : $url ) );
         }
     }
-
-    
-
-
-
-
-
 
     private function run_delayed( string $detail ): Layer_Result {
         $flush = $this->cache_flush();
@@ -155,24 +105,11 @@ final class W3_Total_Cache extends Cache_Adapter {
         return $this->sent( $detail );
     }
 
-    
-
-
-
-
-
     private function cloudflare_page_caching(): bool {
         $active = $this->setting( 'get_array', 'extensions.active' );
         return is_array( $active ) && array_key_exists( 'cloudflare', $active ) && ! in_array( $active['cloudflare'], array( false, null, 0, '' ), true )
             && $this->setting( 'get_boolean', array( 'cloudflare', 'pagecache' ) );
     }
-
-    
-
-
-
-
-
 
     private function setting( string $getter, $key ) {
         $calls = $this->calls();
@@ -185,11 +122,6 @@ final class W3_Total_Cache extends Cache_Adapter {
         }
         return $calls->call( array( $config, $getter ), array( $key ) );
     }
-
-    
-
-
-
 
     private function cache_flush(): ?object {
         if ( ! $this->calls()->method_exists( self::DISPATCHER, 'component' ) ) {

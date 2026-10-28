@@ -1,41 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -44,35 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Htaccess_Plain_Routes {
 
-    
     const MARKER = Htaccess_Auth_Rule::PLAIN_ROUTES_MARKER;
 
-    
     const OFFER_BUTTON = 'button';
 
-    
     const OFFER_PASTE = 'paste';
 
-    
     const OFFER_ALREADY_PRESENT = 'already_present';
 
-    
     const OFFER_NOT_APPLICABLE = 'not_applicable';
 
-    
     const OFFER_NONE = 'none';
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function rule_lines( string $home_root ): array {
         $index = '/' . trim( $home_root, '/' );
@@ -94,13 +40,6 @@ class Htaccess_Plain_Routes {
         );
     }
 
-    
-
-
-
-
-
-
     public static function block_text( string $home_root ): string {
         return implode(
             "\n",
@@ -112,34 +51,11 @@ class Htaccess_Plain_Routes {
         );
     }
 
-    
-
-
-
-
-
-
     public static function has_block( $contents ): bool {
         return Htaccess_Auth_Rule::has_marker_block( $contents, self::MARKER );
     }
 
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function offer( bool $plain, bool $main_site, string $server_software, bool $file_exists, bool $file_writable, bool $dir_writable, $contents ): string {
-        
-        
         if ( ! $plain || ! $main_site ) {
             return self::OFFER_NONE;
         }
@@ -149,25 +65,11 @@ class Htaccess_Plain_Routes {
         if ( self::has_block( $contents ) ) {
             return self::OFFER_ALREADY_PRESENT;
         }
-        
-        
-        
         if ( $file_exists ? $file_writable : $dir_writable ) {
             return self::OFFER_BUTTON;
         }
         return self::OFFER_PASTE;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function place( string $contents, string $home_root ): string {
         $contents = self::strip( $contents );
@@ -177,7 +79,6 @@ class Htaccess_Plain_Routes {
         $auth_end = '/^[ \t]*# END ' . preg_quote( Htaccess_Auth_Rule::MARKER, '/' ) . '[ \t]*(?:\R|$)/m';
         if ( preg_match( $auth_end, $contents, $m, PREG_OFFSET_CAPTURE ) ) {
             $at = (int) $m[0][1] + strlen( $m[0][0] );
-            
             $sep = "\n" === substr( $m[0][0], -1 ) ? '' : $eol;
             return substr( $contents, 0, $at ) . $sep . $block . substr( $contents, $at );
         }
@@ -191,33 +92,14 @@ class Htaccess_Plain_Routes {
         return $block . $contents;
     }
 
-    
-
-
-
-
-
     public static function strip( string $contents ): string {
         return Htaccess_Auth_Rule::strip_marker_block( $contents, self::MARKER );
     }
-
-    
-
-    
-
-
-
-
 
     public static function home_root(): string {
         $path = \wp_parse_url( \home_url(), PHP_URL_PATH );
         return is_string( $path ) && '' !== trim( $path, '/' ) ? '/' . trim( $path, '/' ) . '/' : '/';
     }
-
-    
-
-
-
 
     public static function offer_now(): array {
         $path   = Htaccess_Auth_Rule::htaccess_path();
@@ -238,20 +120,9 @@ class Htaccess_Plain_Routes {
         );
     }
 
-    
-
-
-
-
     public static function is_in_place(): bool {
         return self::has_block( Htaccess_Auth_Rule::read( Htaccess_Auth_Rule::htaccess_path() ) );
     }
-
-    
-
-
-
-
 
     public static function front_page_status(): int {
         $response = \wp_remote_get(
@@ -265,33 +136,9 @@ class Htaccess_Plain_Routes {
         return \is_wp_error( $response ) ? 0 : (int) \wp_remote_retrieve_response_code( $response );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function breaks_site( int $before, int $after ): bool {
         return $after >= 500 && $before < 500;
     }
-
-    
-
-    
-
-
-
-
-
-
 
     public static function write( string $path, string $home_root ): bool {
         $exists = file_exists( $path );
@@ -306,13 +153,6 @@ class Htaccess_Plain_Routes {
             ! $exists
         );
     }
-
-    
-
-
-
-
-
 
     public static function remove( string $path ): bool {
         if ( ! file_exists( $path ) ) {

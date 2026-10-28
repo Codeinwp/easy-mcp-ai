@@ -1,25 +1,14 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 final class Cache_Registry {
 
     const ADAPTERS = array(
-        
         'rank-math-sitemap'    => 'Easy_MCP_AI\\Cache\\Adapters\\Rank_Math_Sitemap',
         'seo-sitemaps'         => 'Easy_MCP_AI\\Cache\\Adapters\\Seo_Sitemaps',
         'woocommerce'          => 'Easy_MCP_AI\\Cache\\Adapters\\Woocommerce',
@@ -29,11 +18,9 @@ final class Cache_Registry {
         'popup-maker'          => 'Easy_MCP_AI\\Cache\\Adapters\\Popup_Maker',
         'smash-balloon'        => 'Easy_MCP_AI\\Cache\\Adapters\\Smash_Balloon',
         'facetwp'              => 'Easy_MCP_AI\\Cache\\Adapters\\Facetwp',
-        
         'optimole'             => 'Easy_MCP_AI\\Cache\\Adapters\\Optimole',
         'elementor'            => 'Easy_MCP_AI\\Cache\\Adapters\\Elementor',
         'autoptimize'          => 'Easy_MCP_AI\\Cache\\Adapters\\Autoptimize',
-        
         'litespeed-cache'      => 'Easy_MCP_AI\\Cache\\Adapters\\Litespeed_Cache',
         'wp-rocket'            => 'Easy_MCP_AI\\Cache\\Adapters\\Wp_Rocket',
         'wp-super-cache'       => 'Easy_MCP_AI\\Cache\\Adapters\\Wp_Super_Cache',
@@ -50,7 +37,6 @@ final class Cache_Registry {
         'clearfy'              => 'Easy_MCP_AI\\Cache\\Adapters\\Clearfy',
         'xspeed'               => 'Easy_MCP_AI\\Cache\\Adapters\\Xspeed',
         'spinupwp'             => 'Easy_MCP_AI\\Cache\\Adapters\\Spinupwp',
-        
         'nginx-helper'         => 'Easy_MCP_AI\\Cache\\Adapters\\Nginx_Helper',
         'proxy-cache-purge'    => 'Easy_MCP_AI\\Cache\\Adapters\\Proxy_Cache_Purge',
         'kinsta'               => 'Easy_MCP_AI\\Cache\\Adapters\\Kinsta',
@@ -62,23 +48,14 @@ final class Cache_Registry {
         'pantheon'             => 'Easy_MCP_AI\\Cache\\Adapters\\Pantheon',
         'wordpress-vip'        => 'Easy_MCP_AI\\Cache\\Adapters\\Wordpress_Vip',
         'bigscoots'            => 'Easy_MCP_AI\\Cache\\Adapters\\Bigscoots',
-        
         'super-page-cache'     => 'Easy_MCP_AI\\Cache\\Adapters\\Super_Page_Cache',
         'cloudflare'           => 'Easy_MCP_AI\\Cache\\Adapters\\Cloudflare',
-        
         'object-cache'         => 'Easy_MCP_AI\\Cache\\Adapters\\Object_Cache',
     );
 
-    
     const FILTER = 'easy_mcp_ai_cache_adapter_enabled';
 
-    
     private static $adapters = null;
-
-    
-
-
-
 
     public static function all(): array {
         if ( null === self::$adapters ) {
@@ -94,22 +71,9 @@ final class Cache_Registry {
         return self::$adapters;
     }
 
-    
-
-
-
-
     public static function ids(): array {
         return array_keys( self::ADAPTERS );
     }
-
-    
-
-
-
-
-
-
 
     public static function is_switched_on( Cache_Adapter $adapter ): bool {
         $default = $adapter->enabled_by_default();
@@ -117,19 +81,9 @@ final class Cache_Registry {
         return $default ? false !== $value : true === $value;
     }
 
-    
-
-
-
-
     public static function noise_options(): array {
         return Cache_Noise::OPTIONS;
     }
-
-    
-
-
-
 
     public static function reset(): void {
         self::$adapters = null;

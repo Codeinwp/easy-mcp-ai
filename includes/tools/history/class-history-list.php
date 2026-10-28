@@ -10,14 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class History_List extends Base_Tool {
 
-    
-
-
-
-
-
-
-
     private const MAX_ATTACHMENT_CHAIN = 5;
 
     public function get_name() { return 'wp_history_list'; }
@@ -28,9 +20,6 @@ class History_List extends Base_Tool {
     public function get_required_capability() { return 'read'; }
 
     public function get_annotations() {
-        
-        
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => true,
@@ -64,10 +53,6 @@ class History_List extends Base_Tool {
         $limit  = isset( $args['limit'] )  ? max( 1, min( 200, (int) $args['limit'] ) )  : 50;
         $offset = isset( $args['offset'] ) ? max( 0, (int) $args['offset'] ) : 0;
 
-        
-        
-        
-        
         $can_view_all = \current_user_can( 'easy_mcp_ai_view_all_history' );
         $self_scope   = $can_view_all
             ? array()
@@ -81,9 +66,6 @@ class History_List extends Base_Tool {
             $can_view_all
         );
 
-        
-        
-        
         $allowed_keys = array( 'object_type', 'object_id', 'tool_name', 'wp_user_id', 'oauth_client_id', 'auth_source', 'action', 'audit_id', 'since', 'until' );
         $filters      = array();
         foreach ( $allowed_keys as $k ) {
@@ -92,9 +74,6 @@ class History_List extends Base_Tool {
             }
         }
         $filters = $this->validate_choice_filters( $filters );
-        
-        
-        
         foreach ( array( 'since', 'until' ) as $dt_key ) {
             if ( ! isset( $filters[ $dt_key ] ) || '' === $filters[ $dt_key ] ) {
                 continue;
@@ -105,9 +84,6 @@ class History_List extends Base_Tool {
             }
             $filters[ $dt_key ] = gmdate( 'Y-m-d H:i:s', $ts );
         }
-        
-        
-        
         $list_columns = \Easy_MCP_AI\History\Change_Log_Repository::list_columns();
         $rows = ( new Change_Log_Repository() )->query(
             array_merge( $filters, (array) $extra_filters, $self_scope ),
@@ -138,10 +114,6 @@ class History_List extends Base_Tool {
                 'auth_source'     => $r['auth_source'] ?? null,
                 'created_at'      => $r['created_at'] ?? null,
                 'truncated'       => ! empty( $r['truncated'] ),
-                
-                
-                
-                
                 'capture_mode'    => ( isset( $r['capture_mode'] ) && '' !== $r['capture_mode'] ) ? $r['capture_mode'] : 'hooked',
             );
             if ( $can_view_all && isset( $r['ip_address'] ) ) {
@@ -151,33 +123,6 @@ class History_List extends Base_Tool {
         }
         return array( 'items' => $items, 'limit' => $limit, 'offset' => $offset, 'count' => count( $items ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function object_titles( array $rows, bool $can_view_all ): array {
         $wanted = array();
@@ -223,15 +168,6 @@ class History_List extends Base_Tool {
         return $titles;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function existing_ids( string $kind, array $ids ): array {
         global $wpdb;
         $tables = array(
@@ -252,24 +188,10 @@ class History_List extends Base_Tool {
         return array_fill_keys( $found, true );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function prime_inherited_parents( array $ids ): void {
         if ( ! function_exists( '_prime_post_caches' ) ) {
             return;
         }
-        
-        
         $walked = array_fill_keys( $ids, true );
         $primed = array();
         $level  = $ids;
@@ -292,19 +214,6 @@ class History_List extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function attachment_chain_exceeds_limit( $post ): bool {
         for ( $depth = 0; $post && 'attachment' === $post->post_type && 'inherit' === $post->post_status && (int) $post->post_parent > 0; $depth++ ) {
             if ( $depth >= self::MAX_ATTACHMENT_CHAIN ) {
@@ -314,14 +223,6 @@ class History_List extends Base_Tool {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
 
     private static function title_target( string $type, string $object_id ): ?array {
         if ( 'meta' === $type ) {
@@ -334,16 +235,6 @@ class History_List extends Base_Tool {
         return array( 'wc_product' === $type ? 'post' : $type, (int) $object_id );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function object_title( string $kind, int $id, bool $can_view_all ): ?string {
         switch ( $kind ) {
             case 'post':
@@ -351,8 +242,6 @@ class History_List extends Base_Tool {
                 if ( ! $post || ( ! $can_view_all && ( self::attachment_chain_exceeds_limit( $post ) || ! \current_user_can( 'read_post', $id ) ) ) ) {
                     return null;
                 }
-                
-                
                 return (string) $post->post_title;
             case 'term':
                 $term = \get_term( $id );
@@ -369,17 +258,6 @@ class History_List extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function user_logins( array $rows ): array {
         $ids = array();
@@ -398,20 +276,6 @@ class History_List extends Base_Tool {
         }
         return $logins;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function validate_choice_filters( array $filters ): array {
         $choices = array(

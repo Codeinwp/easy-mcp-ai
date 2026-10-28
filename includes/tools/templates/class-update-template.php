@@ -67,13 +67,7 @@ class Update_Template extends Base_Tool {
 
         $this->validate_required( $arguments, array( 'template_id', 'content' ) );
 
-        
-        
-        
-        $template_id = sanitize_text_field( $arguments['template_id'] );
-        if ( ! preg_match( '/^[A-Za-z0-9_-]+\/\/[A-Za-z0-9_-]+$/', $template_id ) ) {
-            throw new \InvalidArgumentException( 'Invalid template_id format. Expected: theme-slug//template-slug (letters, numbers, hyphens, underscores only in each segment).' );
-        }
+        $template_id = Template_Id::validate( $arguments['template_id'] );
 
         $request = new \WP_REST_Request( 'POST', '/wp/v2/' . Template_Type::rest_base( $type ) . '/' . $template_id );
         $request->set_param( 'content', $arguments['content'] );

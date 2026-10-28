@@ -5,85 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Auth_Header {
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function recover_bearer( array $headers ) {
         return self::find_authorization( $headers, 'Bearer' );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function find_authorization( array $headers, $scheme ) {
         foreach ( $headers as $name => $value ) {
@@ -98,34 +24,11 @@ class Auth_Header {
         return null;
     }
 
-    
-
-
-
-
-
-
     const API_KEY_PATTERN = '/^wpmcp_(?:[a-f0-9]{6}_)?[a-f0-9]{64}$/';
-
-    
-
-
-
 
     public static function is_api_key( $value ) {
         return is_string( $value ) && 1 === preg_match( self::API_KEY_PATTERN, $value );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function pair_has_plugin_credential_shape( $user, $pass ) {
         $user = is_string( $user ) ? $user : '';
@@ -135,22 +38,6 @@ class Auth_Header {
         }
         return '' === $pass && 0 === strpos( $user, 'wpmcp_' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function api_key_from_pair( $user, $pass ) {
         $user = is_string( $user ) ? $user : '';
@@ -163,16 +50,6 @@ class Auth_Header {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function api_key_from_basic( $header ) {
         if ( ! is_string( $header ) || 0 !== stripos( $header, 'Basic ' ) ) {
@@ -190,16 +67,6 @@ class Auth_Header {
         return self::api_key_from_pair( $user, $pass );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function recover_basic_api_key( array $headers ) {
         $value = self::find_authorization( $headers, 'Basic' );
         if ( null === $value || null === self::api_key_from_basic( $value ) ) {
@@ -207,15 +74,6 @@ class Auth_Header {
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function request_headers() {
         if ( function_exists( 'getallheaders' ) ) {

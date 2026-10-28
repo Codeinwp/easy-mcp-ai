@@ -8,12 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class Update_Plugin extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -61,8 +55,6 @@ class Update_Plugin extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
         if ( isset( $arguments['plugin'] ) && is_string( $arguments['plugin'] ) ) {
             $arguments['plugin'] = sanitize_text_field( $arguments['plugin'] );
         }
@@ -81,14 +73,9 @@ class Update_Plugin extends Base_Tool {
         $this->assert_filesystem_available( WP_PLUGIN_DIR );
         $this->raise_time_limit();
 
-        
         wp_update_plugins();
         $offer = $this->chosen_offer( $plugin, $name, $old_version, $version );
 
-        
-        
-        
-        
         $skin     = new \WP_Ajax_Upgrader_Skin();
         $upgrader = new \Plugin_Upgrader( $skin );
         $result   = $this->run_bulk_upgrade( $upgrader, $plugin, $offer );
@@ -107,17 +94,6 @@ class Update_Plugin extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function chosen_offer( string $plugin, string $name, string $old_version, ?string $version ): ?object {
         if ( null === $version ) {
             $this->assert_update_available( $plugin, $name, $old_version );
@@ -125,15 +101,6 @@ class Update_Plugin extends Base_Tool {
         }
         return $this->version_offer( $plugin, '' !== $name ? $name : $plugin, $old_version, $version );
     }
-
-    
-
-
-
-
-
-
-
 
     private function run_bulk_upgrade( \Plugin_Upgrader $upgrader, string $plugin, ?object $offer ) {
         $filter = null === $offer ? null : $this->offer_once( $plugin, $offer );
@@ -146,36 +113,15 @@ class Update_Plugin extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_ignored_offer( ?object $offer, $result, string $plugin, string $version ): void {
         if ( null !== $offer && is_array( $result ) && isset( $result[ $plugin ] ) && true === $result[ $plugin ] ) {
             throw new \RuntimeException( sprintf( 'Version %s was not installed: WordPress read its update data without the chosen version (a plugin on this site replaces that data), so nothing changed.', $version ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 
-    
-
-
-
-
-
-
     private function assert_may_update( string $plugin ) {
         $this->assert_file_mods_allowed( 'plugins' );
 
-        
         if ( ! current_user_can( 'update_plugins' ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to update plugins for this site.' );
         }
@@ -185,17 +131,6 @@ class Update_Plugin extends Base_Tool {
             throw new \RuntimeException( 'Easy MCP AI cannot update itself over MCP: replacing its files mid-request would cut off this connection. Update it from wp-admin → Plugins or Dashboard → Updates.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function parse_version_argument( array $arguments ): ?string {
         if ( ! isset( $arguments['version'] ) ) {
@@ -212,45 +147,11 @@ class Update_Plugin extends Base_Tool {
         return $version;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function assert_may_install_a_version(): void {
         if ( ! current_user_can( 'install_plugins' ) ) {
             throw new \RuntimeException( 'Sorry, installing a chosen plugin version also needs the install_plugins capability: wp-admin installs a specific version only through Upload Plugin, which requires it.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function version_offer( string $plugin, string $label, string $old_version, string $version ): object {
         $entry = $this->update_entry( $plugin );
@@ -268,19 +169,9 @@ class Update_Plugin extends Base_Tool {
         $offer              = is_object( $entry ) ? clone $entry : (object) $entry;
         $offer->new_version = $version;
         $offer->package     = $package;
-        
-        
-        
         unset( $offer->requires, $offer->requires_php, $offer->tested, $offer->upgrade_notice );
         return $offer;
     }
-
-    
-
-
-
-
-
 
     private function update_entry( string $plugin ) {
         $transient = get_site_transient( 'update_plugins' );
@@ -288,17 +179,6 @@ class Update_Plugin extends Base_Tool {
         $no_update = ( is_object( $transient ) && isset( $transient->no_update ) && is_array( $transient->no_update ) ) ? $transient->no_update : array();
         return isset( $response[ $plugin ] ) ? $response[ $plugin ] : ( isset( $no_update[ $plugin ] ) ? $no_update[ $plugin ] : null );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function version_package( string $slug, string $version ): string {
         $versions = $this->version_list( $slug );
@@ -315,13 +195,6 @@ class Update_Plugin extends Base_Tool {
         }
         return $package;
     }
-
-    
-
-
-
-
-
 
     private function version_list( string $slug ): array {
         if ( ! function_exists( 'plugins_api' ) ) {
@@ -343,19 +216,6 @@ class Update_Plugin extends Base_Tool {
         return ( is_object( $info ) && isset( $info->versions ) && ( is_array( $info->versions ) || is_object( $info->versions ) ) ) ? (array) $info->versions : array();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private function offer_once( string $plugin, object $offer ): \Closure {
         $filter = null;
         $filter = static function ( $value ) use ( &$filter, $plugin, $offer ) {
@@ -363,7 +223,6 @@ class Update_Plugin extends Base_Tool {
                 return $value;
             }
             remove_filter( 'site_transient_update_plugins', $filter, PHP_INT_MAX );
-            
             $value              = clone $value;
             $response           = ( isset( $value->response ) && is_array( $value->response ) ) ? $value->response : array();
             $response[ $plugin ] = $offer;
@@ -373,13 +232,6 @@ class Update_Plugin extends Base_Tool {
         add_filter( 'site_transient_update_plugins', $filter, PHP_INT_MAX );
         return $filter;
     }
-
-    
-
-
-
-
-
 
     private function installed_header( string $plugin ): array {
         $installed = get_plugins();
@@ -394,12 +246,6 @@ class Update_Plugin extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private function assert_update_available( string $plugin, string $name, string $old_version ) {
         $response = $this->update_response( get_site_transient( 'update_plugins' ) );
         if ( ! isset( $response[ $plugin ] ) ) {
@@ -408,16 +254,6 @@ class Update_Plugin extends Base_Tool {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function version_after_upgrade( $item ): string {
         if ( ! is_array( $item ) || empty( $item['destination_name'] ) ) {

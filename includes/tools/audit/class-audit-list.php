@@ -8,20 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Audit_List extends Base_Tool {
     public function get_name() { return 'wp_audit_list'; }
     public function get_description() {
@@ -31,9 +17,6 @@ class Audit_List extends Base_Tool {
     public function get_required_capability() { return 'manage_options'; }
 
     public function get_annotations() {
-        
-        
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => true,
@@ -67,8 +50,6 @@ class Audit_List extends Base_Tool {
         $limit  = isset( $args['limit'] )  ? max( 1, min( 200, (int) $args['limit'] ) ) : 50;
         $offset = isset( $args['offset'] ) ? max( 0, (int) $args['offset'] ) : 0;
 
-        
-        
         $filters = array();
         foreach ( Audit_Log_Repository::filter_keys() as $k ) {
             if ( isset( $args[ $k ] ) && '' !== $args[ $k ] ) {
@@ -78,9 +59,6 @@ class Audit_List extends Base_Tool {
         if ( isset( $filters['auth_source'] ) && ! in_array( $filters['auth_source'], array( 'legacy', 'oauth', Audit_Log_Repository::SOURCE_UNKNOWN ), true ) ) {
             throw new \InvalidArgumentException( 'auth_source must be one of: legacy, oauth, unknown' );
         }
-        
-        
-        
         foreach ( array( 'since', 'until' ) as $dt_key ) {
             if ( ! isset( $filters[ $dt_key ] ) ) {
                 continue;
@@ -94,11 +72,6 @@ class Audit_List extends Base_Tool {
 
         $repo = new Audit_Log_Repository();
 
-        
-        
-        
-        
-        
         $before_id = isset( $args['before_id'] ) ? max( 0, (int) $args['before_id'] ) : 0;
         if ( 0 === $before_id ) {
             $before_id = $repo->max_id();
@@ -134,8 +107,6 @@ class Audit_List extends Base_Tool {
                 'duration_ms'     => isset( $r['duration_ms'] ) && null !== $r['duration_ms'] && '' !== $r['duration_ms'] ? (int) $r['duration_ms'] : null,
                 'ip_address'      => isset( $r['ip_address'] ) ? (string) $r['ip_address'] : null,
                 'arguments'       => $arguments,
-                
-                
                 'error'           => isset( $r['error_message'] ) && '' !== $r['error_message'] ? (string) $r['error_message'] : null,
             );
         }

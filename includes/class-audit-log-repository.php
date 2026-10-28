@@ -5,68 +5,22 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Audit_Log_Repository {
 
-    
     const PER_PAGE = 50;
 
-    
     const SOURCES = array( 'legacy', 'oauth' );
 
-    
     const SOURCE_UNKNOWN = 'unknown';
-
-    
-
-
-
-
-
 
     public static function list_columns() {
         return 'id, token_id, tool_name, arguments, result_status, ip_address, '
             . 'auth_source, wp_user_id, oauth_client_id, duration_ms, created_at';
     }
 
-    
     public static function filter_keys() {
         return array( 'search', 'tool_name', 'wp_user_id', 'oauth_client_id', 'auth_source', 'result_status', 'token_id', 'since', 'until', 'before_id' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function max_id() {
         global $wpdb;
@@ -79,22 +33,6 @@ class Audit_Log_Repository {
         global $wpdb;
         return $wpdb->prefix . 'easy_mcp_ai_audit_log';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function build_where( array $filters ) {
         global $wpdb;
@@ -137,18 +75,12 @@ class Audit_Log_Repository {
             $where[]  = 'created_at <= %s';
             $params[] = (string) $filters['until'];
         }
-        
-        
         if ( isset( $filters['before_id'] ) && (int) $filters['before_id'] > 0 ) {
             $where[]  = 'id <= %d';
             $params[] = (int) $filters['before_id'];
         }
         return array( 'sql' => implode( ' AND ', $where ), 'params' => $params );
     }
-
-    
-
-
 
     public function count( array $filters ) {
         global $wpdb;
@@ -159,17 +91,6 @@ class Audit_Log_Repository {
         return (int) $wpdb->get_var( empty( $w['params'] ) ? $sql : $wpdb->prepare( $sql, ...$w['params'] ) );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public function query( array $filters, $limit = self::PER_PAGE, $offset = 0 ) {
         global $wpdb;
@@ -191,15 +112,7 @@ class Audit_Log_Repository {
         return is_array( $rows ) ? $rows : array();
     }
 
-    
     private static ?bool $has_error_column = null;
-
-    
-
-
-
-
-
 
     private function error_column(): string {
         if ( null === self::$has_error_column ) {
@@ -213,13 +126,6 @@ class Audit_Log_Repository {
         return self::$has_error_column ? ', error_message' : '';
     }
 
-    
-
-
-
-
-
-
     public function find( $id ) {
         global $wpdb;
         $table = $this->table();
@@ -228,14 +134,6 @@ class Audit_Log_Repository {
         $row = $wpdb->get_row( $wpdb->prepare( "SELECT {$cols} FROM `{$table}` l WHERE l.id = %d", (int) $id ), ARRAY_A );
         return is_array( $row ) ? $row : null;
     }
-
-    
-
-
-
-
-
-
 
     public function distinct( $column ) {
         global $wpdb;
@@ -252,20 +150,9 @@ class Audit_Log_Repository {
         $values = $wpdb->get_col( "SELECT DISTINCT {$column} FROM `{$table}` WHERE {$column} IS NOT NULL ORDER BY {$column} ASC" );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $values = is_array( $values ) ? array_values( array_filter( array_map( 'strval', $values ), 'strlen' ) ) : array();
-        \set_transient( $key, $values, 300 ); 
+        \set_transient( $key, $values, 300 );
         return $values;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public function attach_labels( array $rows ) {
         global $wpdb;
@@ -331,23 +218,6 @@ class Audit_Log_Repository {
         return $rows;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function credential_label( array $row ) {
         $source   = isset( $row['auth_source'] ) && in_array( $row['auth_source'], self::SOURCES, true ) ? $row['auth_source'] : self::SOURCE_UNKNOWN;
         $token_id = isset( $row['token_id'] ) ? (int) $row['token_id'] : 0;
@@ -381,10 +251,6 @@ class Audit_Log_Repository {
         /* translators: %d: credential row id whose table is not recorded */
         return array( 'source' => self::SOURCE_UNKNOWN, 'label' => sprintf( __( '#%d (unknown source)', 'easy-mcp-ai' ), $token_id ) );
     }
-
-    
-
-
 
     private static function qualify_columns( $cols ) {
         $out = array();

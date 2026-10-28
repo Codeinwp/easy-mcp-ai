@@ -1,74 +1,21 @@
 <?php
 namespace Easy_MCP_AI\Tools\Appearance;
 
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Customizer_Changeset {
 
     const POST_TYPE = 'customize_changeset';
 
-    
-
-
-
-
     public static function is_available(): bool {
         return post_type_exists( self::POST_TYPE );
     }
 
-    
-
-
-
-
-
-
-
     public static function create( string $setting_id, $value ): int {
         return self::write( self::entry( $setting_id, $value ), 0, 'auto-draft' );
     }
-
-    
-
-
-
-
-
-
 
     public static function stage( string $setting_id, $value ): string {
         $draft = self::shared_draft();
@@ -78,20 +25,6 @@ final class Customizer_Changeset {
         return null === $post ? '' : (string) $post->post_name;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function discard( int $id ): void {
         try {
             wp_delete_post( $id, true );
@@ -100,38 +33,13 @@ final class Customizer_Changeset {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     public static function preview_url( string $uuid ): string {
         return admin_url( 'customize.php?changeset_uuid=' . $uuid );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function share_url( string $uuid ): string {
         return add_query_arg( array( 'customize_changeset_uuid' => $uuid ), home_url( '/' ) );
     }
-
-    
-
-
-
-
-
 
     private static function entry( string $setting_id, $value ): array {
         return array(
@@ -143,11 +51,6 @@ final class Customizer_Changeset {
             ),
         );
     }
-
-    
-
-
-
 
     private static function shared_draft(): ?object {
         $posts = get_posts(
@@ -172,37 +75,14 @@ final class Customizer_Changeset {
         return $posts[0];
     }
 
-    
-
-
-
-
-
     private static function data_of( object $post ): array {
         $data = json_decode( (string) ( $post->post_content ?? '' ), true );
         return is_array( $data ) ? $data : array();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function write( array $data, int $id, string $status ): int {
         $json = wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
         if ( ! is_string( $json ) || ! is_array( json_decode( $json, true ) ) ) {
-            
-            
-            
             throw new \RuntimeException( 'The Customizer changeset was not written: its data cannot be stored as JSON. Nothing was changed.' );
         }
         $post = array( 'post_content' => $json );

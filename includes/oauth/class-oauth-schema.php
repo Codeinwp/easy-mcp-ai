@@ -7,96 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class OAuth_Schema {
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const DB_VERSION = '1.0.11';
     const VERSION_OPTION = 'easy_mcp_ai_oauth_db_version';
-
-    
-
-
-
 
     public static function create_tables() {
         global $wpdb;
@@ -104,18 +16,10 @@ class OAuth_Schema {
         $charset_collate = $wpdb->get_charset_collate();
         $prefix          = $wpdb->prefix . 'easy_mcp_ai_oauth_';
 
-        
-        
-        
         if ( ! function_exists( 'dbDelta' ) ) {
             require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         }
 
-        
-        
-        
-        
-        
         $clients_table = $prefix . 'clients';
         $sql_clients   = "CREATE TABLE {$clients_table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -197,14 +101,6 @@ class OAuth_Schema {
             KEY client_id_idx (client_id)
         ) {$charset_collate};";
 
-        
-        
-        
-        
-        
-        
-        
-        
         $device_table = $prefix . 'device_codes';
         $sql_device   = "CREATE TABLE {$device_table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -233,11 +129,6 @@ class OAuth_Schema {
         dbDelta( $sql_consents );
         dbDelta( $sql_device );
 
-        
-        
-        
-        
-        
         $expected = array(
             $clients_table,
             $codes_table,
@@ -253,14 +144,6 @@ class OAuth_Schema {
             }
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
         foreach ( self::REQUIRED_INDEXES as $table_suffix => $index_names ) {
             foreach ( $index_names as $index_name ) {
                 if ( ! self::index_exists( $prefix . $table_suffix, $index_name ) ) {
@@ -269,12 +152,6 @@ class OAuth_Schema {
             }
         }
 
-        
-        
-        
-        
-        
-        
         foreach ( self::REQUIRED_COLUMNS as $table_suffix => $column_names ) {
             foreach ( $column_names as $column_name ) {
                 if ( ! self::column_exists( $prefix . $table_suffix, $column_name ) ) {
@@ -286,52 +163,21 @@ class OAuth_Schema {
         update_option( self::VERSION_OPTION, self::DB_VERSION );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     const REQUIRED_INDEXES = array(
-        'codes'         => array( 'client_id_idx' ),  
-        'consents'      => array( 'client_id_idx' ),  
-        'access_tokens' => array( 'expires_at_idx' ), 
+        'codes'         => array( 'client_id_idx' ),
+        'consents'      => array( 'client_id_idx' ),
+        'access_tokens' => array( 'expires_at_idx' ),
     );
-
-    
-
-
-
-
-
 
     const REQUIRED_COLUMNS = array(
         'clients' => array(
-            'client_secret_hash',          
-            'token_endpoint_auth_method',  
-            'metadata_url',                
-            'metadata_fetched_at',         
-            'metadata_expires_at',         
+            'client_secret_hash',
+            'token_endpoint_auth_method',
+            'metadata_url',
+            'metadata_fetched_at',
+            'metadata_expires_at',
         ),
     );
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function index_exists( $table, $index_name ) {
         global $wpdb;
@@ -344,14 +190,6 @@ class OAuth_Schema {
         return ! empty( $found );
     }
 
-    
-
-
-
-
-
-
-
     public static function column_exists( $table, $column_name ) {
         global $wpdb;
         if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) || ! method_exists( $wpdb, 'prepare' ) ) {
@@ -362,11 +200,6 @@ class OAuth_Schema {
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return ! empty( $found );
     }
-
-    
-
-
-
 
     public static function maybe_upgrade() {
         $installed_version = get_option( self::VERSION_OPTION, '0' );

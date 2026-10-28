@@ -1,25 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -28,7 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Provider_Credentials {
 
-    
     const SECRETS = array(
         'ga'        => array( 'easy_mcp_ai_ga_service_account_json' ),
         'gsc'       => array( 'easy_mcp_ai_gsc_service_account_json' ),
@@ -38,21 +17,14 @@ final class Provider_Credentials {
         'ahrefs'    => array( 'easy_mcp_ai_ahrefs_api_key' ),
     );
 
-    
     const GOOGLE = array( 'ga', 'gsc' );
 
-    
     const GOOGLE_TOKEN_URI = 'https://oauth2.googleapis.com/token';
-
-    
-
-
 
     public static function constant_name( string $option ): string {
         return 'EASY_MCP_AI_' . strtoupper( preg_replace( '/^easy_mcp_ai_/', '', $option ) );
     }
 
-    
     public static function provider_of( string $option ): ?string {
         foreach ( self::SECRETS as $provider => $options ) {
             if ( in_array( $option, $options, true ) ) {
@@ -62,13 +34,6 @@ final class Provider_Credentials {
         return null;
     }
 
-    
-
-
-
-
-
-
     public static function source( string $option ): string {
         $name = self::constant_name( $option );
         if ( defined( $name ) ) {
@@ -76,14 +41,6 @@ final class Provider_Credentials {
         }
         return false !== getenv( $name ) ? 'environment' : '';
     }
-
-    
-
-
-
-
-
-
 
     public static function is_deployed( string $provider ): bool {
         foreach ( self::SECRETS[ $provider ] ?? array() as $option ) {
@@ -93,15 +50,6 @@ final class Provider_Credentials {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function is_configured( string $provider ): bool {
         if ( ! isset( self::SECRETS[ $provider ] ) ) {
@@ -119,12 +67,6 @@ final class Provider_Credentials {
         return true;
     }
 
-    
-
-
-
-
-
     public static function deployed_constants( string $provider ): array {
         $result = array();
         if ( ! self::is_deployed( $provider ) ) {
@@ -135,14 +77,6 @@ final class Provider_Credentials {
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
 
     public static function deployed_secret( string $option ): ?string {
         $provider = self::provider_of( $option );
@@ -164,17 +98,6 @@ final class Provider_Credentials {
         return trim( $raw );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function google_key( string $provider ): ?array {
         if ( ! in_array( $provider, self::GOOGLE, true ) || ! self::is_deployed( $provider ) ) {
             return null;
@@ -190,24 +113,10 @@ final class Provider_Credentials {
         return self::check_google_key( $name, $raw );
     }
 
-    
-
-
-
-
-
-
     public static function deployed_error( string $provider ): string {
         $problems = self::problems( $provider );
         return $problems ? (string) reset( $problems ) : '';
     }
-
-    
-
-
-
-
-
 
     public static function report(): array {
         $deployed = array();
@@ -222,14 +131,6 @@ final class Provider_Credentials {
         }
         return array( 'deployed' => $deployed, 'invalid' => $invalid );
     }
-
-    
-
-
-
-
-
-
 
     private static function problems( string $provider ): array {
         if ( ! self::is_deployed( $provider ) ) {
@@ -249,17 +150,6 @@ final class Provider_Credentials {
         }
         return $problems;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function fingerprint( string $provider ): string {
         if ( ! isset( self::SECRETS[ $provider ] ) ) {
@@ -284,13 +174,6 @@ final class Provider_Credentials {
         return substr( hash( 'sha256', implode( "\0", $parts ) ), 0, 16 );
     }
 
-    
-
-
-
-
-
-
     public static function google_email( string $provider ): ?string {
         try {
             $key = self::google_key( $provider );
@@ -300,7 +183,6 @@ final class Provider_Credentials {
         return is_array( $key ) ? (string) $key['client_email'] : null;
     }
 
-    
     private static function check_google_key( string $name, string $json ): array {
         $key = json_decode( $json, true );
         if ( ! is_array( $key ) ) {
@@ -325,29 +207,21 @@ final class Provider_Credentials {
                 sprintf( '%1$s contains an unexpected token_uri. Only %2$s is accepted.', $name, self::GOOGLE_TOKEN_URI ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
-        
-        
-        
-        
         if ( ! function_exists( 'openssl_pkey_get_private' ) ) {
             throw new \RuntimeException(
                 sprintf( '%s cannot be used: the PHP OpenSSL extension, which signs Google requests, is not available on this server.', $name ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
-        
-        
         $readable = 0 === strpos( ltrim( $key['private_key'] ), '-----BEGIN ' );
         if ( $readable ) {
             try {
                 $readable = false !== openssl_pkey_get_private( $key['private_key'] );
             } catch ( \Throwable $e ) {
-                
                 $readable = false;
             }
         }
         if ( ! $readable ) {
             while ( openssl_error_string() ) {
-                
             }
             throw new \RuntimeException(
                 sprintf( '%s has a private_key OpenSSL cannot read. Use the service account key file downloaded from Google Cloud Console, unedited.', $name ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -356,7 +230,6 @@ final class Provider_Credentials {
         return $key;
     }
 
-    
     private static function raw( string $option ) {
         $name = self::constant_name( $option );
         if ( defined( $name ) ) {

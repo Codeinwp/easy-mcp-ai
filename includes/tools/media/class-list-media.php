@@ -10,10 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class List_Media extends Base_Tool {
 
-    
     const ORDERBY = array( 'date', 'id', 'title', 'slug', 'modified', 'author', 'parent', 'include' );
 
-    
     const STATUSES = array( 'inherit', 'private', 'trash' );
 
     public function get_name() {
@@ -29,7 +27,7 @@ class List_Media extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'read'; 
+        return 'read';
     }
 
     public function get_annotations() {
@@ -163,8 +161,6 @@ class List_Media extends Base_Tool {
             $params['author_exclude'] = array_map( 'absint', $this->parse_json_param( $arguments['author_exclude'], 'author_exclude' ) );
         }
 
-        
-        
         $params = array_merge( $params, List_CPT_Items::collection_params( $arguments, array( 'include', 'exclude', 'offset', 'parent', 'parent_exclude' ) ) );
         if ( isset( $params['offset'] ) && $params['page'] > 1 ) {
             throw new \InvalidArgumentException( 'Send either offset or page, not both: WP_Query ignores page when offset is set.' );
@@ -197,10 +193,6 @@ class List_Media extends Base_Tool {
             $params['order'] = $arguments['order'];
         }
 
-        
-        
-        
-        
         $taxonomies = $this->rest_taxonomies_for( 'attachment' );
 
         if ( ! empty( $arguments['taxonomy_filters'] ) ) {
@@ -228,12 +220,10 @@ class List_Media extends Base_Tool {
             $request->set_param( $key, $value );
         }
 
-        
         $response = List_CPT_Items::dispatch( $request, 'attachment', array() );
 
         if ( $response->is_error() ) {
             $error = $response->as_error();
-            
             if ( $this->is_invalid_page_error( $error ) ) {
                 return array_merge(
                     array( 'media' => array() ),
@@ -247,8 +237,6 @@ class List_Media extends Base_Tool {
 
         $result = array();
         foreach ( $media as $item ) {
-            
-            
             if ( ! List_CPT_Items::may_list_in_context( $context, $item['id'] ) ) {
                 continue;
             }
@@ -260,7 +248,6 @@ class List_Media extends Base_Tool {
                 'alt_text'   => $item['alt_text'] ?? '',
                 'date'       => $item['date'],
                 'media_type' => $item['media_type'],
-                
                 'parent'     => isset( $item['post'] ) ? (int) $item['post'] : 0,
                 'terms'      => $this->item_taxonomy_terms( $item, $taxonomies ),
             );
@@ -275,16 +262,6 @@ class List_Media extends Base_Tool {
             $this->pagination_meta( $response, $params['page'], $params['per_page'], count( $media ) )
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function statuses( array $arguments ): ?array {
         if ( ! isset( $arguments['status'] ) || '' === $arguments['status'] ) {

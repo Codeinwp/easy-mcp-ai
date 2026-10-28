@@ -1,13 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,15 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Support_Text {
 
     const SUPPORT_EMAIL = 'support@easymcpai.com';
-
-    
-
-
-
-
-
-
-
 
     public static function external_test_host( $endpoint_url, $home_url ) {
         $host = (string) \wp_parse_url( (string) $endpoint_url, PHP_URL_HOST );
@@ -40,23 +23,10 @@ class Support_Text {
         return $host;
     }
 
-    
-
-
-
-
     public static function external_test_url( $endpoint_url, $home_url ) {
         $host = self::external_test_host( $endpoint_url, $home_url );
         return '' === $host ? '' : 'https://easymcpai.com/diagnose?url=' . rawurlencode( $host );
     }
-
-    
-
-
-
-
-
-
 
     public static function mailto( $home_url, $version ) {
         $subject = \__( 'Easy MCP AI — support request', 'easy-mcp-ai' );
@@ -88,14 +58,6 @@ class Support_Text {
             . '?subject=' . rawurlencode( $subject )
             . '&body=' . rawurlencode( $body );
     }
-
-    
-
-
-
-
-
-
 
     public static function ai_prompt( $home_url, $endpoint_url, $version ) {
         $wellknown = rtrim( (string) $home_url, '/' ) . '/.well-known/';
@@ -149,23 +111,6 @@ class Support_Text {
         ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function system_info( array $facts, array $diagnostics = array() ) {
         global $wpdb;
 
@@ -190,8 +135,6 @@ class Support_Text {
         $set_admin_language   = (string) \get_option( 'easy_mcp_ai_admin_language', '' );
         $set_disabled_tools   = count( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_disabled_tools', array() ) );
         $set_enabled_tools    = count( (array) \get_option( 'easy_mcp_ai_enabled_tools', array() ) );
-        
-        
         $set_tool_overrides   = 'Not set';
         if ( defined( 'EASY_MCP_AI_TOOLS' ) || false !== getenv( 'EASY_MCP_AI_TOOLS' ) ) {
             $set_tool_overrides = count( \Easy_MCP_AI\Tools\Tool_State::overrides() ) . ' (' . \Easy_MCP_AI\Tools\Tool_State::override_source()
@@ -199,7 +142,6 @@ class Support_Text {
         }
         $set_allowed_patterns = count( (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() ) );
         $set_oauth_cap        = \Easy_MCP_AI\Auth\Connect_Policy::stored_floor();
-        
         $set_connect_roles    = \Easy_MCP_AI\Auth\Connect_Policy::is_filtered_for( \Easy_MCP_AI\Auth\Connect_Policy::CHANNEL_OAUTH )
             ? array()
             : \Easy_MCP_AI\Auth\Connect_Policy::extra_roles();
@@ -212,8 +154,6 @@ class Support_Text {
             : 'Configured (' . $set_ip_count . ( 1 === $set_ip_count ? ' entry)' : ' entries)' );
 
         $srv_software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? \sanitize_text_field( \wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : 'Unknown';
-        
-        
         $srv_mem_raw    = isset( $GLOBALS['easy_mcp_ai_ini_memory_limit'] ) ? (string) $GLOBALS['easy_mcp_ai_ini_memory_limit'] : (string) ini_get( 'memory_limit' );
         $srv_permalinks = (string) \get_option( 'permalink_structure', '' );
         $srv_dropin     = ( defined( 'WP_CONTENT_DIR' ) && file_exists( WP_CONTENT_DIR . '/object-cache.php' ) );

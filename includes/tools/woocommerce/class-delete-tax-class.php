@@ -7,12 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class Delete_Tax_Class extends Base_Tool {
 
     use Store_Setup;
@@ -55,7 +49,6 @@ class Delete_Tax_Class extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         try {
             $slug = $this->parse_slug( $arguments );
@@ -85,13 +78,6 @@ class Delete_Tax_Class extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function parse_slug( array $arguments ): string {
         $slug = sanitize_title( self::text_arg( $arguments, 'slug' ) );
         if ( '' === $slug ) {
@@ -102,15 +88,6 @@ class Delete_Tax_Class extends Base_Tool {
         }
         return $slug;
     }
-
-    
-
-
-
-
-
-
-
 
     private function count_rates( string $slug ): int {
         $request  = self::build_rest_request( 'GET', '/wc/v3/taxes', array( 'class' => $slug, 'per_page' => 1 ) );

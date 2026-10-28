@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,28 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Pressidium extends Cache_Adapter {
 
-    
     const CLASSES = array( 'NinukisCaching', 'Ninukis_Plugin' );
 
     public function id(): string {
@@ -97,11 +72,6 @@ final class Pressidium extends Cache_Adapter {
         return $this->outcome( $returned, sprintf( 'Pressidium cleared %d path(s).', count( $paths ) ) );
     }
 
-    
-
-
-
-
     private function singleton_class(): string {
         foreach ( self::CLASSES as $class ) {
             if ( $this->calls()->class_exists( $class ) ) {
@@ -110,11 +80,6 @@ final class Pressidium extends Cache_Adapter {
         }
         return '';
     }
-
-    
-
-
-
 
     private function plugin(): ?object {
         $class = $this->singleton_class();

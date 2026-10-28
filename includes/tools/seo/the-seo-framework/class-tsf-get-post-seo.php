@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,11 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Easy_MCP_AI\Tools\Base_Tool;
 
 class Tsf_Get_Post_Seo extends Base_Tool {
-
-	
-
-
-
 
 	const META_KEYS = array(
 		'_genesis_title',

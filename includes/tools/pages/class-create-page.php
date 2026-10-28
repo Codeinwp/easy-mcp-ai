@@ -26,7 +26,6 @@ class Create_Page extends Base_Tool {
         return 'edit_pages';
     }
 
-    
     public function get_redacted_arguments() {
         return array( 'password' );
     }
@@ -148,9 +147,6 @@ class Create_Page extends Base_Tool {
 
         $this->maybe_force_draft( $params );
 
-        
-        
-        
         $data = $this->rest_request( 'POST', '/wp/v2/pages', $params, 'id,title,status,link' . ( $meta_sent ? ',meta' : '' ) );
 
         $result = array(
@@ -166,14 +162,6 @@ class Create_Page extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
     private function content_params( array $arguments ): array {
         $params = array(
             'status' => isset( $arguments['status'] ) ? sanitize_text_field( $arguments['status'] ) : 'draft',
@@ -184,10 +172,6 @@ class Create_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['content'] ) ) {
-            
-            
-            
-            
             $params['content'] = $arguments['content'];
         }
 
@@ -205,13 +189,6 @@ class Create_Page extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
     private static function detail_params( array $arguments ): array {
         $params = array();
         if ( ! empty( $arguments['slug'] ) ) {
@@ -223,11 +200,6 @@ class Create_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['excerpt'] ) ) {
-            
-            
-            
-            
-            
             $params['excerpt'] = $arguments['excerpt'];
         }
 
@@ -249,14 +221,6 @@ class Create_Page extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private static function cli_params( array $arguments ): array {
         $params = array();
         Create_CPT_Item::refuse_both_dates( $arguments );
@@ -267,18 +231,10 @@ class Create_Page extends Base_Tool {
             if ( ! is_string( $arguments['password'] ) ) {
                 throw new \InvalidArgumentException( 'Invalid password: must be a string.' );
             }
-            
             $params['password'] = $arguments['password'];
         }
         return $params;
     }
-
-    
-
-
-
-
-
 
     private static function refuse_future_without_date( array $params ): void {
         if ( isset( $params['status'] ) && 'future' === $params['status'] && empty( $params['date'] ) && empty( $params['date_gmt'] ) ) {

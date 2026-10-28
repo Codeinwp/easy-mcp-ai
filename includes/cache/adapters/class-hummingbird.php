@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,42 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Hummingbird extends Cache_Adapter {
 
-    
     const CLEAR = 'clear_cache';
 
-    
     const CORE = 'Hummingbird\\WP_Hummingbird';
 
-    
     const UTILS = 'Hummingbird\\Core\\Utils';
 
-    
     const ZONE_HOOK = 'wphb_cache_directory_cleared';
 
     public function id(): string {
@@ -94,11 +61,6 @@ final class Hummingbird extends Cache_Adapter {
             && true === $calls->call( 'is_main_site' );
     }
 
-    
-
-
-
-
     public function noise_options(): array {
         return array( 'wphb-notice-cache-cleaned-show' );
     }
@@ -140,14 +102,6 @@ final class Hummingbird extends Cache_Adapter {
         return $this->sent( sprintf( 'Hummingbird cleared %d post(s) with their category, tag and author archives, and %d page(s).', count( $request->post_ids ), count( $request->urls ) ) );
     }
 
-    
-
-
-
-
-
-
-
     private function clear_paths( object $module, array $urls ): void {
         $paths = array();
         foreach ( $urls as $url ) {
@@ -160,33 +114,16 @@ final class Hummingbird extends Cache_Adapter {
         }
     }
 
-    
-
-
-
-
-
     private function from_network_admin(): bool {
         $referer = $this->calls()->server( 'HTTP_REFERER' );
         $admin   = (string) $this->calls()->call( 'network_admin_url' );
         return '' !== $referer && '' !== $admin && 0 === stripos( $referer, $admin );
     }
 
-    
-
-
-
-
-
     private function module_with( string $method ): ?object {
         $module = $this->module();
         return null !== $module && $this->calls()->method_exists( $module, $method ) ? $module : null;
     }
-
-    
-
-
-
 
     private function module(): ?object {
         if ( ! $this->calls()->method_exists( self::UTILS, 'get_module' ) ) {

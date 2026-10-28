@@ -9,7 +9,6 @@ use Easy_MCP_AI\Tools\Tool_Registry;
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-
 class Self_Service_Keys {
     private $manager;
     private $registry;
@@ -32,7 +31,6 @@ class Self_Service_Keys {
         \wp_enqueue_script( 'easy-mcp-ai-profile-keys', EASY_MCP_AI_PLUGIN_URL . $base . 'js/self-service-keys.js', array(), filemtime( EASY_MCP_AI_PLUGIN_DIR . $base . 'js/self-service-keys.js' ), true );
     }
 
-    
     public static function enabled() {
         return Config::get( 'self_service_keys' ) && \get_current_user_id() && Connect_Policy::current_user_can_connect( Connect_Policy::CHANNEL_SELF_KEY );
     }
@@ -45,7 +43,6 @@ class Self_Service_Keys {
         return array_values( Admin_Page::token_expiry_presets() );
     }
 
-    
     public function create( array $data ) {
         if ( ! self::enabled() ) { return new \WP_Error( 'forbidden', __( 'Self-service keys are not available for your account.', 'easy-mcp-ai' ) ); }
         $name = isset( $data['key_name'] ) && is_string( $data['key_name'] ) ? trim( \sanitize_text_field( $data['key_name'] ) ) : '';
@@ -66,29 +63,10 @@ class Self_Service_Keys {
                 return new \WP_Error( 'tools', __( 'The tool selection is no longer available. Reload your profile and try again.', 'easy-mcp-ai' ) );
             }
         }
-        
         return $this->manager->create_self_service_token( $name, \get_current_user_id(), array_values( array_unique( $selected ) ), $expires_at, self::limit( 'self_service_max_keys' ) );
     }
 
-    
-
-
-
-
-
-
-
     const NEVER_OFFERED = array( 'wp_cli_run' );
-
-    
-
-
-
-
-
-
-
-
 
     private function offered_tools(): array {
         return array_values( array_filter( Server::available_tools( $this->registry, true ), static function ( array $definition ): bool {
@@ -114,8 +92,6 @@ class Self_Service_Keys {
         if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! self::enabled() ) {
             \wp_die( \esc_html__( 'Self-service keys are not available for this request.', 'easy-mcp-ai' ), '', array( 'response' => 403 ) );
         }
-        
-        
         if ( false === \check_admin_referer( $nonce ) ) {
             \wp_die( \esc_html__( 'The security token for this request is invalid or has expired.', 'easy-mcp-ai' ), '', array( 'response' => 403 ) );
         }
@@ -153,7 +129,6 @@ class Self_Service_Keys {
         require __DIR__ . '/views/self-service-keys.php';
     }
 
-    
     public function render_forms() {
         foreach ( $this->forms as $id => $form ) {
             echo '<form id="' . \esc_attr( $id ) . '" method="post" action="' . \esc_url( \admin_url( 'admin-post.php' ) ) . '">';

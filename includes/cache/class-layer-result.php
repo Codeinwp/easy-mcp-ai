@@ -1,23 +1,10 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
 
 final class Layer_Result {
 
@@ -27,13 +14,10 @@ final class Layer_Result {
     const FAILED      = 'failed';
     const WOULD_CLEAR = 'would_clear';
 
-    
     const CHANGED = array( self::CLEARED, self::QUEUED );
 
-    
     const STATUSES = array( self::CLEARED, self::QUEUED, self::SKIPPED, self::FAILED, self::WOULD_CLEAR );
 
-    
     const REASONS = array(
         'not_selected',
         'disabled_by_filter',
@@ -48,19 +32,9 @@ final class Layer_Result {
         'time_budget',
     );
 
-    
     const APPLIES = array( 'now', 'after_response', 'async' );
 
-    
     private $fields;
-
-    
-
-
-
-
-
-
 
     public function __construct( string $id, string $label, string $kind, string $status, array $extra = array() ) {
         if ( ! in_array( $status, self::STATUSES, true ) ) {
@@ -88,48 +62,21 @@ final class Layer_Result {
         );
     }
 
-    
-
-
-
-
     public function status(): string {
         return (string) $this->fields['status'];
     }
-
-    
-
-
-
 
     public function id(): string {
         return (string) $this->fields['id'];
     }
 
-    
-
-
-
-
-
     public function get( string $key ) {
         return isset( $this->fields[ $key ] ) ? $this->fields[ $key ] : '';
     }
 
-    
-
-
-
-
     public function changed(): bool {
         return in_array( $this->status(), self::CHANGED, true );
     }
-
-    
-
-
-
-
 
     public function with( array $extra ): self {
         $fields = array_merge( $this->fields, $extra );
@@ -140,11 +87,6 @@ final class Layer_Result {
         unset( $fields['id'], $fields['label'], $fields['kind'], $fields['status'] );
         return new self( $id, $label, $kind, $status, $fields );
     }
-
-    
-
-
-
 
     public function to_array(): array {
         return $this->fields;

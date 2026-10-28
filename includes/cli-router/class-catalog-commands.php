@@ -5,41 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Catalog_Commands extends Command_Handler {
 
-    
     const PAGE_BYTES = 65536;
 
-    
     const ANSWERED = array(
         'help'            => 'help',
         'cli version'     => 'cli_version',
@@ -47,10 +16,6 @@ final class Catalog_Commands extends Command_Handler {
         'cli cmd-dump'    => 'cli_cmd_dump',
         'cli has-command' => 'cli_has_command',
     );
-
-    
-
-
 
     const EXCLUDED_FAMILIES = array(
         'cli'      => 'Developer tooling with no meaning inside a web request.',
@@ -60,7 +25,6 @@ final class Catalog_Commands extends Command_Handler {
         'scaffold' => 'Developer tooling with no meaning inside a web request.',
     );
 
-    
     const EXCLUDED_COMMANDS = array(
         'comment generate'           => 'Dummy-content generator.',
         'core download'              => 'Installs WordPress or converts the site.',
@@ -90,7 +54,6 @@ final class Catalog_Commands extends Command_Handler {
         'user generate'              => 'Dummy-content generator.',
     );
 
-    
     public function help( Invocation $inv, Context $ctx ): void {
         $text = Help::render( $inv->args );
         if ( '' === $text ) {
@@ -98,8 +61,6 @@ final class Catalog_Commands extends Command_Handler {
             if ( ! $found['path'] ) {
                 $ctx->note( 'Commands added by plugins are not available through wp_cli_run.' );
             }
-            
-            
             $ctx->out->error( Catalog::not_found_message( $found ) );
         }
         $ctx->out->out( $text );
@@ -109,20 +70,9 @@ final class Catalog_Commands extends Command_Handler {
         }
     }
 
-    
     public function cli_version( Invocation $inv, Context $ctx ): void {
         $ctx->out->line( 'WP-CLI ' . Catalog::version() );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function cli_info( Invocation $inv, Context $ctx ): void {
         $system_os = function_exists( 'php_uname' )
@@ -171,23 +121,9 @@ final class Catalog_Commands extends Command_Handler {
         $ctx->note( 'wp_cli_run runs inside a web request: there is no shell, PHP or MySQL binary, WP-CLI install, cache, package or config file, so those values are empty, and no server path is shown.' );
     }
 
-    
-
-
-
-
-
     public function cli_cmd_dump( Invocation $inv, Context $ctx ): void {
         $ctx->out->out( (string) json_encode( self::dump_node( '', array( __CLASS__, 'runs' ) ) ) );
     }
-
-    
-
-
-
-
-
-
 
     public function cli_has_command( Invocation $inv, Context $ctx ): void {
         $words = explode( ' ', implode( ' ', $inv->args ) );
@@ -200,16 +136,6 @@ final class Catalog_Commands extends Command_Handler {
         }
         $ctx->out->halt( $runs ? 0 : 1 );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function page( string $full, int $offset ): array {
         if ( $offset < 0 ) {
@@ -236,16 +162,13 @@ final class Catalog_Commands extends Command_Handler {
             --$length;
         }
         if ( 0 === $length ) {
-            $length = self::PAGE_BYTES; 
+            $length = self::PAGE_BYTES;
         }
         return array(
             'chunk'       => substr( $full, $offset, $length ),
             'next_offset' => $offset + $length,
         );
     }
-
-    
-
 
     public static function runs( string $command ): bool {
         $route = Routes::get( $command );
@@ -256,11 +179,6 @@ final class Catalog_Commands extends Command_Handler {
         return in_array( $kind, array( 'catalog', 'delegate', 'own' ), true );
     }
 
-    
-
-
-
-
     public static function refusal( string $command ): ?string {
         if ( self::runs( $command ) ) {
             return null;
@@ -268,13 +186,6 @@ final class Catalog_Commands extends Command_Handler {
         $route = Routes::get( $command );
         return null === $route ? self::excluded_reason( $command ) : self::route_refusal( $route );
     }
-
-    
-
-
-
-
-
 
     private static function route_refusal( array $route ): string {
         $kind = isset( $route['route'] ) ? $route['route'] : null;
@@ -288,7 +199,6 @@ final class Catalog_Commands extends Command_Handler {
         return 'Not available through wp_cli_run.';
     }
 
-    
     private static function excluded_reason( string $command ): ?string {
         if ( isset( self::ANSWERED[ $command ] ) ) {
             return null;
@@ -300,7 +210,6 @@ final class Catalog_Commands extends Command_Handler {
         return isset( self::EXCLUDED_FAMILIES[ $top ] ) ? self::EXCLUDED_FAMILIES[ $top ] : null;
     }
 
-    
     private static function composite_runs( string $composite ): bool {
         $prefix = $composite . ' ';
         foreach ( Catalog::commands() as $command ) {
@@ -310,12 +219,6 @@ final class Catalog_Commands extends Command_Handler {
         }
         return false;
     }
-
-    
-
-
-
-
 
     private static function refused_note( array $words ): ?string {
         if ( ! $words ) {
@@ -343,13 +246,6 @@ final class Catalog_Commands extends Command_Handler {
         return "wp_cli_run refuses these {$scope} listed above: " . implode( ', ', $refused ) . '. Run help on one for the reason.';
     }
 
-    
-
-
-
-
-
-
     private static function refused_children( string $parent, array $children ): array {
         $composites = Catalog::composites();
         $refused    = array();
@@ -361,14 +257,6 @@ final class Catalog_Commands extends Command_Handler {
         }
         return $refused;
     }
-
-    
-
-
-
-
-
-
 
     private static function dump_node( string $path, callable $keep ): ?array {
         $composites = Catalog::composites();
@@ -389,11 +277,6 @@ final class Catalog_Commands extends Command_Handler {
         return $dump;
     }
 
-    
-
-
-
-
     private static function dump_root(): array {
         $root = Catalog::root();
         return array(
@@ -407,12 +290,6 @@ final class Catalog_Commands extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     private static function dump_composite( string $path, array $composite ): array {
         return array(
             array(
@@ -424,13 +301,6 @@ final class Catalog_Commands extends Command_Handler {
             $composite['subcommands'],
         );
     }
-
-    
-
-
-
-
-
 
     private static function dump_leaf( string $path, callable $keep ): ?array {
         $leaf = Catalog::leaf( $path );
@@ -446,13 +316,11 @@ final class Catalog_Commands extends Command_Handler {
         );
     }
 
-    
     private static function last_word( string $path ): string {
         $space = strrpos( $path, ' ' );
         return false === $space ? $path : substr( $path, $space + 1 );
     }
 
-    
     private static function is_continuation_byte( string $byte ): bool {
         return 0x80 === ( ord( $byte ) & 0xC0 );
     }

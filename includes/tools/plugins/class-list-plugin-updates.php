@@ -8,10 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class List_Plugin_Updates extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -51,8 +47,6 @@ class List_Plugin_Updates extends Base_Tool {
     public function execute( array $arguments ) {
         $this->load_plugin_admin_functions();
 
-        
-        
         wp_update_plugins();
 
         $current   = get_site_transient( 'update_plugins' );
@@ -66,23 +60,12 @@ class List_Plugin_Updates extends Base_Tool {
             }
         }
 
-        
-        
         return array(
             'updates'      => $updates,
             'total'        => count( $updates ),
             'last_checked' => ( is_object( $current ) && isset( $current->last_checked ) ) ? (int) $current->last_checked : null,
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private function update_row( string $file, array $data, $entry ): array {
         $slug = (string) $this->update_field( $entry, 'slug' );
@@ -96,24 +79,10 @@ class List_Plugin_Updates extends Base_Tool {
             'tested'            => $this->update_field( $entry, 'tested' ),
             'requires_php'      => $this->update_field( $entry, 'requires_php' ),
             'url'               => $this->homepage_url( $entry ),
-            
-            
             'details_url'       => '' !== $slug ? self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $slug ) . '&section=changelog' ) : null,
             'package_available' => '' !== (string) $this->update_field( $entry, 'package' ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function homepage_url( $entry ) {
         $url = $this->update_field( $entry, 'url' );

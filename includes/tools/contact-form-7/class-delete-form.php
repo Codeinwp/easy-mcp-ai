@@ -45,7 +45,6 @@ class Delete_Form extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $target = $this->preview_target( $arguments );
         if ( null === $target ) {
@@ -65,7 +64,6 @@ class Delete_Form extends Base_Tool {
         $id   = $this->parse_required_id( $arguments['id'], 'id' );
         $this->require_form_capability( $id );
         $title = self::title_of( $id );
-        
         $data = $this->rest_request( 'DELETE', self::$cf7_route . '/' . $id );
         if ( ! is_array( $data ) || empty( $data['deleted'] ) ) {
             throw new \RuntimeException( sprintf( 'Contact Form 7 did not confirm deleting form %d. Check it under Contact › Contact Forms.', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

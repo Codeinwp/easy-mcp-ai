@@ -5,98 +5,38 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Batch {
 
     const SUCCESS = 'success';
     const FAILURE = 'failure';
     const SKIP    = 'skip';
 
-    
-
-
-
-
-
     const RATE_LIMIT_MESSAGES = array(
         'Rate limit exceeded. Please try again later.',
         'Privileged tool rate limit exceeded. Please try again in a minute.',
     );
 
-    
     const OVER_CAP = "wp_cli_run runs at most %d items in one 'wp %s' command, and this one has %d. Run it in smaller groups.";
 
-    
     private $inv;
 
-    
     private $ctx;
 
-    
     private $noun;
 
-    
     private $verb;
 
-    
     private $total = 0;
 
-    
     private $successes = 0;
 
-    
     private $failures = 0;
 
-    
     private $skips = 0;
 
-    
     private $last = null;
 
-    
     private $stopped = null;
-
-    
-
-
 
     public function __construct( Invocation $inv, Context $ctx, string $noun, string $verb ) {
         $this->inv  = $inv;
@@ -105,31 +45,13 @@ final class Batch {
         $this->verb = $verb;
     }
 
-    
-
-
     public static function cap( Invocation $inv ): int {
         return isset( $inv->route['bulk'] ) ? (int) $inv->route['bulk'] : Router::DEFAULT_BULK;
     }
 
-    
-
-
-
-
     public static function is_rate_limited( array $delegated ): bool {
         return empty( $delegated['ok'] ) && isset( $delegated['error'] ) && in_array( (string) $delegated['error'], self::RATE_LIMIT_MESSAGES, true );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function run( array $items, callable $each, ?callable $label = null ): array {
         $items       = array_values( $items );
@@ -159,14 +81,6 @@ final class Batch {
         return $this->result();
     }
 
-    
-
-
-
-
-
-
-
     public function delegate( string $tool, array $arguments ): array {
         $result = $this->ctx->delegate( $tool, $arguments );
         if ( self::is_rate_limited( $result ) ) {
@@ -178,17 +92,10 @@ final class Batch {
         return $result;
     }
 
-    
-
-
-
-
-
     public function report( bool $with_skips = false ): void {
         Values::report_batch( $this->ctx->out, $this->noun, $this->verb, $this->total, $this->successes, $this->failures, $with_skips ? $this->skips : null );
     }
 
-    
     public function result(): array {
         return array(
             'total'     => $this->total,
@@ -199,7 +106,6 @@ final class Batch {
         );
     }
 
-    
     private function count( string $outcome ): void {
         $this->last = $outcome;
         if ( self::SUCCESS === $outcome ) {
@@ -211,31 +117,14 @@ final class Batch {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private function stop( array $items, int $index, ?callable $label ): void {
         foreach ( array_slice( $items, $index ) as $item ) {
             $this->ctx->not_run( null !== $label ? (string) call_user_func( $label, $item ) : $this->noun . ' ' . self::text( $item ) );
         }
         $this->last = null;
-        
-        
         Values::report_batch( $this->ctx->out, $this->noun, $this->verb, $this->total, $this->successes, max( 1, $this->total - $this->successes - $this->skips ) );
         throw new Cli_Exit( 1 );
     }
-
-    
-
-
-
-
 
     private static function text( $item ): string {
         if ( is_scalar( $item ) ) {

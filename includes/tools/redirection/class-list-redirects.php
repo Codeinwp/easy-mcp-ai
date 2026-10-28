@@ -11,13 +11,7 @@ class List_Redirects extends Base_Tool {
 
     use Redirection_Rest;
 
-    
-
-
-
-
     const ORDERS = array( 'id', 'source', 'last_count', 'last_access', 'position' );
-
 
     public function get_name() {
         return 'wp_redirection_list_redirects';
@@ -110,13 +104,6 @@ class List_Redirects extends Base_Tool {
             self::paging_result( self::int_of( is_array( $data ) ? $data : array(), 'total' ), $page, $per_page )
         );
     }
-
-    
-
-
-
-
-
 
     private function filters( array $arguments ): array {
         $filters = array();

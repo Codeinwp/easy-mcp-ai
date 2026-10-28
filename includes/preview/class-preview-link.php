@@ -1,100 +1,36 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Preview;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Preview_Link {
 
-    
     const QUERY_VAR = 'easy_mcp_ai_preview';
 
     const MIN_MINUTES     = 5;
     const MAX_MINUTES     = 1440;
     const DEFAULT_MINUTES = 60;
 
-    
     const SIGNATURE_LENGTH = 32;
 
-    
     const UNPREVIEWABLE_STATUSES = array( 'trash', 'auto-draft', 'inherit' );
 
-    
     private static ?int $query_id = null;
 
-    
     private static int $post_id = 0;
 
-    
     private static string $link = '';
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function url( object $post, int $user_id, int $expires ): string {
         return self::link_for( $post, self::token( (int) $post->ID, $user_id, $expires ) );
     }
 
-    
-
-
-
-
-
-
-
     public static function token( int $post_id, int $user_id, int $expires ): string {
         return $user_id . '.' . $expires . '.' . self::signature( $post_id, $user_id, $expires );
     }
-
-    
-
-
-
-
-
-
 
     public static function status_problem( object $post ): string {
         $status = (string) $post->post_status;
@@ -110,30 +46,10 @@ final class Preview_Link {
         return '';
     }
 
-    
-
-
-
-
-
-
     public static function is_public( object $post ): bool {
         $object = \get_post_status_object( (string) $post->post_status );
         return $object && ! empty( $object->public );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     public static function decide( $raw, object $post, int $now ): array {
         if ( self::is_public( $post ) ) {
@@ -165,16 +81,9 @@ final class Preview_Link {
         );
     }
 
-    
     public static function register_front_end(): void {
         \add_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts' ) );
     }
-
-    
-
-
-
-
 
     public static function on_pre_get_posts( object $query ): void {
         if ( ! $query->is_main_query() || ! $query->is_preview() || ! $query->is_singular() || $query->is_feed() ) {
@@ -183,22 +92,9 @@ final class Preview_Link {
         \remove_action( 'pre_get_posts', array( __CLASS__, 'on_pre_get_posts' ) );
         self::$query_id = spl_object_id( $query );
         self::send_private_headers();
-        
-        
-        
         \add_filter( 'wp_headers', array( __CLASS__, 'filter_wp_headers' ), PHP_INT_MAX );
         \add_filter( 'posts_results', array( __CLASS__, 'on_posts_results' ), 10, 2 );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function on_posts_results( $posts, object $query ) {
         if ( spl_object_id( $query ) !== self::$query_id ) {
@@ -221,20 +117,8 @@ final class Preview_Link {
             \wp_die( \esc_html( $decision['message'] ), \esc_html__( 'Preview link', 'easy-mcp-ai' ), array( 'response' => $decision['status'] ) );
         }
         self::show( $post, $raw );
-        
-        
         return array( $post );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function allow_reading( array $caps, string $cap, int $user_id, array $args ): array {
         if ( 'read_post' === $cap && isset( $args[0] ) && (int) $args[0] === self::$post_id ) {
@@ -243,27 +127,9 @@ final class Preview_Link {
         return $caps;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function close_for_post( $open, int $post_id ) {
         return (int) $post_id === self::$post_id ? false : $open;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function page_link( $link, int $page ) {
         if ( '' === self::$link || (int) \get_the_ID() !== self::$post_id || ! is_string( $link ) ) {
@@ -280,21 +146,9 @@ final class Preview_Link {
         );
     }
 
-    
-
-
-
-
-
     public static function filter_wp_headers( $headers ): array {
         return array_merge( (array) $headers, \wp_get_nocache_headers(), self::private_headers() );
     }
-
-    
-
-
-
-
 
     public static function private_headers(): array {
         return array(
@@ -304,23 +158,11 @@ final class Preview_Link {
         );
     }
 
-    
     public static function reset(): void {
         self::$query_id = null;
         self::$post_id  = 0;
         self::$link     = '';
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     private static function link_for( object $post, string $token ): string {
         return \add_query_arg(
@@ -332,35 +174,13 @@ final class Preview_Link {
         );
     }
 
-    
-
-
-
-
-
     private static function signature( int $post_id, int $user_id, int $expires ): string {
         return substr( hash_hmac( 'sha256', 'easy-mcp-ai-preview|' . $post_id . '|' . $user_id . '|' . $expires, \wp_salt( 'auth' ) ), 0, self::SIGNATURE_LENGTH );
     }
 
-    
-
-
-
-
-
-
     private static function matches( array $parts, int $post_id ): bool {
         return hash_equals( self::signature( $post_id, $parts['user_id'], $parts['expires'] ), $parts['signature'] );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function pick( string $raw, array $posts ): object {
         $parts = self::parse( $raw );
@@ -374,10 +194,6 @@ final class Preview_Link {
         return $posts[0];
     }
 
-    
-
-
-
     private static function parse( $raw ): ?array {
         if ( ! is_string( $raw ) || ! preg_match( '/^([1-9][0-9]{0,18})\.([1-9][0-9]{0,18})\.([0-9a-f]{' . self::SIGNATURE_LENGTH . '})\z/', $raw, $m ) ) {
             return null;
@@ -389,11 +205,6 @@ final class Preview_Link {
         );
     }
 
-    
-
-
-
-
     private static function refusal( int $status, string $message ): array {
         return array(
             'action'  => 'refuse',
@@ -402,14 +213,7 @@ final class Preview_Link {
         );
     }
 
-    
-
-
-
-
     private static function show( object $post, string $raw ): void {
-        
-        
         self::$link        = self::link_for( $post, $raw );
         $post->post_status = 'publish';
         self::$post_id     = (int) $post->ID;
@@ -419,12 +223,6 @@ final class Preview_Link {
         \add_filter( 'pings_open', array( __CLASS__, 'close_for_post' ), 10, 2 );
         \add_filter( 'wp_robots', 'wp_robots_no_robots' );
     }
-
-    
-
-
-
-
 
     private static function send_private_headers(): void {
         if ( ! defined( 'DONOTCACHEPAGE' ) ) {

@@ -1,88 +1,32 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Themeisle_SDK {
 
-    
     const PRODUCT_SLUG = 'easy-mcp-ai';
 
-    
     const PRODUCT_KEY = 'easy_mcp_ai';
 
-    
     const ABOUT_US_MENU_SLUG = 'ti-about-easy_mcp_ai';
 
-    
     const MENU_SLUG = 'easy-mcp-ai';
 
-    
     const CONSENT_OPTION = 'easy_mcp_ai_logger_flag';
 
-    
     const USAGE_WINDOW_DAYS = 30;
 
-    
     const USAGE_MAX_TOOLS = 50;
 
-    
-
-
-
-
     private static $basefile = '';
-
-    
-
-
-
-
 
     public static function register( $basefile ) {
         self::$basefile = (string) $basefile;
 
-        
-        
         if ( false === \get_option( self::CONSENT_OPTION ) ) {
             \add_option( self::CONSENT_OPTION, 'no' );
         }
@@ -97,15 +41,6 @@ final class Themeisle_SDK {
         \add_filter( self::PRODUCT_KEY . '_logger_data', array( __CLASS__, 'logger_data' ) );
         \add_action( 'admin_menu', array( __CLASS__, 'move_about_us_submenu_last' ), 999 );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function move_about_us_submenu_last() {
         global $submenu;
@@ -130,25 +65,6 @@ final class Themeisle_SDK {
         $submenu[ self::MENU_SLUG ] = array_merge( array_values( $items ), $about );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function about_us_metadata( $data = array() ) {
         if ( self::is_white_labelled() ) {
             return array();
@@ -161,36 +77,9 @@ final class Themeisle_SDK {
         );
     }
 
-    
     private static function is_white_labelled() {
         return Config::is_white_labelled();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function logger_data( $data = array() ) {
         $data = is_array( $data ) ? $data : array();
@@ -211,15 +100,6 @@ final class Themeisle_SDK {
 
         return $data;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function client_counts() {
         global $wpdb;
@@ -277,17 +157,6 @@ final class Themeisle_SDK {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function tool_usage_counts() {
         global $wpdb;
 
@@ -320,9 +189,6 @@ final class Themeisle_SDK {
                 continue;
             }
             $name = (string) $row['tool_name'];
-            
-            
-            
             if ( 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/', $name ) ) {
                 continue;
             }
@@ -331,13 +197,6 @@ final class Themeisle_SDK {
 
         return $out;
     }
-
-    
-
-
-
-
-
 
     private static function table_exists( $table ) {
         global $wpdb;
@@ -353,33 +212,15 @@ final class Themeisle_SDK {
         return ! self::has_error( $wpdb ) && Schema_Guard::table_found( $found, $table );
     }
 
-    
-
-
-
-
-
     private static function clear_error( $wpdb ) {
         if ( property_exists( $wpdb, 'last_error' ) ) {
             $wpdb->last_error = '';
         }
     }
 
-    
-
-
-
-
-
     private static function has_error( $wpdb ) {
         return isset( $wpdb->last_error ) && '' !== $wpdb->last_error;
     }
-
-    
-
-
-
-
 
     public static function register_product( $products ) {
         $products   = is_array( $products ) ? $products : array();
@@ -388,43 +229,17 @@ final class Themeisle_SDK {
         return $products;
     }
 
-    
-
-
-
-
     public static function policy() {
         return array(
-            
-            
-            
-            
-            
             'themeisle_sdk_ran_promos'                    => '__return_true',
 
-            
-            
-            
             'themeisle_sdk_hide_notifications'            => '__return_true',
 
-            
-            
-            
             'themeisle_sdk_blackfriday_data'              => '__return_empty_array',
 
-            
-            
-            
             self::PRODUCT_SLUG . '_sdk_should_review'     => '__return_false',
             self::PRODUCT_SLUG . '_sdk_enable_translate'  => '__return_false',
-            
-            
-            
-            
-            
-            
 
-            
             self::PRODUCT_SLUG . '_load_dashboard_widget' => '__return_false',
         );
     }

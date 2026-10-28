@@ -218,7 +218,7 @@ class Create_Product extends Base_Tool {
             $params['sku'] = sanitize_text_field( $arguments['sku'] );
         }
         if ( isset( $arguments['stock_quantity'] ) ) {
-            $params['stock_quantity'] = (int) $arguments['stock_quantity']; 
+            $params['stock_quantity'] = (int) $arguments['stock_quantity'];
         }
         if ( isset( $arguments['manage_stock'] ) ) {
             $params['manage_stock'] = (bool) $arguments['manage_stock'];

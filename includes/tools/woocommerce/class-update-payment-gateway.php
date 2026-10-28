@@ -7,14 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Update_Payment_Gateway extends Base_Tool {
 
     use Store_Setup;
@@ -115,13 +107,6 @@ class Update_Payment_Gateway extends Base_Tool {
         $after['changed'] = self::changed_fields( $before, $after, self::FIELDS );
         return $after;
     }
-
-    
-
-
-
-
-
 
     private static function present_gateway( $gateway ): array {
         $gateway = is_array( $gateway ) ? $gateway : array();

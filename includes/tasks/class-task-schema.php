@@ -5,28 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
 class Task_Schema {
-    
-
-
-
-
-
-
-
-
-
     const DB_VERSION  = '1.2.0';
 
-    
     const REQUIRED_COLUMNS = array( 'signature', 'approval_id' );
     const OPTION_NAME = 'easy_mcp_ai_tasks_db_version';
     const TABLE       = 'easy_mcp_ai_tasks';
@@ -56,10 +37,6 @@ class Task_Schema {
         global $wpdb;
         $table           = self::table_name();
         $charset_collate = method_exists( $wpdb, 'get_charset_collate' ) ? $wpdb->get_charset_collate() : '';
-        
-        
-        
-        
         $sql = "CREATE TABLE {$table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             task_id varchar(36) NOT NULL,
@@ -105,8 +82,6 @@ class Task_Schema {
         if ( ! \Easy_MCP_AI\Schema_Guard::table_found( $exists, $table ) ) {
             return;
         }
-        
-        
         foreach ( self::REQUIRED_COLUMNS as $column ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; the name is prefix + a constant.
             if ( $column !== $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$table}` LIKE %s", $column ) ) ) {

@@ -56,9 +56,6 @@ class List_Widgets extends Base_Tool {
             $params['sidebar'] = $this->validate_rest_route_segment( $arguments['sidebar'], 'sidebar' );
         }
 
-        
-        
-        
         $data = $this->rest_request( 'GET', '/wp/v2/widgets', $params, 'id,id_base,sidebar,instance' );
 
         $widgets = array();
@@ -69,8 +66,6 @@ class List_Widgets extends Base_Tool {
             }
             $widget  = $this->shape_widget( $item, false );
             $sidebar = $widget['sidebar'];
-            
-            
             $counter[ $sidebar ] = isset( $counter[ $sidebar ] ) ? $counter[ $sidebar ] + 1 : 0;
             $widgets[]           = array(
                 'id'                => $widget['id'],

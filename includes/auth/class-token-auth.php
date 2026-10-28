@@ -26,49 +26,14 @@ class Token_Auth {
         }
         $token = $this->token_manager->validate_token( $raw_token );
         if ( false === $token ) {
-            
-            
-            
-            
             $reason = $this->token_manager->get_last_validation_error();
             if ( \is_wp_error( $reason ) && Token_Manager::ERROR_SITE_MISMATCH === $reason->get_error_code() ) {
                 return $reason;
             }
             return new \WP_Error( 'invalid_token', __( 'Invalid or expired token.', 'easy-mcp-ai' ) );
         }
-        
-        
-        
-        
-        
-        
-        
         return array( 'token_id' => (int) $token['id'], 'wp_user_id' => (int) $token['wp_user_id'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function check_ip_allowed( $ip = null ) {
         return $this->is_ip_allowed( $ip );
@@ -77,11 +42,8 @@ class Token_Auth {
     private function is_ip_allowed( $ip = null ) {
         $whitelist_raw = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_ip_whitelist', '' );
         if ( empty( trim( $whitelist_raw ) ) ) {
-            return true; 
+            return true;
         }
-        
-        
-        
         $cache_key = 'ip_wl_' . substr( md5( $whitelist_raw ), 0, 12 );
         $entries   = \wp_cache_get( $cache_key, 'easy_mcp_ai' );
         if ( false === $entries ) {
@@ -91,11 +53,6 @@ class Token_Auth {
         if ( null === $ip ) {
             $ip = (string) \Easy_MCP_AI\Client_IP::get();
         }
-        
-        
-        
-        
-        
         return \Easy_MCP_AI\Client_IP::matches_any( (string) $ip, $entries );
     }
 }

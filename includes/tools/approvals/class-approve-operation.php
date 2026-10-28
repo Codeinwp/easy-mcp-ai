@@ -7,21 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 class Approve_Operation extends Base_Tool {
 
-    
     protected $identity = null;
 
     public function get_name() {
@@ -65,7 +52,6 @@ class Approve_Operation extends Base_Tool {
         return array( 'secret' );
     }
 
-    
     public function get_ui_meta() {
         return array( 'visibility' => array( 'app' ) );
     }

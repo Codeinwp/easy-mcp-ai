@@ -101,9 +101,6 @@ class List_Events extends Base_Tool {
         $page     = isset( $arguments['page'] ) ? absint( $arguments['page'] ) : 1;
         $per_page = isset( $arguments['per_page'] ) ? min( 50, max( 1, absint( $arguments['per_page'] ) ) ) : 10;
 
-        
-        
-        
         $params = array(
             'per_page' => $per_page,
             'page'     => $page,
@@ -115,13 +112,6 @@ class List_Events extends Base_Tool {
         if ( isset( $arguments['organizer'] ) )  $params['organizer']  = absint( $arguments['organizer'] );
         if ( isset( $arguments['featured'] ) )   $params['featured']   = (bool) $arguments['featured'];
         if ( isset( $arguments['status'] ) ) {
-            
-            
-            
-            
-            
-            
-            
             $statuses = array_values( array_filter( array_map( 'sanitize_key', explode( ',', (string) $arguments['status'] ) ) ) );
             if ( ! empty( $statuses ) && ! in_array( 'any', $statuses, true ) ) {
                 $params['status'] = implode( ',', $statuses );
@@ -134,11 +124,6 @@ class List_Events extends Base_Tool {
             $params['tags'] = array_values( array_filter( array_map( 'absint', $this->parse_json_param( $arguments['tags'], 'tags' ) ) ) );
         }
 
-        
-        
-        
-        
-        
         $request = new \WP_REST_Request( 'GET', '/tribe/events/v1/events' );
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );

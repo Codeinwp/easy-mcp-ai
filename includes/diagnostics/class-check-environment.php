@@ -1,19 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,23 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Environment {
 
-    
     const MIN_EXECUTION_TIME = 60;
 
-    
-    const MIN_MEMORY_BYTES = 134217728; 
+    const MIN_MEMORY_BYTES = 134217728;
 
-    const MIN_POST_MAX_SIZE = 8388608; 
+    const MIN_POST_MAX_SIZE = 8388608;
     const MIN_INPUT_VARS    = 1000;
 
-    
-
-
-
     const KEY_PLACEHOLDER = 'put your unique phrase here';
-
-    
-
 
     public static function run() {
         return array(
@@ -56,10 +33,6 @@ class Check_Environment {
             ),
         );
     }
-
-    
-
-
 
     public static function evaluate_max_execution_time( $seconds ) {
         $label = __( 'PHP max execution time', 'easy-mcp-ai' );
@@ -86,29 +59,6 @@ class Check_Environment {
         return Diagnostic_Result::pass( 'g1', Diagnostic_Result::TIER_WARNING, $label, sprintf( '%ds', (int) $seconds ), array( 'max_execution_time' => (int) $seconds ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function rest_memory_limit_bytes() {
         $captured = isset( $GLOBALS['easy_mcp_ai_ini_memory_limit'] )
             ? (string) $GLOBALS['easy_mcp_ai_ini_memory_limit']
@@ -121,24 +71,9 @@ class Check_Environment {
         return self::bytes_from_ini( ini_get( 'memory_limit' ) );
     }
 
-    
-
-
-
-
-
     public static function bytes_from_ini( $value ) {
         return self::parse_ini_bytes( $value );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function evaluate_memory_limit( $bytes ) {
         $label = __( 'PHP memory limit', 'easy-mcp-ai' );
@@ -164,10 +99,6 @@ class Check_Environment {
 
         return Diagnostic_Result::pass( 'g2', Diagnostic_Result::TIER_WARNING, $label, \size_format( (int) $bytes ), array( 'memory_limit' => (int) $bytes ) );
     }
-
-    
-
-
 
     public static function evaluate_input_limits( $post_max_bytes, $max_input_vars ) {
         $label   = __( 'PHP input limits', 'easy-mcp-ai' );
@@ -205,10 +136,6 @@ class Check_Environment {
         return Diagnostic_Result::pass( 'g3', Diagnostic_Result::TIER_WARNING, $label, '', $evidence );
     }
 
-    
-
-
-
     public static function evaluate_cipher_support( $available ) {
         $label = __( 'AES-256-GCM encryption available', 'easy-mcp-ai' );
 
@@ -225,12 +152,6 @@ class Check_Environment {
 
         return Diagnostic_Result::pass( 'g4', Diagnostic_Result::TIER_WARNING, $label, '', array( 'aes_256_gcm' => true ) );
     }
-
-    
-
-
-
-
 
     public static function evaluate_auth_keys( $key, $salt, array $undecryptable = array() ) {
         $label   = __( 'WordPress security keys usable for encryption', 'easy-mcp-ai' );
@@ -257,25 +178,12 @@ class Check_Environment {
             );
         }
 
-        
-        
-        
-        
         if ( ! empty( $undecryptable ) ) {
             return self::credentials_unreadable( $label, $undecryptable );
         }
 
         return Diagnostic_Result::pass( 'g5', Diagnostic_Result::TIER_WARNING, $label, '', array( 'unusable_keys' => array() ) );
     }
-
-    
-
-
-
-
-
-
-
 
     const CREDENTIAL_OPTIONS = array(
         array( 'label' => 'Google Analytics',  'option' => 'easy_mcp_ai_ga_service_account_json',  'class' => '\Easy_MCP_AI\GA\GA_Client' ),
@@ -286,42 +194,21 @@ class Check_Environment {
         array( 'label' => 'SE Ranking',        'option' => 'easy_mcp_ai_seranking_api_key',        'class' => '\Easy_MCP_AI\SeRanking\SeRanking_Client' ),
     );
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function undecryptable_credentials() {
         $failed = array();
 
         foreach ( self::CREDENTIAL_OPTIONS as $provider ) {
             $owner = \Easy_MCP_AI\Provider_Credentials::provider_of( $provider['option'] );
             if ( null !== $owner && \Easy_MCP_AI\Provider_Credentials::is_deployed( $owner ) ) {
-                continue; 
+                continue;
             }
             $stored = \get_option( $provider['option'], '' );
             if ( ! is_string( $stored ) || '' === trim( $stored ) ) {
-                continue; 
+                continue;
             }
 
             if ( ! class_exists( $provider['class'] ) || ! method_exists( $provider['class'], 'decrypt' ) ) {
-                continue; 
+                continue;
             }
 
             try {
@@ -339,7 +226,6 @@ class Check_Environment {
         return $failed;
     }
 
-    
     private static function credentials_unreadable( $label, array $undecryptable ) {
         return Diagnostic_Result::warn(
             'g5',
@@ -355,8 +241,6 @@ class Check_Environment {
         );
     }
 
-    
-
     private static function cipher_available() {
         if ( ! function_exists( 'openssl_get_cipher_methods' ) ) {
             return false;
@@ -364,12 +248,6 @@ class Check_Environment {
         $methods = openssl_get_cipher_methods();
         return is_array( $methods ) && in_array( 'aes-256-gcm', array_map( 'strtolower', $methods ), true );
     }
-
-    
-
-
-
-
 
     private static function parse_ini_bytes( $value ) {
         $value = trim( (string) $value );

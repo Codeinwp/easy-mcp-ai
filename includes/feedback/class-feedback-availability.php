@@ -10,57 +10,22 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Feedback_Availability {
 
     const OFF           = 'off';
     const NO_ACCESS     = 'no_access';
-    
     const PATTERN       = 'pattern';
     const INTEGRATION   = 'integration_off';
     const NOT_CONNECTED = 'not_connected';
     const ABILITY       = 'ability_off';
 
-    
     const NOT_QUEUED = 'Not queued: this site already has what the report asks for, but it is not switched on for you, so nothing was stored or sent.';
 
-    
     const LIST_TOOL_POINTER = 'wp_list_disabled_tools lists everything else that is switched off on this site.';
 
-    
     const IN_CONFIGURATION = Tool_Status::CONFIGURATION_PLACE;
 
-    
-
-
-
-
     const MAX_GAP = 2;
-
-    
-
-
-
 
     const INTEGRATION_PHRASES = array(
         'woocommerce'         => array( 'woocommerce', 'woo commerce' ),
@@ -78,10 +43,6 @@ class Feedback_Availability {
         'the-seo-framework'   => array( 'seo framework' ),
     );
 
-    
-
-
-
     const PROVIDER_PHRASES = array(
         'gsc'       => array( 'search console', 'gsc' ),
         'ga'        => array( 'google analytics', 'ga4' ),
@@ -90,23 +51,6 @@ class Feedback_Availability {
         'ahrefs'    => array( 'ahrefs' ),
         'seranking' => array( 'se ranking', 'seranking' ),
     );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function find( string $summary, string $details, ?object $registry, ?callable $status_of = null, string $self = '' ): array {
         $text  = strtolower( $summary . "\n" . $details );
@@ -118,21 +62,6 @@ class Feedback_Availability {
             self::ability_matches( $text, $words )
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function tool_matches( string $text, array $words, ?object $registry, ?callable $status_of, string $self ): array {
         if ( null === $registry || ! method_exists( $registry, 'get_all_tool_names' ) || ! method_exists( $registry, 'get_tool' ) ) {
@@ -173,16 +102,6 @@ class Feedback_Availability {
         return $found;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function named_matches( string $case, array $entries, array $phrases, string $text ): array {
         $found = array();
         foreach ( $entries as $entry ) {
@@ -192,12 +111,6 @@ class Feedback_Availability {
         }
         return $found;
     }
-
-    
-
-
-
-
 
     private static function ability_matches( string $text, array $words ): array {
         $found = array();
@@ -211,22 +124,6 @@ class Feedback_Availability {
         }
         return $found;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function refusal( array $found, bool $list_tool = false ): Detailed_Tool_Error {
         $items        = array();
@@ -261,16 +158,6 @@ class Feedback_Availability {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function name_matches( string $name, string $text, array $words ): bool {
         $name = strtolower( $name );
         if ( '' === $name ) {
@@ -282,13 +169,6 @@ class Feedback_Availability {
         $parts = self::words( str_replace( '_', ' ', (string) preg_replace( '/^wp_/', '', $name ) ) );
         return count( $parts ) >= 2 && self::in_order( $parts, $words );
     }
-
-    
-
-
-
-
-
 
     private static function in_order( array $parts, array $words ): bool {
         foreach ( array_keys( $words, $parts[0], true ) as $start ) {
@@ -304,13 +184,6 @@ class Feedback_Availability {
         }
         return false;
     }
-
-    
-
-
-
-
-
 
     public static function words( string $text ): array {
         $out = array();
@@ -330,11 +203,6 @@ class Feedback_Availability {
         }
         return $word;
     }
-
-    
-
-
-
 
     private static function mentions( string $text, array $phrases ): bool {
         foreach ( $phrases as $phrase ) {

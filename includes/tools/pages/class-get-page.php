@@ -22,7 +22,7 @@ class Get_Page extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'edit_pages'; 
+        return 'edit_pages';
     }
 
     public function get_annotations() {

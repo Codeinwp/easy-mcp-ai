@@ -10,54 +10,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Core_Adapter extends Command_Handler {
 
     const TOOL = 'wp_update_core';
 
-    
     const UP_TO_DATE   = 'WordPress is up to date.';
     const LATEST_MINOR = 'WordPress is at the latest minor release.';
 
     const NOTE_REASON = 'wp_update_core reported: %s';
 
-    
     const NOT_CAPTURED_FILES = 'Core files: change history does not record files; a core update cannot be undone from it.';
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $result = $ctx->delegate( self::TOOL, self::update_arguments( $inv ) );
         if ( ! $result['ok'] ) {
@@ -71,12 +34,6 @@ class Core_Adapter extends Command_Handler {
         }
         self::report_updated( $ctx, $payload );
     }
-
-    
-
-
-
-
 
     private static function update_arguments( Invocation $inv ): array {
         $arguments = array();
@@ -94,12 +51,6 @@ class Core_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-
-
-
-
-
     private static function report_unchanged( Context $ctx, array $payload ): void {
         $reason = isset( $payload['reason'] ) ? (string) $payload['reason'] : '';
         if ( '' !== $reason && self::UP_TO_DATE !== $reason && self::LATEST_MINOR !== $reason ) {
@@ -108,18 +59,11 @@ class Core_Adapter extends Command_Handler {
         $ctx->out->success( self::LATEST_MINOR === $reason ? self::LATEST_MINOR : self::UP_TO_DATE );
     }
 
-    
-
-
-
-
-
     private static function report_updated( Context $ctx, array $payload ): void {
         $ctx->mark_changed();
         $ctx->not_captured( self::NOT_CAPTURED_FILES );
         $ctx->out->log( sprintf( 'Updating to version %s (%s)...', (string) ( $payload['new_version'] ?? '' ), (string) ( $payload['locale'] ?? '' ) ) );
         foreach ( (array) ( $payload['messages'] ?? array() ) as $message ) {
-            
             $line = html_entity_decode( str_replace( '&#8230;', '...', (string) $message ), ENT_QUOTES, 'UTF-8' );
             if ( '' !== $line ) {
                 $ctx->out->log( $line );

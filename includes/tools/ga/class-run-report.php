@@ -135,9 +135,6 @@ class Run_Report extends Base_Tool {
         }
         $data = GA_Client::post( "https://analyticsdata.googleapis.com/v1beta/{$property}:runReport", $body );
 
-        
-        
-        
         if ( is_array( $data ) && ! isset( $data['error'] ) ) {
             $data['row_count']       = count( $data['rows'] ?? array() );
             $data['total_row_count'] = isset( $data['rowCount'] ) ? (int) $data['rowCount'] : null;

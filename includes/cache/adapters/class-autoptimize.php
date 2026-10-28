@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,26 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Autoptimize extends Cache_Adapter {
 
-    
     const VENDOR = 'autoptimizeCache';
 
     public function id(): string {
@@ -63,7 +40,6 @@ final class Autoptimize extends Cache_Adapter {
         if ( ! $calls->is_multisite() ) {
             return false;
         }
-        
         if ( ! empty( $calls->apply_filters( 'autoptimize_filter_cache_clear_advanced', false ) ) ) {
             return true;
         }

@@ -10,40 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Send_Email extends Base_Tool {
 
     const NAME = 'wp_send_email';
 
-    
     const MAX_RECIPIENTS = 50;
 
-    
     const MESSAGE_MAX = 5000;
 
     const SUBJECT_MAX = 200;
 
-    
     const NO_REASON = 'WordPress did not accept it and the mailer gave no reason.';
 
     const ACCEPTED_NOTE = 'accepted means WordPress handed the email to the site\'s mailer. It does not mean the email was delivered: a mail plugin may queue it, simulate it or only log it.';
 
-    
     protected $identity = null;
 
     public function get_name() {
@@ -72,7 +52,6 @@ class Send_Email extends Base_Tool {
         return array(
             'title'           => 'Send Email',
             'readOnlyHint'    => false,
-            
             'destructiveHint' => true,
             'idempotentHint'  => false,
             'openWorldHint'   => true,
@@ -83,7 +62,6 @@ class Send_Email extends Base_Tool {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -124,7 +102,6 @@ class Send_Email extends Base_Tool {
         );
     }
 
-    
     public function redact_for_record( array $arguments ) {
         if ( array_key_exists( 'message', $arguments ) ) {
             $arguments['message'] = '[REDACTED]';
@@ -132,18 +109,9 @@ class Send_Email extends Base_Tool {
         return $arguments;
     }
 
-    
     public function set_request_identity( array $identity ): void {
         $this->identity = $identity;
     }
-
-    
-
-
-
-
-
-
 
     public function describe( array $arguments ) {
         try {
@@ -163,13 +131,6 @@ class Send_Email extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public function approval_refusal( array $arguments ): ?string {
         $length = Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
         if ( null === $length ) {
@@ -183,29 +144,11 @@ class Send_Email extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         self::parse_subject( $arguments );
         self::parse_message( $arguments );
         self::check_recipient_arguments( $arguments );
     }
-
-    
-
-
-
-
 
     public function execute( array $arguments ) {
         $subject    = self::parse_subject( $arguments );
@@ -261,13 +204,6 @@ class Send_Email extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private function send_one( string $to, string $subject, string $message ): array {
         $errors   = array();
         $listener = static function ( $error ) use ( &$errors ) {
@@ -294,21 +230,10 @@ class Send_Email extends Base_Tool {
         return array( 'accepted' => false, 'error' => Server::sanitize_error_message( $error ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private function unapproved_refusal( array $outside, array $arguments ): Detailed_Tool_Error {
         if ( ! Approval_Gate::enabled() ) {
             $why = 'approvals are off on this site ("Ask before destructive actions" in Settings)';
         } elseif ( ! Approval_Gate::requires_approval( $this, $arguments ) ) {
-            
-            
             $never = Approval_Gate::matches_any( self::NAME, (array) \Easy_MCP_AI\Config::get( 'approval_never' ) )
                 && ! Approval_Gate::matches_any( self::NAME, (array) \Easy_MCP_AI\Config::get( 'approval_always' ) );
             $why   = $never
@@ -328,7 +253,6 @@ class Send_Email extends Base_Tool {
         );
     }
 
-    
     private function is_unattended_key(): bool {
         if ( ! is_array( $this->identity ) || 'legacy' !== $this->identity['auth_source'] ) {
             return false;
@@ -336,7 +260,6 @@ class Send_Email extends Base_Tool {
         return $this->token_is_unattended( (int) $this->identity['token_id'] );
     }
 
-    
     protected function token_is_unattended( int $token_id ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\Plugin' ) ) {
             return false;
@@ -346,23 +269,12 @@ class Send_Email extends Base_Tool {
         return is_array( $row ) && ! empty( $row['unattended'] );
     }
 
-    
-
-
-
-
-
-
-
-
     private function resolve_recipients( array $arguments ): array {
         self::check_recipient_arguments( $arguments );
         $recipients = array();
         $summary    = array();
         $admin      = self::admin_address();
 
-        
-        
         $add = static function ( string $address, string $from, ?int $user_id, string $label ) use ( &$recipients, &$summary ): void {
             $key = strtolower( $address );
             if ( isset( $recipients[ $key ] ) ) {
@@ -415,9 +327,6 @@ class Send_Email extends Base_Tool {
             if ( count( $ids ) > self::MAX_RECIPIENTS ) {
                 throw new \InvalidArgumentException( sprintf( 'The role "%s" has %d users, more than the %d recipients one call may send to. Nothing was sent.', $slug, count( $ids ), self::MAX_RECIPIENTS ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-            
-            
-            
             sort( $ids );
             $name      = isset( $known->role_names[ $slug ] ) ? (string) $known->role_names[ $slug ] : $slug;
             $summary[] = sprintf(
@@ -456,15 +365,6 @@ class Send_Email extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function check_recipient_arguments( array $arguments ): void {
         $invalid = array();
         foreach ( self::list_argument( $arguments, 'emails' ) as $email ) {
@@ -500,21 +400,13 @@ class Send_Email extends Base_Tool {
         }
     }
 
-    
     private static function no_such_users( array $ids ): \InvalidArgumentException {
         return new \InvalidArgumentException( sprintf( 'Nothing was sent: no user of this site with a valid email address has the ID %s. Use wp_list_users to find users.', implode( ', ', $ids ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
-    
     private static function no_such_role( $role ): \InvalidArgumentException {
         return new \InvalidArgumentException( sprintf( 'No role "%s" on this site. Nothing was sent.', is_scalar( $role ) ? (string) $role : gettype( $role ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
 
     private function site_user( int $id ): ?object {
         $user = get_userdata( $id );
@@ -527,16 +419,10 @@ class Send_Email extends Base_Tool {
         return $user;
     }
 
-    
     private function site_user_by_email( string $address ): ?object {
         $user = get_user_by( 'email', $address );
         return $user ? $this->site_user( (int) $user->ID ) : null;
     }
-
-    
-
-
-
 
     private static function role_member_ids( string $slug ): array {
         $ids = array();
@@ -546,15 +432,10 @@ class Send_Email extends Base_Tool {
         return $ids;
     }
 
-    
     private static function admin_address(): ?string {
         $admin = trim( (string) get_option( 'admin_email', '' ) );
         return '' !== $admin && is_email( $admin ) ? $admin : null;
     }
-
-    
-
-
 
     private static function list_argument( array $arguments, string $key ): array {
         if ( ! isset( $arguments[ $key ] ) ) {
@@ -565,12 +446,6 @@ class Send_Email extends Base_Tool {
         }
         return array_values( $arguments[ $key ] );
     }
-
-    
-
-
-
-
 
     private static function parse_subject( array $arguments ): string {
         $subject = isset( $arguments['subject'] ) && is_string( $arguments['subject'] ) ? $arguments['subject'] : '';
@@ -584,13 +459,6 @@ class Send_Email extends Base_Tool {
         }
         return $subject;
     }
-
-    
-
-
-
-
-
 
     private static function parse_message( array $arguments ): string {
         $message = isset( $arguments['message'] ) && is_string( $arguments['message'] ) ? $arguments['message'] : '';
@@ -609,7 +477,6 @@ class Send_Email extends Base_Tool {
         return $message;
     }
 
-    
     private static function refuse_invalid_utf8( string $text, string $field ): void {
         if ( 1 !== preg_match( '//u', $text ) ) {
             throw new \InvalidArgumentException( sprintf( '%s is not valid UTF-8 text. Nothing was sent.', $field ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

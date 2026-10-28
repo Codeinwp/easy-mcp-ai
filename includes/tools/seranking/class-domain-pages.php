@@ -55,7 +55,6 @@ class Domain_Pages extends Base_Tool {
 			SeRanking_Validators::validate_target( $target );
 			SeRanking_Validators::validate_scope( $scope );
 			SeRanking_Validators::validate_source( $source );
-			
 			if ( 'subdomains' === $mode && 'url' === $scope ) {
 				throw new \InvalidArgumentException( 'scope "url" is not supported when mode=subdomains; use base_domain or domain.' );
 			}

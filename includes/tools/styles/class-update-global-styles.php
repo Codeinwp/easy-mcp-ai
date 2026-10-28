@@ -25,12 +25,6 @@ class Update_Global_Styles extends Base_Tool {
         return 'edit_theme_options';
     }
 
-    
-
-
-
-
-
     public function get_annotations() {
         return array(
             'title'           => $this->get_title(),
@@ -118,15 +112,6 @@ class Update_Global_Styles extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private function validate_arguments( $has_styles, $has_settings, $has_variation, $merge_raw ) {
         if ( $has_variation && ( $has_styles || $has_settings ) ) {
             throw new \InvalidArgumentException( '"variation_slug" cannot be combined with "styles" or "settings". Apply the variation first, then send the overrides in a second call.' );
@@ -139,13 +124,6 @@ class Update_Global_Styles extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function variation_mode( array $arguments ) {
         if ( ! isset( $arguments['variation_mode'] ) || '' === $arguments['variation_mode'] ) {
             return 'merge';
@@ -157,20 +135,8 @@ class Update_Global_Styles extends Base_Tool {
         return $mode;
     }
 
-    
-
-
-
-
-
-
-
     private function variation_body( array $variation, $mode, $global_styles_id ) {
         if ( 'replace' === $mode ) {
-            
-            
-            
-            
             return array(
                 'settings' => empty( $variation['settings'] ) ? new \stdClass() : $variation['settings'],
                 'styles'   => empty( $variation['styles'] ) ? new \stdClass() : $variation['styles'],
@@ -182,22 +148,6 @@ class Update_Global_Styles extends Base_Tool {
             'styles'   => $this->merge_theme_json( $current['styles'], $variation['styles'] ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function sent_body( array $arguments, $merge_raw, $global_styles_id ) {
         $sent = array();
@@ -227,14 +177,6 @@ class Update_Global_Styles extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private function post_global_styles( $global_styles_id, array $body ) {
         $request = new \WP_REST_Request( 'POST', '/wp/v2/global-styles/' . $global_styles_id );
 
@@ -258,16 +200,6 @@ class Update_Global_Styles extends Base_Tool {
         return $response->get_data();
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function prepend_removed_keys( array $result, array $before, array $body, array $data ) {
         $removed = array();
         foreach ( array_keys( $body ) as $section ) {
@@ -286,17 +218,6 @@ class Update_Global_Styles extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function collect_removed_keys( array $before, array $after, $prefix, array &$removed ) {
         if ( $this->is_list( $before ) ) {
             return;
@@ -310,14 +231,6 @@ class Update_Global_Styles extends Base_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
 
     private function resolve_variation( $slug ) {
         $slug       = is_string( $slug ) ? trim( $slug ) : '';
@@ -341,14 +254,6 @@ class Update_Global_Styles extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private function read_current( $global_styles_id ) {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/global-styles/' . $global_styles_id );
         $request->set_param( 'context', 'edit' );
@@ -364,22 +269,6 @@ class Update_Global_Styles extends Base_Tool {
             'styles'   => isset( $data['styles'] ) && is_array( $data['styles'] ) ? $data['styles'] : array(),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function merge_theme_json( array $current, array $variation ) {
         if ( empty( $current ) && empty( $variation ) ) {
@@ -402,7 +291,6 @@ class Update_Global_Styles extends Base_Tool {
         return $current;
     }
 
-    
     private function is_list( array $value ) {
         if ( empty( $value ) ) {
             return false;

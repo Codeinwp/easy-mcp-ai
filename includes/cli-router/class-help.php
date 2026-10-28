@@ -5,45 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Help {
 
-    
     const WIDTH = 80;
-
-    
-
-
 
     public static function render( array $path ): string {
         $words = array();
@@ -59,8 +23,6 @@ final class Help {
             );
         }
 
-        
-        
         $found = Catalog::find( $words );
         if ( null !== $found['leaf'] ) {
             $leaf = $found['leaf'];
@@ -84,7 +46,7 @@ final class Help {
                     $name,
                     self::shortdesc_with_hook( (string) $composite['shortdesc'], isset( $composite['hook'] ) ? (string) $composite['hook'] : '', true ),
                     $name . ' <command>',
-                    '', 
+                    '',
                     self::render_subcommands( (string) $composite['command'], $composite['subcommands'] )
                 ),
                 $composite['longdesc'] . $composite['global_prefix'] . Catalog::global_help()
@@ -92,11 +54,6 @@ final class Help {
         }
         return '';
     }
-
-    
-
-
-
 
     private static function shortdesc_with_hook( string $shortdesc, string $hook, bool $has_subcommands ): string {
         $events = array(
@@ -118,13 +75,6 @@ final class Help {
         return $shortdesc;
     }
 
-    
-
-
-
-
-
-
     private static function man( string $name, string $shortdesc, string $synopsis, string $alias, ?array $subcommands ): string {
         $out = "## NAME\n\n\t" . $name . "\n\n";
         if ( ! empty( $shortdesc ) ) {
@@ -143,16 +93,6 @@ final class Help {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function render_subcommands( string $parent, array $children ): array {
         $composites  = Catalog::composites();
@@ -185,15 +125,9 @@ final class Help {
         return $lines;
     }
 
-    
-
-
-
-
     private static function show_help( string $initial_markdown, string $longdesc ): string {
         $out = $initial_markdown;
 
-        
         $subcommands        = '';
         $subcommands_header = "## SUBCOMMANDS\n";
         $column_subpattern  = '[ \t]+[^\t]+\t+';
@@ -206,20 +140,16 @@ final class Help {
 
         $out .= self::parse_reference_links( $longdesc );
 
-        
         $out = self::check( preg_replace_callback( '/([^\n]+)\n: (.+?)(\n\n|$)/s', array( __CLASS__, 'rewrap_param_desc' ), $out ) );
 
-        
         $out = self::check( preg_replace( '/^((?! |\t|##).)/m', "\t$1", $out ) );
 
         $tab = str_repeat( ' ', 2 );
 
-        
         $out = str_replace( "\t", $tab, $out );
 
         $wordwrap_width = self::WIDTH;
 
-        
         $out = self::check(
             preg_replace_callback(
                 '/^( *)([^\n]+)\n/m',
@@ -231,12 +161,10 @@ final class Help {
         );
 
         if ( $subcommands ) {
-            
             $subcommands = self::check(
                 preg_replace_callback(
                     '/^(' . $column_subpattern . ')([^\n]+)\n/m',
                     static function ( array $matches ) use ( $wordwrap_width, $tab ): string {
-                        
                         $matches[1]  = str_replace( "\t", $tab, $matches[1] );
                         $matches[2]  = str_replace( "\t", $tab, $matches[2] );
                         $padding_len = strlen( $matches[1] );
@@ -247,19 +175,11 @@ final class Help {
                 )
             );
 
-            
             $out = str_replace( $subcommands_header, $subcommands, $out );
         }
 
-        
         return self::check( preg_replace( '/^## ([A-Z ]+)/m', '\1', $out ) );
     }
-
-    
-
-
-
-
 
     private static function rewrap_param_desc( array $matches ): string {
         $param = $matches[1];
@@ -267,7 +187,6 @@ final class Help {
         return "\t$param\n$desc\n\n";
     }
 
-    
     private static function indent( string $whitespace, string $text ): string {
         $lines = explode( "\n", $text );
         foreach ( $lines as &$line ) {
@@ -276,12 +195,6 @@ final class Help {
         unset( $line );
         return implode( "\n", $lines );
     }
-
-    
-
-
-
-
 
     private static function parse_reference_links( string $longdesc ): string {
         $description = '';
@@ -292,9 +205,8 @@ final class Help {
             $description .= $line . "\n";
         }
 
-        
         if ( $description ) {
-            $links   = array(); 
+            $links   = array();
             $count   = 0;
             $pattern = '/\[.+?\]\((https?:\/\/.+?)\)/';
             $newdesc = self::check(
@@ -324,15 +236,6 @@ final class Help {
 
         return $longdesc;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function check( $result ) {
         if ( null === $result || false === $result ) {

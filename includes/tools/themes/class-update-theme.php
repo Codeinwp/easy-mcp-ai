@@ -8,11 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Update_Theme extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -76,7 +71,6 @@ class Update_Theme extends Base_Tool {
 
         $offer = $this->chosen_offer( $stylesheet, $name, $old_version, $version );
 
-        
         $skin     = new \WP_Ajax_Upgrader_Skin();
         $upgrader = new \Theme_Upgrader( $skin );
         $result   = $this->run_bulk_upgrade( $upgrader, $stylesheet, $offer );
@@ -84,7 +78,6 @@ class Update_Theme extends Base_Tool {
 
         $this->interpret_upgrade_result( $result, $skin, $upgrader, $stylesheet, 'Theme update failed.' );
 
-        
         $updated     = wp_get_theme( $stylesheet );
         $new_version = $updated->exists() ? (string) $updated->get( 'Version' ) : '';
         $active      = wp_get_theme();
@@ -99,17 +92,6 @@ class Update_Theme extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function chosen_offer( string $stylesheet, string $name, string $old_version, ?string $version ): ?array {
         if ( null === $version ) {
             $this->assert_update_available( $stylesheet, $name, $old_version );
@@ -117,15 +99,6 @@ class Update_Theme extends Base_Tool {
         }
         return $this->version_offer( $stylesheet, '' !== $name ? $name : $stylesheet, $old_version, $version );
     }
-
-    
-
-
-
-
-
-
-
 
     private function run_bulk_upgrade( \Theme_Upgrader $upgrader, string $stylesheet, ?array $offer ) {
         $filter = null === $offer ? null : $this->offer_once( $stylesheet, $offer );
@@ -138,32 +111,11 @@ class Update_Theme extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_ignored_offer( ?array $offer, $result, string $stylesheet, string $version ): void {
         if ( null !== $offer && is_array( $result ) && isset( $result[ $stylesheet ] ) && true === $result[ $stylesheet ] ) {
             throw new \RuntimeException( sprintf( 'Version %s was not installed: WordPress read its update data without the chosen version (a plugin on this site replaces that data), so nothing changed.', $version ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function parse_stylesheet( array $arguments ): string {
         $raw = isset( $arguments['stylesheet'] ) && is_string( $arguments['stylesheet'] ) ? trim( $arguments['stylesheet'] ) : '';
@@ -178,15 +130,6 @@ class Update_Theme extends Base_Tool {
         }
         return $stylesheet;
     }
-
-    
-
-
-
-
-
-
-
 
     private function parse_version_argument( array $arguments ): ?string {
         if ( ! isset( $arguments['version'] ) ) {
@@ -203,43 +146,11 @@ class Update_Theme extends Base_Tool {
         return $version;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function assert_may_install_a_version(): void {
         if ( ! current_user_can( 'install_themes' ) ) {
             throw new \RuntimeException( 'Sorry, installing a chosen theme version also needs the install_themes capability: wp-admin installs a specific version only through Upload Theme, which requires it.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function version_offer( string $stylesheet, string $label, string $old_version, string $version ): array {
         $entry = $this->update_entry( $stylesheet );
@@ -254,24 +165,12 @@ class Update_Theme extends Base_Tool {
 
         $package = $this->version_package( $stylesheet, $version );
 
-        
         $offer                = (array) $entry;
         $offer['new_version'] = $version;
         $offer['package']     = $package;
-        
-        
         unset( $offer['requires'], $offer['requires_php'] );
         return $offer;
     }
-
-    
-
-
-
-
-
-
-
 
     private function update_entry( string $stylesheet ) {
         wp_update_themes();
@@ -280,15 +179,6 @@ class Update_Theme extends Base_Tool {
         $no_update = ( is_object( $transient ) && isset( $transient->no_update ) && is_array( $transient->no_update ) ) ? $transient->no_update : array();
         return isset( $response[ $stylesheet ] ) ? $response[ $stylesheet ] : ( isset( $no_update[ $stylesheet ] ) ? $no_update[ $stylesheet ] : null );
     }
-
-    
-
-
-
-
-
-
-
 
     private function version_package( string $stylesheet, string $version ): string {
         $versions = $this->version_list( $stylesheet );
@@ -304,13 +194,6 @@ class Update_Theme extends Base_Tool {
         }
         return $package;
     }
-
-    
-
-
-
-
-
 
     private function version_list( string $stylesheet ): array {
         if ( ! function_exists( 'themes_api' ) ) {
@@ -332,18 +215,6 @@ class Update_Theme extends Base_Tool {
         return ( is_object( $info ) && isset( $info->versions ) && ( is_array( $info->versions ) || is_object( $info->versions ) ) ) ? (array) $info->versions : array();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function offer_once( string $stylesheet, array $offer ): \Closure {
         $filter = null;
         $filter = static function ( $value ) use ( &$filter, $stylesheet, $offer ) {
@@ -351,7 +222,6 @@ class Update_Theme extends Base_Tool {
                 return $value;
             }
             remove_filter( 'site_transient_update_themes', $filter, PHP_INT_MAX );
-            
             $value                   = clone $value;
             $response                = ( isset( $value->response ) && is_array( $value->response ) ) ? $value->response : array();
             $response[ $stylesheet ] = $offer;
@@ -362,28 +232,14 @@ class Update_Theme extends Base_Tool {
         return $filter;
     }
 
-    
-
-
-
-
-
     private function assert_may_update() {
         $this->assert_file_mods_allowed( 'themes' );
 
-        
         if ( ! current_user_can( 'update_themes' ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to update themes for this site.' );
         }
         $this->assert_network_update_allowed( 'manage_network_themes' );
     }
-
-    
-
-
-
-
-
 
     private function installed_header( string $stylesheet ): array {
         $theme = wp_get_theme( $stylesheet );
@@ -394,15 +250,6 @@ class Update_Theme extends Base_Tool {
         }
         return array( (string) $theme->get( 'Name' ), (string) $theme->get( 'Version' ) );
     }
-
-    
-
-
-
-
-
-
-
 
     private function assert_update_available( string $stylesheet, string $name, string $old_version ) {
         $current = get_site_transient( 'update_themes' );

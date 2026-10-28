@@ -5,46 +5,24 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 abstract class Action {
 
-    
     const ARGUMENTS = array();
 
-    
     const RESPONSE_BUDGET = 60000;
 
-    
     protected $resolver;
 
     public function __construct( Resolver $resolver ) {
         $this->resolver = $resolver;
     }
 
-    
-
-
-
-
-
     abstract public function run( array $arguments ): array;
 
-    
     protected static function default_dir(): string {
         $stylesheet = function_exists( 'get_stylesheet' ) ? (string) \get_stylesheet() : '';
         return '' === $stylesheet ? 'themes' : 'themes/' . $stylesheet;
     }
-
-    
-
-
-
-
-
 
     protected static function int_argument( array $arguments, string $key, int $default, int $min, int $max ): int {
         if ( ! array_key_exists( $key, $arguments ) || null === $arguments[ $key ] ) {
@@ -60,12 +38,6 @@ abstract class Action {
         return $value;
     }
 
-    
-
-
-
-
-
     protected static function string_argument( array $arguments, string $key, string $default ): string {
         if ( ! array_key_exists( $key, $arguments ) || null === $arguments[ $key ] ) {
             return $default;
@@ -76,26 +48,12 @@ abstract class Action {
         return $arguments[ $key ];
     }
 
-    
-
-
-
-
     protected static function bool_argument( array $arguments, string $key, bool $default ): bool {
         if ( ! array_key_exists( $key, $arguments ) || null === $arguments[ $key ] ) {
             return $default;
         }
         return function_exists( 'rest_sanitize_boolean' ) ? (bool) \rest_sanitize_boolean( $arguments[ $key ] ) : (bool) $arguments[ $key ];
     }
-
-    
-
-
-
-
-
-
-
 
     protected static function fit_list( array $response, string $key ): array {
         if ( strlen( self::json( $response ) ) <= self::RESPONSE_BUDGET ) {
@@ -117,11 +75,6 @@ abstract class Action {
         $response['truncated'] = true;
         return $response;
     }
-
-    
-
-
-
 
     public static function json( $value ): string {
         $flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;

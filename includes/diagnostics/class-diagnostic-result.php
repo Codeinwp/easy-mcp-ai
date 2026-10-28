@@ -1,28 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,39 +17,21 @@ class Diagnostic_Result {
     const TIER_WARNING = 'warning';
     const TIER_INFO    = 'info';
 
-    
     private $id;
 
-    
     private $status;
 
-    
     private $tier;
 
-    
     private $label;
 
-    
     private $detail;
 
-    
     private $fix;
 
-    
     private $evidence;
 
-    
-
-
-
-
     private $measured_at = null;
-
-    
-
-
-
-
 
     private $group = '';
 
@@ -86,8 +45,6 @@ class Diagnostic_Result {
         $this->evidence = $evidence;
     }
 
-    
-
     public static function pass( $id, $tier, $label, $detail = '', array $evidence = array() ) {
         return new self( $id, self::STATUS_PASS, $tier, $label, $detail, '', $evidence );
     }
@@ -100,15 +57,9 @@ class Diagnostic_Result {
         return new self( $id, self::STATUS_FAIL, $tier, $label, $detail, $fix, $evidence );
     }
 
-    
-
-
-
     public static function unknown( $id, $tier, $label, $reason = '', array $evidence = array() ) {
         return new self( $id, self::STATUS_UNKNOWN, $tier, $label, $reason, '', $evidence );
     }
-
-    
 
     public function id() { return $this->id; }
     public function status() { return $this->status; }
@@ -120,13 +71,6 @@ class Diagnostic_Result {
     public function measured_at(): ?int { return $this->measured_at; }
     public function group(): string { return $this->group; }
 
-    
-
-
-
-
-
-
     public function with_measurement( $group, $measured_at ) {
         $copy              = clone $this;
         $copy->group       = (string) $group;
@@ -134,58 +78,17 @@ class Diagnostic_Result {
         return $copy;
     }
 
-    
-
-    
-
-
-
     public function is_problem() {
         return self::STATUS_WARN === $this->status || self::STATUS_FAIL === $this->status;
     }
-
-    
-
 
     public function renders_in_notice() {
         return self::TIER_BLOCKER === $this->tier && self::STATUS_FAIL === $this->status;
     }
 
-    
-
-
-
     public function renders_in_site_health() {
         return self::TIER_BLOCKER === $this->tier || self::TIER_WARNING === $this->tier;
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function problem_badge_html() {
         if ( self::STATUS_FAIL === $this->status ) {
@@ -205,8 +108,6 @@ class Diagnostic_Result {
             . '</span> ';
     }
 
-    
-
     public function to_array() {
         return array(
             'id'       => $this->id,
@@ -221,11 +122,6 @@ class Diagnostic_Result {
             'measured_at' => $this->measured_at,
         ) : array() );
     }
-
-    
-
-
-
 
     public static function from_array( $row ) {
         if ( ! is_array( $row ) ) {
@@ -251,7 +147,6 @@ class Diagnostic_Result {
             isset( $row['fix'] ) ? $row['fix'] : '',
             ( isset( $row['evidence'] ) && is_array( $row['evidence'] ) ) ? $row['evidence'] : array()
         );
-        
         if ( isset( $row['group'] ) && is_string( $row['group'] ) && '' !== $row['group'] ) {
             $result = $result->with_measurement(
                 $row['group'],

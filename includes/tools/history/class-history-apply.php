@@ -9,36 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class History_Apply extends Base_Tool {
-
-    
-
-
-
 
     private $dispatcher = null;
 
@@ -55,7 +26,6 @@ class History_Apply extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
         return 'read';
     }
 
@@ -63,8 +33,6 @@ class History_Apply extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            
-            
             'destructiveHint' => true,
             'idempotentHint'  => false,
             'openWorldHint'   => false,
@@ -102,28 +70,9 @@ class History_Apply extends Base_Tool {
         );
     }
 
-    
-
-
-
-
     public function set_dispatcher( callable $dispatcher ) {
         $this->dispatcher = $dispatcher;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function describe( array $arguments ) {
         try {
@@ -168,16 +117,6 @@ class History_Apply extends Base_Tool {
         return $text;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function approval_refusal( array $arguments ): ?string {
         $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
         if ( null === $length ) {
@@ -189,14 +128,6 @@ class History_Apply extends Base_Tool {
             \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function call_texts( array $calls ): array {
         $texts = array();
@@ -228,12 +159,6 @@ class History_Apply extends Base_Tool {
         return $texts;
     }
 
-    
-
-
-
-
-
     private static function only_difference( array $a, array $b ): ?string {
         if ( $a['tool'] !== $b['tool'] || array_keys( $a['arguments'] ) !== array_keys( $b['arguments'] ) ) {
             return null;
@@ -247,9 +172,6 @@ class History_Apply extends Base_Tool {
         return 1 === count( $differ ) ? $differ[0] : null;
     }
 
-    
-
-
     private static function call_text( string $tool, array $arguments ): string {
         $parts = array();
         foreach ( $arguments as $key => $value ) {
@@ -257,11 +179,6 @@ class History_Apply extends Base_Tool {
         }
         return $parts ? $tool . ' (' . implode( ', ', $parts ) . ')' : $tool;
     }
-
-    
-
-
-
 
     private static function shown_value( string $key, $value ): string {
         if ( 'content' === $key && is_string( $value ) ) {
@@ -301,21 +218,12 @@ class History_Apply extends Base_Tool {
         return $this->run( $arguments, $dry_run );
     }
 
-    
-
-
-
-
-
-
-
     private function run( array $arguments, $dry_run, $with_calls = false ) {
         $force        = isset( $arguments['force'] ) && \rest_sanitize_boolean( $arguments['force'] );
         $can_view_all = \current_user_can( 'easy_mcp_ai_view_all_history' );
         $rows         = $this->load_rows( $arguments, $can_view_all );
         $planner      = new Rebuild_Planner( $rows );
 
-        
         $plans = array();
         foreach ( $rows as $row ) {
             $plans[] = $planner->plan( $row );
@@ -330,13 +238,10 @@ class History_Apply extends Base_Tool {
             throw new \InvalidArgumentException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
         $approval = ( ! $dry_run && 'redeem' === \Easy_MCP_AI\MCP\Server::current_call_approval_kind() ) ? 'skip' : null;
 
         $entries = array();
-        $touched = array(); 
+        $touched = array();
         $stopped = false;
         foreach ( $rows as $row ) {
             $entry = array(
@@ -349,10 +254,8 @@ class History_Apply extends Base_Tool {
                 $entries[]       = $entry;
                 continue;
             }
-            $plan = $planner->plan( $row ); 
+            $plan = $planner->plan( $row );
             if ( 'restore' !== $plan['status'] ) {
-                
-                
                 $by_plan         = array( 'skip' => 'skipped', 'incidental' => 'incidental' );
                 $entry['status'] = $by_plan[ $plan['status'] ] ?? 'refused';
                 $entry['reason'] = $plan['reason'];
@@ -367,9 +270,6 @@ class History_Apply extends Base_Tool {
                 $entry['not_restored'] = $plan['not_restored'];
             }
 
-            
-            
-            
             $keys = self::object_keys( $row );
             if ( $dry_run && array_intersect( $keys, array_keys( $touched ) ) ) {
                 $entry['drift'] = __( 'checked when the call runs, after the newer entry for this object', 'easy-mcp-ai' );
@@ -419,16 +319,6 @@ class History_Apply extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function run_plan( array $row, array $plan, Rebuild_Planner $planner, $approval, array $entry ) {
         $new_id    = null;
         $audit_ids = array();
@@ -474,7 +364,6 @@ class History_Apply extends Base_Tool {
             $entry['audit_ids'] = $audit_ids;
         }
         if ( ! isset( $entry['status'] ) ) {
-            
             $lost = 'update' === $row['action'] && array_intersect(
                 array_keys( (array) ( $entry['not_restored'] ?? array() ) ),
                 is_array( $row['changed_fields'] ?? null ) ? $row['changed_fields'] : array()
@@ -485,24 +374,12 @@ class History_Apply extends Base_Tool {
         return $entry;
     }
 
-    
-
-
-
     private function dispatch( string $tool, array $arguments, ?string $approval ): ?array {
         if ( null !== $this->dispatcher ) {
             return call_user_func( $this->dispatcher, $tool, $arguments, $approval );
         }
         return \Easy_MCP_AI\MCP\Server::call_as_current_caller( $tool, $arguments, $approval );
     }
-
-    
-
-
-
-
-
-
 
     private function load_rows( array $arguments, $can_view_all ) {
         $has_entry = isset( $arguments['entry_id'] ) && '' !== $arguments['entry_id'] && null !== $arguments['entry_id'];
@@ -514,8 +391,6 @@ class History_Apply extends Base_Tool {
         $me   = (int) \get_current_user_id();
         if ( $has_entry ) {
             $row = $repo->find( (int) $arguments['entry_id'] );
-            
-            
             if ( ! $row || ( ! $can_view_all && (int) ( $row['wp_user_id'] ?? 0 ) !== $me ) ) {
                 throw new \RuntimeException( 'History entry not found' );
             }
@@ -546,13 +421,6 @@ class History_Apply extends Base_Tool {
         return $rows;
     }
 
-    
-
-
-
-
-
-
     private static function object_keys( array $row ) {
         $type = (string) $row['object_type'];
         $id   = (string) $row['object_id'];
@@ -565,13 +433,6 @@ class History_Apply extends Base_Tool {
         return $keys;
     }
 
-    
-
-
-
-
-
-
     private static function with_new_id( $value, $new_id ) {
         if ( is_array( $value ) ) {
             foreach ( $value as $k => $v ) {
@@ -581,11 +442,6 @@ class History_Apply extends Base_Tool {
         }
         return ( Rebuild_Planner::NEW_ID === $value && null !== $new_id ) ? (int) $new_id : $value;
     }
-
-    
-
-
-
 
     private static function error_of( array $response ): ?string {
         if ( isset( $response['error'] ) ) {
@@ -598,12 +454,6 @@ class History_Apply extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
 
     private static function payload_of( array $response ): array {
         $result = $response['result'] ?? array();

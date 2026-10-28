@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Rest_Delete extends Rest_Route_Tool {
 
     public function get_name() {
@@ -30,13 +26,6 @@ class Rest_Delete extends Rest_Route_Tool {
             'openWorldHint'   => false,
         );
     }
-
-    
-
-
-
-
-
 
     public function is_disabled_by_default() {
         return true;

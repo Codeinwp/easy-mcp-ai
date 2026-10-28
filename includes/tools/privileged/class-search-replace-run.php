@@ -11,42 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 class Search_Replace_Run extends Privileged_Tool {
 
     const MIN_OLD_LENGTH = 3;
-    
     const MAX_NAME_LENGTH = 191;
-    
     const NUDGE_AFTER = 60;
-    
     const LOG_CONTEXT = 40;
-    
-
-
-
     const REGEX_FLAGS = 'imsxuADSUXJnr';
 
-    
     private $runner = null;
-    
     private $store = null;
-    
-
-
-
-
-
-
     public $cancel_wait_seconds = 22.0;
 
     public function __construct( ?Runner $runner = null, ?Job_Store $store = null ) {
@@ -168,22 +142,13 @@ class Search_Replace_Run extends Privileged_Tool {
         );
     }
 
-    
     public function records_own_history() {
         return true;
     }
 
-    
     protected function is_status_read( array $arguments ) {
         return array( 'job_id' ) === array_keys( $arguments ) && is_string( $arguments['job_id'] );
     }
-
-    
-
-
-
-
-
 
     public function approval_refusal( array $arguments ): ?string {
         $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
@@ -192,13 +157,6 @@ class Search_Replace_Run extends Privileged_Tool {
         }
         return sprintf( 'This search-replace is %1$d characters long to describe and the approval page shows %2$d, so it was not sent for approval: a person must see every argument they approve. Use shorter old/new strings or fewer table names.', $length, \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX );
     }
-
-    
-
-
-
-
-
 
     protected function describe_payload( array $arguments ) {
         $job_line = $this->job_line( $arguments );
@@ -227,13 +185,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return implode( "\n", $lines );
     }
 
-    
-
-
-
-
-
-
     private function job_line( array $arguments ): ?string {
         if ( $this->is_status_read( $arguments ) ) {
             return sprintf( 'Read the status of search-replace job %s.', (string) $arguments['job_id'] );
@@ -244,12 +195,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return null;
     }
 
-    
-
-
-
-
-
     private static function regex_line( array $args ): string {
         return sprintf(
             'Match: regular expression (flags: %1$s; delimiter: %2$s; %3$s per string). Every row in scope is read.',
@@ -258,14 +203,6 @@ class Search_Replace_Run extends Privileged_Tool {
             -1 === $args['regex_limit'] ? 'no limit' : 'at most ' . $args['regex_limit']
         );
     }
-
-    
-
-
-
-
-
-
 
     protected function run( array $arguments ) {
         $store = $this->store ? $this->store : new Job_Store();
@@ -283,15 +220,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return $runner->summary( $this->start_job( $args, $store, $runner ), true );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_held_live_run( Job_Store $store ): void {
         $live = $store->live_job();
         $held = '' !== $live ? $store->get( $live ) : null;
@@ -299,17 +227,6 @@ class Search_Replace_Run extends Privileged_Tool {
             throw new \InvalidArgumentException( self::live_refusal( $held ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function start_job( array $args, Job_Store $store, Runner $runner ): array {
         $user_id = (int) \get_current_user_id();
@@ -334,20 +251,9 @@ class Search_Replace_Run extends Privileged_Tool {
         return $job;
     }
 
-    
-
-
-
-
-
-
-
     private function existing_job( array $arguments, Job_Store $store ): array {
         $id  = (string) $arguments['job_id'];
         $job = $store->get( $id );
-        
-        
-        
         if ( null === $job || ( function_exists( 'get_current_blog_id' ) && (int) $job['blog_id'] !== (int) \get_current_blog_id() ) || ! self::may_read( $job ) ) {
             throw new \InvalidArgumentException( sprintf( 'No search-replace job %s on this site. Finished jobs are kept for %s.', $id, 1 === Jobs::RETENTION_DAYS ? 'a day' : Jobs::RETENTION_DAYS . ' days' ) );
         }
@@ -359,30 +265,12 @@ class Search_Replace_Run extends Privileged_Tool {
         return $runner->summary( $job, true );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function nudge_stalled_job( string $id, array $job ): void {
         if ( 'running' === $job['status'] && time() - (int) $job['heartbeat'] > self::NUDGE_AFTER && function_exists( 'spawn_cron' ) ) {
             Jobs::schedule( $id );
             \spawn_cron();
         }
     }
-
-    
-
-
-
-
-
-
 
     private function cancel( string $id, Job_Store $store, Runner $runner ): array {
         $until = microtime( true ) + $this->cancel_wait_seconds;
@@ -403,22 +291,9 @@ class Search_Replace_Run extends Privileged_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private static function may_read( array $job ): bool {
         return empty( $job['needs_network'] ) || Jobs::network_user( (int) \get_current_user_id() );
     }
-
-    
-
-
-
-
 
     private static function live_refusal( ?array $held ): string {
         if ( null === $held || ! self::may_read( $held ) ) {
@@ -431,7 +306,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return $this->runner ? $this->runner : Jobs::runner();
     }
 
-    
     private function identity( int $user_id ): array {
         $ctx = class_exists( '\\Easy_MCP_AI\\History\\Change_Context' ) ? \Easy_MCP_AI\History\Change_Context::all() : array();
         return array(
@@ -444,24 +318,9 @@ class Search_Replace_Run extends Privileged_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function normalise( array $arguments ): array {
         list( $old, $new ) = self::search_strings( $arguments );
         $regex             = self::flag( $arguments['regex'] ?? false );
-        
-        
-        
         if ( $old === $new && ! $regex ) {
             throw new \InvalidArgumentException( '`old` and `new` are the same; nothing would change.' );
         }
@@ -470,16 +329,6 @@ class Search_Replace_Run extends Privileged_Tool {
         self::refuse_options_without( $arguments, array( 'before_context', 'after_context' ), 'log', $log );
         return self::with_wp_cli_options( self::run_arguments( $arguments, $old, $new ), $arguments, $regex, $log );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function run_arguments( array $arguments, string $old, string $new ): array {
         return array(
@@ -497,14 +346,6 @@ class Search_Replace_Run extends Privileged_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function search_strings( array $arguments ): array {
         foreach ( array( 'old', 'new' ) as $key ) {
             if ( ! isset( $arguments[ $key ] ) || ! is_string( $arguments[ $key ] ) ) {
@@ -519,16 +360,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return array( $old, $arguments['new'] );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_options_without( array $arguments, array $keys, string $flag, bool $on ): void {
         foreach ( $keys as $key ) {
             if ( ! $on && isset( $arguments[ $key ] ) ) {
@@ -536,18 +367,6 @@ class Search_Replace_Run extends Privileged_Tool {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function with_wp_cli_options( array $args, array $arguments, bool $regex, bool $log ): array {
         if ( $regex ) {
@@ -567,16 +386,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return $args;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function regex_arguments( array $arguments, string $old ): array {
         $flags     = self::regex_flags( $arguments );
         $delimiter = self::regex_delimiter( $arguments );
@@ -590,13 +399,6 @@ class Search_Replace_Run extends Privileged_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function regex_flags( array $arguments ): string {
         $flags = $arguments['regex_flags'] ?? '';
         if ( ! is_string( $flags ) || strspn( $flags, self::REGEX_FLAGS ) !== strlen( $flags ) ) {
@@ -604,14 +406,6 @@ class Search_Replace_Run extends Privileged_Tool {
         }
         return $flags;
     }
-
-    
-
-
-
-
-
-
 
     private static function regex_delimiter( array $arguments ): string {
         $delimiter = $arguments['regex_delimiter'] ?? '';
@@ -627,14 +421,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return $delimiter;
     }
 
-    
-
-
-
-
-
-
-
     private static function regex_limit( array $arguments ): int {
         $limit = $arguments['regex_limit'] ?? -1;
         if ( ! is_numeric( $limit ) || (float) $limit !== (float) (int) $limit || ( -1 !== (int) $limit && (int) $limit < 1 ) ) {
@@ -642,13 +428,6 @@ class Search_Replace_Run extends Privileged_Tool {
         }
         return (int) $limit;
     }
-
-    
-
-
-
-
-
 
     private static function refuse_uncompilable( string $pattern ): void {
         error_clear_last();
@@ -658,15 +437,6 @@ class Search_Replace_Run extends Privileged_Tool {
             throw new \InvalidArgumentException( sprintf( '`old` is not a valid regular expression with these flags and delimiter (%s); nothing was run.', substr( (string) $message, 0, 100 ) ) );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function whole_number( array $arguments, string $key, int $default ): int {
         if ( ! isset( $arguments[ $key ] ) ) {
@@ -679,16 +449,13 @@ class Search_Replace_Run extends Privileged_Tool {
         return (int) $value;
     }
 
-    
     public static function args_hash( array $args ): string {
         $key = $args;
-        
         unset( $key['dry_run'], $key['samples'], $key['log'], $key['before_context'], $key['after_context'], $key['verbose'] );
         ksort( $key );
         return hash( 'sha256', (string) \wp_json_encode( $key ) );
     }
 
-    
     private static function flag( $value ): bool {
         if ( function_exists( 'rest_sanitize_boolean' ) ) {
             return (bool) \rest_sanitize_boolean( $value );
@@ -696,7 +463,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return (bool) filter_var( $value, FILTER_VALIDATE_BOOLEAN );
     }
 
-    
     private static function names( array $arguments, string $key ): array {
         if ( ! isset( $arguments[ $key ] ) ) {
             return array();
@@ -743,11 +509,6 @@ class Search_Replace_Run extends Privileged_Tool {
         return $scope . '.';
     }
 
-    
-
-
-
-
     private function last_dry_run_line( string $hash ): string {
         $store  = $this->store ? $this->store : new Job_Store();
         $recent = array_reverse( $store->recent(), true );
@@ -756,8 +517,6 @@ class Search_Replace_Run extends Privileged_Tool {
                 continue;
             }
             $job = $store->get( (string) $id );
-            
-            
             if ( null === $job || ! self::may_read( $job ) ) {
                 continue;
             }

@@ -22,12 +22,10 @@ class Update_CPT_Item extends Base_Tool {
         return 'cpt';
     }
 
-    
     public function get_required_capability() {
         return 'read';
     }
 
-    
     public function get_redacted_arguments() {
         return array( 'password' );
     }
@@ -137,13 +135,6 @@ class Update_CPT_Item extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'POST' );
     }
@@ -176,29 +167,11 @@ class Update_CPT_Item extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_meta_without_support( string $rest_base ): string {
         list( $post_type, $post_type_object ) = Create_CPT_Item::post_type_for_rest_base( $rest_base );
         Create_CPT_Item::refuse_unsupported_fields( array( 'meta' ), $post_type_object, $post_type );
         return $post_type;
     }
-
-    
-
-
-
-
-
-
 
     private static function content_params( array $arguments ): array {
         $params = array();
@@ -206,21 +179,12 @@ class Update_CPT_Item extends Base_Tool {
             $params['title'] = sanitize_text_field( $arguments['title'] );
         }
         if ( isset( $arguments['content'] ) ) {
-            
-            
-            
-            
             $params['content'] = $arguments['content'];
         }
         if ( isset( $arguments['status'] ) ) {
             $params['status'] = sanitize_text_field( $arguments['status'] );
         }
         if ( isset( $arguments['excerpt'] ) ) {
-            
-            
-            
-            
-            
             $params['excerpt'] = $arguments['excerpt'];
         }
         if ( ! empty( $arguments['slug'] ) ) {
@@ -228,17 +192,6 @@ class Update_CPT_Item extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function apply_post_type_fields( array $arguments, string $rest_base, array &$params ): void {
         $sent = Create_CPT_Item::apply_post_fields( $arguments, $params );
@@ -261,16 +214,6 @@ class Update_CPT_Item extends Base_Tool {
             $params = array_merge( $params, Create_CPT_Item::tax_input_params( $arguments['tax_input'], $post_type, $params ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function update_item( string $rest_base, int $item_id, array $params ): array {
         $request = new \WP_REST_Request( 'POST', self::post_type_route( $rest_base, $item_id, 'POST' ) );

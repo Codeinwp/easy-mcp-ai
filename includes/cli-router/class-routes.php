@@ -5,125 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Routes {
 
-    
     private static $files = array();
-
-    
-
-
-
 
     public static function get( string $command ): ?array {
         $top    = (string) strtok( $command, ' ' );
         $routes = self::family( $top );
         return isset( $routes[ $command ] ) ? $routes[ $command ] : null;
     }
-
-    
-
-
-
 
     public static function family( string $top ): array {
         if ( ! isset( self::$files[ $top ] ) ) {
@@ -141,11 +31,6 @@ final class Routes {
         return self::$files[ $top ];
     }
 
-    
-
-
-
-
     public static function all(): array {
         $all   = array();
         $files = glob( __DIR__ . '/routes/*.php' );
@@ -156,7 +41,6 @@ final class Routes {
         return $all;
     }
 
-    
     public static function reset(): void {
         self::$files = array();
     }

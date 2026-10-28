@@ -8,21 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class List_Cron_Events extends Base_Tool {
 
-    
     const OVERDUE_AFTER = 3600;
 
-    
     const MALFORMED_MAX = 50;
 
     public function get_name() {
@@ -98,17 +87,6 @@ class List_Cron_Events extends Base_Tool {
         return self::with_malformed_timestamps( $result );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function collect_events( string $filter, int $offset, int $limit, int $now ): array {
         $events  = array();
         $total   = 0;
@@ -123,27 +101,16 @@ class List_Cron_Events extends Base_Tool {
                 ++$overdue;
             }
             if ( $total <= $offset || count( $events ) >= $limit ) {
-                continue; 
+                continue;
             }
             $events[] = self::event_row( $event, $now, $is_overdue );
         }
         return array( $events, $total, $overdue );
     }
 
-    
-
-
-
-
-
-
-
     private static function event_row( array $event, int $now, bool $is_overdue ): array {
         $schedule = Site_Health_Guard::describe_schedule( $event['schedule'], $event['interval'] );
         if ( null !== $schedule ) {
-            
-            
-            
             $schedule['stored_interval_seconds'] = (int) $event['interval'];
         }
         return array(
@@ -153,19 +120,9 @@ class List_Cron_Events extends Base_Tool {
             'seconds_until_run' => $event['timestamp'] - $now,
             'overdue'           => $is_overdue,
             'schedule'          => $schedule,
-            
-            
-            
             'args'              => Text_Redactor::redact_value( $event['args'] ),
         );
     }
-
-    
-
-
-
-
-
 
     private static function with_malformed_timestamps( array $result ): array {
         $malformed                      = self::malformed_timestamps();
@@ -175,15 +132,6 @@ class List_Cron_Events extends Base_Tool {
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function offset( array $arguments ): int {
         if ( ! isset( $arguments['offset'] ) ) {
@@ -196,18 +144,6 @@ class List_Cron_Events extends Base_Tool {
         return (int) $value;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function malformed_timestamps(): array {
         $crons = function_exists( '_get_cron_array' ) ? \_get_cron_array() : array();
         if ( ! is_array( $crons ) ) {
@@ -215,7 +151,6 @@ class List_Cron_Events extends Base_Tool {
         }
         $out = array();
         foreach ( array_keys( $crons ) as $key ) {
-            
             if ( is_string( $key ) && 'version' !== $key ) {
                 $out[] = $key;
             }

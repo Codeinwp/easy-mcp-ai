@@ -1,15 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\External_Data_Service;
@@ -20,11 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class External_Data_Controller extends Admin_Rest_Controller {
 
-    
     private $service;
-
-    
-
 
     public function __construct( External_Data_Service $service ) {
         $this->service = $service;
@@ -45,20 +31,9 @@ class External_Data_Controller extends Admin_Rest_Controller {
         $this->register_route( '/external-data/(?P<provider>[a-z]+)/refresh-balance', \WP_REST_Server::CREATABLE, array( $this, 'post_refresh_balance' ), $provider );
     }
 
-    
-
-
-
     public function get_all( $request ) {
         return $this->ok( $this->service->describe_all() );
     }
-
-    
-
-
-
-
-
 
     public function patch_provider( $request ) {
         $key = $this->provider_of( $request );
@@ -76,13 +51,6 @@ class External_Data_Controller extends Admin_Rest_Controller {
         return $this->ok( $this->service->describe( $key ) );
     }
 
-    
-
-
-
-
-
-
     public function post_test( $request ) {
         $key = $this->provider_of( $request );
         if ( \is_wp_error( $key ) ) {
@@ -90,10 +58,6 @@ class External_Data_Controller extends Admin_Rest_Controller {
         }
         return $this->ok( $this->service->test( $key ) );
     }
-
-    
-
-
 
     public function post_remove_key( $request ) {
         $key = $this->provider_of( $request );
@@ -107,10 +71,6 @@ class External_Data_Controller extends Admin_Rest_Controller {
         return $this->ok( $this->service->describe( $key ) );
     }
 
-    
-
-
-
     public function post_clear_cache( $request ) {
         $key = $this->provider_of( $request );
         if ( \is_wp_error( $key ) ) {
@@ -122,12 +82,6 @@ class External_Data_Controller extends Admin_Rest_Controller {
         }
         return $this->ok( $this->service->describe( $key ) );
     }
-
-    
-
-
-
-
 
     public function post_refresh_balance( $request ) {
         $key = $this->provider_of( $request );
@@ -141,7 +95,6 @@ class External_Data_Controller extends Admin_Rest_Controller {
         return $this->ok( $result );
     }
 
-    
     private function provider_of( $request ) {
         $key = (string) $request->get_param( 'provider' );
         if ( ! External_Data_Service::is_provider( $key ) ) {

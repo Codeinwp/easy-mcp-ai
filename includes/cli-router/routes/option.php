@@ -1,33 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -53,7 +25,6 @@ $emai_option = static function ( string $method, bool $write, array $params, ?st
 
 return array(
     'option add'          => $emai_option( 'add', true, array( 'key', 'value', 'format', 'autoload' ), null, 'preflight_write', 'describe_add' ),
-    
     'option delete'       => $emai_option( 'delete', true, array( 'key' ), 'manage_network_options', 'preflight_keys', 'describe_delete', array( 'bulk' => 50 ) ),
     'option get'          => $emai_option( 'get', false, array( 'key', 'format' ), null, 'preflight_read', null ),
     'option get-autoload' => $emai_option( 'get_autoload', false, array( 'key' ), null, 'preflight_read', null ),

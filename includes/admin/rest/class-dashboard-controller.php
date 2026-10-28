@@ -1,53 +1,32 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
+
+use Easy_MCP_AI\Admin\Review_Ask;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class Dashboard_Controller extends Admin_Rest_Controller {
 
     const WINDOW_DAYS   = 7;
-    
     const CALLS_WINDOW_DAYS = 1;
     const CHANGES_LIMIT = 25;
 
-    
     const ATTENTION_SCAN_LIMIT = 200;
 
-    
     const RECENT_LIMIT = 3;
 
-    
     const LAST_CALL_OPTION = 'easy_mcp_ai_last_tool_call';
 
-    
     private $db;
 
-    
     private $repository;
 
-    
     private $token_manager;
 
-    
     private $tool_registry;
-
-    
-
-
-
-
 
     public function __construct( $db, $repository, $token_manager, $tool_registry = null ) {
         $this->db            = $db;
@@ -58,11 +37,13 @@ class Dashboard_Controller extends Admin_Rest_Controller {
 
     public function register_routes() {
         $this->register_route( '/dashboard', \WP_REST_Server::READABLE, array( $this, 'get_dashboard' ) );
+        $this->register_delete_route( '/review-ask', array( $this, 'close_review_ask' ) );
     }
 
-    
-
-
+    public function close_review_ask( $request ) {
+        Review_Ask::close();
+        return $this->ok( array( 'reviewAsk' => false ) );
+    }
 
     public function get_dashboard( $request ) {
         $now    = \current_time( 'mysql', true );
@@ -92,7 +73,8 @@ class Dashboard_Controller extends Admin_Rest_Controller {
             $attention = self::build_attention( $this->attention_rows( $bounds ), array( $this, 'post_status_of' ) );
         }
 
-        $payload = array(
+        $usage_ask = Settings_Controller::usage_ask();
+        $payload   = array(
             'window'    => array(
                 'days'  => self::WINDOW_DAYS,
                 'from'  => self::iso8601( $bounds['from'] ),
@@ -115,27 +97,16 @@ class Dashboard_Controller extends Admin_Rest_Controller {
                 'tokens'       => (int) $this->token_manager->count_tokens(),
                 'grants'       => $this->count_grants(),
                 'toolsEnabled' => $tools,
-                
                 'preset'       => null,
             ),
             'mcpUrl'        => \rest_url( 'easy-mcp-ai/v1/mcp' ),
             'connectorName' => self::connector_name( \get_bloginfo( 'name' ) ),
-            'usageAsk'      => Settings_Controller::usage_ask(),
+            'usageAsk'      => $usage_ask,
+            'reviewAsk'     => ! $usage_ask && Review_Ask::due(),
         );
 
         return $this->ok( $payload );
     }
-
-    
-
-    
-
-
-
-
-
-
-
 
     public static function window_bounds( $now, $days = self::WINDOW_DAYS ) {
         $ts = strtotime( (string) $now . ' UTC' );
@@ -151,12 +122,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
     public static function iso8601( $mysql ) {
         if ( null === $mysql || '' === $mysql ) {
             return null;
@@ -165,25 +130,10 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         return false === $ts ? null : gmdate( 'Y-m-d\TH:i:s\Z', $ts );
     }
 
-    
-
-
-
-
-
     public static function is_tool_call( $tool_name ) {
         $tool_name = (string) $tool_name;
         return '' !== $tool_name && '_' !== $tool_name[0];
     }
-
-    
-
-
-
-
-
-
-
 
     public static function bucket_stats( array $audit_rows, array $change_rows, $audit_enabled, $change_enabled ) {
         $empty = array( 'current' => 0, 'previous' => 0 );
@@ -223,7 +173,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
                 ? array( 'current' => count( $tools['current'] ), 'previous' => count( $tools['previous'] ) )
                 : null,
             'failures'    => $audit_enabled ? $failures : null,
-            
             'successRate' => $audit_enabled
                 ? array(
                     'current'  => self::success_rate( $calls['current'], $failures['current'] ),
@@ -234,11 +183,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
     public static function success_rate( $calls, $failures ) {
         $calls = (int) $calls;
         if ( $calls <= 0 ) {
@@ -246,12 +190,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         }
         return (int) round( 100 * max( 0, $calls - (int) $failures ) / $calls );
     }
-
-    
-
-
-
-
 
     public static function changes_by_type( array $change_rows ) {
         $out = array();
@@ -268,13 +206,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         arsort( $out, SORT_NUMERIC );
         return $out;
     }
-
-    
-
-
-
-
-
 
     public static function build_recent( array $rows ): array {
         $out = array();
@@ -296,13 +227,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         return $out;
     }
 
-    
-
-
-
-
-
-
     public static function read_last_call( $stored ): ?array {
         if ( ! is_array( $stored ) || ! isset( $stored['id'], $stored['at'], $stored['auth_source'] ) ) {
             return null;
@@ -313,7 +237,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         if ( ! in_array( $stored['auth_source'], array( 'legacy', 'oauth' ), true ) ) {
             return null;
         }
-        
         $token_id = (int) ( $stored['token_id'] ?? 0 );
         if ( $token_id < 1 ) {
             return null;
@@ -328,10 +251,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
     public static function build_last_call( array $row ): ?array {
         $client = self::caller( $row );
         if ( null === $client ) {
@@ -344,15 +263,7 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
-
     public static function caller( array $row ): ?array {
-        
         $source = $row['auth_source'] ?? null;
         if ( ! in_array( $source, array( 'legacy', 'oauth' ), true ) || (int) ( $row['token_id'] ?? 0 ) < 1 ) {
             return null;
@@ -363,25 +274,10 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
-
     public static function connector_name( $site_title ) {
         $title = trim( (string) $site_title );
         return '' !== $title ? $title . ' WordPress' : 'WordPress';
     }
-
-    
-
-
-
-
-
-
 
     public static function merge_clients( array $legacy_rows, array $oauth_rows ) {
         $clients = array();
@@ -425,12 +321,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         return $clients;
     }
 
-    
-
-
-
-
-
     public static function derive_status( array $row, $post_status, $audit_status ) {
         if ( 'refused' === $audit_status ) {
             return 'blocked';
@@ -446,14 +336,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         }
         return 'done';
     }
-
-    
-
-
-
-
-
-
 
     public static function describe_change( array $row, $title = null ) {
         $type  = (string) ( $row['object_type'] ?? '' );
@@ -479,10 +361,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
                 return sprintf( \__( 'Changed %s', 'easy-mcp-ai' ), $object );
         }
     }
-
-    
-
-
 
     public static function object_type_label( $type ) {
         switch ( $type ) {
@@ -519,13 +397,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         }
     }
 
-    
-
-
-
-
-
-
     public static function build_attention( array $rows, callable $status_of ) {
         $count = 0;
         $since = null;
@@ -541,15 +412,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         }
         return array( 'count' => $count, 'since' => self::iso8601( $since ) );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function count_active_tools( array $tools_by_category, array $disabled, array $patterns ) {
         $total = 0;
@@ -567,12 +429,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         }
         return $total;
     }
-
-    
-
-    
-
-
 
     public function post_status_of( $object_id ) {
         if ( ! is_numeric( $object_id ) ) {
@@ -600,12 +456,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
             (array) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_allowed_tool_patterns', array() )
         );
     }
-
-    
-
-    
-
-
 
     private static function bucket_sql() {
         return "CASE WHEN created_at >= %s THEN 'current' ELSE 'previous' END";
@@ -645,7 +495,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
 
     private function recent_audit_rows() {
         $table = $this->db->prefix . 'easy_mcp_ai_audit_log';
-        
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- plugin-owned table.
         $rows = $this->db->get_results(
             $this->db->prepare(
@@ -657,10 +506,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
         return is_array( $rows ) ? $rows : array();
     }
-
-    
-
-
 
     private function attach_labels( array $rows ): array {
         return ( new \Easy_MCP_AI\Audit_Log_Repository() )->attach_labels( $rows );
@@ -723,15 +568,7 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-
-
-
-
     private function recent_changes( array $b ) {
-        
-        
         $rows = $this->repository->query(
             array( 'since' => $b['from'], 'until' => $b['to'] ),
             self::CHANGES_LIMIT,
@@ -786,14 +623,6 @@ class Dashboard_Controller extends Admin_Rest_Controller {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
 
     public static function client_label( array $row, array $token_names, array $client_names ) {
         if ( 'oauth' === ( $row['auth_source'] ?? '' ) || ! empty( $row['oauth_client_id'] ) ) {

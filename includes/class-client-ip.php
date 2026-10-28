@@ -5,51 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Client_IP {
-
-    
-
-
-
-
-
-
 
     const CONSTANT_TRUSTED_PROXIES = 'EASY_MCP_AI_TRUSTED_PROXIES';
 
-    
     const CONSTANT_HEADER = 'EASY_MCP_AI_CLIENT_IP_HEADER';
 
-    
     const DOC_URL = 'https://docs.easymcpai.com/trusted-proxies';
 
-    
     const HEADER_DEFAULT = 'X-Forwarded-For';
-
-    
-
-
 
     const HEADERS = array(
         'X-Forwarded-For'  => 'HTTP_X_FORWARDED_FOR',
@@ -57,42 +21,6 @@ class Client_IP {
         'X-Real-IP'        => 'HTTP_X_REAL_IP',
         'True-Client-IP'   => 'HTTP_TRUE_CLIENT_IP',
     );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function get(): string {
         $remote = isset( $_SERVER['REMOTE_ADDR'] )
@@ -103,23 +31,6 @@ class Client_IP {
         if ( ! empty( $trusted ) && '' !== $remote ) {
             $remote = self::resolve( $remote, $_SERVER, $trusted, self::header_name() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- resolve() validates every value it reads.
         }
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         $filtered = \apply_filters( 'easy_mcp_ai_client_ip', $remote );
 
@@ -132,20 +43,6 @@ class Client_IP {
 
         return '' !== $remote ? $remote : 'unknown';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function is_private_or_reserved( string $ip ): bool {
         if ( '' === $ip ) {
@@ -160,25 +57,6 @@ class Client_IP {
         return false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function unwrap_v4_mapped( string $ip ): string {
         if ( 0 !== stripos( $ip, '::ffff:' ) ) {
             return $ip;
@@ -186,36 +64,15 @@ class Client_IP {
 
         $candidate = substr( $ip, 7 );
 
-        
-        
-        
         return ( false !== filter_var( $candidate, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) )
             ? $candidate
             : $ip;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function describe( string $ip ): string {
         if ( '' === $ip ) {
             return 'Unknown';
         }
-        
-        
         if ( in_array( self::unwrap_v4_mapped( $ip ), array( '127.0.0.1', '::1' ), true ) ) {
             return 'Loopback (site is behind a same-host proxy)';
         }
@@ -228,38 +85,14 @@ class Client_IP {
         return 'Public address';
     }
 
-    
-
-    
-
-
-
-
-
-
-
     public static function trusted_proxies(): array {
         $raw     = Config::get( 'trusted_proxies' );
         $entries = self::parse_trusted_proxies( $raw );
-
-        
-
-
-
 
         $filtered = \apply_filters( 'easy_mcp_ai_trusted_proxies', $entries );
 
         return self::parse_trusted_proxies( is_array( $filtered ) ? $filtered : $entries );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function parse_trusted_proxies( $raw ): array {
         $entries = array();
@@ -288,24 +121,13 @@ class Client_IP {
         return array_values( array_unique( $entries ) );
     }
 
-    
-
-
-
-
     public static function header_name(): string {
         $raw  = Config::get( 'client_ip_header' );
         $name = self::sanitize_header_name( $raw );
 
-        
-
-
-
-
         return self::sanitize_header_name( \apply_filters( 'easy_mcp_ai_client_ip_header', $name ) );
     }
 
-    
     public static function sanitize_header_name( $raw ): string {
         if ( ! is_string( $raw ) ) {
             return self::HEADER_DEFAULT;
@@ -318,17 +140,6 @@ class Client_IP {
         return self::HEADER_DEFAULT;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function resolve( string $remote, array $server, array $trusted, string $header ): string {
         if ( empty( $trusted ) || ! self::matches_any( $remote, $trusted ) ) {
             return $remote;
@@ -340,18 +151,11 @@ class Client_IP {
         $value = \sanitize_text_field( \wp_unslash( $server[ $key ] ) );
 
         if ( self::HEADER_DEFAULT === $header ) {
-            
-            
-            
-            
-            
-            
-            
             $parts = array_reverse( array_map( 'trim', explode( ',', $value ) ) );
             foreach ( $parts as $candidate ) {
                 $candidate = trim( $candidate, '[]' );
                 if ( '' === $candidate || false === filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
-                    return $remote; 
+                    return $remote;
                 }
                 if ( ! self::matches_any( $candidate, $trusted ) ) {
                     return $candidate;
@@ -363,17 +167,6 @@ class Client_IP {
         $candidate = trim( $value, '[]' );
         return ( false !== filter_var( $candidate, FILTER_VALIDATE_IP ) ) ? $candidate : $remote;
     }
-
-    
-
-    
-
-
-
-
-
-
-
 
     public static function matches_any( string $ip, array $entries ): bool {
         $raw = trim( $ip );
@@ -388,13 +181,6 @@ class Client_IP {
                 if ( self::ip_in_cidr( $ip, $cidr ) ) {
                     return true;
                 }
-                
-                
-                
-                
-                
-                
-                
                 if ( $raw !== $ip && self::ip_in_cidr( $raw, $cidr ) ) {
                     return true;
                 }
@@ -404,7 +190,6 @@ class Client_IP {
             if ( false === filter_var( $normalized_entry, FILTER_VALIDATE_IP ) ) {
                 continue;
             }
-            
             if ( inet_pton( $ip ) === inet_pton( $normalized_entry ) ) {
                 return true;
             }
@@ -412,7 +197,6 @@ class Client_IP {
         return false;
     }
 
-    
     public static function is_ip_or_cidr( string $entry ): bool {
         if ( false === strpos( $entry, '/' ) ) {
             return false !== filter_var( $entry, FILTER_VALIDATE_IP );
@@ -433,11 +217,6 @@ class Client_IP {
         return false;
     }
 
-    
-
-
-
-
     public static function normalize_ip( string $ip ): string {
         if ( false === strpos( $ip, ':' ) ) {
             return $ip;
@@ -454,27 +233,6 @@ class Client_IP {
         }
         return $ip;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function normalize_cidr_entry( string $cidr ): string {
         if ( 1 !== substr_count( $cidr, '/' ) ) {
@@ -494,10 +252,6 @@ class Client_IP {
         }
         return $cidr;
     }
-
-    
-
-
 
     public static function ip_in_cidr( string $ip, string $cidr ): bool {
         if ( 1 !== substr_count( $cidr, '/' ) ) {

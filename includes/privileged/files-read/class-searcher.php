@@ -5,37 +5,19 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 final class Searcher {
 
-    
     const MAX_FILE_BYTES = 2097152;
     const MAX_FILES = 5000;
-    
     const BUDGET_SECONDS = 20.0;
-    
     const MAX_ENTRIES = 50000;
     const MAX_DEPTH = 20;
     const EXCERPT_CHARS = 200;
-    
     const EXCERPT_LEAD = 60;
-    
     const DELIMITER = "\x01";
 
-    
     private $resolver;
-    
     private $budget;
-    
     private $max_files;
 
     public function __construct( Resolver $resolver, float $budget = self::BUDGET_SECONDS, int $max_files = self::MAX_FILES ) {
@@ -43,15 +25,6 @@ final class Searcher {
         $this->budget    = $budget;
         $this->max_files = $max_files;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function pattern( string $text, bool $regex, bool $case_sensitive ): string {
         if ( '' === $text ) {
@@ -64,14 +37,6 @@ final class Searcher {
         }
         return $pattern;
     }
-
-    
-
-
-
-
-
-
 
     public function search( array $target, bool $is_dir, string $pattern, array $extensions, int $max_results ): array {
         $state = array(
@@ -89,7 +54,7 @@ final class Searcher {
                 'type'     => 'file',
                 'size'     => (int) @filesize( $target['abs'] ), // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
                 'modified' => '',
-                'readable' => true, 
+                'readable' => true,
             );
             if ( $this->wanted( $entry, $extensions, $state['skipped'] ) ) {
                 $this->scan_file( $target, $pattern, $max_results, $deadline, $state );
@@ -116,11 +81,6 @@ final class Searcher {
         return $state;
     }
 
-    
-
-
-
-
     private function wanted( array $entry, array $extensions, array &$skipped ): bool {
         $extension = strtolower( (string) pathinfo( $entry['path'], PATHINFO_EXTENSION ) );
         if ( ! $entry['readable'] || ! in_array( $extension, $extensions, true ) ) {
@@ -134,17 +94,10 @@ final class Searcher {
         return true;
     }
 
-    
-
-
-
-
-
     private function scan_file( array $file, string $pattern, int $max_results, float $deadline, array &$state ): bool {
         try {
             $text = Text_File::open( $file );
         } catch ( Refusal $e ) {
-            
             $state['skipped']['unreadable'] = ( $state['skipped']['unreadable'] ?? 0 ) + 1;
             return true;
         }
@@ -176,12 +129,6 @@ final class Searcher {
         return true;
     }
 
-    
-
-
-
-
-
     private function match_line( string $pattern, string $line, string $path, int $number, array &$state ): bool {
         $found = preg_match( $pattern, $line, $m, PREG_OFFSET_CAPTURE );
         if ( false === $found || PREG_NO_ERROR !== preg_last_error() ) {
@@ -198,7 +145,6 @@ final class Searcher {
         return true;
     }
 
-    
     public static function excerpt( string $line, int $byte_offset ): string {
         $byte_offset = max( 0, $byte_offset - ( strlen( $line ) - strlen( ltrim( $line ) ) ) );
         $line        = trim( $line );

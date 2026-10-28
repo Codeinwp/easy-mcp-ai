@@ -16,75 +16,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Adapter extends Db_Object_Command {
 
     protected $obj_type = 'post';
 
     protected $obj_fields = array( 'ID', 'post_title', 'post_name', 'post_date', 'post_status' );
 
-    
     const ROW_CAP = 1000;
 
-    
     const PAGE_SIZE = 100;
 
-    
     const BUILTIN_READ_BASES = array(
         'post'       => 'posts',
         'page'       => 'pages',
@@ -92,7 +33,6 @@ final class Post_Adapter extends Db_Object_Command {
         'wp_block'   => 'blocks',
     );
 
-    
     const TOOLS = array(
         'create' => array(
             'post' => 'wp_create_post',
@@ -112,12 +52,6 @@ final class Post_Adapter extends Db_Object_Command {
         ),
     );
 
-    
-
-
-
-
-
     const FIELDS = array(
         'post_title'     => array( 'title', 'title' ),
         'post_content'   => array( 'content', 'editor' ),
@@ -135,25 +69,18 @@ final class Post_Adapter extends Db_Object_Command {
         'page_template'  => array( 'template', '' ),
     );
 
-    
     const INT_FIELDS = array( 'post_author', 'post_parent', 'menu_order' );
 
-    
     const CLEARABLE = array(
         'post_title'   => 'title',
         'post_content' => 'content',
         'post_excerpt' => 'excerpt',
     );
 
-    
     const CONTROL_KEYS = array(
         'create' => array( 'post_type', 'post_category', 'tags_input', 'meta_input', 'porcelain' ),
         'update' => array( 'post_type', 'post_category', 'tags_input', 'meta_input', 'defer-term-counting' ),
     );
-
-    
-
-
 
     const LIST_VARS = array(
         'post_type'           => array( 'post', 'page', 'cpt', 'media' ),
@@ -191,7 +118,6 @@ final class Post_Adapter extends Db_Object_Command {
         'ignore_sticky_posts' => array( 'post', 'page', 'cpt', 'media' ),
     );
 
-    
     const LIST_ID_LISTS = array(
         'author__not_in'      => 'author_exclude',
         'post__in'            => 'include',
@@ -201,7 +127,6 @@ final class Post_Adapter extends Db_Object_Command {
         'tag__in'             => 'tags',
     );
 
-    
     const LIST_ORDERBY = array(
         'date'           => 'date',
         'post_date'      => 'date',
@@ -224,15 +149,9 @@ final class Post_Adapter extends Db_Object_Command {
         'meta_value_num' => 'meta_value_num',
     );
 
-    
     const MEDIA_ORDERBY = array( 'date', 'id', 'title', 'slug', 'modified', 'author', 'parent', 'include' );
 
-    
     const NOT_HOME_VARS = array( 's', 'year', 'monthnum', 'day' );
-
-    
-    
-    
 
     const MSG_PARAM_FRAME = "Parameter errors:\n%s";
 
@@ -316,11 +235,6 @@ final class Post_Adapter extends Db_Object_Command {
 
     const MSG_UNSAFE_CATEGORY = 'wp_cli_run refuses a category name in --post_category that has a control character or a non-ASCII byte: the term tables compare names without regard to accents or control characters, so such a name can match another category than the one named. Pass the category by ID instead (`term list category --fields=term_id,name,slug` prints the IDs).';
 
-    
-    
-    
-
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $post       = Fetchers::of( 'post' )->get_check_for(
@@ -341,14 +255,6 @@ final class Post_Adapter extends Db_Object_Command {
         $formatter = $this->get_formatter( $ctx, $assoc_args );
         $formatter->display_item( $post_arr );
     }
-
-    
-
-
-
-
-
-
 
     private static function raw_post( Context $ctx, object $post, string $command ): array {
         $base = self::read_base( (string) $post->post_type, $command );
@@ -381,11 +287,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $post_arr;
     }
 
-    
-    
-    
-
-    
     public function create( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         self::refuse_unknown_fields( $ctx, $assoc, 'create' );
@@ -427,11 +328,6 @@ final class Post_Adapter extends Db_Object_Command {
         );
     }
 
-    
-    
-    
-
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         $ids   = self::update_ids( $ctx, $inv->args );
@@ -471,15 +367,6 @@ final class Post_Adapter extends Db_Object_Command {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public function plan_update( Invocation $inv ): array {
         $assoc = $inv->assoc;
         if ( ! self::plannable_update( $assoc ) ) {
@@ -507,13 +394,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $plan;
     }
 
-    
-
-
-
-
-
-
     private static function plannable_update( array $assoc ): bool {
         if ( array_key_exists( 'post_type', $assoc ) || ( isset( $assoc['post_status'] ) && 'trash' === $assoc['post_status'] ) || ! $assoc ) {
             return false;
@@ -526,32 +406,14 @@ final class Post_Adapter extends Db_Object_Command {
         return true;
     }
 
-    
-
-
-
-
-
-
     public function preflight_update( Invocation $inv, Context $ctx ): void {
         self::update_ids( $ctx, $inv->args );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         Ids::require_all( $ctx, array_values( $inv->args ), 'a post ID' );
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $assoc_args = array_merge( array( 'force' => false ), $inv->assoc );
         $this->_delete(
@@ -572,11 +434,6 @@ final class Post_Adapter extends Db_Object_Command {
             }
         );
     }
-
-    
-
-
-
 
     public function plan_delete( Invocation $inv ): array {
         $force = ! empty( $inv->assoc['force'] );
@@ -600,11 +457,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $plan;
     }
 
-    
-    
-    
-
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $formatter  = $this->get_formatter( $ctx, $assoc_args );
@@ -625,8 +477,6 @@ final class Post_Adapter extends Db_Object_Command {
         list( $args, $paging ) = $mapped;
 
         if ( 'count' === $format && ! $formatter->field ) {
-            
-            
             $first = self::list_page( $ctx, $tool, $target[0], $args, $paging['start'], 1 );
             $formatter->display_items( array_fill( 0, self::rows_expected( $first['total'], $paging ), 0 ) );
             return;
@@ -641,14 +491,6 @@ final class Post_Adapter extends Db_Object_Command {
         $formatter->display_items( self::list_objects( $ctx, $rows, $query, 'post' === $type && $paging['page'] <= 1 ) );
     }
 
-    
-
-
-
-
-
-
-
     private static function list_query( array $assoc_args ): array {
         foreach ( array( 'date_query', 'tax_query', 'meta_query' ) as $key ) {
             if ( isset( $assoc_args[ $key ] ) && is_string( $assoc_args[ $key ] ) && self::is_json( $assoc_args[ $key ] ) ) {
@@ -657,13 +499,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return self::process_csv_arguments_to_arrays( $assoc_args );
     }
-
-    
-
-
-
-
-
 
     private static function list_post_type( Context $ctx, array $query ): string {
         if ( ! isset( $query['post_type'] ) ) {
@@ -675,12 +510,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $type;
     }
-
-    
-
-
-
-
 
     private static function display_ids( Context $ctx, Formatter $formatter, array $rows, string $format ): void {
         $ids = array();
@@ -694,15 +523,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function list_objects( Context $ctx, array $rows, array $query, bool $first_post_page ): array {
         if ( $first_post_page && empty( $query['ignore_sticky_posts'] ) && self::is_home( $query ) ) {
             $rows = self::move_sticky_posts( $ctx, $rows, $query );
@@ -714,18 +534,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $items;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     private static function media_takes_mime_list(): bool {
         $type       = \get_post_type_object( 'attachment' );
         $controller = is_object( $type ) && method_exists( $type, 'get_rest_controller' ) ? $type->get_rest_controller() : null;
@@ -733,21 +541,9 @@ final class Post_Adapter extends Db_Object_Command {
         return isset( $params['mime_type']['type'] ) && 'array' === $params['mime_type']['type'];
     }
 
-    
-
-
-
-
-
     public static function list_target( string $post_type, string $command ) {
         return 'attachment' === $post_type ? array( 'media', 'media' ) : self::write_target( $post_type, $command );
     }
-
-    
-
-
-
-
 
     public static function write_target( string $post_type, string $command ) {
         if ( 'post' === $post_type ) {
@@ -767,13 +563,6 @@ final class Post_Adapter extends Db_Object_Command {
         return is_array( $base ) ? array( 'cpt', $base[0] ) : $base;
     }
 
-    
-
-
-
-
-
-
     public static function read_base( string $post_type, string $command ) {
         if ( isset( self::BUILTIN_READ_BASES[ $post_type ] ) ) {
             return array( self::BUILTIN_READ_BASES[ $post_type ] );
@@ -787,15 +576,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return self::custom_rest_base( $post_type, $object, $command );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function custom_rest_base( string $post_type, object $object, string $command ) {
         $found = Post_Type_Rest_Base::inspect( $post_type, $object );
@@ -811,20 +591,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return array( $found['base'] );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
 
     public static function write_call( string $mode, string $type, array $target, array $assoc, ?int $post_id ) {
         list( $kind, $base ) = $target;
@@ -851,12 +617,6 @@ final class Post_Adapter extends Db_Object_Command {
         return is_array( $args ) ? array( $tool, $args ) : $args;
     }
 
-    
-
-
-
-
-
     private static function target_arguments( string $mode, string $kind, string $base, ?int $post_id ): array {
         $args = array();
         if ( 'cpt' === $kind ) {
@@ -873,12 +633,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
     private static function field_refusals( string $mode, string $type, string $kind, string $tool, array $assoc ): ?string {
         foreach ( self::FIELDS as $field => $spec ) {
             if ( ! array_key_exists( $field, $assoc ) ) {
@@ -891,14 +645,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private static function field_refusal( string $mode, string $type, string $kind, string $tool, string $field, $value ): ?string {
         if ( ! is_string( $value ) ) {
@@ -920,14 +666,6 @@ final class Post_Adapter extends Db_Object_Command {
         return null;
     }
 
-    
-
-
-
-
-
-
-
     private static function empty_refusal( string $mode, string $field, string $tool ): ?string {
         if ( ( 'update' === $mode && isset( self::CLEARABLE[ $field ] ) ) || 'post_password' === $field ) {
             return null;
@@ -935,19 +673,8 @@ final class Post_Adapter extends Db_Object_Command {
         if ( 'update' === $mode || in_array( $field, self::INT_FIELDS, true ) ) {
             return sprintf( self::MSG_EMPTY_KEEP, $field, $tool );
         }
-        
-        
-        
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private static function field_values( string $mode, array $assoc ): array {
         $args  = array();
@@ -973,13 +700,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
-
     private static function term_arguments( string $mode, string $type, string $kind, string $tool, array $assoc ) {
         $args = array();
         if ( array_key_exists( 'post_category', $assoc ) ) {
@@ -998,14 +718,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
-
-
     private static function category_arguments( string $type, string $kind, $value ) {
         $categories = self::category_ids( $value );
         if ( is_string( $categories ) ) {
@@ -1020,14 +732,6 @@ final class Post_Adapter extends Db_Object_Command {
         return sprintf( self::MSG_NO_CATEGORIES, $type );
     }
 
-    
-
-
-
-
-
-
-
     private static function tag_arguments( string $mode, string $type, string $kind, string $tool, $value ) {
         if ( 'post' !== $kind ) {
             return sprintf( self::MSG_TAGS_ONLY_POSTS, $tool, $type );
@@ -1041,13 +745,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return 'update' === $mode ? array( 'tags' => array() ) : array();
     }
-
-    
-
-
-
-
-
 
     private static function meta_arguments( string $type, string $kind, string $tool, array $assoc ) {
         if ( ! array_key_exists( 'meta_input', $assoc ) ) {
@@ -1069,13 +766,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $meta ? array( 'meta' => $meta ) : array();
     }
 
-    
-
-
-
-
-
-
     private static function meta_object( $value ): ?array {
         $meta = is_string( $value ) && self::is_json( $value ) ? json_decode( $value, true ) : null;
         if ( ! is_array( $meta ) || ( $meta && array_keys( $meta ) === range( 0, count( $meta ) - 1 ) ) ) {
@@ -1083,14 +773,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $meta;
     }
-
-    
-
-
-
-
-
-
 
     private static function create_title( string $type, array $args ) {
         $title = isset( $args['title'] ) ? (string) $args['title'] : '';
@@ -1103,9 +785,6 @@ final class Post_Adapter extends Db_Object_Command {
         $args['allow_empty_title'] = true;
         return $args;
     }
-
-    
-
 
     private static function field_support( string $field, string $support, string $kind, string $type, string $tool ): ?string {
         if ( 'post' === $kind && in_array( $field, array( 'post_parent', 'menu_order' ), true ) ) {
@@ -1121,18 +800,9 @@ final class Post_Adapter extends Db_Object_Command {
         return \post_type_supports( $type, $support ) ? null : sprintf( self::MSG_NO_SUPPORT, $field, $type, $support );
     }
 
-    
-
-
-
-
-
-
-
     private static function update_call( int $post_id, array $fields, string $command, ?Context $ctx ): array {
         $post = $post_id > 0 ? \get_post( $post_id ) : null;
         if ( ! $post ) {
-            
             return array( 'response' => Db_Object_Command::missing( 'Invalid post ID.' ) );
         }
         $type   = (string) $post->post_type;
@@ -1148,23 +818,9 @@ final class Post_Adapter extends Db_Object_Command {
         return is_array( $call ) ? array( 'call' => $call ) : array( 'response' => Db_Object_Command::failure( $call ) );
     }
 
-    
-
-
-
-
-
     private static function delete_call( string $post_id, bool $force, string $command, ?Context $ctx ): array {
         $post = \get_post( (int) $post_id );
         if ( ! $post ) {
-            
-            
-            
-            
-            
-            
-            
-            
             return Db_Object_Command::missing( $force ? "Failed deleting post {$post_id}." : sprintf( Fetchers::MESSAGES['post'], $post_id ) );
         }
         $status    = (string) $post->post_status;
@@ -1191,17 +847,6 @@ final class Post_Adapter extends Db_Object_Command {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function delete_tool_call( object $post, bool $force_or_trashed, string $command ) {
         $permanent = $force_or_trashed || ( defined( 'EMPTY_TRASH_DAYS' ) && ! EMPTY_TRASH_DAYS );
         $id        = (int) $post->ID;
@@ -1225,24 +870,9 @@ final class Post_Adapter extends Db_Object_Command {
         return array( 'wp_delete_cpt_item', array( 'rest_base' => $target[1], 'item_id' => $id, 'force' => true ) );
     }
 
-    
-
-
-
-
-
-
     private static function delete_action( bool $force, string $status, string $post_type ): string {
         return $force || 'trash' === $status || 'revision' === $post_type ? 'Deleted' : 'Trashed';
     }
-
-    
-
-
-
-
-
-
 
     private static function report_saved( Context $ctx, array $call, array $payload, int $id, array $assoc ): void {
         $creating = 0 === strpos( $call[0], 'wp_create_' );
@@ -1254,18 +884,9 @@ final class Post_Adapter extends Db_Object_Command {
         }
     }
 
-    
     private static function force_draft_on(): bool {
         return class_exists( '\\Easy_MCP_AI\\Config' ) && (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_force_draft_on_create', false );
     }
-
-    
-
-
-
-
-
-
 
     private static function update_ids( Context $ctx, array $args ): array {
         $ids = array();
@@ -1274,22 +895,11 @@ final class Post_Adapter extends Db_Object_Command {
                 Read_Value::refuse_stdin_marker( $ctx->out, (string) $arg, 'file' );
                 $ctx->out->error( sprintf( self::MSG_UPDATE_FILE, (string) $arg ) );
             }
-            
-            
             Ids::require_digits( $ctx, $arg, 'a post ID' );
             $ids[] = (string) $arg;
         }
         return $ids;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function unsafe_term_names( array $assoc ): ?string {
         if ( isset( $assoc['tags_input'] ) && is_string( $assoc['tags_input'] ) && self::has_unsafe_name( $assoc['tags_input'] ) ) {
@@ -1301,10 +911,6 @@ final class Post_Adapter extends Db_Object_Command {
         return null;
     }
 
-    
-
-
-
     private static function has_unsafe_name( string $list ): bool {
         foreach ( explode( ',', $list ) as $name ) {
             if ( Meta_Command::unsafe_key( trim( $name ) ) ) {
@@ -1313,11 +919,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return false;
     }
-
-    
-
-
-
 
     private static function post_type_argument( Context $ctx, array $assoc ): string {
         if ( ! array_key_exists( 'post_type', $assoc ) ) {
@@ -1328,14 +929,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return (string) $assoc['post_type'];
     }
-
-    
-
-
-
-
-
-
 
     private static function refuse_unknown_fields( Context $ctx, array $assoc, string $mode ): void {
         $errors = array();
@@ -1350,14 +943,6 @@ final class Post_Adapter extends Db_Object_Command {
             $ctx->out->error( sprintf( self::MSG_PARAM_FRAME, implode( "\n", $errors ) ) );
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function category_ids( $arg ) {
         if ( ! is_string( $arg ) ) {
@@ -1380,14 +965,11 @@ final class Post_Adapter extends Db_Object_Command {
             $ids[] = $id;
         }
         if ( ! $ids ) {
-            
-            
             return sprintf( self::MSG_NEEDS_VALUE, 'post_category', 'the default category' );
         }
         return $ids;
     }
 
-    
     private static function type_has_rest_taxonomy( string $type, string $taxonomy ): bool {
         if ( ! in_array( $taxonomy, (array) \get_object_taxonomies( $type, 'names' ), true ) ) {
             return false;
@@ -1395,13 +977,6 @@ final class Post_Adapter extends Db_Object_Command {
         $object = \get_taxonomy( $taxonomy );
         return is_object( $object ) && ! empty( $object->show_in_rest );
     }
-
-    
-
-
-
-
-
 
     private static function rest_meta_keys( string $type ): array {
         $keys = array();
@@ -1418,19 +993,9 @@ final class Post_Adapter extends Db_Object_Command {
         return $keys;
     }
 
-    
-
-
-
-
     public static function is_rest_meta_key( string $type, string $key ): bool {
         return isset( self::rest_meta_keys( $type )[ $key ] );
     }
-
-    
-
-
-
 
     private static function caller_may_use( string $tool ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' ) ) {
@@ -1439,7 +1004,6 @@ final class Post_Adapter extends Db_Object_Command {
         return false !== \Easy_MCP_AI\MCP\Server::current_call_may_use( $tool );
     }
 
-    
     private static function is_json( string $argument ): bool {
         if ( '' === $argument || ! in_array( $argument[0], array( '{', '[' ), true ) ) {
             return false;
@@ -1447,18 +1011,6 @@ final class Post_Adapter extends Db_Object_Command {
         json_decode( $argument, true );
         return JSON_ERROR_NONE === json_last_error();
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
 
     private static function list_arguments( array $query, array $target, string $tool ) {
         $refusal = self::list_var_refusal( $query, $target[0], $tool );
@@ -1475,12 +1027,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return array( $args, $paging );
     }
-
-    
-
-
-
-
 
     private static function list_var_refusal( array $query, string $kind, string $tool ): ?string {
         if ( array_key_exists( 'name', $query ) ) {
@@ -1500,14 +1046,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $errors ? sprintf( self::MSG_PARAM_FRAME, implode( "\n", $errors ) ) : null;
     }
-
-    
-
-
-
-
-
-
 
     private static function list_filter_arguments( array $query, array $target ) {
         $args = array(
@@ -1554,20 +1092,6 @@ final class Post_Adapter extends Db_Object_Command {
         return array_merge( $args, $status, $author, $ids, $names, $values, $clauses, $order );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function media_arguments( array $query, array $values, array $order ) {
         if ( isset( $order['orderby'] ) && ! in_array( $order['orderby'], self::MEDIA_ORDERBY, true ) ) {
             return sprintf( self::MSG_LIST_VALUE, 'orderby', self::text( $query['orderby'] ), self::MSG_MEDIA_ORDERBY );
@@ -1578,9 +1102,6 @@ final class Post_Adapter extends Db_Object_Command {
         if ( '' === trim( (string) $values['post_mime_type'] ) ) {
             return array();
         }
-        
-        
-        
         $types = array_map( 'trim', explode( ',', (string) $values['post_mime_type'] ) );
         if ( in_array( '', $types, true ) ) {
             return sprintf( self::MSG_LIST_VALUE, 'post_mime_type', self::text( $query['post_mime_type'] ), self::MSG_MEDIA_MIME_EMPTY );
@@ -1597,13 +1118,6 @@ final class Post_Adapter extends Db_Object_Command {
         return array( 'mime_type' => implode( ',', $types ) );
     }
 
-    
-
-
-
-
-
-
     private static function list_status_arguments( array $query, string $kind ) {
         $status = isset( $query['post_status'] ) ? $query['post_status'] : 'any';
         if ( ! is_string( $status ) || '' === trim( $status ) ) {
@@ -1619,13 +1133,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return array( 'status' => implode( ',', $statuses ) );
     }
-
-    
-
-
-
-
-
 
     private static function list_author_arguments( array $query ) {
         $args = array();
@@ -1647,13 +1154,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
-
     private static function list_author( array $query ) {
         $author = null;
         if ( isset( $query['author'] ) ) {
@@ -1671,13 +1171,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $author;
     }
-
-    
-
-
-
-
-
 
     private static function list_id_arguments( array $query ) {
         $args = array();
@@ -1702,12 +1195,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
     private static function list_name_parent_arguments( array $query ) {
         $args = array();
         if ( isset( $query['post_name__in'] ) ) {
@@ -1725,14 +1212,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $args;
     }
-
-    
-
-
-
-
-
-
 
     private static function list_value_arguments( array $query ) {
         $args = array();
@@ -1755,13 +1234,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
-
     private static function list_clause_arguments( array $query ) {
         $args = array();
         if ( array_key_exists( 'has_password', $query ) ) {
@@ -1781,13 +1253,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $args;
     }
 
-    
-
-
-
-
-
-
     private static function list_order_arguments( array $query ) {
         $args = array();
         if ( isset( $query['orderby'] ) ) {
@@ -1806,14 +1271,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $args;
     }
-
-    
-
-
-
-
-
-
 
     private static function list_paging( array $query ) {
         $limit = self::list_limit( $query );
@@ -1839,14 +1296,6 @@ final class Post_Adapter extends Db_Object_Command {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function list_limit( array $query ) {
         if ( ! array_key_exists( 'posts_per_page', $query ) ) {
             return -1;
@@ -1862,13 +1311,6 @@ final class Post_Adapter extends Db_Object_Command {
         return sprintf( self::MSG_LIST_VALUE, 'posts_per_page', self::text( $ppp ), 'it takes a whole number, or -1 for every post' );
     }
 
-    
-
-
-
-
-
-
     private static function list_unpaged( array $query ) {
         foreach ( array( 'paged', 'offset' ) as $var ) {
             if ( array_key_exists( $var, $query ) ) {
@@ -1882,13 +1324,6 @@ final class Post_Adapter extends Db_Object_Command {
         );
     }
 
-    
-
-
-
-
-
-
     private static function list_whole( array $query, string $var, string $why ) {
         if ( ! array_key_exists( $var, $query ) ) {
             return null;
@@ -1898,14 +1333,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return (int) $query[ $var ];
     }
-
-    
-
-
-
-
-
-
 
     private static function list_page( Context $ctx, string $tool, string $kind, array $args, int $offset, int $per_page ): array {
         $args['per_page'] = $per_page;
@@ -1922,14 +1349,6 @@ final class Post_Adapter extends Db_Object_Command {
             'total' => isset( $result['payload']['total'] ) ? (int) $result['payload']['total'] : count( $rows ),
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function page_rows( Context $ctx, string $tool, string $kind, array $payload ): array {
         $list_key = array(
@@ -1954,24 +1373,6 @@ final class Post_Adapter extends Db_Object_Command {
         return $rows;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function list_rows( Context $ctx, string $tool, string $kind, array $args, array $paging ): array {
         $asked    = -1 === $paging['limit'] ? self::PAGE_SIZE : max( 1, min( self::PAGE_SIZE, $paging['limit'] ) );
         $first    = self::list_page( $ctx, $tool, $kind, $args, $paging['start'], $asked );
@@ -1988,23 +1389,10 @@ final class Post_Adapter extends Db_Object_Command {
         return $rows;
     }
 
-    
-
-
-
-
     private static function rows_expected( int $total, array $paging ): int {
         $left = max( 0, $total - $paging['start'] );
         return -1 === $paging['limit'] ? $left : min( $paging['limit'], $left );
     }
-
-    
-
-
-
-
-
-
 
     private static function is_home( array $query ): bool {
         foreach ( self::NOT_HOME_VARS as $var ) {
@@ -2023,12 +1411,6 @@ final class Post_Adapter extends Db_Object_Command {
         return ! self::has_tax_clause( $query );
     }
 
-    
-
-
-
-
-
     private static function has_tax_clause( array $query ): bool {
         if ( ! isset( $query['tax_query'] ) || ! is_array( $query['tax_query'] ) ) {
             return false;
@@ -2044,16 +1426,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function move_sticky_posts( Context $ctx, array $rows, array $query ): array {
         $sticky_posts = \get_option( 'sticky_posts' );
@@ -2097,16 +1469,6 @@ final class Post_Adapter extends Db_Object_Command {
         return array_values( $rows );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function id_list( $value, bool $zero = false ): ?array {
         if ( is_string( $value ) ) {
             $value = explode( ',', $value );
@@ -2124,12 +1486,6 @@ final class Post_Adapter extends Db_Object_Command {
         }
         return $ids;
     }
-
-    
-
-
-
-
 
     private static function text( $value ): string {
         if ( is_string( $value ) ) {

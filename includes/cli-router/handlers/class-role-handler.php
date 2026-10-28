@@ -12,76 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Role_Handler extends Command_Handler {
 
-    
     const DEFAULT_ROLES = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
 
-    
     const FIELDS = array( 'name', 'role' );
 
-    
     const GATE_CAPS = array( 'manage_options', 'promote_users' );
 
-    
     const NETWORK_CAPS = Capability_Grants::NETWORK_CAPS;
 
-    
     const NOT_CAPTURED = 'Role and capability changes are recorded only as an update of the roles option ({prefix}user_roles), and only while change history records every option (not in allowlist mode); wp_history_apply cannot restore role definitions.';
-
-    
-
-
-
-
 
     const MSG_NOT_HELD       = "wp_cli_run grants a role only capabilities you have yourself, and user %d does not have '%s'.";
     const MSG_NOT_HELD_DENY  = "wp_cli_run lifts a denial only for capabilities you have: removing '%s' from '%s' lets its holders gain it, and user %d does not have it.";
@@ -96,11 +37,6 @@ class Role_Handler extends Command_Handler {
     const MSG_CLONE_REFUSED  = "Cloning '%s' refused: %s%s";
     const MSG_RESET_REFUSED  = "Resetting '%s' refused: %s%s";
 
-    
-    
-    
-
-    
     public function list_roles( Invocation $inv, Context $ctx ): void {
         $output_roles = array();
         foreach ( (array) self::roles()->roles as $key => $role ) {
@@ -116,12 +52,6 @@ class Role_Handler extends Command_Handler {
         $this->formatter( $ctx, $assoc, self::FIELDS )->display_items( $output_roles );
     }
 
-    
-
-
-
-
-
     public function exists( Invocation $inv, Context $ctx ): void {
         $key = $inv->args[0];
         if ( ! in_array( $key, array_keys( (array) self::roles()->roles ), true ) ) {
@@ -132,11 +62,6 @@ class Role_Handler extends Command_Handler {
         $ctx->out->success( "Role with ID '{$key}' exists." );
     }
 
-    
-    
-    
-
-    
     public function create( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED );
         $roles = self::roles();
@@ -152,8 +77,6 @@ class Role_Handler extends Command_Handler {
         $clone        = $inv->get( 'clone' );
         $capabilities = self::clone_source_caps( $roles, $clone, $ctx );
 
-        
-        
         if ( isset( $roles->roles[ $role_key ] ) ) {
             $ctx->out->error( "Role couldn't be created." );
         }
@@ -172,14 +95,6 @@ class Role_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function clone_source_caps( object $roles, $clone, Context $ctx ): ?array {
         if ( empty( $clone ) ) {
             return null;
@@ -190,16 +105,6 @@ class Role_Handler extends Command_Handler {
         }
         return (array) $role_obj->capabilities;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function cloned_caps( array $capabilities, string $clone, Context $ctx ): array {
         $caps     = array();
@@ -225,12 +130,6 @@ class Role_Handler extends Command_Handler {
         return $caps;
     }
 
-    
-
-
-
-
-
     public function describe_create( Invocation $inv ): array {
         $roles = self::roles();
         $key   = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
@@ -253,13 +152,6 @@ class Role_Handler extends Command_Handler {
         return array( sprintf( "Role '%s': does not exist → created as '%s' with the capabilities of '%s' (%d granted, %d denied)", $key, $name, (string) $clone, $granted, $denied ) );
     }
 
-    
-
-
-
-
-
-
     private static function count_grants( array $capabilities ): array {
         $granted = 0;
         $denied  = 0;
@@ -272,15 +164,6 @@ class Role_Handler extends Command_Handler {
         return array( $granted, $denied );
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         $ctx->require_cap( 'manage_options' );
         if ( isset( $inv->args[0] ) && 'administrator' === $inv->args[0] ) {
@@ -291,7 +174,6 @@ class Role_Handler extends Command_Handler {
         }
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED );
         $roles = self::roles();
@@ -306,9 +188,6 @@ class Role_Handler extends Command_Handler {
         if ( function_exists( 'get_option' ) && (string) \get_option( 'default_role' ) === (string) $role_key ) {
             $ctx->out->error( sprintf( self::MSG_DEFAULT_ROLE, $role_key ) );
         }
-        
-        
-        
         foreach ( (array) $roles->roles[ $role_key ]['capabilities'] as $cap => $grant ) {
             if ( ! $grant && ! self::caller_holds( (string) $cap ) ) {
                 $ctx->out->error( sprintf( self::MSG_DELETE_DENY, $role_key, $cap, $ctx->user_id() ) );
@@ -318,8 +197,6 @@ class Role_Handler extends Command_Handler {
 
         $roles->remove_role( $role_key );
 
-        
-        
         if ( ! isset( $roles->roles[ $role_key ] ) ) {
             $ctx->mark_changed();
             $ctx->out->success( "Role with key '{$role_key}' deleted." );
@@ -328,7 +205,6 @@ class Role_Handler extends Command_Handler {
         }
     }
 
-    
     public function describe_delete( Invocation $inv ): array {
         $roles = self::roles();
         $key   = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
@@ -338,16 +214,6 @@ class Role_Handler extends Command_Handler {
         $role = $roles->roles[ $key ];
         return array( sprintf( "Role '%s' ('%s', %d capabilities): exists → deleted; users who hold it keep the role name in their record and lose its capabilities", $key, (string) $role['name'], count( (array) $role['capabilities'] ) ) );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function reset( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_CAPTURED );
@@ -379,17 +245,6 @@ class Role_Handler extends Command_Handler {
         self::report_reset( $targets, $plan, $ctx );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function reset_targets( array $args, bool $all, array $all_roles, Context $ctx ): array {
         if ( $all ) {
             $args               = array_merge( $args, self::DEFAULT_ROLES );
@@ -402,18 +257,11 @@ class Role_Handler extends Command_Handler {
         }
 
         $targets = self::default_role_targets( $args );
-        
         if ( ! $all && ! $targets ) {
             $ctx->out->error( 'Must specify a default role to reset.' );
         }
         return $targets;
     }
-
-    
-
-
-
-
 
     private static function default_role_targets( array $args ): array {
         $targets = array();
@@ -424,13 +272,6 @@ class Role_Handler extends Command_Handler {
         }
         return array_values( array_unique( $targets ) );
     }
-
-    
-
-
-
-
-
 
     private static function report_reset( array $targets, array $plan, Context $ctx ): void {
         foreach ( $targets as $role_key ) {
@@ -459,7 +300,6 @@ class Role_Handler extends Command_Handler {
         }
     }
 
-    
     public function describe_reset( Invocation $inv ): array {
         $roles = self::roles();
         $args  = array_values( $inv->args );
@@ -486,18 +326,6 @@ class Role_Handler extends Command_Handler {
         }
         return $lines;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function reset_plan( object $roles, array $targets, ?Context $ctx ): array {
         $defaults = self::default_roles();
@@ -536,14 +364,6 @@ class Role_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function default_with_plugin_caps( array $default, ?array $before ): array {
         $after = $default;
         $kept  = array();
@@ -556,30 +376,10 @@ class Role_Handler extends Command_Handler {
         return array( $after, $kept );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function same_definition( ?array $before, array $after ): bool {
         // phpcs:ignore Universal.Operators.StrictComparisons -- loose, as WP-CLI's `!=`.
         return null !== $before && $before['name'] == $after['name'] && (array) $before['capabilities'] == $after['capabilities'];
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function refuse_reset_grants( object $roles, array $changes, Context $ctx ): void {
         foreach ( $changes as $role_key => $after ) {
@@ -601,20 +401,9 @@ class Role_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function preflight_write( Invocation $inv, Context $ctx ): void {
         $ctx->require_cap( 'manage_options' );
     }
-
-    
-
-
-
-
 
     protected static function roles(): object {
         if ( isset( $GLOBALS['wp_roles'] ) && is_object( $GLOBALS['wp_roles'] ) ) {
@@ -623,28 +412,15 @@ class Role_Handler extends Command_Handler {
         return \wp_roles();
     }
 
-    
-
-
-
-
     protected static function persistence_check( Context $ctx ): void {
         if ( ! self::roles()->use_db ) {
             $ctx->out->error( 'Role definitions are not persistent.' );
         }
     }
 
-    
     protected static function is_plugin_capability( string $cap ): bool {
         return 1 === preg_match( Self_Protection::NAMESPACE_PATTERN, strtolower( trim( $cap ) ) );
     }
-
-    
-
-
-
-
-
 
     protected static function grant_refusal( string $cap, Context $ctx ): ?string {
         $protected = Self_Protection::capability( $cap );
@@ -661,19 +437,9 @@ class Role_Handler extends Command_Handler {
         return null;
     }
 
-    
     protected static function caller_holds( string $cap ): bool {
         return Capability_Grants::holds( $cap );
     }
-
-    
-
-
-
-
-
-
-
 
     protected static function default_roles(): array {
         static $cache = array();
@@ -713,11 +479,6 @@ class Role_Handler extends Command_Handler {
         return $defaults;
     }
 
-    
-
-
-
-
     protected static function administrator_core_caps(): array {
         $defaults = self::default_roles();
         $caps     = array();
@@ -728,17 +489,6 @@ class Role_Handler extends Command_Handler {
         }
         return $caps;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     protected static function gate_caps_lost( array $changes ): array {
         if ( \is_multisite() && \is_super_admin() ) {
@@ -758,24 +508,12 @@ class Role_Handler extends Command_Handler {
         return $lost;
     }
 
-    
-
-
-
     protected static function refuse_gate_loss( Context $ctx, array $changes ): void {
         $lost = self::gate_caps_lost( $changes );
         if ( $lost ) {
             $ctx->out->error( sprintf( self::MSG_OWN_GATE, implode( ' and ', $lost ), $ctx->user_id() ) );
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function role_derived_caps( array $user_caps, array $roles, array $changes ): array {
         $allcaps = array();
@@ -790,15 +528,6 @@ class Role_Handler extends Command_Handler {
         }
         return array_merge( $allcaps, $user_caps );
     }
-
-    
-
-
-
-
-
-
-
 
     protected static function write_role( object $roles, string $key, string $name, array $caps ): ?object {
         $use_db        = $roles->use_db;
@@ -819,14 +548,6 @@ class Role_Handler extends Command_Handler {
         return $role;
     }
 
-    
-
-
-
-
-
-
-
     protected static function write_roles( object $roles, array $final ): void {
         \update_option( $roles->role_key, $final, true );
         $roles->roles        = $final;
@@ -837,13 +558,6 @@ class Role_Handler extends Command_Handler {
             $roles->role_names[ $key ]   = $role['name'];
         }
     }
-
-    
-
-
-
-
-
 
     protected static function batched( object $roles, callable $fn ): bool {
         $use_db        = $roles->use_db;

@@ -7,21 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Type_Tool_Hint {
 
-    
     const TOOLS = array(
         'post'              => array(
             'get'    => 'wp_get_post',
@@ -54,7 +41,6 @@ final class Post_Type_Tool_Hint {
         ),
     );
 
-    
     const ARGUMENTS = array(
         'post'              => 'post_id %1$d',
         'page'              => 'page_id %1$d',
@@ -64,30 +50,17 @@ final class Post_Type_Tool_Hint {
         'product_variation' => 'product_id %2$d, id %1$d',
     );
 
-    
     const CPT_TOOLS = array(
         'get'    => 'wp_get_cpt_item',
         'update' => 'wp_update_cpt_item',
         'delete' => 'wp_delete_cpt_item',
     );
 
-    
     const VERBS = array(
         'get'    => 'read',
         'update' => 'update',
         'delete' => 'delete',
     );
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function other_type( object $post, string $expected_type, string $verb, string $tool ): string {
         $id   = (int) $post->ID;
@@ -100,28 +73,12 @@ final class Post_Type_Tool_Hint {
         return sprintf( 'ID %1$d has post type "%2$s", not "%3$s", so %4$s cannot %5$s it.', $id, $type, $expected_type, $tool, self::VERBS[ $verb ] );
     }
 
-    
-
-
-
-
-
-
     public static function no_route( string $value ): string {
         if ( self::may_use( 'wp_get_post_types' ) ) {
             return sprintf( 'Pass a rest_base or post type slug from wp_get_post_types: no route answers this request at /wp/v2/%s', $value );
         }
         return sprintf( 'Pass the rest_base or slug of a post type shown in the REST API: no route answers this request at /wp/v2/%s', $value );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function not_a_post_type( string $value ): string {
         if ( self::may_use( 'wp_get_post_types' ) ) {
@@ -130,36 +87,13 @@ final class Post_Type_Tool_Hint {
         return sprintf( 'Pass the rest_base or slug of a post type shown in the REST API: this tool reaches posts only, and no post type is served at /wp/v2/%s', $value );
     }
 
-    
-
-
-
-
-
-
-
     public static function other_controller( string $path ): string {
         return sprintf( 'This tool reaches posts only, and on this site another REST controller, not the post type\'s, answers this request: %s', $path );
     }
 
-    
-
-
-
-
-
-
     public static function may_use( string $tool ): bool {
         return class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) && true === \Easy_MCP_AI\MCP\Server::current_call_may_use( $tool );
     }
-
-    
-
-
-
-
-
-
 
     private static function candidates( object $post, string $verb ): array {
         $type   = (string) $post->post_type;
@@ -179,19 +113,6 @@ final class Post_Type_Tool_Hint {
         return $found;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function revision_route_exists( object $revision, string $verb ): bool {
         $parent = isset( $revision->post_parent ) ? \get_post( (int) $revision->post_parent ) : null;
         $object = is_object( $parent ) ? \get_post_type_object( (string) $parent->post_type ) : null;
@@ -199,7 +120,6 @@ final class Post_Type_Tool_Hint {
         if ( empty( $object->show_in_rest ) || ! is_object( $server ) ) {
             return false;
         }
-        
         $base = ! empty( $object->rest_base ) ? (string) $object->rest_base : (string) $parent->post_type;
         try {
             Route_Gate::resolve( $server, 'delete' === $verb ? 'DELETE' : 'GET', sprintf( '/wp/v2/%s/%d/revisions/%d', $base, (int) $parent->ID, (int) $revision->ID ) );

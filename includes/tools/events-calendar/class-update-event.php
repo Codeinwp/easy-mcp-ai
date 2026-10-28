@@ -9,11 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Event extends Base_Tool {
 
-    
-
-
-
-
     const FIELDS = array(
         'title'              => 'title',
         'start_date'         => 'start_date',
@@ -144,17 +139,6 @@ class Update_Event extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public function sent_fields( array $arguments ) {
         $sent = array();
         foreach ( self::FIELDS as $argument => $rest_name ) {
@@ -172,16 +156,11 @@ class Update_Event extends Base_Tool {
 
         $this->validate_required( $arguments, array( 'id' ) );
         $id = $this->parse_required_id( $arguments['id'], 'id' );
-        
-        
-        
         if ( ! current_user_can( 'edit_post', $id ) ) {
             throw new \RuntimeException( 'You are not allowed to edit this event, or it does not exist.' );
         }
         $params = $this->rest_params( $arguments );
 
-        
-        
         $this->require_compat_shim( 'tec-event-update-fill', $arguments );
 
         $data = $this->rest_request( 'PUT', '/tribe/events/v1/events/' . $id, $params );
@@ -195,12 +174,6 @@ class Update_Event extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private function rest_params( array $arguments ) {
         $params = array();
 
@@ -209,8 +182,6 @@ class Update_Event extends Base_Tool {
                 $params[ $field ] = sanitize_text_field( $arguments[ $field ] );
             }
         }
-        
-        
         if ( isset( $arguments['description'] ) ) {
             $params['description'] = (string) $arguments['description'];
         }
@@ -224,9 +195,6 @@ class Update_Event extends Base_Tool {
         }
         if ( isset( $arguments['organizer'] ) ) {
             $organizers = $this->organizer_ids( $arguments['organizer'] );
-            
-            
-            
             if ( $organizers ) {
                 $params['organizer'] = $organizers;
             }
@@ -236,22 +204,13 @@ class Update_Event extends Base_Tool {
         }
         if ( isset( $arguments['image'] ) ) {
             $image = $this->image_id( $arguments['image'] );
-            
             if ( $image ) {
-                
                 $params['image'] = (string) $image;
             }
         }
 
         return $params;
     }
-
-    
-
-
-
-
-
 
     private function organizer_ids( $value ) {
         $raw = is_string( $value ) ? json_decode( $value, true ) : $value;
@@ -266,13 +225,6 @@ class Update_Event extends Base_Tool {
         }
         return $ids;
     }
-
-    
-
-
-
-
-
 
     private function image_id( $value ) {
         if ( 0 === $value || '0' === $value ) {

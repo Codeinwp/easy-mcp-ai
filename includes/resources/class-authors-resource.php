@@ -27,15 +27,6 @@ class Authors_Resource extends Base_Resource {
         ) );
         $authors = array();
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $can_list_users = current_user_can( 'list_users' );
 
         foreach ( $users as $user ) {

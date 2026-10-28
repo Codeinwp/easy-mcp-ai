@@ -17,96 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Theme_Adapter extends Command_Handler {
 
     const SWITCH  = 'wp_switch_theme';
@@ -117,16 +27,12 @@ class Theme_Adapter extends Command_Handler {
     const MOD_SET = 'wp_update_theme_mod';
     const MOD_DEL = 'wp_delete_theme_mod';
 
-    
     const INSTALL_MAX = 5;
 
-    
     const BATCH_MAX = 5;
 
-    
     const VERSION_HIGHER = 'version higher than expected';
 
-    
     const TOOL_ALREADY_INSTALLED = 'The theme "%s" is already installed';
 
     const REFUSE_ZIP      = "wp_cli_run installs themes only by their wordpress.org slug: '%s' is a zip file, a server path or a URL, and installing from a file or a URL reads a file on the server or from another host (plan §4.1). Pass the slug from the theme's wordpress.org address.";
@@ -141,35 +47,15 @@ class Theme_Adapter extends Command_Handler {
 
     const NOTE_MOD_STORED    = "The setting's sanitizer stored %s for '%s', so WP-CLI's check (the value read back equals the string passed) prints 'Could not update'.";
 
-    
     const MOD_STAGED = "Theme mod %1\$s was not set live: %2\$s";
     const NOTE_ACTIVE_NOOP   = "Nothing changed: '%s' was already the active theme.";
     const NOTE_REQUIREMENTS  = "WP-CLI checks the wordpress.org theme directory's Requires at least and Requires PHP before it downloads a theme (--ignore-requirements skips that check). wp_cli_run never makes that check, with or without the flag; WordPress's own check of the downloaded package's headers still refuses an incompatible theme, as it does under WP-CLI.";
     const NOT_CAPTURED_FILES = 'Theme files are outside change history: a theme installed, updated or deleted here cannot be restored from it.';
 
-    
-    
-    
-
-    
-
-
-
-
     public function activate( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, self::SWITCH );
         $this->do_activate( (string) $inv->args[0], $ctx, null );
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
@@ -193,14 +79,6 @@ class Theme_Adapter extends Command_Handler {
         $this->formatter( $ctx, $assoc, $obj_fields, 'theme' )->display_items( $all_items );
     }
 
-    
-
-
-
-
-
-
-
     private static function listed_items( Context $ctx, array $listed ): array {
         if ( ! $listed['ok'] ) {
             $ctx->out->error( (string) $listed['error'] );
@@ -211,16 +89,6 @@ class Theme_Adapter extends Command_Handler {
         return self::items( (array) ( $listed['payload']['themes'] ?? array() ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function shown_item( array $item, array &$obj_fields ): array {
         if ( empty( $item['version'] ) ) {
             $item['version'] = '';
@@ -228,7 +96,6 @@ class Theme_Adapter extends Command_Handler {
         if ( empty( $item['update_version'] ) ) {
             $item['update_version'] = '';
         }
-        
         if ( array_key_exists( 'update', $item ) && 'unavailable' === $item['update'] ) {
             foreach ( array( 'requires', 'requires_php' ) as $shown ) {
                 if ( ! in_array( $shown, $obj_fields, true ) ) {
@@ -241,14 +108,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return $item;
     }
-
-    
-
-
-
-
-
-
 
     private static function matches_filters( array $item, array $obj_fields, array $assoc ): bool {
         foreach ( $obj_fields as $field ) {
@@ -266,16 +125,6 @@ class Theme_Adapter extends Command_Handler {
         return true;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_install( Invocation $inv, Context $ctx ): void {
         $args = array_values( array_map( 'strval', $inv->args ) );
         if ( count( $args ) > self::INSTALL_MAX ) {
@@ -287,14 +136,6 @@ class Theme_Adapter extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
-
-
-
 
     public function plan_install( Invocation $inv ): array {
         $plan  = array();
@@ -321,13 +162,6 @@ class Theme_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
-
-
-
-
-
-
     public function install( Invocation $inv, Context $ctx ): void {
         $args     = array_values( array_map( 'strval', $inv->args ) );
         $activate = (bool) Read_Value::flag( $inv->assoc, 'activate', false );
@@ -337,7 +171,6 @@ class Theme_Adapter extends Command_Handler {
         }
         $ctx->not_captured( self::NOT_CAPTURED_FILES );
         if ( ! isset( $inv->assoc['version'] ) ) {
-            
             $ctx->note( self::NOTE_REQUIREMENTS );
         }
 
@@ -353,18 +186,8 @@ class Theme_Adapter extends Command_Handler {
             }
         );
         $result = $batch->result();
-        
         Values::report_batch( $ctx->out, 'theme', 'install', count( $args ), $result['successes'], $result['failures'] );
     }
-
-    
-
-
-
-
-
-
-
 
     private function install_slug( string $slug, Invocation $inv, Context $ctx, Batch $batch, bool $activate ): string {
         if ( empty( $slug ) ) {
@@ -385,31 +208,13 @@ class Theme_Adapter extends Command_Handler {
         return 'already' === $outcome ? Batch::SKIP : Batch::FAILURE;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_batch( Invocation $inv, Context $ctx ): void {
         if ( count( $inv->args ) > self::BATCH_MAX ) {
             $ctx->out->error( sprintf( self::REFUSE_OVER_CAP, self::BATCH_MAX, $inv->command, count( $inv->args ) ) );
         }
     }
 
-    
-
-
-
-
-
-
     public function plan_delete( Invocation $inv ): array {
-        
         if ( count( $inv->args ) > self::BATCH_MAX || ! self::plan_may_read( self::DELETE, 'delete_themes' ) ) {
             return array();
         }
@@ -422,11 +227,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return $plan;
     }
-
-    
-
-
-
 
     public function delete( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, self::DELETE );
@@ -443,9 +243,6 @@ class Theme_Adapter extends Command_Handler {
             $ctx->fail_missing_target( sprintf( 'No theme named %s is installed, so nothing was deleted for it. WP-CLI prints a Warning and does not count it.', implode( ', ', $missing ) ) );
         }
         if ( $all ) {
-            
-            
-            
             $themes = self::deletable( $themes );
         }
 
@@ -487,16 +284,6 @@ class Theme_Adapter extends Command_Handler {
         Values::report_batch( $ctx->out, 'theme', 'delete', count( $args ), $result['successes'], $result['failures'] );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function update( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         $all   = (bool) Read_Value::flag( $assoc, 'all', false );
@@ -517,7 +304,6 @@ class Theme_Adapter extends Command_Handler {
         if ( isset( $assoc['version'] ) ) {
             $themes = Fetchers::of( 'theme' )->get_many( $args, $ctx->out );
             if ( count( $themes ) > self::BATCH_MAX ) {
-                
                 $ctx->out->error( sprintf( self::REFUSE_OVER_CAP, self::BATCH_MAX, $inv->command, count( $themes ) ) );
             }
             foreach ( $themes as $theme ) {
@@ -529,23 +315,8 @@ class Theme_Adapter extends Command_Handler {
         $this->update_many( $args, $assoc, $inv, $ctx );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function plan_update( Invocation $inv ): array {
         $assoc = $inv->assoc;
-        
         if ( ( isset( $assoc['version'] ) && isset( $assoc['dry-run'] ) ) || count( $inv->args ) > self::BATCH_MAX ) {
             return array();
         }
@@ -561,12 +332,6 @@ class Theme_Adapter extends Command_Handler {
         return self::plan_update_many( $inv );
     }
 
-    
-
-
-
-
-
     private static function plan_update_to_version( Invocation $inv, string $version ): array {
         $plan = array();
         foreach ( self::plan_targets( $inv ) as $theme ) {
@@ -580,13 +345,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return count( $plan ) > self::BATCH_MAX ? array() : $plan;
     }
-
-    
-
-
-
-
-
 
     private static function plan_update_many( Invocation $inv ): array {
         $plan = array(
@@ -611,15 +369,6 @@ class Theme_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public function mod_set( Invocation $inv, Context $ctx ): void {
         list( $mod, $value ) = array_values( array_map( 'strval', $inv->args ) );
 
@@ -633,9 +382,6 @@ class Theme_Adapter extends Command_Handler {
         if ( ! $result['ok'] ) {
             $ctx->out->error( (string) $result['error'] );
         }
-        
-        
-        
         if ( isset( $result['payload']['published'] ) && false === $result['payload']['published'] ) {
             $ctx->mark_changed();
             $ctx->out->error( sprintf( self::MOD_STAGED, $mod, isset( $result['payload']['message'] ) ? (string) $result['payload']['message'] : 'it was staged in the Customizer draft for a person to publish.' ) );
@@ -653,29 +399,9 @@ class Theme_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function mod_set_holds( string $value, $read_back ): bool {
         return $value === $read_back || ( is_array( $read_back ) && json_decode( $value, true ) === $read_back );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     public function plan_mod_remove( Invocation $inv ): array {
         return array(
@@ -686,31 +412,12 @@ class Theme_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     private static function mod_remove_arguments( Invocation $inv ): array {
         return array(
             'keys'                 => array_values( array_unique( array_map( 'strval', $inv->args ) ) ),
             'include_unregistered' => true,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public function mod_remove( Invocation $inv, Context $ctx ): void {
         $mods = array_values( array_map( 'strval', $inv->args ) );
@@ -739,17 +446,6 @@ class Theme_Adapter extends Command_Handler {
         $ctx->out->success( sprintf( 1 === $count ? '%d mod removed.' : '%d mods removed.', $count ) );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     private static function plan_may_read( string $tool, string $cap ): bool {
         if ( class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) && method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' )
             && false === \Easy_MCP_AI\MCP\Server::current_call_may_use( $tool ) ) {
@@ -757,12 +453,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return (bool) \current_user_can( $cap );
     }
-
-    
-
-
-
-
 
     private static function plan_targets( Invocation $inv ): array {
         $names = array_values( array_map( 'strval', $inv->args ) );
@@ -775,12 +465,6 @@ class Theme_Adapter extends Command_Handler {
         return $names ? array_values( Fetchers::of( 'theme' )->get_many( $names, new Output( true ) ) ) : array();
     }
 
-    
-
-
-
-
-
     private static function deletable( array $themes ): array {
         $out = array();
         foreach ( $themes as $theme ) {
@@ -791,15 +475,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function planned_updates( Invocation $inv ): array {
         if ( ! self::plan_may_read( self::UPDATE, 'update_themes' ) || ! self::plan_may_read( self::LISTER, 'update_themes' ) ) {
@@ -822,23 +497,10 @@ class Theme_Adapter extends Command_Handler {
         return $out;
     }
 
-    
-
-
-
-
-
     private static function stored_offers(): array {
         $update = Theme_Handler::wp( 'update_transient' );
         return is_array( $update ) && isset( $update['response'] ) ? (array) $update['response'] : array();
     }
-
-    
-
-
-
-
-
 
     private static function offer_fits( array $offer, array $versions ): bool {
         if ( ! empty( $offer['requires_php'] ) && ! version_compare( (string) ( $versions['php'] ?? PHP_VERSION ), (string) $offer['requires_php'], '>=' ) ) {
@@ -846,11 +508,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return empty( $offer['requires'] ) || version_compare( (string) ( $versions['wp'] ?? '' ), (string) $offer['requires'], '>=' );
     }
-
-    
-
-
-
 
     private function do_activate( string $name, Context $ctx, ?Batch $batch ): void {
         $fetcher = Fetchers::of( 'theme' );
@@ -885,18 +542,7 @@ class Theme_Adapter extends Command_Handler {
         $ctx->out->success( "Switched to '$label' theme." );
     }
 
-    
-
-
-
-
-
-
     private function install_one( string $slug, Invocation $inv, Context $ctx, Batch $batch ): string {
-        
-        
-        
-        
         $result = $batch->delegate( self::INSTALL, self::install_arguments( $slug, $inv->assoc ) );
         if ( ! $result['ok'] ) {
             if ( Batch::is_rate_limited( $result ) ) {
@@ -917,12 +563,6 @@ class Theme_Adapter extends Command_Handler {
         self::print_messages( (array) ( $payload['messages'] ?? array() ), $ctx );
         return 'installed';
     }
-
-    
-
-
-
-
 
     private function install_version( string $stylesheet, string $version, Invocation $inv, Context $ctx ): void {
         $batch = new Batch( $inv, $ctx, 'theme', 'install' );
@@ -952,23 +592,13 @@ class Theme_Adapter extends Command_Handler {
         $batch->report();
     }
 
-    
-
-
-
-
-
-
-
     private function update_many( array $args, array $assoc_args, Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, self::LISTER );
         $format  = self::update_format( $ctx, $assoc_args );
         $dry_run = (bool) Read_Value::flag( $assoc_args, 'dry-run' );
 
-        
         $planned = $dry_run ? array() : self::planned_or_refuse( $inv, $ctx );
 
-        
         $items = self::listed_items( $ctx, $ctx->delegate( self::LISTER, array( 'skip_update_check' => false ) ) );
 
         $errors  = 0;
@@ -988,8 +618,6 @@ class Theme_Adapter extends Command_Handler {
             return;
         }
 
-        
-        
         $items_to_update = self::only_planned( $ctx, $items_to_update, $planned, $skipped );
         $result          = self::run_updates( $inv, $ctx, $items_to_update );
         $errors         += self::report_updates( $ctx, $items_to_update, $result, $format );
@@ -1005,14 +633,6 @@ class Theme_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function update_format( Context $ctx, array $assoc_args ): ?string {
         $format = isset( $assoc_args['format'] ) && is_string( $assoc_args['format'] ) ? $assoc_args['format'] : null;
         if ( in_array( $format, array( 'json', 'csv' ), true ) ) {
@@ -1021,25 +641,10 @@ class Theme_Adapter extends Command_Handler {
         return $format;
     }
 
-    
-
-
-
-
-
-
     private static function exclude_flag( array $assoc_args ): ?string {
         $exclude = Read_Value::flag( $assoc_args, 'exclude' );
         return null === $exclude ? null : (string) $exclude;
     }
-
-    
-
-
-
-
-
-
 
     private static function planned_or_refuse( Invocation $inv, Context $ctx ): array {
         $planned = self::planned_updates( $inv );
@@ -1049,15 +654,6 @@ class Theme_Adapter extends Command_Handler {
         return $planned;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function picked_items( Context $ctx, array $args, array $items ): array {
         $theme_files = array();
         foreach ( $args as $arg ) {
@@ -1065,12 +661,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return Values::pick_fields( $items, $theme_files );
     }
-
-    
-
-
-
-
 
     private static function with_update( array $items ): array {
         return array_filter(
@@ -1080,13 +670,6 @@ class Theme_Adapter extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
-
 
     private static function without_excluded( array $items_to_update, ?string $exclude ): array {
         if ( null === $exclude ) {
@@ -1100,14 +683,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return $items_to_update;
     }
-
-    
-
-
-
-
-
-
 
     private static function without_unavailable( Context $ctx, array $items_to_update, int &$skipped ): array {
         foreach ( $items_to_update as $item_key => $item_info ) {
@@ -1125,14 +700,6 @@ class Theme_Adapter extends Command_Handler {
         return $items_to_update;
     }
 
-    
-
-
-
-
-
-
-
     private static function only_planned( Context $ctx, array $items_to_update, array $planned, int &$skipped ): array {
         foreach ( $items_to_update as $item_key => $item_info ) {
             if ( ! in_array( (string) $item_info['update_id'], $planned, true ) ) {
@@ -1143,14 +710,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return $items_to_update;
     }
-
-    
-
-
-
-
-
-
 
     private static function run_updates( Invocation $inv, Context $ctx, array $items_to_update ): array {
         $result = array();
@@ -1181,14 +740,6 @@ class Theme_Adapter extends Command_Handler {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
     private static function report_updates( Context $ctx, array $items_to_update, array $result, ?string $format ): int {
         if ( ! $items_to_update ) {
             return 0;
@@ -1217,11 +768,6 @@ class Theme_Adapter extends Command_Handler {
         return $errors;
     }
 
-    
-
-
-
-
     private function dry_run( array $items_to_update, ?string $format, ?string $exclude, Context $ctx ): void {
         if ( empty( $items_to_update ) ) {
             $ctx->out->log( 'No theme updates available.' );
@@ -1246,14 +792,6 @@ class Theme_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function items( array $themes ): array {
         $items = array();
         foreach ( $themes as $theme ) {
@@ -1263,13 +801,6 @@ class Theme_Adapter extends Command_Handler {
         return $items;
     }
 
-    
-
-
-
-
-
-
     private static function item( string $stylesheet, array $theme ): array {
         $item = self::item_columns( $stylesheet, self::item_status( $theme ), $theme ) + self::item_details( $theme );
         if ( array_key_exists( 'enabled', $theme ) && null !== $theme['enabled'] ) {
@@ -1278,12 +809,6 @@ class Theme_Adapter extends Command_Handler {
         return $item;
     }
 
-    
-
-
-
-
-
     private static function item_status( array $theme ): string {
         $status = (string) ( $theme['status'] ?? '' );
         if ( 'active' === $status ) {
@@ -1291,13 +816,6 @@ class Theme_Adapter extends Command_Handler {
         }
         return ! empty( $theme['active_parent'] ) ? 'parent' : 'inactive';
     }
-
-    
-
-
-
-
-
 
     private static function item_columns( string $stylesheet, string $status, array $theme ): array {
         return array(
@@ -1311,13 +829,6 @@ class Theme_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     private static function item_details( array $theme ): array {
         return array(
             'author'                    => $theme['author'] ?? '',
@@ -1327,12 +838,6 @@ class Theme_Adapter extends Command_Handler {
             'update_unavailable_reason' => $theme['update_unavailable_reason'] ?? '',
         );
     }
-
-    
-
-
-
-
 
     private static function refuse_list_fields( array $assoc, Context $ctx ): void {
         $asked = array();
@@ -1353,16 +858,6 @@ class Theme_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_list_filters( array $assoc, array $filters, Context $ctx ): void {
         foreach ( array_keys( $assoc ) as $key ) {
             $key = (string) $key;
@@ -1372,16 +867,6 @@ class Theme_Adapter extends Command_Handler {
             $ctx->out->error( sprintf( self::REFUSE_FILTER, $key, implode( ', ', array_values( array_unique( $filters ) ) ) ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function refuse_requires_filters( array $assoc, array $obj_fields, array $items, Context $ctx ): void {
         foreach ( $items as $item ) {
@@ -1396,12 +881,6 @@ class Theme_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private static function install_arguments( string $slug, array $assoc ): array {
         $arguments = array( 'slug' => $slug );
         if ( isset( $assoc['version'] ) ) {
@@ -1413,24 +892,12 @@ class Theme_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-
-
-
-
-
     private static function print_messages( array $messages, Context $ctx ): void {
         foreach ( $messages as $message ) {
             $string = str_replace( '&#8230;', '...', (string) $message );
             $ctx->out->log( html_entity_decode( $string, ENT_QUOTES, 'UTF-8' ) );
         }
     }
-
-    
-
-
-
-
 
     private static function format_items( Context $ctx, string $format, iterable $items, array $fields ): void {
         $assoc_args = array(
@@ -1439,13 +906,6 @@ class Theme_Adapter extends Command_Handler {
         );
         ( new Formatter( $ctx->out, $assoc_args ) )->display_items( $items );
     }
-
-    
-
-
-
-
-
 
     private static function missing( array $args, array $themes ): array {
         $found = array();

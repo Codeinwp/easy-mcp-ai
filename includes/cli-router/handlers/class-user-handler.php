@@ -15,33 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class User_Handler extends Command_Handler {
 
-    
     const NETWORK_CAPS = Capability_Grants::NETWORK_CAPS;
 
     const NOT_CAPTURED_CAPS = 'User capability changes are stored in the user\'s capabilities meta, which change history records only while user meta capture is on.';
@@ -55,14 +30,6 @@ final class User_Handler extends Command_Handler {
     const MSG_LAST_ADMIN    = "removing the 'administrator' role from %s (%d) would leave this site without an administrator. Promote another user to administrator first.";
     const MSG_OWN_GATE      = "removing the '%s' role from your own WordPress user (user %d) would leave it without a role that can edit users. Do it as another administrator.";
     const MSG_SITES_NOTE    = 'User %d %s: WP-CLI also set the spam flag to %s on every site of the user except the main site: %s.';
-
-    
-    
-    
-
-    
-
-
 
     public function preflight_cap( Invocation $inv, Context $ctx ): void {
         $cap     = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
@@ -83,7 +50,6 @@ final class User_Handler extends Command_Handler {
         }
     }
 
-    
     public function add_cap( Invocation $inv, Context $ctx ): void {
         $user = Fetchers::of( 'user' )->get_check( isset( $inv->args[0] ) ? $inv->args[0] : '', $ctx->out );
         $this->require_target( $ctx, $user );
@@ -98,7 +64,6 @@ final class User_Handler extends Command_Handler {
         $ctx->out->success( "Added '{$cap}' capability for {$user->user_login} ({$user->ID})." );
     }
 
-    
     public function remove_cap( Invocation $inv, Context $ctx ): void {
         $user = Fetchers::of( 'user' )->get_check( isset( $inv->args[0] ) ? $inv->args[0] : '', $ctx->out );
         $this->require_target( $ctx, $user );
@@ -115,13 +80,6 @@ final class User_Handler extends Command_Handler {
         $ctx->out->success( "Removed '{$cap}' cap for {$user->user_login} ({$user->ID})." );
     }
 
-    
-
-
-
-
-
-
     private static function refuse_not_direct( Context $ctx, object $user, string $cap ): void {
         $allcaps = isset( $user->allcaps ) ? (array) $user->allcaps : array();
         if ( isset( $allcaps[ $cap ] ) ) {
@@ -129,16 +87,6 @@ final class User_Handler extends Command_Handler {
         }
         $ctx->out->error( "No such '{$cap}' cap for {$user->user_login} ({$user->ID})." );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function guard_removal( Invocation $inv, Context $ctx, object $user, string $cap, array $caps ): void {
         $user_roles = isset( $user->roles ) ? array_values( (array) $user->roles ) : array();
@@ -155,12 +103,6 @@ final class User_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     public function describe_add_cap( Invocation $inv ): array {
         $cap  = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
         $user = self::peek_user( isset( $inv->args[0] ) ? $inv->args[0] : '' );
@@ -169,11 +111,6 @@ final class User_Handler extends Command_Handler {
         }
         return array( sprintf( "User %s (%d) capability '%s': %s → grant directly", $user->user_login, (int) $user->ID, $cap, self::hold( $user, $cap ) ) );
     }
-
-    
-
-
-
 
     public function describe_remove_cap( Invocation $inv ): array {
         $cap  = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
@@ -186,45 +123,21 @@ final class User_Handler extends Command_Handler {
         return array( sprintf( "User %s (%d) capability '%s': %s → %s", $user->user_login, (int) $user->ID, $cap, self::hold( $user, $cap ), $effect ) );
     }
 
-    
-    
-    
-
-    
     public function spam( Invocation $inv, Context $ctx ): void {
         $this->update_msuser_status( $inv, $ctx, '1' );
     }
 
-    
     public function unspam( Invocation $inv, Context $ctx ): void {
         $this->update_msuser_status( $inv, $ctx, '0' );
     }
-
-    
-
-
-
 
     public function describe_spam( Invocation $inv ): array {
         return self::describe_status( $inv, '1' );
     }
 
-    
-
-
-
-
     public function describe_unspam( Invocation $inv ): array {
         return self::describe_status( $inv, '0' );
     }
-
-    
-    
-    
-
-    
-
-
 
     private function update_msuser_status( Invocation $inv, Context $ctx, string $value ): void {
         if ( ! \is_multisite() ) {
@@ -255,14 +168,6 @@ final class User_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'user', $verb, count( $user_ids ), $successes, $errors );
     }
 
-    
-
-
-
-
-
-
-
     private static function refuse_current_site( array $users, string $value, Context $ctx ): void {
         foreach ( $users as $user ) {
             if ( self::is_network_admin( $user ) || $value === $user->spam ) {
@@ -277,24 +182,14 @@ final class User_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function set_spam( object $user, string $value, string $action, Context $ctx ): bool {
         $user_id = $user->ID;
 
-        
         if ( self::is_network_admin( $user ) ) {
             $ctx->out->warning( "User cannot be modified. The user {$user->ID} is a network administrator." );
             return false;
         }
 
-        
         if ( $value === $user->spam ) {
             $ctx->out->warning( "User {$user_id} already {$action}." );
             return false;
@@ -321,19 +216,9 @@ final class User_Handler extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function spam_sites( int $user_id ): array {
         $sites = array();
         foreach ( (array) \get_blogs_of_user( $user_id, true ) as $details ) {
-            
             if ( \get_main_site_id( (int) $details->site_id ) !== (int) $details->userblog_id ) {
                 $sites[] = $details;
             }
@@ -341,28 +226,16 @@ final class User_Handler extends Command_Handler {
         return $sites;
     }
 
-    
-
-
-
-
     private static function site_label( object $details ): string {
         $url = isset( $details->siteurl ) ? (string) $details->siteurl : ( isset( $details->domain ) ? (string) $details->domain . ( isset( $details->path ) ? (string) $details->path : '' ) : '' );
         return (int) $details->userblog_id . ( '' !== $url ? ' (' . $url . ')' : '' );
     }
-
-    
-
-
-
-
 
     private static function is_network_admin( object $user ): bool {
         $login = isset( $user->user_login ) ? (string) $user->user_login : '';
         return function_exists( 'get_super_admins' ) && in_array( $login, (array) \get_super_admins(), true );
     }
 
-    
     private static function describe_status( Invocation $inv, string $value ): array {
         $lines  = array();
         $action = (int) $value ? 'mark as spam' : 'remove from spam';
@@ -372,11 +245,6 @@ final class User_Handler extends Command_Handler {
         }
         return $lines;
     }
-
-    
-
-
-
 
     private static function describe_user_status( object $user, string $value, string $action ): string {
         if ( self::is_network_admin( $user ) ) {
@@ -402,29 +270,12 @@ final class User_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     private function require_target( Context $ctx, object $user ): void {
         $id = (int) $user->ID;
         if ( ! \current_user_can( 'edit_user', $id ) || ! \current_user_can( 'promote_user', $id ) ) {
             $ctx->out->error( sprintf( self::MSG_TARGET, $user->user_login, $id ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function guard_role_removal( Context $ctx, object $user, string $role, array $user_roles ): void {
         $refusal = self::role_refusal( $role );
@@ -454,12 +305,6 @@ final class User_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private static function grant_refusal( Context $ctx, string $cap ): ?string {
         if ( self::is_role( $cap ) ) {
             $refusal = self::role_refusal( $cap );
@@ -474,11 +319,6 @@ final class User_Handler extends Command_Handler {
         }
         return null;
     }
-
-    
-
-
-
 
     private static function role_refusal( string $role ): ?string {
         if ( ! \current_user_can( 'promote_users' ) ) {
@@ -500,16 +340,10 @@ final class User_Handler extends Command_Handler {
         return null;
     }
 
-    
     private static function is_role( string $name ): bool {
         $roles = function_exists( 'wp_roles' ) ? \wp_roles() : null;
         return is_object( $roles ) && method_exists( $roles, 'is_role' ) && (bool) $roles->is_role( $name );
     }
-
-    
-
-
-
 
     private static function hold( object $user, string $cap ): string {
         $caps    = isset( $user->caps ) ? (array) $user->caps : array();
@@ -519,11 +353,6 @@ final class User_Handler extends Command_Handler {
         }
         return ! empty( $allcaps[ $cap ] ) ? 'inherited from a role' : 'not held';
     }
-
-    
-
-
-
 
     private static function peek_user( string $arg ): ?object {
         $user = Fetchers::user( $arg, new Output() );

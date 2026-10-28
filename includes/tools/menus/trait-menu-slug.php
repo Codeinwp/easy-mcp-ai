@@ -5,30 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 trait Menu_Slug {
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function requested_menu_slug( $raw, int $menu_id ): string {
         if ( ! is_string( $raw ) ) {
@@ -38,8 +15,6 @@ trait Menu_Slug {
         if ( '' === $slug ) {
             throw new \InvalidArgumentException( sprintf( 'The slug "%s" has no letters or numbers WordPress can keep.', $raw ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
-        
         if ( empty( $slug ) ) {
             throw new \InvalidArgumentException( sprintf( 'The slug "%s" cannot be stored: WordPress treats it as empty and derives the slug from the name.', $slug ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -50,14 +25,6 @@ trait Menu_Slug {
         return $slug;
     }
 
-    
-
-
-
-
-
-
-
     protected function store_menu_slug( int $menu_id, string $slug ): string {
         $term = get_term( $menu_id, 'nav_menu' );
         if ( is_object( $term ) && ! is_wp_error( $term ) && $term->slug === $slug ) {
@@ -67,8 +34,6 @@ trait Menu_Slug {
         if ( is_wp_error( $result ) ) {
             throw new \RuntimeException( $result->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        
-        
         $term   = get_term( $menu_id, 'nav_menu' );
         $stored = is_object( $term ) && ! is_wp_error( $term ) ? (string) $term->slug : $slug;
         if ( $stored !== $slug ) {

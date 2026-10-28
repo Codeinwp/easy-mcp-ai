@@ -1,27 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -30,7 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Schema {
 
-    
     const TABLES = array(
         'easy_mcp_ai_tokens',
         'easy_mcp_ai_audit_log',
@@ -42,15 +19,10 @@ class Check_Schema {
         'easy_mcp_ai_oauth_device_codes',
     );
 
-    
     const CHANGE_LOG_INDEX = 'object_lookup';
 
-    
     const REASON_NO_DATABASE        = 'no_database';
     const REASON_OAUTH_UNAVAILABLE  = 'oauth_unavailable';
-
-    
-
 
     public static function run() {
         return array(
@@ -66,65 +38,24 @@ class Check_Schema {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function abstention_reason( $reason ) {
         if ( self::REASON_OAUTH_UNAVAILABLE === $reason ) {
             return __( 'The OAuth layer is switched off on this site, so its tables and indexes were not examined. This is not a database problem.', 'easy-mcp-ai' );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         return __( 'The indexes could not be read. If a table is missing, the table check above says so; otherwise the database did not answer this query.', 'easy-mcp-ai' );
     }
-
-    
-
-
-
 
     private static function oauth_layer_used(): bool {
         return class_exists( '\Easy_MCP_AI\OAuth\OAuth_Schema', false );
     }
 
-    
     private static function index_abstention_reason() {
         if ( ! self::oauth_layer_used() ) {
             return self::REASON_OAUTH_UNAVAILABLE;
         }
         return self::REASON_NO_DATABASE;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function index_probe( $table, $index_name ) {
         global $wpdb;
@@ -133,7 +64,6 @@ class Check_Schema {
             return null;
         }
 
-        
         if ( property_exists( $wpdb, 'last_error' ) ) {
             $wpdb->last_error = '';
         }
@@ -142,27 +72,12 @@ class Check_Schema {
         $found = $wpdb->get_var( $wpdb->prepare( "SHOW INDEX FROM `{$table}` WHERE Key_name = %s", $index_name ) );
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( null === $found && property_exists( $wpdb, 'last_error' ) && '' !== (string) $wpdb->last_error ) {
             return null;
         }
 
         return ! empty( $found );
     }
-
-    
-
-
-
-
 
     public static function evaluate_tables( $missing ) {
         $label = __( 'Plugin database tables present', 'easy-mcp-ai' );
@@ -189,12 +104,6 @@ class Check_Schema {
         return Diagnostic_Result::pass( 'c1', Diagnostic_Result::TIER_BLOCKER, $label, '', array( 'missing_tables' => array() ) );
     }
 
-    
-
-
-
-
-
     public static function evaluate_indexes( $missing, $reason = self::REASON_NO_DATABASE ) {
         $label = __( 'Required database indexes present', 'easy-mcp-ai' );
 
@@ -219,14 +128,6 @@ class Check_Schema {
 
         return Diagnostic_Result::pass( 'c2', Diagnostic_Result::TIER_WARNING, $label, '', array( 'missing_indexes' => array() ) );
     }
-
-    
-
-
-
-
-
-
 
     public static function evaluate_change_log_index( $present, $db_describe, $reason = self::REASON_NO_DATABASE ) {
         $label = __( 'Change history lookup index', 'easy-mcp-ai' );
@@ -253,16 +154,9 @@ class Check_Schema {
         return Diagnostic_Result::pass( 'c3', Diagnostic_Result::TIER_WARNING, $label, '', array( 'change_log_index' => true ) );
     }
 
-    
-
-
-
-
     public static function evaluate_schema_versions( $versions ) {
         $label  = __( 'Database migrations complete', 'easy-mcp-ai' );
 
-        
-        
         if ( ! is_array( $versions ) || empty( $versions ) ) {
             return Diagnostic_Result::unknown( 'c4', Diagnostic_Result::TIER_WARNING, $label, __( 'Could not read the recorded database versions.', 'easy-mcp-ai' ) );
         }
@@ -275,9 +169,6 @@ class Check_Schema {
             if ( '' === $code ) {
                 continue;
             }
-            
-            
-            
             if ( version_compare( '' === $stored ? '0' : $stored, $code, '<' ) ) {
                 $behind[] = sprintf( '%s (%s < %s)', $option, '' === $stored ? '—' : $stored, $code );
             }
@@ -302,12 +193,6 @@ class Check_Schema {
         return Diagnostic_Result::pass( 'c4', Diagnostic_Result::TIER_WARNING, $label, '', array( 'behind' => array() ) );
     }
 
-    
-
-
-
-
-
     public static function evaluate_privileges( $grants ) {
         $label = __( 'Database user can change the schema', 'easy-mcp-ai' );
 
@@ -320,18 +205,11 @@ class Check_Schema {
             );
         }
 
-        
-        
-        
-        
-        
         $upper = strtoupper( self::privilege_lists( (string) $grants ) );
         if ( false !== strpos( $upper, 'ALL PRIVILEGES' ) ) {
             return Diagnostic_Result::pass( 'c5', Diagnostic_Result::TIER_INFO, $label, __( 'Full privileges.', 'easy-mcp-ai' ), array( 'schema_privileges' => true ) );
         }
 
-        
-        
         $granted = array_map( 'trim', explode( ',', $upper ) );
         $missing = array();
         foreach ( array( 'CREATE', 'ALTER', 'INDEX' ) as $needed ) {
@@ -341,20 +219,6 @@ class Check_Schema {
         }
 
         if ( ! empty( $missing ) ) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             return Diagnostic_Result::pass(
                 'c5',
                 Diagnostic_Result::TIER_INFO,
@@ -371,8 +235,6 @@ class Check_Schema {
         return Diagnostic_Result::pass( 'c5', Diagnostic_Result::TIER_INFO, $label, '', array( 'schema_privileges' => true ) );
     }
 
-    
-
     private static function wpdb( $method = 'get_var' ) {
         global $wpdb;
         if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, $method ) ) {
@@ -380,17 +242,6 @@ class Check_Schema {
         }
         return $wpdb;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function missing_tables() {
         $wpdb = self::wpdb();
@@ -422,20 +273,6 @@ class Check_Schema {
         return $missing;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function missing_indexes() {
         if ( null === self::wpdb() || ! self::oauth_layer_used() ) {
             return null;
@@ -449,7 +286,7 @@ class Check_Schema {
                 $present = self::index_probe( $table, $index );
 
                 if ( null === $present ) {
-                    return null; 
+                    return null;
                 }
                 if ( ! $present ) {
                     $missing[] = 'oauth_' . $suffix . '.' . $index;
@@ -460,14 +297,11 @@ class Check_Schema {
         return $missing;
     }
 
-    
     private static function change_log_index_present() {
         $wpdb = self::wpdb();
         if ( null === $wpdb ) {
             return null;
         }
-        
-        
         return self::index_probe( $wpdb->prefix . 'easy_mcp_ai_change_log', self::CHANGE_LOG_INDEX );
     }
 
@@ -480,14 +314,6 @@ class Check_Schema {
         $engine = ( '' !== $server && false !== stripos( $server, 'mariadb' ) ) ? 'MariaDB' : 'MySQL';
         return trim( $engine . ' ' . (string) $wpdb->db_version() );
     }
-
-    
-
-
-
-
-
-
 
     private static function schema_versions() {
         if ( null === self::wpdb() ) {
@@ -530,13 +356,6 @@ class Check_Schema {
         return $versions;
     }
 
-    
-
-
-
-
-
-
     private static function privilege_lists( $grants ) {
         $lists = array();
 
@@ -549,7 +368,6 @@ class Check_Schema {
         return implode( ',', $lists );
     }
 
-    
     private static function read_grants() {
         $wpdb = self::wpdb( 'get_col' );
         if ( null === $wpdb ) {

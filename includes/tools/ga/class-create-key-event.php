@@ -8,15 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class Create_Key_Event extends Base_Tool {
 
-    
     const COUNTING_METHODS = array( 'ONCE_PER_EVENT', 'ONCE_PER_SESSION' );
 
     public function get_name() { return 'wp_ga_create_key_event'; }
@@ -58,11 +51,6 @@ class Create_Key_Event extends Base_Tool {
         );
     }
 
-    
-
-
-
-
     public function describe( array $arguments ) {
         $event = self::text_arg( $arguments, 'event_name' );
         try {
@@ -96,25 +84,11 @@ class Create_Key_Event extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function build_body( array $arguments ): array {
         $event = self::text_arg( $arguments, 'event_name' );
         if ( '' === $event ) {
             throw new \RuntimeException( 'event_name is required.' );
         }
-        
-        
-        
-        
-        
-        
         if ( 1 !== preg_match( '/^\p{L}[\p{L}\p{M}\p{N}_]*\z/u', $event ) || preg_match_all( '/./us', $event ) > 40 ) {
             throw new \RuntimeException( 'event_name must start with a letter and contain only letters, numbers and underscores, at most 40 characters.' );
         }

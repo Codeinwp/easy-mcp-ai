@@ -47,7 +47,6 @@ class Delete_Product extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id = isset( $arguments['id'] ) ? (int) $arguments['id'] : 0;
         $product = $id > 0 ? $this->peek( '/wc/v3/products/' . $id, 'id,name,status,sku' ) : null;

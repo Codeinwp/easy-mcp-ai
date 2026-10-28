@@ -87,10 +87,6 @@ class List_Templates extends Base_Tool {
         $per_page = isset( $arguments['per_page'] ) ? min( 100, max( 1, absint( $arguments['per_page'] ) ) ) : 10;
         $page     = isset( $arguments['page'] ) ? absint( $arguments['page'] ) : 1;
 
-        
-        
-        
-        
         $request = new \WP_REST_Request( 'GET', '/wp/v2/' . Template_Type::rest_base( $type ) );
         $request->set_param( 'context', 'edit' );
 
@@ -123,8 +119,6 @@ class List_Templates extends Base_Tool {
             );
         }
 
-        
-        
         if ( ! empty( $arguments['search'] ) ) {
             $needle = strtolower( sanitize_text_field( $arguments['search'] ) );
             $result = array_values( array_filter(
@@ -137,9 +131,6 @@ class List_Templates extends Base_Tool {
             ) );
         }
 
-        
-        
-        
         if ( '' !== $area ) {
             $result = array_values( array_filter(
                 $result,

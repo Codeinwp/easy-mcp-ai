@@ -13,84 +13,34 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Cache_Handler extends Command_Handler {
 
-    
     const NOT_RECORDED = 'Object cache: change history does not record the object cache, which is not the database.';
 
-    
     const NOTE_RUNTIME = 'This site has no persistent object cache, so the write reached only the memory of this request and ended with it; WP-CLI prints the same line for the same reason. changed is false.';
 
-    
     const FLUSH_RESET = 'Flushing the object cache also ended every MCP session and reset the rate-limit and lockout counters of the plugin that serves this MCP connection, which this site keeps in the object cache. MCP clients start a new session on their next request.';
 
     const NOTE_NO_PATH = "WP-CLI exits 1 without output here: the object '%s' in group '%s' has no value at that key path.";
 
-    
     const RUNTIME_STATE = '(no persistent object cache: only the memory of the request that runs it)';
 
-    
-    
-    
-
-    
     public function preflight_group_third( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) $this->arg( $inv, 2, 'default' ), $ctx );
     }
 
-    
     public function preflight_group_second( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) $this->arg( $inv, 1, 'default' ), $ctx );
     }
 
-    
     public function preflight_group_first( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) $this->arg( $inv, 0, '' ), $ctx );
     }
 
-    
     public function preflight_group_flag( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) Read_Value::flag( $inv->assoc, 'group', 'default' ), $ctx );
     }
 
-    
-    
-    
-
-    
     public function add( Invocation $inv, Context $ctx ): void {
         list( $key, $value, $group, $expiration ) = $this->positionals( $inv, 4 );
         $this->guard( (string) $group, $ctx );
@@ -104,17 +54,14 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->success( "Added object '$key' in group '$group'." );
     }
 
-    
     public function decr( Invocation $inv, Context $ctx ): void {
         $this->step( $inv, $ctx, 'decr', 'The value was not decremented.' );
     }
 
-    
     public function incr( Invocation $inv, Context $ctx ): void {
         $this->step( $inv, $ctx, 'incr', 'The value was not incremented.' );
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         list( $key, $group ) = $this->positionals( $inv, 2 );
         $this->guard( (string) $group, $ctx );
@@ -130,7 +77,6 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->success( 'Object deleted.' );
     }
 
-    
     public function flush( Invocation $inv, Context $ctx ): void {
         $ctx->not_captured( self::NOT_RECORDED );
 
@@ -152,7 +98,6 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->success( 'The cache was flushed.' );
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         list( $key, $group ) = $this->positionals( $inv, 2 );
         $this->guard( (string) $group, $ctx );
@@ -166,7 +111,6 @@ class Cache_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $this->mask( (string) $key, (string) $group, $value, $ctx ), $inv->assoc );
     }
 
-    
     public function replace( Invocation $inv, Context $ctx ): void {
         list( $key, $value, $group, $expiration ) = $this->positionals( $inv, 4 );
         $this->guard( (string) $group, $ctx );
@@ -183,7 +127,6 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->success( "Replaced object '$key' in group '$group'." );
     }
 
-    
     public function set( Invocation $inv, Context $ctx ): void {
         list( $key, $value, $group, $expiration ) = $this->positionals( $inv, 4 );
         $this->guard( (string) $group, $ctx );
@@ -200,15 +143,10 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->success( "Set object '$key' in group '$group'." );
     }
 
-    
     public function type( Invocation $inv, Context $ctx ): void {
         $message = $this->cache_type();
         $ctx->out->line( $message );
     }
-
-    
-
-
 
     public function supports( Invocation $inv, Context $ctx ): void {
         list( $feature ) = $this->positionals( $inv, 1 );
@@ -225,7 +163,6 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->halt( 1 );
     }
 
-    
     public function flush_group( Invocation $inv, Context $ctx ): void {
         list( $group ) = $this->positionals( $inv, 1 );
         $this->guard( (string) $group, $ctx );
@@ -242,7 +179,6 @@ class Cache_Handler extends Command_Handler {
         $ctx->out->success( "Cache group '$group' was flushed." );
     }
 
-    
     public function pluck( Invocation $inv, Context $ctx ): void {
         $args  = array_values( $inv->args );
         $key   = $args[0];
@@ -268,7 +204,6 @@ class Cache_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $this->mask( (string) $key, (string) $group, $value, $ctx ), $inv->assoc );
     }
 
-    
     public function patch( Invocation $inv, Context $ctx ): void {
         $args       = array_values( $inv->args );
         $action     = (string) $args[0];
@@ -282,8 +217,6 @@ class Cache_Handler extends Command_Handler {
         if ( 'delete' === $action ) {
             $patch_value = null;
         } else {
-            
-            
             if ( count( $key_path ) > 1 ) {
                 $patch_value = Read_Value::read( $ctx->out, array_pop( $key_path ), $inv->assoc );
             } else {
@@ -295,7 +228,6 @@ class Cache_Handler extends Command_Handler {
             }
         }
 
-        
         $old_value     = $this->cache_get( $key, $group );
         $current_value = $old_value;
         if ( is_object( $old_value ) ) {
@@ -323,11 +255,6 @@ class Cache_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function describe_store( Invocation $inv ): array {
         list( $key, $value, $group, $expiration ) = $this->positionals( $inv, 4 );
         $verb = array(
@@ -348,7 +275,6 @@ class Cache_Handler extends Command_Handler {
         );
     }
 
-    
     public function describe_step( Invocation $inv ): array {
         list( $key, $offset, $group ) = $this->positionals( $inv, 3 );
         return array(
@@ -363,13 +289,11 @@ class Cache_Handler extends Command_Handler {
         );
     }
 
-    
     public function describe_delete( Invocation $inv ): array {
         list( $key, $group ) = $this->positionals( $inv, 2 );
         return array( sprintf( "Object cache key '%s' in group '%s': %s → delete", $key, $group, $this->current( (string) $key, (string) $group ) ) );
     }
 
-    
     public function describe_flush( Invocation $inv ): array {
         if ( ! $this->ext_object_cache() ) {
             return array( 'Object cache ' . self::RUNTIME_STATE . ': every group → flush' );
@@ -377,14 +301,12 @@ class Cache_Handler extends Command_Handler {
         return array( sprintf( "Object cache (%s): every key of every group, shared by every site that uses the same backend → flush, ending every MCP session and resetting the plugin's rate-limit and lockout counters", $this->cache_type() ) );
     }
 
-    
     public function describe_flush_group( Invocation $inv ): array {
         list( $group ) = $this->positionals( $inv, 1 );
         $where = $this->ext_object_cache() ? '' : ' ' . self::RUNTIME_STATE;
         return array( sprintf( "Object cache group '%s'%s: every key → flush", $group, $where ) );
     }
 
-    
     public function describe_patch( Invocation $inv ): array {
         $args   = array_values( $inv->args );
         $action = (string) $args[0];
@@ -400,20 +322,6 @@ class Cache_Handler extends Command_Handler {
         return array( sprintf( "Object cache key '%s' in group '%s': %s → %s", $key, $group, $this->current( $key, $group ), $effect ) );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
     public static function cache_type_of( ?bool $using_ext, ?object $object_cache ): string {
         if ( empty( $using_ext ) ) {
             return 'Default';
@@ -425,18 +333,10 @@ class Cache_Handler extends Command_Handler {
         return $message ?? 'Unknown';
     }
 
-    
-
-
-
-
-
     private static function memcache_type( ?object $object_cache ): ?string {
-        
         if ( isset( $object_cache->m ) && $object_cache->m instanceof \Memcached ) {
             return 'Memcached';
         }
-        
         if ( ! isset( $object_cache->mc ) ) {
             return null;
         }
@@ -449,56 +349,33 @@ class Cache_Handler extends Command_Handler {
         return $is_memcache ? 'Memcache' : 'Unknown';
     }
 
-    
-
-
-
-
     private static function extension_cache_type( ?object $object_cache ): ?string {
-        
         if ( $object_cache instanceof \XCache_Object_Cache ) {
             return 'Xcache';
         }
-        
         if ( class_exists( 'WinCache_Object_Cache' ) ) {
             return 'WinCache';
         }
-        
         if ( class_exists( 'APC_Object_Cache' ) ) {
             return 'APC';
         }
         return null;
     }
 
-    
-
-
-
-
     private static function redis_type( ?object $object_cache ): ?string {
-        
         if ( isset( $object_cache->redis ) && $object_cache->redis instanceof \Redis ) {
             return 'Redis';
         }
-        
         if ( method_exists( $object_cache, 'redis_instance' ) && method_exists( $object_cache, 'redis_status' ) ) {
             return 'Redis';
         }
-        
         if ( method_exists( $object_cache, 'config' ) && method_exists( $object_cache, 'connection' ) ) {
             return 'Redis';
         }
         return null;
     }
 
-    
-
-
-
-
-
     private static function other_cache_type( ?object $object_cache ): ?string {
-        
         if ( isset( $object_cache->lcache ) && $object_cache->lcache instanceof \LCache\Integrated ) {
             return 'WP LCache';
         }
@@ -508,19 +385,6 @@ class Cache_Handler extends Command_Handler {
         }
         return null;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     protected function seam( string $name, array $args, callable $real ) {
         return call_user_func_array( $real, $args );
@@ -546,11 +410,6 @@ class Cache_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
     protected function cache_add( string $key, $value, string $group, $expiration ): bool {
         return (bool) $this->seam(
             'wp_cache_add',
@@ -561,12 +420,6 @@ class Cache_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     protected function cache_get( string $key, $group ) {
         return $this->seam(
             'wp_cache_get',
@@ -576,12 +429,6 @@ class Cache_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
 
     protected function cache_get_found( string $key, $group ): array {
         $result = $this->seam(
@@ -596,11 +443,6 @@ class Cache_Handler extends Command_Handler {
         return is_array( $result ) && array_key_exists( 0, $result ) ? array( $result[0], ! empty( $result[1] ) ) : array( false, false );
     }
 
-    
-
-
-
-
     protected function cache_set( string $key, $value, $group, $expiration ): bool {
         return (bool) $this->seam(
             'wp_cache_set',
@@ -610,11 +452,6 @@ class Cache_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
 
     protected function cache_replace( string $key, $value, string $group, $expiration ): bool {
         return (bool) $this->seam(
@@ -635,13 +472,6 @@ class Cache_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
-
 
     protected function cache_step( string $which, string $key, $offset, string $group ) {
         return $this->seam(
@@ -667,7 +497,6 @@ class Cache_Handler extends Command_Handler {
         );
     }
 
-    
     protected function supports_exists(): bool {
         return (bool) $this->seam(
             'function_exists:wp_cache_supports',
@@ -709,15 +538,6 @@ class Cache_Handler extends Command_Handler {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
     private function guard( string $group, Context $ctx ): void {
         $refusal = Self_Protection::cache_group( $group );
         if ( null !== $refusal ) {
@@ -725,20 +545,9 @@ class Cache_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
     private function arg( Invocation $inv, int $index, string $default ): string {
         return array_key_exists( $index, $inv->args ) ? $inv->args[ $index ] : $default;
     }
-
-    
-
-
-
-
-
 
     private function positionals( Invocation $inv, int $count ): array {
         $out = array();
@@ -747,11 +556,6 @@ class Cache_Handler extends Command_Handler {
         }
         return $out;
     }
-
-    
-
-
-
 
     private function step( Invocation $inv, Context $ctx, string $which, string $failure ): void {
         list( $key, $offset, $group ) = $this->positionals( $inv, 3 );
@@ -769,10 +573,6 @@ class Cache_Handler extends Command_Handler {
         Values::print_value( $ctx->out, $this->mask( (string) $key, (string) $group, $value, $ctx ), $inv->assoc );
     }
 
-    
-
-
-
     private function wrote( Context $ctx, bool $moved ): void {
         if ( ! $this->ext_object_cache() ) {
             $ctx->note( self::NOTE_RUNTIME );
@@ -783,13 +583,6 @@ class Cache_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private function mask( string $key, string $group, $value, Context $ctx ) {
         if ( Option_Handler::key_is_secret( $key ) ) {
             $ctx->redacted( "value of cache key '{$key}' in group '{$group}'" );
@@ -798,7 +591,6 @@ class Cache_Handler extends Command_Handler {
         return $value;
     }
 
-    
     private function current( string $key, string $group ): string {
         if ( ! $this->ext_object_cache() ) {
             return self::RUNTIME_STATE;
@@ -807,7 +599,6 @@ class Cache_Handler extends Command_Handler {
         return $found[1] ? Option_Handler::preview( $key, $found[0] ) : '(not set)';
     }
 
-    
     private static function expiry_text( $expiration ): string {
         $seconds = is_numeric( $expiration ) ? (int) $expiration : 0;
         return 0 === $seconds ? 'no expiry' : sprintf( 'expires %d seconds after the write', $seconds );

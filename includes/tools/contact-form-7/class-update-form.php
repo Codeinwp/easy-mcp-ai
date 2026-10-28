@@ -48,7 +48,6 @@ class Update_Form extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $target = $this->preview_target( $arguments );
         $fields = self::sent_fields( $arguments );

@@ -29,7 +29,7 @@ class Update_Category extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
@@ -77,7 +77,6 @@ class Update_Category extends Base_Tool {
             $params['slug'] = sanitize_title( $arguments['slug'] );
         }
 
-        
         if ( isset( $arguments['description'] ) && '' !== $arguments['description'] ) {
             $params['description'] = sanitize_text_field( $arguments['description'] );
         }

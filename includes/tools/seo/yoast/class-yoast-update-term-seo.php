@@ -7,34 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Yoast_Update_Term_Seo extends Base_Tool {
-
-	
-
 
 	const FIELDS = array(
 		'seo_title'           => 'wpseo_title',
@@ -52,17 +25,9 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		'twitter_image'       => 'wpseo_twitter-image',
 	);
 
-	
-
-
-
 	const ADVANCED = array( 'noindex', 'canonical', 'breadcrumb_title' );
 
 	const URL_FIELDS = array( 'canonical', 'og_image', 'twitter_image' );
-
-	
-
-
 
 	const IMAGE_IDS = array(
 		'og_image'      => 'wpseo_opengraph-image-id',
@@ -82,9 +47,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 	}
 
 	public function get_required_capability() {
-		
-		
-		
 		return 'read';
 	}
 
@@ -137,15 +99,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		);
 	}
 
-	
-
-
-
-
-
-
-
-
 	private function validated_changes( array $arguments ) {
 		$unknown = array_diff( array_keys( $arguments ), array_merge( array( 'term_id' ), array_keys( self::FIELDS ) ) );
 		if ( $unknown ) {
@@ -167,13 +120,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		return $changes;
 	}
 
-	
-
-
-
-
-
-
 	private function merged_values( $term, array $changes ) {
 		$values = self::stored( $term );
 		foreach ( $changes as $field => $value ) {
@@ -185,51 +131,24 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		return $values;
 	}
 
-	
-
-
-
-
-
-
 	private function attachment_id_for( $url ) {
 		$id = ( '' !== $url && function_exists( 'attachment_url_to_postid' ) ) ? (int) attachment_url_to_postid( $url ) : 0;
 		return $id > 0 ? (string) $id : '';
 	}
 
-	
-
-
-
-
-
-
-
 	private function write_and_refresh( $term, array $values ) {
 		$history = class_exists( '\\Easy_MCP_AI\\History\\Change_Context' );
 
-		
-		
 		if ( $history ) {
 			\Easy_MCP_AI\History\Change_Context::expect_scoped_option( 'wpseo_taxonomy_meta', array( $term->taxonomy, (string) $term->term_id ) );
 		}
 		\WPSEO_Taxonomy_Meta::set_values( (int) $term->term_id, $term->taxonomy, $values );
 		if ( $history ) {
-			
-			
 			\Easy_MCP_AI\History\Change_Context::consume_scoped_option( 'wpseo_taxonomy_meta' );
-			
 			\Easy_MCP_AI\History\Change_Context::expect_refresh_only( 'term', (int) $term->term_id );
 		}
 		do_action( 'edited_term', (int) $term->term_id, (int) $term->term_taxonomy_id, $term->taxonomy, array() );
 	}
-
-	
-
-
-
-
-
 
 	private function altered_fields( array $changes, array $after ) {
 		$altered = array();
@@ -240,14 +159,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		}
 		return $altered;
 	}
-
-	
-
-
-
-
-
-
 
 	public static function resolve_term( $term_id ) {
 		if ( ! class_exists( 'WPSEO_Taxonomy_Meta' ) || ! class_exists( 'WPSEO_Options' ) ) {
@@ -263,26 +174,12 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		return $term;
 	}
 
-	
-
-
-
-
-
-
-
 	public static function can_edit_advanced( $user_id ) {
 		if ( user_can( (int) $user_id, 'wpseo_manage_options' ) || user_can( (int) $user_id, 'wpseo_edit_advanced_metadata' ) ) {
 			return true;
 		}
 		return false === \WPSEO_Options::get( 'disableadvanced_meta' );
 	}
-
-	
-
-
-
-
 
 	public static function read( $term ) {
 		$stored = self::stored( $term );
@@ -294,12 +191,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		return $out;
 	}
 
-	
-
-
-
-
-
 	private static function stored( $term ) {
 		$stored = \WPSEO_Taxonomy_Meta::get_term_meta( $term, $term->taxonomy );
 		if ( ! is_array( $stored ) ) {
@@ -307,13 +198,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		}
 		return $stored;
 	}
-
-	
-
-
-
-
-
 
 	private function validate_field( $field, $value ) {
 		if ( 'is_cornerstone' === $field ) {
@@ -333,15 +217,6 @@ class Yoast_Update_Term_Seo extends Base_Tool {
 		}
 		return $value;
 	}
-
-	
-
-
-
-
-
-
-
 
 	private function assert_http_url( $field, $value ) {
 		$parts  = wp_parse_url( $value );

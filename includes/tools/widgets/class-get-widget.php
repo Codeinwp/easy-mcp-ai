@@ -54,7 +54,6 @@ class Get_Widget extends Base_Tool {
         $this->validate_required( $arguments, array( 'widget_id' ) );
         $widget_id = $this->validate_rest_route_segment( $arguments['widget_id'], 'widget_id' );
 
-        
         $data = $this->rest_request( 'GET', '/wp/v2/widgets/' . $widget_id, array( 'context' => 'edit' ), 'id,id_base,sidebar,rendered,instance' );
 
         return $this->shape_widget( (array) $data, true );

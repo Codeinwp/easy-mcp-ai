@@ -5,28 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class Approval_Schema {
-    
-
-
-
-
-
-
-
-
     const DB_VERSION  = '1.1.0';
 
-    
     const REQUIRED_COLUMNS = array( 'client_protocol', 'client_capabilities' );
     const OPTION_NAME = 'easy_mcp_ai_approvals_db_version';
     const TABLE       = 'easy_mcp_ai_approvals';
@@ -59,13 +40,6 @@ class Approval_Schema {
         }
         $table           = self::table_name();
         $charset_collate = $wpdb->get_charset_collate();
-        
-        
-        
-        
-        
-        
-        
         $sql = "CREATE TABLE {$table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             approval_id varchar(36) NOT NULL,

@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,20 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Popup_Maker extends Cache_Adapter {
 
@@ -50,11 +31,6 @@ final class Popup_Maker extends Cache_Adapter {
     public function is_present(): bool {
         return $this->calls()->class_exists( 'PUM_AssetCache' );
     }
-
-    
-
-
-
 
     public function noise_options(): array {
         return array( 'pum-has-cached-css', 'pum-has-cached-js' );

@@ -11,70 +11,26 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Core_Handler extends Command_Handler {
 
-    
     const NETWORK_SITE_CAP = 50;
 
-    
     const UPDATE_FIELDS = array( 'version', 'update_type', 'package_url' );
 
-    
     const CHECKSUMS_ENDPOINT = 'https://api.wordpress.org/core/checksums/1.0/';
 
-    
     const CAPABILITY = 'update_core';
 
     const REASON_FILE_MODS  = "File modifications are disabled on this site (DISALLOW_FILE_MODS in wp-config.php, or a file_mod_allowed filter): WordPress then withholds the %2\$s capability from every user, administrators included, so wp_cli_run does not run 'wp %1\$s'.";
     const REASON_NETWORK_CAP = "wp_cli_run upgrades at most %1\$d sites in one 'wp core update-db --network' command, and this network has %2\$d sites to upgrade. Upgrade them from Network Admin › Upgrade Network in wp-admin.";
     const NOTE_VERSION_CHECK = "WordPress's update check ran (wp_version_check()) and may have refreshed the %s site transient, a cache WordPress refreshes on its own; nothing else was written.";
 
-    
     const NOT_CAPTURED_UPGRADE = 'Database upgrade: change history does not record the table changes wp_upgrade() makes (dbDelta) and records its option writes only where its capture settings allow; an upgrade cannot be undone from change history.';
 
-    
-    
-    
-
-    
     public function preflight_update_core( Invocation $inv, Context $ctx ): void {
         self::require_update_core( $inv->command, $ctx );
     }
 
-    
     public function preflight_update_db( Invocation $inv, Context $ctx ): void {
         $network = Read_Value::flag( $inv->assoc, 'network' );
         if ( $network && ! \is_multisite() ) {
@@ -90,17 +46,9 @@ class Core_Handler extends Command_Handler {
         }
     }
 
-    
     public function is_dry_run( Invocation $inv ): bool {
         return (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
     }
-
-    
-
-
-
-
-
 
     public static function require_update_core( string $command, Context $ctx ): void {
         if ( function_exists( 'wp_is_file_mod_allowed' ) && ! \wp_is_file_mod_allowed( 'capability_update_core' ) ) {
@@ -109,11 +57,6 @@ class Core_Handler extends Command_Handler {
         $ctx->require_cap( self::CAPABILITY );
     }
 
-    
-    
-    
-
-    
     public function check_update( Invocation $inv, Context $ctx ): void {
         $assoc  = $inv->assoc;
         $format = Read_Value::flag( $assoc, 'format', 'table' );
@@ -129,7 +72,6 @@ class Core_Handler extends Command_Handler {
         }
     }
 
-    
     public function is_installed( Invocation $inv, Context $ctx ): void {
         if ( $this->wp( 'is_blog_installed' ) && ( ! Read_Value::flag( $inv->assoc, 'network' ) || \is_multisite() ) ) {
             $ctx->out->halt( 0 );
@@ -137,7 +79,6 @@ class Core_Handler extends Command_Handler {
         $ctx->out->halt( 1 );
     }
 
-    
     public function version( Invocation $inv, Context $ctx ): void {
         $details = $this->get_wp_details( $ctx, 'installation' );
 
@@ -150,8 +91,6 @@ class Core_Handler extends Command_Handler {
         $found_version           = preg_match( '/(\d)(\d+)-/', (string) $details['tinymce_version'], $match );
         $human_readable_tiny_mce = $found_version ? "{$match[1]}.{$match[2]}" : '';
 
-        
-        
         $values = array(
             'wp-version'    => $details['wp_version'],
             'db-version'    => $details['wp_db_version'],
@@ -169,7 +108,6 @@ class Core_Handler extends Command_Handler {
         );
     }
 
-    
     public function update_db( Invocation $inv, Context $ctx ): void {
         $network = Read_Value::flag( $inv->assoc, 'network' );
         if ( $network && ! \is_multisite() ) {
@@ -194,7 +132,6 @@ class Core_Handler extends Command_Handler {
         $ctx->out->success( (string) $result['success'] );
     }
 
-    
     public function verify_checksums( Invocation $inv, Context $ctx ): void {
         list( $wp_version, $locale, $include_root, $exclude ) = $this->checksum_args( $inv->assoc, $ctx );
 
@@ -208,15 +145,6 @@ class Core_Handler extends Command_Handler {
             $ctx->out->error( "WordPress installation doesn't verify against checksums." );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function checksum_args( array $assoc_args, Context $ctx ): array {
         $wp_version   = '';
@@ -245,13 +173,6 @@ class Core_Handler extends Command_Handler {
         return array( (string) $wp_version, empty( $locale ) ? 'en_US' : (string) $locale, $include_root, $exclude );
     }
 
-    
-
-
-
-
-
-
     private function core_checksums( string $wp_version, string $locale, Context $ctx ): array {
         $response = $this->wp( 'core_checksums', array( $wp_version, $locale ) );
         if ( isset( $response['exception'] ) ) {
@@ -263,14 +184,6 @@ class Core_Handler extends Command_Handler {
         }
         return $checksums;
     }
-
-    
-
-
-
-
-
-
 
     private static function files_to_hash( array $checksums, array $exclude ): array {
         $to_hash = array();
@@ -284,21 +197,12 @@ class Core_Handler extends Command_Handler {
         return $to_hash;
     }
 
-    
-
-
-
-
-
-
-
     private function verify_files( array $checksums, array $exclude, Context $ctx ): bool {
         $hashes = (array) $this->wp( 'file_hashes', array( self::files_to_hash( $checksums, $exclude ) ) );
 
         $has_errors = false;
         foreach ( $checksums as $file => $checksum ) {
             $file = (string) $file;
-            
             if ( 'wp-content' === substr( $file, 0, 10 ) ) {
                 continue;
             }
@@ -318,14 +222,6 @@ class Core_Handler extends Command_Handler {
         }
         return $has_errors;
     }
-
-    
-
-
-
-
-
-
 
     private function warn_additional_files( array $checksums, bool $include_root, array $exclude, Context $ctx ): void {
         $core_checksums_files = array_filter(
@@ -347,11 +243,6 @@ class Core_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function describe_update_db( Invocation $inv ): array {
         $dry_run = (bool) Read_Value::flag( $inv->assoc, 'dry-run' );
         if ( ! Read_Value::flag( $inv->assoc, 'network' ) ) {
@@ -369,7 +260,6 @@ class Core_Handler extends Command_Handler {
         return $lines;
     }
 
-    
     private static function describe_versions( string $label, array $versions, bool $dry_run ): string {
         $current = (int) ( $versions['current'] ?? 0 );
         $target  = (int) ( $versions['target'] ?? 0 );
@@ -378,17 +268,6 @@ class Core_Handler extends Command_Handler {
         }
         return sprintf( '%s: db version %d → %s to db version %d', $label, $current, $dry_run ? 'dry run, nothing written; would upgrade' : 'upgrade (wp_upgrade())', $target );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     private function get_updates( array $assoc_args, Context $ctx ): array {
         $force_check = (bool) Read_Value::flag( $assoc_args, 'force-check' );
@@ -408,13 +287,6 @@ class Core_Handler extends Command_Handler {
         }
         return array_values( $updates );
     }
-
-    
-
-
-
-
-
 
     private static function newest_offers( array $offers, string $compare_version ): array {
         $updates = array(
@@ -446,14 +318,9 @@ class Core_Handler extends Command_Handler {
         return $updates;
     }
 
-    
-
-
-
     private static function wordpress_update_type( string $new_version, string $original_version ): string {
         $update_type = self::named_sem_ver( $new_version, $original_version );
 
-        
         if ( 'minor' === $update_type ) {
             return 'major';
         }
@@ -462,16 +329,6 @@ class Core_Handler extends Command_Handler {
         }
         return $update_type;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function named_sem_ver( string $new_version, string $original_version ): string {
         if ( ! version_compare( $new_version, $original_version, '>' ) ) {
@@ -495,13 +352,6 @@ class Core_Handler extends Command_Handler {
         return 'major';
     }
 
-    
-
-
-
-
-
-
     private static function original_major_minor( string $original_version ): ?array {
         $parts = explode( '-', $original_version );
         $bits  = explode( '.', $parts[0] );
@@ -513,13 +363,6 @@ class Core_Handler extends Command_Handler {
         return array( (int) $major, null === $minor ? null : (int) $minor );
     }
 
-    
-
-
-
-
-
-
     private static function new_major_minor( string $new_version ): ?array {
         if ( ! preg_match( '/^v?(\d+)(?:\.(\d+))?(?:\.\d+){0,2}(?:[._-]?(?:stable|beta|b|rc|alpha|a|patch|pl|p)(?:[.-]?\d+)*)?(?:[.-]?dev)?\z/i', $new_version, $m ) ) {
             return null;
@@ -527,7 +370,6 @@ class Core_Handler extends Command_Handler {
         return array( (int) $m[1], isset( $m[2] ) && '' !== $m[2] ? (int) $m[2] : 0 );
     }
 
-    
     public static function filter_file( string $filepath, bool $include_root ): bool {
         if ( true === $include_root ) {
             return ( 1 !== preg_match( '/^(\.htaccess$|\.maintenance$|wp-config\.php$|wp-content\/)/', $filepath ) );
@@ -538,14 +380,6 @@ class Core_Handler extends Command_Handler {
             || 1 === preg_match( '/^wp-(?!config\.php)([^\/]*)$/', $filepath )
         );
     }
-
-    
-
-
-
-
-
-
 
     private function get_wp_details( Context $ctx, string $noun ): array {
         $version_content = $this->wp( 'version_file' );
@@ -562,7 +396,6 @@ class Core_Handler extends Command_Handler {
         return $result;
     }
 
-    
     private static function find_var( string $var_name, string $code ): ?string {
         $start = strpos( $code, '$' . $var_name . ' = ' );
         if ( ! $start ) {
@@ -574,7 +407,6 @@ class Core_Handler extends Command_Handler {
         return trim( (string) $value, " '" );
     }
 
-    
     private function update_db_network( bool $dry_run, Context $ctx ): void {
         $success  = 0;
         $total    = 0;
@@ -585,7 +417,6 @@ class Core_Handler extends Command_Handler {
             $url        = $blog['domain'] . $blog['path'];
             $result     = (array) $this->wp( 'blog_update_db', array( (int) $blog['blog_id'], $dry_run ) );
             if ( ! empty( $result['ok'] ) ) {
-                
                 if ( isset( $result['success'] ) && '' !== (string) $result['success'] ) {
                     $message = rtrim( (string) $result['success'], '.' ) . " on {$url}";
                 } else {
@@ -609,32 +440,6 @@ class Core_Handler extends Command_Handler {
         $ctx->out->success( "WordPress database upgraded on {$success}/{$total} sites." );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected function wp( string $call, array $args = array() ) {
         return $this->{'call_' . $call}( ...$args );
     }
@@ -643,16 +448,9 @@ class Core_Handler extends Command_Handler {
         return (bool) \is_blog_installed();
     }
 
-    
     protected function call_running_wp_version(): string {
         return isset( $GLOBALS['wp_version'] ) ? (string) $GLOBALS['wp_version'] : '';
     }
-
-    
-
-
-
-
 
     protected function call_version_check( bool $force ) {
         if ( ! function_exists( 'wp_version_check' ) ) {
@@ -671,13 +469,6 @@ class Core_Handler extends Command_Handler {
         return array( 'updates' => $updates );
     }
 
-    
-
-
-
-
-
-
     private static function offer_row( object $offer ): array {
         $packages = isset( $offer->packages ) && is_object( $offer->packages ) ? $offer->packages : new \stdClass();
         return array(
@@ -689,7 +480,6 @@ class Core_Handler extends Command_Handler {
         );
     }
 
-    
     protected function call_version_file(): ?string {
         $path = ABSPATH . 'wp-includes/version.php';
         if ( ! is_readable( $path ) ) {
@@ -698,7 +488,6 @@ class Core_Handler extends Command_Handler {
         return (string) file_get_contents( $path, false, null, 6, 2048 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- WP-CLI's exact read of a local file.
     }
 
-    
     protected function call_db_versions(): array {
         global $wp_db_version;
         if ( ! function_exists( '__get_option' ) ) {
@@ -710,7 +499,6 @@ class Core_Handler extends Command_Handler {
         );
     }
 
-    
     protected function call_blog_db_versions( int $blog_id ): array {
         \switch_to_blog( $blog_id );
         try {
@@ -719,13 +507,6 @@ class Core_Handler extends Command_Handler {
             \restore_current_blog();
         }
     }
-
-    
-
-
-
-
-
 
     protected function call_update_db_site( bool $dry_run ): array {
         global $wpdb, $wp_current_db_version;
@@ -758,12 +539,6 @@ class Core_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     protected function call_blog_update_db( int $blog_id, bool $dry_run ): array {
         \switch_to_blog( $blog_id );
         try {
@@ -782,7 +557,6 @@ class Core_Handler extends Command_Handler {
         }
     }
 
-    
     protected function call_network_blogs(): array {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- WP-CLI's TableIterator reads wp_blogs itself.
@@ -799,23 +573,15 @@ class Core_Handler extends Command_Handler {
         return $out;
     }
 
-    
     protected function call_network_blog_count(): int {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the count behind the cap.
         return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->blogs} WHERE spam = 0 AND deleted = 0 AND archived = 0 AND site_id = %d", self::current_network_id() ) );
     }
 
-    
     private static function current_network_id(): int {
         return function_exists( 'get_current_network_id' ) ? (int) \get_current_network_id() : 1;
     }
-
-    
-
-
-
-
 
     protected function call_mark_network_upgraded( array $site_ids ): bool {
         global $wp_db_version;
@@ -825,13 +591,6 @@ class Core_Handler extends Command_Handler {
         }
         return $changed;
     }
-
-    
-
-
-
-
-
 
     protected function call_core_checksums( string $version, string $locale ): array {
         $url      = sprintf( '%s?%s', self::CHECKSUMS_ENDPOINT, http_build_query( array( 'version' => $version, 'locale' => $locale ), '', '&' ) );
@@ -859,13 +618,6 @@ class Core_Handler extends Command_Handler {
         return array( 'checksums' => $data['checksums'] );
     }
 
-    
-
-
-
-
-
-
     protected function call_file_hashes( array $files ): array {
         $out = array();
         foreach ( $files as $file ) {
@@ -878,12 +630,6 @@ class Core_Handler extends Command_Handler {
         }
         return $out;
     }
-
-    
-
-
-
-
 
     protected function call_walk_files( bool $include_root ): array {
         $path           = ABSPATH;

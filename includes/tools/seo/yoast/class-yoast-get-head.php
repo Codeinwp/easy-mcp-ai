@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -63,8 +60,6 @@ class Yoast_Get_Head extends Base_Tool {
 		try {
 			return $this->rest_request( 'GET', '/yoast/v1/get_head', $params );
 		} catch ( \RuntimeException $e ) {
-			
-			
 			if ( self::REST_ERROR_WITHOUT_MESSAGE !== $e->getCode() ) {
 				throw $e;
 			}
@@ -72,23 +67,7 @@ class Yoast_Get_Head extends Base_Tool {
 		}
 	}
 
-	
-
-
-
-
-
-
-
-
-
-
-
 	private function explain_not_found( $url ) {
-		
-		
-		
-		
 		$url_parts = wp_parse_url( $url );
 		$site_host = (string) wp_parse_url( site_url(), PHP_URL_HOST );
 
@@ -108,19 +87,11 @@ class Yoast_Get_Head extends Base_Tool {
 		return 'No Yoast SEO data for this permalink: not published, a different permalink, or not indexed yet. For one post or page, use wp_yoast_get_post_seo with its ID.';
 	}
 
-	
-
-
-
-
-
-
 	private function yoast_builds_index() {
 		if ( function_exists( 'YoastSEO' ) ) {
 			try {
 				return (bool) YoastSEO()->helpers->indexable->should_index_indexables();
 			} catch ( \Throwable $e ) {
-				
 			}
 		}
 		return 'production' === wp_get_environment_type();

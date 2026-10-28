@@ -10,23 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Get_Easy_Mcp_Diagnostics extends Base_Tool {
 
     public function get_name() {
@@ -46,10 +29,6 @@ class Get_Easy_Mcp_Diagnostics extends Base_Tool {
     }
 
     public function get_annotations() {
-        
-        
-        
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
@@ -76,9 +55,6 @@ class Get_Easy_Mcp_Diagnostics extends Base_Tool {
         $rerun = Site_Health_Guard::flag( $arguments, 'rerun', false );
 
         if ( $rerun ) {
-            
-            
-            
             if ( ! \current_user_can( 'manage_options' ) ) {
                 throw new \RuntimeException( 'Re-running diagnostics requires the manage_options capability.' );
             }
@@ -119,13 +95,6 @@ class Get_Easy_Mcp_Diagnostics extends Base_Tool {
         }
         return $out;
     }
-
-    
-
-
-
-
-
 
     protected function live_tool_registry() {
         return class_exists( '\\Easy_MCP_AI\\Plugin' ) ? \Easy_MCP_AI\Plugin::instance()->get_tool_registry() : null;

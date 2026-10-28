@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class GA_List_Key_Events extends Base_Tool {
 
     use Site_Kit_Rest;

@@ -7,10 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Spam_Comment extends Base_Tool {
 
     use Comment_Moderation;
@@ -28,8 +24,6 @@ class Spam_Comment extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'moderate_comments';
     }
 

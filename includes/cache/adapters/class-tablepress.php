@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,20 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Tablepress extends Cache_Adapter {
 
@@ -52,7 +33,6 @@ final class Tablepress extends Cache_Adapter {
     }
 
     protected function purge_site( Purge_Request $request ): Layer_Result {
-        
         $model = $this->calls()->call(
             static function () {
                 return isset( \TablePress::$model_table ) ? \TablePress::$model_table : null;

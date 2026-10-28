@@ -14,46 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Cron_Handler extends Command_Handler {
 
-    
     const ROW_CAP = 1000;
 
-    
     const LIST_FILTERS = array( 'hook', 'next_run_gmt', 'next_run_relative', 'recurrence' );
 
     const TIME_FORMAT = 'Y-m-d H:i:s';
@@ -68,28 +32,16 @@ class Cron_Handler extends Command_Handler {
 
     const UNSCHEDULE_FAILED = "Failed to unschedule events for hook '%s'.";
 
-    
     const NOT_RECORDED = 'Cron: change history does not record the cron option (scheduled events), by design.';
 
-    
-    
-    
-
-    
     public function preflight_hook( Invocation $inv, Context $ctx ): void {
         $this->guard( (string) ( array_key_exists( 0, $inv->args ) ? $inv->args[0] : '' ), $ctx );
     }
-
-    
-
-
 
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         foreach ( array_values( $inv->args ) as $hook ) {
             $this->guard( (string) $hook, $ctx );
         }
-        
-        
         $scratch = new Output( $ctx->out->is_quiet() );
         try {
             $events = $this->selection( $inv, $scratch );
@@ -108,7 +60,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
     public function preflight_list( Invocation $inv, Context $ctx ): void {
         $errors = array();
         foreach ( array_keys( $inv->assoc ) as $key ) {
@@ -123,11 +74,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $formatter  = $this->formatter( $ctx, $assoc_args, self::LIST_FILTERS, 'event' );
@@ -158,14 +104,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function filter_events( array $events, array $assoc_args ): array {
         foreach ( $events as $key => $event ) {
             foreach ( self::LIST_FILTERS as $field ) {
@@ -178,13 +116,11 @@ class Cron_Handler extends Command_Handler {
         return $events;
     }
 
-    
     private static function shows_args( Formatter $formatter ): bool {
         return in_array( 'args', (array) $formatter->fields, true ) || in_array( 'event_args', (array) $formatter->fields, true )
             || in_array( $formatter->field, array( 'args', 'event_args' ), true );
     }
 
-    
     public function schedule( Invocation $inv, Context $ctx ): void {
         $args       = $inv->args;
         $assoc_args = $inv->assoc;
@@ -232,7 +168,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
     public function unschedule( Invocation $inv, Context $ctx ): void {
         $hook = (string) $inv->args[0];
         $this->guard( $hook, $ctx );
@@ -247,7 +182,6 @@ class Cron_Handler extends Command_Handler {
         if ( empty( $unscheduled ) ) {
             $message = self::UNSCHEDULE_FAILED;
 
-            
             if ( 0 === $unscheduled ) {
                 $message = "No events found for hook '%1\$s'.";
             }
@@ -266,7 +200,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         foreach ( array_values( $inv->args ) as $hook ) {
             $this->guard( (string) $hook, $ctx );
@@ -301,7 +234,6 @@ class Cron_Handler extends Command_Handler {
         $ctx->out->success( sprintf( $message, $deleted ) );
     }
 
-    
     public function schedule_list( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $formatter  = $this->formatter( $ctx, $assoc_args, array( 'name', 'display', 'interval' ), 'schedule' );
@@ -319,11 +251,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function describe_schedule( Invocation $inv ): array {
         $hook       = (string) $inv->args[0];
         $next_run   = isset( $inv->args[1] ) ? $inv->args[1] : 'now';
@@ -347,13 +274,11 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     public function describe_unschedule( Invocation $inv ): array {
         $hook = (string) $inv->args[0];
         return array( sprintf( "Cron hook '%s': %s → unschedule every one", $hook, self::instances_text( $this->instances( $hook ) ) ) );
     }
 
-    
     public function describe_delete( Invocation $inv ): array {
         $out   = new Output();
         $lines = array();
@@ -371,20 +296,6 @@ class Cron_Handler extends Command_Handler {
         return $lines;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
     public static function cron_events( $crons, array $schedules, Output $out, array $clock ): ?array {
         $events = array();
 
@@ -394,7 +305,6 @@ class Cron_Handler extends Command_Handler {
 
         foreach ( (array) $crons as $time => $hooks ) {
 
-            
             if ( is_string( $time ) ) {
                 $out->warning( sprintf( 'Ignoring incorrectly registered cron event "%s".', $time ) );
                 continue;
@@ -414,16 +324,6 @@ class Cron_Handler extends Command_Handler {
         return $events;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function event_object( $hook, int $time, $sig, $data ): object {
         return (object) array(
             'hook'     => $hook,
@@ -434,17 +334,6 @@ class Cron_Handler extends Command_Handler {
             'interval' => is_array( $data ) && isset( $data['interval'] ) ? $data['interval'] : null,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function select_events( array $args, array $assoc_args, callable $read, Output $out ): ?array {
         $args    = array_values( $args );
@@ -462,7 +351,6 @@ class Cron_Handler extends Command_Handler {
 
         self::check_named_hooks( $events, $args, $out );
 
-        
         if ( ! empty( $exclude ) ) {
             $exclude = explode( ',', (string) $exclude );
             $events  = array_filter(
@@ -475,12 +363,6 @@ class Cron_Handler extends Command_Handler {
 
         return array_values( self::narrow_events( $events, $args, $due_now, $all ) );
     }
-
-    
-
-
-
-
 
     private static function usage_errors( array $args, bool $due_now, bool $all, Output $out ): void {
         if ( empty( $args ) && ! $due_now && ! $all ) {
@@ -496,14 +378,6 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function check_named_hooks( array $events, array $args, Output $out ): void {
         $hooks = array();
         foreach ( $events as $event ) {
@@ -516,18 +390,7 @@ class Cron_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function narrow_events( array $events, array $args, bool $due_now, bool $all ): array {
-        
-        
         if ( $due_now ) {
             $due_events = array();
             foreach ( $events as $event ) {
@@ -541,8 +404,6 @@ class Cron_Handler extends Command_Handler {
             return $due_events;
         }
         if ( ! $all ) {
-            
-            
             $due_events = array();
             foreach ( $events as $event ) {
                 if ( in_array( $event->hook, $args, true ) ) {
@@ -553,12 +414,6 @@ class Cron_Handler extends Command_Handler {
         }
         return $events;
     }
-
-    
-
-
-
-
 
     public static function split_protected( array $events ): array {
         $kept    = array();
@@ -575,13 +430,6 @@ class Cron_Handler extends Command_Handler {
         return array( $kept, $omitted );
     }
 
-    
-
-
-
-
-
-
     public static function skipped_warning( array $omitted, string $verb ): string {
         $labels = array(
             'plugin' => '%d of the plugin that serves this MCP connection (its own scheduled tasks)',
@@ -597,11 +445,6 @@ class Cron_Handler extends Command_Handler {
         return sprintf( self::SKIPPED, $total, 1 === $total ? 'event' : 'events', 'runs' === $verb ? 'runs or deletes' : 'deletes or runs', implode( '; ', $parts ) );
     }
 
-    
-
-
-
-
     public static function interval( $since ): string {
         if ( $since <= 0 ) {
             return 'now';
@@ -609,7 +452,6 @@ class Cron_Handler extends Command_Handler {
 
         $since = self::absint( $since );
 
-        
         $chunks = array(
             array( 60 * 60 * 24 * 365, 'year' ),
             array( 60 * 60 * 24 * 30, 'month' ),
@@ -623,29 +465,24 @@ class Cron_Handler extends Command_Handler {
         $count   = 0.0;
         $seconds = 1;
         $name    = 'second';
-        
         for ( $i = 0, $j = count( $chunks ); $i < $j; $i++ ) {
             $seconds = $chunks[ $i ][0];
             $name    = $chunks[ $i ][1];
 
-            
             $count = floor( $since / $seconds );
             if ( floatval( 0 ) !== $count ) {
                 break;
             }
         }
 
-        
         $output = sprintf( '%d %s', $count, self::pluralize( $name, self::absint( $count ) ) );
 
-        
         if ( $i + 1 < $j ) {
             $seconds2 = $chunks[ $i + 1 ][0];
             $name2    = $chunks[ $i + 1 ][1];
 
             $count2 = floor( ( $since - ( $seconds * $count ) ) / $seconds2 );
             if ( floatval( 0 ) !== $count2 ) {
-                
                 $output .= ' ' . sprintf( '%d %s', $count2, self::pluralize( $name2, self::absint( $count2 ) ) );
             }
         }
@@ -653,20 +490,9 @@ class Cron_Handler extends Command_Handler {
         return $output;
     }
 
-    
-
-
-
-
-
     public static function absint( $value ): int {
         return function_exists( 'absint' ) ? (int) \absint( $value ) : abs( (int) $value );
     }
-
-    
-
-
-
 
     public static function pluralize( string $noun, ?int $count = null ): string {
         if ( 1 === $count ) {
@@ -674,13 +500,6 @@ class Cron_Handler extends Command_Handler {
         }
         return $noun . 's';
     }
-
-    
-
-
-
-
-
 
     public static function sorted_schedules( array $schedules ): array {
         if ( ! empty( $schedules ) ) {
@@ -702,24 +521,10 @@ class Cron_Handler extends Command_Handler {
         return $schedules;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     protected function seam( string $name, array $args, callable $real ) {
         return call_user_func_array( $real, $args );
     }
 
-    
     protected function cron_array() {
         return $this->seam(
             '_get_cron_array',
@@ -730,7 +535,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     protected function schedules(): array {
         return (array) $this->seam(
             'wp_get_schedules',
@@ -751,7 +555,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     protected function date( string $format, int $timestamp ): string {
         return (string) $this->seam(
             'date',
@@ -772,7 +575,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     protected function strtotime( string $text ) {
         return $this->seam(
             'strtotime',
@@ -783,7 +585,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     protected function schedule_event( int $timestamp, string $recurrence, string $hook, array $args ): bool {
         return (bool) $this->seam(
             'wp_schedule_event',
@@ -794,7 +595,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     protected function schedule_single_event( int $timestamp, string $hook, array $args ): bool {
         return (bool) $this->seam(
             'wp_schedule_single_event',
@@ -805,7 +605,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
     protected function unschedule_hook( string $hook ) {
         return $this->seam(
             'wp_unschedule_hook',
@@ -816,10 +615,6 @@ class Cron_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
     protected function unschedule_event( $timestamp, string $hook, $args ): bool {
         return (bool) $this->seam(
             'wp_unschedule_event',
@@ -829,15 +624,6 @@ class Cron_Handler extends Command_Handler {
             }
         );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     protected function clock(): array {
         return array(
@@ -852,12 +638,6 @@ class Cron_Handler extends Command_Handler {
             },
         );
     }
-
-    
-
-
-
-
 
     private function selection( Invocation $inv, Output $out ): array {
         $events = self::select_events(
@@ -874,10 +654,6 @@ class Cron_Handler extends Command_Handler {
         return (array) $events;
     }
 
-    
-
-
-
     private function delete_event( object $event, Context $ctx ): bool {
         $crons = $this->cron_array();
 
@@ -893,26 +669,13 @@ class Cron_Handler extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
     private static function format_event( object $event, array $schedules, array $clock ): void {
         $schedule                 = $event->schedule;
-        
         $event->recurrence        = ( is_scalar( $schedule ) || null === $schedule ) && isset( $schedules[ $schedule ] ) ? self::interval( $event->interval ) : 'Non-repeating';
         $event->next_run          = call_user_func( $clock['local'], call_user_func( $clock['date'], self::TIME_FORMAT, (int) $event->time ) );
         $event->next_run_gmt      = call_user_func( $clock['date'], self::TIME_FORMAT, (int) $event->time );
         $event->next_run_relative = self::interval( (int) $event->time - (int) call_user_func( $clock['now'] ) );
     }
-
-    
-
-
-
-
 
     private static function redact_args( array $events, Context $ctx ): array {
         foreach ( $events as $key => $event ) {
@@ -927,22 +690,12 @@ class Cron_Handler extends Command_Handler {
         return $events;
     }
 
-    
-
-
-
-
     private function guard( string $hook, Context $ctx ): void {
         $refusal = Self_Protection::cron_hook( $hook );
         if ( null !== $refusal ) {
             $ctx->out->error( $refusal );
         }
     }
-
-    
-
-
-
 
     private function timestamp( string $next_run ) {
         if ( empty( $next_run ) ) {
@@ -953,7 +706,6 @@ class Cron_Handler extends Command_Handler {
         return $this->strtotime( (string) $next_run );
     }
 
-    
     private function instances( string $hook ): int {
         $count = 0;
         foreach ( (array) $this->cron_array() as $time => $hooks ) {
@@ -968,7 +720,6 @@ class Cron_Handler extends Command_Handler {
         return 0 === $count ? 'not scheduled' : sprintf( '%d %s scheduled', $count, 1 === $count ? 'event' : 'events' );
     }
 
-    
     private static function args_preview( array $args ): string {
         $text = (string) json_encode( \Easy_MCP_AI\Text_Redactor::redact_value( $args ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR );
         return strlen( $text ) > 200 ? \Easy_MCP_AI\Cli_Router\Envelope::cut( $text, 197 ) . '...' : $text;

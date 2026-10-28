@@ -13,55 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Search_Replace_Adapter extends Command_Handler {
 
     const TOOL = 'wp_privileged_search_replace_run';
 
-    
     const PLUGIN_MARK = 'easy_mcp_ai_';
 
-    
     const LOG_PREFIXES = array( '< ', '> ' );
 
     const LOG_FILE        = "wp_cli_run refuses --log=%s: it writes a file on the server. Use --log alone to print the log in the output.";
@@ -76,7 +33,6 @@ class Search_Replace_Adapter extends Command_Handler {
     const CHECKED_MORE    = 'The report leaves out %d searched %s: the search-replace tool names at most 1,000.';
     const REPORT_MORE     = 'The report shows 0 for %d changed %s past the 200 the search-replace tool counts one by one; the total above is exact.';
 
-    
     const SKIPPED = array(
         'protected'          => 'Self-protection: %1$d %2$s of the plugin that serves this MCP connection (its settings, and the search-replace job record itself) matched and %3$s left unchanged.',
         'partial'            => '%1$d %2$s kept a match inside an object the search-replace tool does not open (a class other than stdClass, or any object with --no-recurse-objects); WP-CLI would have replaced %4$s there: %5$s.',
@@ -84,11 +40,6 @@ class Search_Replace_Adapter extends Command_Handler {
         'primary_key_column' => '%1$d primary-key %6$s %7$s not searched, because rewriting a key moves the row: %5$s.',
     );
 
-    
-    
-    
-
-    
     public function preflight_run( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         self::check_regex_limit( $assoc, $ctx );
@@ -100,23 +51,12 @@ class Search_Replace_Adapter extends Command_Handler {
         self::check_log( $assoc, $ctx );
     }
 
-    
-
-
-
-
     private static function check_regex_limit( array $assoc, Context $ctx ): void {
         $regex_limit = Read_Value::flag( $assoc, 'regex-limit' );
         if ( null !== $regex_limit && ( ! preg_match( '/^(?:[0-9]+|-1)$/', (string) $regex_limit ) || 0 === (int) $regex_limit ) ) {
             $ctx->out->error( '`--regex-limit` expects a non-zero positive integer or -1.' );
         }
     }
-
-    
-
-
-
-
 
     private static function check_regex( string $old, array $assoc, Context $ctx ): void {
         $regex_delimiter = Read_Value::flag( $assoc, 'regex-delimiter', '' );
@@ -142,12 +82,6 @@ class Search_Replace_Adapter extends Command_Handler {
         $ctx->out->error( $msg . $preg_error_message );
     }
 
-    
-
-
-
-
-
     private static function refuse_regex_only( array $assoc, Context $ctx ): void {
         foreach ( array( 'regex-flags', 'regex-delimiter', 'regex-limit' ) as $key ) {
             if ( array_key_exists( $key, $assoc ) ) {
@@ -155,12 +89,6 @@ class Search_Replace_Adapter extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
-
 
     private static function check_log( array $assoc, Context $ctx ): void {
         $log = Read_Value::flag( $assoc, 'log' );
@@ -179,19 +107,6 @@ class Search_Replace_Adapter extends Command_Handler {
             }
         }
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     public function run( Invocation $inv, Context $ctx ): void {
         $assoc   = $inv->assoc;
@@ -217,25 +132,11 @@ class Search_Replace_Adapter extends Command_Handler {
             return;
         }
 
-        
         if ( $ctx->out->is_quiet() ) {
             return;
         }
         $this->report_result( $scope, $summary, $dry_run, $assoc, $ctx );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     private function report_job( array $summary, bool $dry_run, Context $ctx ): bool {
         $job_id = (string) ( $summary['job_id'] ?? '' );
@@ -251,15 +152,6 @@ class Search_Replace_Adapter extends Command_Handler {
         return self::report_finished( $summary, $job_id, $status, $cells, $ctx );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function report_finished( array $summary, string $job_id, string $status, int $cells, Context $ctx ): bool {
         if ( 'running' === $status ) {
             $ctx->out->warning( sprintf( self::BACKGROUND, $job_id, (int) ( $summary['progress']['tables_done'] ?? 0 ), (int) ( $summary['progress']['tables_total'] ?? 0 ), $cells, 1 === $cells ? 'replacement' : 'replacements', self::TOOL ) );
@@ -271,12 +163,6 @@ class Search_Replace_Adapter extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
     private static function print_log( array $summary, Context $ctx ): void {
         foreach ( (array) ( $summary['log'] ?? array() ) as $entry ) {
             $ctx->out->out( sprintf( "%s\n%s%s\n%s%s\n", (string) $entry['row'], self::LOG_PREFIXES[0], (string) $entry['old'], self::LOG_PREFIXES[1], (string) $entry['new'] ) );
@@ -286,15 +172,6 @@ class Search_Replace_Adapter extends Command_Handler {
             $ctx->out->warning( sprintf( self::LOG_MORE, $more, 1 === $more ? 'cell is' : 'cells are' ) );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function report_result( array $scope, array $summary, bool $dry_run, array $assoc, Context $ctx ): void {
         $cells = (int) ( $summary['totals']['cells'] ?? 0 );
@@ -312,7 +189,6 @@ class Search_Replace_Adapter extends Command_Handler {
         $this->print_success( $cells, $dry_run, $ctx );
     }
 
-    
     private function print_success( int $cells, bool $dry_run, Context $ctx ): void {
         if ( $dry_run ) {
             $ctx->out->success( sprintf( 1 === $cells ? '%d replacement to be made.' : '%d replacements to be made.', $cells ) );
@@ -324,15 +200,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
         $ctx->out->success( $message );
     }
-
-    
-
-
-
-
-
-
-
 
     private function table_list( array $args, array $assoc, Context $ctx ): array {
         $helper = $this->tables_helper();
@@ -352,12 +219,6 @@ class Search_Replace_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     private static function scope_flags( array $assoc ): array {
         $scope = array();
         foreach ( array( 'network', 'all-tables-with-prefix', 'all-tables' ) as $key ) {
@@ -367,15 +228,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
         return $scope;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function without_skipped_and_own( array $all, array $skip ): array {
         $list = array();
@@ -394,13 +246,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
         return array( $list, $own );
     }
-
-    
-
-
-
-
-
 
     public static function arguments( string $old, string $new, bool $dry_run, array $tables, array $assoc ): array {
         $skip_columns    = self::names( $assoc, 'skip-columns' );
@@ -437,13 +282,6 @@ class Search_Replace_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
     private static function regex_arguments( array $assoc ): array {
         $arguments = array( 'regex' => true );
         $flags     = Read_Value::flag( $assoc, 'regex-flags', false );
@@ -461,13 +299,6 @@ class Search_Replace_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
     private static function log_arguments( array $assoc ): array {
         $arguments = array( 'log' => true );
         foreach ( array( 'before_context', 'after_context' ) as $key ) {
@@ -477,18 +308,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
         return $arguments;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function report_rows( array $tables, array $views, array $summary, bool $report_on, bool $changed_only, Context $ctx ): array {
         $cells   = self::cells_by_column( $summary );
@@ -512,12 +331,6 @@ class Search_Replace_Adapter extends Command_Handler {
         return $rows;
     }
 
-    
-
-
-
-
-
     private static function cells_by_column( array $summary ): array {
         $cells = array();
         foreach ( (array) ( $summary['report'] ?? array() ) as $row ) {
@@ -525,13 +338,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
         return $cells;
     }
-
-    
-
-
-
-
-
 
     private static function checked_columns( array $tables, array $summary ): array {
         $checked = array();
@@ -547,13 +353,6 @@ class Search_Replace_Adapter extends Command_Handler {
         return $checked;
     }
 
-    
-
-
-
-
-
-
     private static function no_key_rows( string $table, bool $report_on, bool $changed_only, Context $ctx ): array {
         if ( $changed_only ) {
             return array();
@@ -564,12 +363,6 @@ class Search_Replace_Adapter extends Command_Handler {
         $ctx->out->warning( "No primary keys for table '$table'." );
         return array();
     }
-
-    
-
-
-
-
 
     private static function report_more_warnings( array $summary, Context $ctx ): void {
         $more = (int) ( $summary['checked_more'] ?? 0 );
@@ -582,12 +375,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private function skipped_warnings( array $skipped, Context $ctx ): void {
         foreach ( $skipped as $bucket => $list ) {
             $count = (int) ( $list['count'] ?? 0 );
@@ -599,7 +386,6 @@ class Search_Replace_Adapter extends Command_Handler {
         }
     }
 
-    
     private static function skipped_text( string $bucket, int $count, string $items ): string {
         if ( ! isset( self::SKIPPED[ $bucket ] ) ) {
             return sprintf( 'The search-replace tool left out %d (%s): %s.', $count, $bucket, $items );
@@ -617,14 +403,6 @@ class Search_Replace_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function names( array $assoc, string $flag ): array {
         $value = Read_Value::flag( $assoc, $flag, '' );
         if ( ! is_string( $value ) || '' === $value ) {
@@ -633,24 +411,14 @@ class Search_Replace_Adapter extends Command_Handler {
         return array_values( array_filter( explode( ',', $value ), 'strlen' ) );
     }
 
-    
     protected function tables_helper(): Db_Handler {
         return new Db_Handler();
     }
-
-    
-
-
-
-
-
-
 
     protected function call( string $name, array $args, callable $real ) {
         return $real();
     }
 
-    
     protected function ext_object_cache(): bool {
         return (bool) $this->call(
             __FUNCTION__,

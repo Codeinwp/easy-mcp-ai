@@ -5,35 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Task_Contract {
     const MODE_CURSOR = 'cursor';
     const MODE_POLL   = 'poll';
 
     const STATES = array( 'working', 'completed', 'failed', 'cancelled' );
 
-    
     const MESSAGE_MAX_BYTES = 500;
-
-    
-
-
-
 
     public static function normalize( $meta, $input_schema = null ) {
         if ( is_object( $meta ) ) {
@@ -49,11 +27,11 @@ class Task_Contract {
         $status_ability = self::ability_slug( isset( $meta['status_ability'] ) ? $meta['status_ability'] : null );
         $cancel_ability = self::ability_slug( isset( $meta['cancel_ability'] ) ? $meta['cancel_ability'] : null );
         if ( self::MODE_POLL === $mode && null === $status_ability ) {
-            return null; 
+            return null;
         }
         $properties = self::schema_properties( $input_schema );
         if ( self::MODE_CURSOR === $mode && ! isset( $properties['cursor'] ) ) {
-            return null; 
+            return null;
         }
         $results_key = null;
         if ( isset( $meta['results_key'] ) && is_string( $meta['results_key'] ) && preg_match( '/^[A-Za-z0-9_\-]{1,64}$/D', $meta['results_key'] ) ) {
@@ -94,19 +72,13 @@ class Task_Contract {
         return is_array( $properties ) ? $properties : array();
     }
 
-    
-
-
-
-
-
     public static function read_chunk( $data ) {
         if ( ! is_array( $data ) || ! array_key_exists( 'done', $data ) || ! is_bool( $data['done'] ) ) {
             return null;
         }
         $cursor = isset( $data['cursor'] ) && is_string( $data['cursor'] ) ? $data['cursor'] : '';
         if ( ! $data['done'] && '' === $cursor ) {
-            return null; 
+            return null;
         }
         return array(
             'done'     => $data['done'],
@@ -115,11 +87,6 @@ class Task_Contract {
             'job_id'   => self::read_job_id( $data ),
         );
     }
-
-    
-
-
-
 
     public static function read_status( $data ) {
         if ( ! is_array( $data ) || ! isset( $data['state'] ) || ! in_array( $data['state'], self::STATES, true ) ) {
@@ -147,16 +114,6 @@ class Task_Contract {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function stored_message( $text ): string {
         $text = (string) $text;
         if ( ! function_exists( 'mb_strcut' ) || ! function_exists( 'mb_scrub' ) ) {
@@ -165,26 +122,12 @@ class Task_Contract {
         return mb_strcut( mb_scrub( $text, 'UTF-8' ), 0, self::MESSAGE_MAX_BYTES, 'UTF-8' );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function valid_prefix( string $text ): string {
         while ( '' !== $text && 1 !== preg_match( '//u', $text ) ) {
             $text = substr( $text, 0, -1 );
         }
         return $text;
     }
-
-    
-
-
-
 
     public static function merge_chunk( $accumulated, array $chunk, $results_key ) {
         if ( ! is_array( $accumulated ) ) {

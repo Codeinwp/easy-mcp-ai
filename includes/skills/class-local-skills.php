@@ -1,55 +1,25 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 final class Local_Skills {
 
     const FILTER = 'easy_mcp_ai_skills_directory';
 
-    
     const TEXT_EXTENSIONS = array( 'md', 'txt', 'json', 'yaml', 'yml', 'csv' );
 
-    
     const NAME_PATTERN = '/^[a-z0-9]+(?:-[a-z0-9]+)*$/';
     const NAME_MAX = 64;
     const DESCRIPTION_MAX = 1024;
 
-    
-
-
-
-
     const CORE_NUMBER = '/^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+|[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$/';
 
-    
     const TOOL_TOKEN = '/\bwp_[a-z0-9_]+\b/';
 
-    
     public static function directory(): ?string {
         $dir = \apply_filters( self::FILTER, null );
         if ( ! is_string( $dir ) || '' === trim( $dir ) ) {
@@ -57,14 +27,6 @@ final class Local_Skills {
         }
         return rtrim( $dir, '/\\' );
     }
-
-    
-
-
-
-
-
-
 
     public static function load( string $dir, array $known_tools ): array {
         if ( ! is_dir( $dir ) || ! is_readable( $dir ) ) {
@@ -85,7 +47,6 @@ final class Local_Skills {
             }
         }
 
-        
         foreach ( $unreadable as $folder ) {
             $problems[] = $folder . ': this folder cannot be read; any skill in it is not served';
         }
@@ -108,19 +69,11 @@ final class Local_Skills {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function skill_paths( string $dir, array &$unreadable = array() ): array {
         $paths = array();
         foreach ( self::files( $dir, $unreadable ) as $relative ) {
             if ( 'SKILL.md' === $relative ) {
-                continue; 
+                continue;
             }
             if ( '/SKILL.md' === substr( $relative, -9 ) ) {
                 $paths[] = substr( $relative, 0, -9 );
@@ -130,30 +83,12 @@ final class Local_Skills {
         return $paths;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function files( string $dir, array &$unreadable = array() ): array {
         $out = array();
         self::walk( $dir, '', $out, $unreadable );
         sort( $out, SORT_STRING );
         return $out;
     }
-
-    
-
-
-
-
 
     private static function walk( string $dir, string $relative, array &$out, array &$unreadable ): void {
         $entries = is_readable( $dir ) ? @scandir( $dir ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- reported through $unreadable.
@@ -175,21 +110,11 @@ final class Local_Skills {
             } elseif ( is_file( $path ) ) {
                 $out[] = $rel;
             } elseif ( ! file_exists( $path ) ) {
-                
-                
-                
                 $unreadable[] = '' === $relative ? '.' : $relative;
                 return;
             }
         }
     }
-
-    
-
-
-
-
-
 
     private static function load_skill( string $dir, string $path, array $known ): array {
         $segments = explode( '/', $path );
@@ -268,20 +193,6 @@ final class Local_Skills {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function parse_frontmatter( string $text ): array {
         if ( ! preg_match( '/\A---\r?\n(.*?)\r?\n---\r?\n/s', $text, $match ) ) {
             throw new \InvalidArgumentException( 'SKILL.md must begin with YAML frontmatter between --- lines' );
@@ -292,13 +203,9 @@ final class Local_Skills {
             if ( '' === trim( $line ) || '#' === ltrim( $line )[0] ) {
                 continue;
             }
-            
-            
             if ( preg_match( '/^([A-Za-z0-9_-]+):(?=[ \t]|$)[ \t]*(.*)$/', $line, $kv ) ) {
                 self::refuse_duplicate( $out, $kv[1], $i );
                 if ( '' === trim( $kv[2] ) ) {
-                    
-                    
                     $out[ $kv[1] ] = null;
                     $parent        = $kv[1];
                 } else {
@@ -320,23 +227,11 @@ final class Local_Skills {
         return $out;
     }
 
-    
-
-
-
-
-
-
     private static function refuse_duplicate( array $map, string $key, int $i ): void {
         if ( array_key_exists( $key, $map ) ) {
             throw new \InvalidArgumentException( 'frontmatter line ' . ( $i + 2 ) . ': "' . $key . '" is already set above' );
         }
     }
-
-    
-
-
-
 
     private static function scalar( string $raw, int $i ) {
         $raw = trim( $raw );
@@ -356,8 +251,6 @@ final class Local_Skills {
         if ( false !== strpos( '[{|>&*!', $raw[0] ) ) {
             throw new \InvalidArgumentException( 'frontmatter line ' . ( $i + 2 ) . ': lists, maps and block values are not supported' );
         }
-        
-        
         if ( false !== strpos( '#%@`,', $raw[0] ) || preg_match( '/^[-?:](\s|$)/', $raw ) || false !== strpos( $raw, ': ' ) || ':' === substr( $raw, -1 ) ) {
             throw new \InvalidArgumentException( 'frontmatter line ' . ( $i + 2 ) . ': quote this value' );
         }
@@ -368,15 +261,12 @@ final class Local_Skills {
         if ( in_array( $raw, array( 'null', 'Null', 'NULL', '~' ), true ) ) {
             return null;
         }
-        
         if ( preg_match( '/^-?(?:0|[1-9][0-9]{0,14})$/', $raw ) ) {
             return (int) $raw;
         }
         if ( preg_match( '/^-?(?:0|[1-9][0-9]*)\.[0-9]+$/', $raw ) ) {
             return (float) $raw;
         }
-        
-        
         if ( preg_match( self::CORE_NUMBER, $raw ) ) {
             throw new \InvalidArgumentException( 'frontmatter line ' . ( $i + 2 ) . ': quote this value' );
         }

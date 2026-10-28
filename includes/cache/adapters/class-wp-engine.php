@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,35 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Wp_Engine extends Cache_Adapter {
 
     const COMMON = 'WpeCommon';
 
-    
     const IDENTIFIER = 'easy-mcp-ai:urls';
 
     const PATHS_FILTER = 'wpe_purge_varnish_cache_paths';
@@ -136,27 +106,12 @@ final class Wp_Engine extends Cache_Adapter {
         return 0 === $posts ? $result : $result->with( array( 'detail' => $what . ' ' . (string) $result->get( 'detail' ) ) );
     }
 
-    
-
-
-
-
-
-
     private function answer( $sent, string $detail ): Layer_Result {
         if ( false === $sent ) {
             return $this->layer( Layer_Result::FAILED, array( 'detail' => 'WP Engine sent nothing: purge_varnish_cache() returned false (an autosave, or purging switched off).' ) );
         }
         return $this->sent( $detail );
     }
-
-    
-
-
-
-
-
-
 
     private function has_exact_post_purge( int $post_id ): bool {
         $post = $post_id > 1 ? $this->calls()->call( 'get_post', array( $post_id ) ) : null;
@@ -169,16 +124,6 @@ final class Wp_Engine extends Cache_Adapter {
         $permalink = $this->calls()->call( 'get_permalink', array( $post_id ) );
         return is_string( $permalink ) && '' !== $permalink && ! $this->is_home_url( $permalink );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function path_patterns( array $urls ): array {
         $paths = array();

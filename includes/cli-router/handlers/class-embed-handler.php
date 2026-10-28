@@ -11,52 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Embed_Handler extends Command_Handler {
 
-    
     const NOT_CAPTURED_FETCH = 'oEmbed cache: the HTML WordPress may store for this URL (an oembed_cache post, or _oembed_ meta of --post-id) is a cache it refreshes itself, so wp_cli_run reports changed:false for it.';
 
-    
     const SKIP_SANITIZATION = "Sorry, you are not allowed to do this: --skip-sanitization caches the provider's HTML unfiltered and WordPress renders it on the site, so wp_cli_run needs the unfiltered_html capability for it.";
 
-    
-    
-    
-
-    
     public function preflight_fetch( Invocation $inv, Context $ctx ): void {
         $raw = Read_Value::flag( $inv->assoc, 'raw' );
         if ( ! $raw && Read_Value::flag( $inv->assoc, 'skip-sanitization' ) && ! $this->user_can( 'unfiltered_html' ) ) {
@@ -68,7 +28,6 @@ class Embed_Handler extends Command_Handler {
         }
     }
 
-    
     public function preflight_trigger( Invocation $inv, Context $ctx ): void {
         Ids::require_digits( $ctx, (string) $inv->args[0], 'a post ID' );
         $post = $this->post_row( (string) $inv->args[0] );
@@ -77,19 +36,9 @@ class Embed_Handler extends Command_Handler {
         }
     }
 
-    
     public function is_raw( Invocation $inv ): bool {
         return (bool) Read_Value::flag( $inv->assoc, 'raw' );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public function fetch( Invocation $inv, Context $ctx ): void {
         $assoc_args          = $inv->assoc;
@@ -138,15 +87,6 @@ class Embed_Handler extends Command_Handler {
         $ctx->out->log( (string) $html );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function oembed_args( $width, $height, $discover ): array {
         $oembed_args = array();
         if ( null !== $width ) {
@@ -161,15 +101,6 @@ class Embed_Handler extends Command_Handler {
         return $oembed_args;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function fetch_usage_errors( bool $discover, $response_size_limit, $raw, $raw_format, Context $ctx ): void {
         if ( ! $discover && null !== $response_size_limit ) {
             $ctx->out->error( "The 'limit-response-size' option can only be used with discovery." );
@@ -178,14 +109,6 @@ class Embed_Handler extends Command_Handler {
             $ctx->out->error( "The 'raw-format' option can only be used with the 'raw' option." );
         }
     }
-
-    
-
-
-
-
-
-
 
     private function print_raw( string $url, array $oembed_args, bool $discover, ?string $limit, $raw_format, Context $ctx ): void {
         $result = $this->raw_fetch( $url, $oembed_args, $limit );
@@ -206,12 +129,6 @@ class Embed_Handler extends Command_Handler {
         $ctx->out->log( false === $xml ? '' : (string) $xml );
     }
 
-    
-
-
-
-
-
     public function describe_fetch( Invocation $inv ): array {
         $url     = self::url_without_query( (string) $inv->args[0] );
         $post_id = Read_Value::flag( $inv->assoc, 'post-id' );
@@ -224,7 +141,6 @@ class Embed_Handler extends Command_Handler {
         return array( sprintf( '%s → fetch its embed HTML; WordPress caches it as an oembed_cache post', $url ) );
     }
 
-    
     public function cache_find( Invocation $inv, Context $ctx ): void {
         $url      = (string) $inv->args[0];
         $width    = Read_Value::flag( $inv->assoc, 'width' );
@@ -262,7 +178,6 @@ class Embed_Handler extends Command_Handler {
         $ctx->out->error( 'No cache post ID found!' );
     }
 
-    
     public function cache_trigger( Invocation $inv, Context $ctx ): void {
         $post_id = (string) $inv->args[0];
         $post    = $this->post_row( $post_id );
@@ -288,11 +203,6 @@ class Embed_Handler extends Command_Handler {
         $ctx->out->success( 'Caching triggered!' );
     }
 
-    
-
-
-
-
     public function describe_trigger( Invocation $inv ): array {
         $post = $this->post_row( (string) $inv->args[0] );
         if ( null === $post ) {
@@ -309,13 +219,11 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
     public function handler_list( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         $this->formatter( $ctx, $assoc, array( 'id', 'regex' ) )->display_items( $this->embed_handlers() );
     }
 
-    
     public function provider_list( Invocation $inv, Context $ctx ): void {
         $assoc       = $inv->assoc;
         $force_regex = Read_Value::flag( $assoc, 'force-regex' );
@@ -334,7 +242,6 @@ class Embed_Handler extends Command_Handler {
         $this->formatter( $ctx, $assoc, array( 'format', 'endpoint' ) )->display_items( $providers );
     }
 
-    
     public function provider_match( Invocation $inv, Context $ctx ): void {
         $url                 = (string) $inv->args[0];
         $discover            = Read_Value::flag( $inv->assoc, 'discover', true );
@@ -354,17 +261,6 @@ class Embed_Handler extends Command_Handler {
         $ctx->out->line( (string) $provider );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     private static function discovery_only( $response_size_limit, $link_type ): string {
         if ( null !== $response_size_limit && null !== $link_type ) {
             return "The 'limit-response-size' and 'link-type' options can only be used with discovery.";
@@ -375,24 +271,15 @@ class Embed_Handler extends Command_Handler {
         return "The 'link-type' option can only be used with discovery.";
     }
 
-    
     public static function mask_to_regex( string $matchmask ): string {
         $matchmask = '#' . str_replace( '___wildcard___', '(.+)', preg_quote( str_replace( '*', '___wildcard___', $matchmask ), '#' ) ) . '#i';
         return (string) preg_replace( '|^#http\\\://|', '#https?\://', $matchmask );
     }
 
-    
     private static function url_without_query( string $url ): string {
         $cut = strcspn( $url, '?#' );
         return $cut < strlen( $url ) ? substr( $url, 0, $cut ) . '?[…]' : $url;
     }
-
-    
-
-
-
-
-
 
     protected function oembed_create_xml( $data, ?\SimpleXMLElement $node = null ) {
         if ( ! is_array( $data ) || empty( $data ) ) {
@@ -415,24 +302,10 @@ class Embed_Handler extends Command_Handler {
         return $node->asXML();
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     protected function call( string $name, array $args, callable $real ) {
         return $real();
     }
 
-    
     protected function user_can( string $cap, int ...$args ): bool {
         return (bool) $this->call(
             __FUNCTION__,
@@ -442,11 +315,6 @@ class Embed_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
 
     protected function post_row( string $id ): ?array {
         $row = $this->call(
@@ -463,11 +331,6 @@ class Embed_Handler extends Command_Handler {
         );
         return is_array( $row ) ? $row : null;
     }
-
-    
-
-
-
 
     protected function oembed_meta( int $post_id ): array {
         return (array) $this->call(
@@ -486,7 +349,6 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
     protected function cache_oembed_types(): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -498,7 +360,6 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
     protected function cache_oembed( int $post_id ): void {
         $this->call(
             __FUNCTION__,
@@ -518,7 +379,6 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
     protected function embed_defaults( string $url ): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -528,11 +388,6 @@ class Embed_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
 
     protected function find_oembed_post_id( string $key ) {
         return $this->call(
@@ -545,7 +400,6 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
     protected function embed_handlers(): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -553,7 +407,6 @@ class Embed_Handler extends Command_Handler {
             static function () {
                 global $wp_embed;
                 $handlers = (array) $wp_embed->handlers;
-                
                 ksort( $handlers );
                 $rows = array();
                 foreach ( $handlers as $priority => $list ) {
@@ -571,7 +424,6 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
     protected function oembed_providers(): array {
         return (array) $this->call(
             __FUNCTION__,
@@ -586,11 +438,6 @@ class Embed_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
 
     protected function match_provider( string $url, bool $discover, ?string $limit, ?string $link_type ) {
         return $this->call(
@@ -631,12 +478,6 @@ class Embed_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
 
     protected function raw_fetch( string $url, array $oembed_args, ?string $limit ): array {
         return (array) $this->call(
@@ -688,15 +529,6 @@ class Embed_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     protected function html_fetch( string $url, array $oembed_args, array $options ) {
         return $this->call(
             __FUNCTION__,
@@ -706,16 +538,6 @@ class Embed_Handler extends Command_Handler {
             }
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function shortcode_html( string $url, array $oembed_args, array $options ) {
         global $wp_embed;
@@ -756,13 +578,6 @@ class Embed_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private static function html_fetch_filters( array $options ): array {
         $filters = array(
             'embed_oembed_discover' => array( $options['discover'] ? '__return_true' : '__return_false', PHP_INT_MAX ),
@@ -776,11 +591,6 @@ class Embed_Handler extends Command_Handler {
         return $filters;
     }
 
-    
-    
-    
-
-    
     private static function limit_filter( string $limit ): callable {
         return static function ( $args ) use ( $limit ) {
             $args['limit_response_size'] = $limit;
@@ -788,21 +598,18 @@ class Embed_Handler extends Command_Handler {
         };
     }
 
-    
     private static function add_filters( array $filters ): void {
         foreach ( $filters as $hook => $filter ) {
             \add_filter( $hook, $filter[0], $filter[1], isset( $filter[2] ) ? $filter[2] : 1 );
         }
     }
 
-    
     private static function remove_filters( array $filters ): void {
         foreach ( $filters as $hook => $filter ) {
             \remove_filter( $hook, $filter[0], $filter[1] );
         }
     }
 
-    
     private static function new_oembed(): \WP_oEmbed {
         if ( ! class_exists( '\\WP_oEmbed' ) ) {
             require_once ABSPATH . WPINC . '/class-wp-oembed.php';
@@ -810,7 +617,6 @@ class Embed_Handler extends Command_Handler {
         return new \WP_oEmbed();
     }
 
-    
     private static function drop_oembed( \WP_oEmbed $oembed ): void {
         \remove_filter( 'oembed_dataparse', array( $oembed, '_strip_newlines' ), 10 );
     }

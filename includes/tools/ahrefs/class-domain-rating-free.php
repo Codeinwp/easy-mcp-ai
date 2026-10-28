@@ -7,26 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Domain_Rating_Free extends Base_Tool {
 
-	
-	
-	
 	const ENDPOINT     = \Easy_MCP_AI\Ahrefs\Ahrefs_Client::ENDPOINT;
 	const ALLOWED_HOST = \Easy_MCP_AI\Ahrefs\Ahrefs_Client::ALLOWED_HOST;
 
@@ -84,16 +66,11 @@ class Domain_Rating_Free extends Base_Tool {
 				throw new \InvalidArgumentException( 'target is too long (max 2048 characters).' );
 			}
 
-			
-			
 			$host = \wp_parse_url( self::ENDPOINT, PHP_URL_HOST );
 			if ( self::ALLOWED_HOST !== $host ) {
 				throw new \RuntimeException( 'Ahrefs client: refusing to call non-Ahrefs host.' );
 			}
 
-			
-			
-			
 			$url = \add_query_arg(
 				array(
 					'target' => rawurlencode( $target ),
@@ -102,27 +79,16 @@ class Domain_Rating_Free extends Base_Tool {
 				self::ENDPOINT
 			);
 
-			
-			
-			
-			
 			$api_key = ( new \Easy_MCP_AI\Ahrefs\Ahrefs_Client() )->get_api_key();
 
 			$response = \wp_remote_get( $url, array(
-				
-				
 				'timeout'             => 10,
-				
-				
-				
-				
 				'redirection'         => 0,
 				'user-agent'          => 'EasyMCPAI/' . ( defined( 'EASY_MCP_AI_VERSION' ) ? EASY_MCP_AI_VERSION : '0' ),
 				'headers'             => array(
 					'Accept'        => 'application/json',
 					'Authorization' => 'Bearer ' . $api_key,
 				),
-				
 				'limit_response_size' => 1048576,
 			) );
 
@@ -140,13 +106,8 @@ class Domain_Rating_Free extends Base_Tool {
 				$detail = '';
 				$parsed = json_decode( $body, true );
 				if ( is_array( $parsed ) && isset( $parsed['error'] ) && is_string( $parsed['error'] ) ) {
-					
-					
-					
 					$detail = ' (' . str_replace( $api_key, '[REDACTED]', $parsed['error'] ) . ')';
 				}
-				
-				
 				if ( 401 === $code || 403 === $code ) {
 					throw new \RuntimeException( "Ahrefs rejected the API key (HTTP {$code}).{$detail} Check the key at Easy MCP AI → Tools → External data → Ahrefs; it must be an APIv3 key from your Ahrefs account under Account settings → API keys." ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 				}

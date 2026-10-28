@@ -5,46 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Live_State {
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function read( $type, $id, $can_view_all = false, $object_subtype = null ) {
         switch ( $type ) {
@@ -56,19 +17,9 @@ class Live_State {
                 if ( ! $p ) {
                     return array();
                 }
-                
-                
-                
                 if ( ! $can_view_all && ! \current_user_can( 'read_post', (int) $id ) ) {
                     return null;
                 }
-                
-                
-                
-                
-                
-                
-                
                 return array(
                     'post_title'     => $p->post_title     ?? null,
                     'post_status'    => $p->post_status    ?? null,
@@ -78,35 +29,22 @@ class Live_State {
                     'menu_order'     => $p->menu_order     ?? null,
                     'comment_status' => $p->comment_status ?? null,
                     'ping_status'    => $p->ping_status    ?? null,
-                    
-                    
-                    
-                    
                     'post_password'  => '[REDACTED]',
                     'post_name'      => $p->post_name      ?? null,
                     'post_author'    => $p->post_author    ?? null,
                 );
 
             case 'option':
-                
-                
-                
-                
                 $allowlist = \Easy_MCP_AI\History\Change_Recorder::option_allowlist();
                 if ( ! in_array( (string) $id, $allowlist, true ) ) {
                     return null;
                 }
-                
-                
-                
                 if ( ! $can_view_all && ! \current_user_can( 'manage_options' ) ) {
                     return null;
                 }
                 if ( ! function_exists( '\get_option' ) ) {
                     return null;
                 }
-                
-                
                 $scope = \Easy_MCP_AI\History\Change_Recorder::option_scope_from_subtype( (string) $id, $object_subtype );
                 $live  = \get_option( $id );
                 return array( 'value' => null === $scope ? $live : \Easy_MCP_AI\History\Change_Recorder::option_slice( $live, $scope ) );
@@ -115,18 +53,9 @@ class Live_State {
                 if ( ! function_exists( '\get_term' ) ) {
                     return null;
                 }
-                
-                
-                
-                
-                
-                
-                
                 if ( ! $can_view_all && ! \current_user_can( 'manage_categories' ) ) {
                     return null;
                 }
-                
-                
                 $term = $object_subtype
                     ? \get_term( (int) $id, (string) $object_subtype )
                     : \get_term( (int) $id );
@@ -147,10 +76,6 @@ class Live_State {
                 if ( ! function_exists( '\get_userdata' ) ) {
                     return null;
                 }
-                
-                
-                
-                
                 $can_read = $can_view_all
                     || ( (int) \get_current_user_id() === (int) $id )
                     || \current_user_can( 'list_users' );
@@ -161,13 +86,6 @@ class Live_State {
                 if ( ! $u ) {
                     return array();
                 }
-                
-                
-                
-                
-                
-                
-                
                 return array(
                     'ID'           => isset( $u->ID )           ? (int) $u->ID           : null,
                     'user_login'   => isset( $u->user_login )   ? (string) $u->user_login : null,
@@ -184,8 +102,6 @@ class Live_State {
                 if ( ! $c ) {
                     return array();
                 }
-                
-                
                 $parent = isset( $c->comment_post_ID ) ? (int) $c->comment_post_ID : 0;
                 if ( ! $can_view_all && $parent > 0 && ! \current_user_can( 'read_post', $parent ) ) {
                     return null;
@@ -196,7 +112,6 @@ class Live_State {
                     'comment_author'   => isset( $c->comment_author )   ? (string) $c->comment_author   : null,
                     'comment_content'  => isset( $c->comment_content )  ? (string) $c->comment_content  : null,
                     'comment_approved' => isset( $c->comment_approved ) ? (string) $c->comment_approved : null,
-                    
                     'comment_parent'   => isset( $c->comment_parent )   ? (string) $c->comment_parent   : null,
                     'comment_date_gmt' => isset( $c->comment_date_gmt ) ? (string) $c->comment_date_gmt : null,
                     'user_id'          => isset( $c->user_id )          ? (string) $c->user_id          : null,
@@ -213,12 +128,6 @@ class Live_State {
                 if ( ! $product || ! method_exists( $product, 'get_data' ) ) {
                     return array();
                 }
-                
-                
-                
-                
-                
-                
                 return json_decode( wp_json_encode(
                     \Easy_MCP_AI\History\Change_Recorder::expand_for_storage( $product->get_data() )
                 ), true ) ?: array();
@@ -234,9 +143,6 @@ class Live_State {
                 if ( ! $order || ! method_exists( $order, 'get_data' ) ) {
                     return array();
                 }
-                
-                
-                
                 return json_decode( wp_json_encode(
                     \Easy_MCP_AI\History\Change_Recorder::expand_for_storage( $order->get_data() )
                 ), true ) ?: array();
@@ -245,10 +151,6 @@ class Live_State {
                 if ( ! function_exists( '\bp_activity_get_specific' ) ) {
                     return null;
                 }
-                
-                
-                
-                
                 if ( ! $can_view_all && ! \current_user_can( 'bp_moderate' ) ) {
                     return null;
                 }
@@ -269,23 +171,15 @@ class Live_State {
                 );
 
             case 'meta':
-                
-                
                 $parts = explode( ':', (string) $id, 2 );
                 if ( count( $parts ) !== 2 || ! function_exists( '\get_post_meta' ) ) {
                     return null;
                 }
                 $post_id  = (int) $parts[0];
                 $meta_key = $parts[1];
-                
-                
-                
                 if ( ! $can_view_all && ! \current_user_can( 'edit_post', $post_id ) ) {
                     return null;
                 }
-                
-                
-                
                 if ( function_exists( '\is_protected_meta' ) && \is_protected_meta( $meta_key, 'post' ) ) {
                     return null;
                 }
@@ -294,22 +188,9 @@ class Live_State {
             case 'term_meta':
             case 'user_meta':
             case 'comment_meta':
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 return self::meta_read( $type, (string) $id, $can_view_all );
 
             case 'site_option':
-                
-                
-                
-                
                 $allowlist = \Easy_MCP_AI\History\Change_Recorder::option_allowlist();
                 if ( ! in_array( (string) $id, $allowlist, true ) ) {
                     return null;
@@ -318,17 +199,6 @@ class Live_State {
                 $network_ok = $is_network
                     ? \current_user_can( 'manage_network_options' )
                     : \current_user_can( 'manage_options' );
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 if ( ! $network_ok && ( $is_network || ! $can_view_all ) ) {
                     return null;
                 }
@@ -340,10 +210,6 @@ class Live_State {
                     : null;
 
             case 'object_terms':
-                
-                
-                
-                
                 $parts = explode( ':', (string) $id, 2 );
                 if ( count( $parts ) !== 2 || ! function_exists( '\\wp_get_object_terms' ) ) {
                     return null;
@@ -358,29 +224,16 @@ class Live_State {
                 }
                 $ids = \wp_get_object_terms( $post_id, $taxonomy, array( 'fields' => 'ids' ) );
                 if ( ! is_array( $ids ) ) {
-                    return null; 
+                    return null;
                 }
                 $ids = array_values( array_unique( array_map( 'intval', $ids ) ) );
                 sort( $ids );
                 return array( 'term_ids' => $ids );
 
             default:
-                
-                
                 return null;
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function meta_read( $type, $id, $can_view_all ) {
         $parts = explode( ':', $id, 2 );
@@ -400,8 +253,6 @@ class Live_State {
                     : null;
 
             case 'user_meta':
-                
-                
                 if ( \Easy_MCP_AI\History\Change_Recorder::user_meta_is_blocked( $meta_key ) ) {
                     return null;
                 }
@@ -427,18 +278,6 @@ class Live_State {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function body_matches( $post_id, $expected, $can_view_all = false ) {
         if ( ! function_exists( '\\get_post' ) ) {
             return null;
@@ -453,16 +292,6 @@ class Live_State {
         return (string) ( $post->post_content ?? '' ) === (string) $expected;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function sticky_matches( $post_id, $expected, $can_view_all = false ) {
         if ( ! function_exists( '\\get_post' ) || ! function_exists( '\\is_sticky' ) || ! \get_post( (int) $post_id ) ) {
             return null;
@@ -472,22 +301,6 @@ class Live_State {
         }
         return \is_sticky( (int) $post_id ) === (bool) $expected;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function meta_matches( $type, $id, $expected, $expect_absent = false, $can_view_all = false ) {
         $parts = explode( ':', (string) $id, 2 );
@@ -505,7 +318,7 @@ class Live_State {
                 return null;
             }
         } elseif ( null === self::meta_read( $type, (string) $id, $can_view_all ) ) {
-            return null; 
+            return null;
         }
         $exists = \metadata_exists( $meta_type[ $type ], $object_id, $key );
         if ( $expect_absent ) {
@@ -517,25 +330,10 @@ class Live_State {
         return self::same_value( \get_metadata( $meta_type[ $type ], $object_id, $key, true ), $expected );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function same_value( $a, $b ) {
         return self::stored_form( $a ) === self::stored_form( $b );
     }
 
-    
     private static function stored_form( $value ) {
         if ( is_object( $value ) || is_array( $value ) ) {
             $value = json_decode( (string) \wp_json_encode( $value ), true );

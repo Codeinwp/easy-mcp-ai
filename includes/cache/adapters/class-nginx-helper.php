@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,28 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Nginx_Helper extends Cache_Adapter {
 
@@ -103,12 +76,6 @@ final class Nginx_Helper extends Cache_Adapter {
         return $this->sent( sprintf( 'Nginx Helper cleared %d post(s) with their related pages, and %d page(s).', count( $request->post_ids ), count( $request->urls ) ) );
     }
 
-    
-
-
-
-
-
     private function purger( string ...$methods ): ?object {
         $purger = $this->calls()->global_value( 'nginx_purger' );
         if ( ! is_object( $purger ) ) {
@@ -122,20 +89,10 @@ final class Nginx_Helper extends Cache_Adapter {
         return $purger;
     }
 
-    
-
-
-
-
     private function redis_mode(): bool {
         $options = $this->options();
         return isset( $options['cache_method'] ) && 'enable_redis' === $options['cache_method'];
     }
-
-    
-
-
-
 
     private function options(): array {
         $admin = $this->calls()->global_value( 'nginx_helper_admin' );

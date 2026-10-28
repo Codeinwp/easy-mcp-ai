@@ -1,29 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,40 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Conflicts {
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const KNOWN_MCP_PLUGINS = array(
         'wordpress-mcp' => 'WordPress MCP',
         'mcp-adapter'   => 'MCP Adapter',
         'wp-mcp-server' => 'WP MCP Server',
     );
 
-    
     const KNOWN_SECURITY_PLUGINS = array(
         'wordfence'                          => 'Wordfence Security',
         'better-wp-security'                 => 'Solid Security',
@@ -75,19 +23,6 @@ class Check_Conflicts {
         'wp-defender'                        => 'Defender',
         'sucuri-scanner'                     => 'Sucuri Security',
     );
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     const KNOWN_COMING_SOON_PLUGINS = array(
         'coming-soon'                     => 'SeedProd',
@@ -99,7 +34,6 @@ class Check_Conflicts {
         'site-offline'                    => 'Site Offline / Coming Soon',
     );
 
-    
     const KNOWN_CACHE_PLUGINS = array(
         'litespeed-cache'  => 'LiteSpeed Cache',
         'wp-rocket'        => 'WP Rocket',
@@ -108,17 +42,11 @@ class Check_Conflicts {
         'wp-fastest-cache' => 'WP Fastest Cache',
     );
 
-    
     const CACHE_COVERED    = 'covered';
     const CACHE_UNCOVERED  = 'uncovered';
     const CACHE_UNREADABLE = 'unreadable';
 
-    
-
-
     public static function run() {
-        
-        
         $foreign_rest_auth = self::foreign_rest_auth_callbacks( self::rest_auth_callback_names() );
 
         return array(
@@ -131,23 +59,7 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_competing_mcp( $found ) {
-        
-        
         if ( null === $found ) {
             return Diagnostic_Result::unknown( 'e1', Diagnostic_Result::TIER_WARNING, __( 'No competing MCP plugin', 'easy-mcp-ai' ), __( 'Could not read the list of active plugins.', 'easy-mcp-ai' ) );
         }
@@ -160,10 +72,6 @@ class Check_Conflicts {
                 Diagnostic_Result::TIER_WARNING,
                 $label,
                 sprintf(
-                    
-                    
-                    
-                    
                     count( $found ) > 1
                         /* translators: %s: comma-separated plugin names. */
                         ? __( 'Also active: %s. If they also serve MCP or OAuth discovery on this site, an AI client may connect to whichever answers first, so a connection can succeed and still reach the wrong plugin.', 'easy-mcp-ai' )
@@ -185,38 +93,9 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_security_plugins( $found ) {
-        
-        
-        
-        
         $label = __( 'Firewall and security plugins', 'easy-mcp-ai' );
 
-        
-        
         if ( null === $found ) {
             return Diagnostic_Result::unknown( 'e2', Diagnostic_Result::TIER_INFO, $label, __( 'Could not read the list of active plugins.', 'easy-mcp-ai' ) );
         }
@@ -239,11 +118,6 @@ class Check_Conflicts {
             );
         }
 
-        
-        
-        
-        
-        
         return Diagnostic_Result::pass(
             'e2',
             Diagnostic_Result::TIER_INFO,
@@ -253,61 +127,8 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_rest_filters( $hooked, array $foreign = array(), $override_active = false, $observation = null, $identities = null ) {
         $label = __( 'REST API authentication unmodified', 'easy-mcp-ai' );
-        
-        
-        
         $identities = is_array( $identities ) ? $identities : $foreign;
 
         if ( $hooked && $override_active ) {
@@ -319,9 +140,6 @@ class Check_Conflicts {
             );
             $fix_own_allowlist = __( 'Identify the plugin the callback above belongs to and allow the easy-mcp-ai/v1 endpoints in its own REST settings. Then press Re-run checks.', 'easy-mcp-ai' );
 
-            
-            
-            
             if ( is_array( $observation ) && $observation['reached'] && self::observation_matches( $observation, $identities ) ) {
                 $when = \wp_date( \get_option( 'date_format', 'Y-m-d' ), $observation['time'] );
                 if ( $observation['seen'] && $observation['cleared'] ) {
@@ -347,10 +165,6 @@ class Check_Conflicts {
                 );
             }
 
-            
-            
-            
-            
             if ( ! is_array( $observation ) ) {
                 $why = __( 'Whether the exemption lets a request through on this site has not been measured yet.', 'easy-mcp-ai' );
                 $fix = __( 'Press Re-run checks: the connection test sends a real request through that filter and records what it answered.', 'easy-mcp-ai' );
@@ -377,22 +191,6 @@ class Check_Conflicts {
         }
 
         if ( $hooked ) {
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             $named = self::named_callbacks( $foreign );
 
             return Diagnostic_Result::warn(
@@ -401,11 +199,6 @@ class Check_Conflicts {
                 $label,
                 __( 'Another plugin or theme filters REST API authentication on this site, and this plugin reaches WordPress through that API. Plugins that legitimately add their own authentication — WooCommerce, Jetpack and similar — are already excluded from this check, so what is named here is worth identifying: a "disable REST API" or "restrict REST API" feature works the same way.', 'easy-mcp-ai' ) . $named,
                 __( 'Identify the plugin the callback above belongs to. If it offers a "disable REST API" or "restrict REST API" setting, exempt the easy-mcp-ai/v1 namespace so AI clients can authenticate.', 'easy-mcp-ai' ),
-                
-                
-                
-                
-                
                 array(
                     'rest_authentication_hooked' => true,
                     'callbacks'                  => array_values( $foreign ),
@@ -413,10 +206,6 @@ class Check_Conflicts {
             );
         }
 
-        
-        
-        
-        
         return Diagnostic_Result::pass(
             'e3',
             Diagnostic_Result::TIER_WARNING,
@@ -426,40 +215,9 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_hook_stripping( $marker_count, $capture_enabled ) {
         $label = __( 'Change tracking hooks stay registered', 'easy-mcp-ai' );
 
-        
         if ( null === $marker_count ) {
             return Diagnostic_Result::unknown(
                 'e4',
@@ -469,7 +227,6 @@ class Check_Conflicts {
             );
         }
 
-        
         if ( ! $capture_enabled ) {
             return Diagnostic_Result::unknown(
                 'e4',
@@ -494,9 +251,6 @@ class Check_Conflicts {
             );
         }
 
-        
-        
-        
         return Diagnostic_Result::pass(
             'e4',
             Diagnostic_Result::TIER_INFO,
@@ -510,37 +264,9 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_coming_soon_plugins( $found ) {
-        
-        
-        
         $label = __( 'Coming-soon and maintenance pages', 'easy-mcp-ai' );
 
-        
-        
         if ( null === $found ) {
             return Diagnostic_Result::unknown(
                 'e6',
@@ -567,9 +293,6 @@ class Check_Conflicts {
             Diagnostic_Result::TIER_INFO,
             $label,
             sprintf(
-                
-                
-                
                 /* translators: %s: the plugin name, or a comma-separated list of plugin names when more than one is active. */
                 __( 'Detected: %s. Nothing here indicates a problem — putting a site behind a holding page is a deliberate choice. Worth knowing, though: the screen where you approve an AI client is a normal page on the front of your site, not part of the admin area, so a holding page can hide it. If approving a connection never loads, allow the address ?easy_mcp_ai_oauth=authorize through, or switch the holding page off while you connect.', 'easy-mcp-ai' ),
                 implode( ', ', $found )
@@ -578,30 +301,9 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_cache_plugins( $found, $coverage = null ) {
         $label = __( 'Caching excludes API endpoints', 'easy-mcp-ai' );
 
-        
-        
         if ( null === $found ) {
             return Diagnostic_Result::unknown( 'e5', Diagnostic_Result::TIER_WARNING, $label, __( 'Could not read the list of active plugins.', 'easy-mcp-ai' ) );
         }
@@ -694,29 +396,9 @@ class Check_Conflicts {
         );
     }
 
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function protected_paths() {
         $paths = array();
 
-        
-        
-        
-        
-        
-        
         foreach ( array(
             'MCP endpoint'        => array( 'rest_url', 'easy-mcp-ai/v1/mcp' ),
             'OAuth server'        => array( 'home_url', '/.well-known/oauth-authorization-server' ),
@@ -741,19 +423,6 @@ class Check_Conflicts {
         return $paths;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function exclusion_hints() {
         $hints = array();
 
@@ -762,8 +431,6 @@ class Check_Conflicts {
                 $hints[] = 'rest_route=/easy-mcp-ai/';
                 continue;
             }
-            
-            
             $ns = strpos( $subject, '/easy-mcp-ai/' );
             if ( false !== $ns ) {
                 $hints[] = substr( $subject, 0, $ns + strlen( '/easy-mcp-ai/' ) );
@@ -780,10 +447,6 @@ class Check_Conflicts {
         return array_values( array_unique( $hints ) );
     }
 
-    
-
-
-
     private static function list_paths( array $hints ) {
         if ( count( $hints ) < 2 ) {
             return implode( '', $hints );
@@ -797,14 +460,6 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function regex_hits( $pattern, $subject, $insensitive = false ) {
         if ( '' === $pattern || false !== strpos( $pattern, '~' ) ) {
             return false;
@@ -813,36 +468,7 @@ class Check_Conflicts {
         return 1 === @preg_match( '~' . $pattern . '~' . ( $insensitive ? 'i' : '' ), $subject );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function rule_covers( $slug, $rule, $subject ) {
-        
-        
-        
-        
-        
-        
         $candidates = array( $rule );
         if ( 'wp-rocket' === $slug ) {
             $candidates[] = rtrim( (string) $rule, '/' );
@@ -864,9 +490,6 @@ class Check_Conflicts {
                 return true;
             }
             if ( 'wp-rocket' === $slug ) {
-                
-                
-                
                 if ( self::regex_hits( $r, $subject, true )
                     || false !== strpos( $subject, $r ) ) {
                     return true;
@@ -877,7 +500,6 @@ class Check_Conflicts {
         return false;
     }
 
-    
     private static function litespeed_hits( $rule, $subject ) {
         $starts = '^' === substr( $rule, 0, 1 );
         $ends   = '$' === substr( $rule, -1 );
@@ -896,7 +518,6 @@ class Check_Conflicts {
         return false !== strpos( $subject, $rule );
     }
 
-    
     private static function wpfc_hits( $entry, $subject ) {
         if ( ! is_object( $entry ) || ! isset( $entry->content ) ) {
             return false;
@@ -916,11 +537,6 @@ class Check_Conflicts {
             case 'regex':
                 return self::regex_hits( $content, $subject, true );
             case 'startwith':
-                
-                
-                
-                
-                
                 return 0 === stripos( ltrim( $subject, '/' ), ltrim( $content, '/' ) );
             case 'contain':
                 return false !== stripos( $subject, $content );
@@ -928,18 +544,6 @@ class Check_Conflicts {
 
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function cache_rules_for( $slug ) {
         try {
@@ -952,8 +556,6 @@ class Check_Conflicts {
                     return null;
 
                 case 'wp-super-cache':
-                    
-                    
                     return isset( $GLOBALS['cache_rejected_uri'] ) && is_array( $GLOBALS['cache_rejected_uri'] )
                         ? $GLOBALS['cache_rejected_uri']
                         : null;
@@ -969,25 +571,10 @@ class Check_Conflicts {
                     return null;
 
                 case 'litespeed-cache':
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
                     $rules = \apply_filters( 'litespeed_conf', 'cache-exc' );
                     return is_array( $rules ) ? $rules : null;
 
                 case 'wp-fastest-cache':
-                    
-                    
-                    
-                    
-                    
-                    
                     $json = \get_option( 'WpFastestCacheExclude', '' );
                     if ( ! is_string( $json ) || '' === $json ) {
                         return array();
@@ -996,24 +583,15 @@ class Check_Conflicts {
                     return is_array( $rules ) ? $rules : null;
             }
         } catch ( \Throwable $e ) {
-            
-            
             return null;
         }
 
         return null;
     }
 
-    
-
-
-
-
-
     public static function cache_exclusion_coverage( array $detected, ?array $paths = null ) {
         $paths = null === $paths ? self::protected_paths() : $paths;
         if ( ! $paths ) {
-            
             return array_fill_keys( array_values( $detected ), self::CACHE_UNREADABLE );
         }
 
@@ -1048,23 +626,10 @@ class Check_Conflicts {
         return $coverage;
     }
 
-    
-
-
-
-
-
-
-
     private static function cache_coverage_now() {
         $detected = self::detected_cache_plugins();
         return null === $detected ? null : self::cache_exclusion_coverage( $detected );
     }
-
-    
-
-
-
 
     private static function detected_cache_plugins() {
         $known = \apply_filters( 'easy_mcp_ai_diagnostics_known_cache_plugins', self::KNOWN_CACHE_PLUGINS );
@@ -1095,27 +660,7 @@ class Check_Conflicts {
         return $found;
     }
 
-    
-
-    
-
-
-
-
-
-
     private static function active_from( $filter, array $known ) {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- active_from() is private with three call sites, each passing a literal 'easy_mcp_ai_diagnostics_known_*' name; the sniff only sees the variable.
         $filtered = \apply_filters( $filter, $known );
         if ( is_array( $filtered ) ) {
@@ -1130,26 +675,12 @@ class Check_Conflicts {
         return self::match_known( $active, $known );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function active_plugin_paths() {
         $active = \get_option( 'active_plugins', null );
         if ( ! is_array( $active ) ) {
             return null;
         }
 
-        
-        
-        
         if ( function_exists( 'is_multisite' ) && \is_multisite() && function_exists( 'get_site_option' ) ) {
             $network = \get_site_option( 'active_sitewide_plugins', array() );
             if ( is_array( $network ) ) {
@@ -1159,16 +690,6 @@ class Check_Conflicts {
 
         return $active;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function match_known( array $active, array $known ) {
         $slugs = array();
@@ -1188,83 +709,18 @@ class Check_Conflicts {
         return $found;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
     const CORE_REST_AUTH_CALLBACKS = array(
         'rest_cookie_check_errors',
         'rest_application_password_check_errors',
         'wp_is_application_passwords_available',
     );
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const BENIGN_REST_AUTH_CLASSES = array(
-        
         'WC_REST_Authentication',
-        
         'Automattic\\WooCommerce\\StoreApi\\Authentication',
-        
         'Automattic\\Jetpack\\Connection\\Rest_Authentication',
-        
         'Ai1wm_Rest_Controller',
     );
-
-    
-
-
-
 
     private static function benign_rest_auth_classes() {
         $list = self::BENIGN_REST_AUTH_CLASSES;
@@ -1277,7 +733,6 @@ class Check_Conflicts {
         return array_map( 'strval', $list );
     }
 
-    
     private static function is_benign_rest_auth_callback( $name ) {
         $sep = strpos( $name, '::' );
         if ( false === $sep ) {
@@ -1291,17 +746,6 @@ class Check_Conflicts {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function foreign_rest_auth_callbacks( array $callback_names ) {
         $foreign = array();
@@ -1324,33 +768,6 @@ class Check_Conflicts {
         return array_values( array_unique( $foreign ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function is_core_defined_function( $name ) {
         if ( false !== strpos( $name, '::' ) || ! function_exists( $name ) ) {
             return false;
@@ -1364,18 +781,12 @@ class Check_Conflicts {
             return false;
         }
         if ( ! is_string( $file ) || '' === $file ) {
-            return false; 
+            return false;
         }
 
         $core = \wp_normalize_path( ABSPATH . 'wp-includes/' );
         return 0 === strpos( \wp_normalize_path( $file ), $core );
     }
-
-    
-
-
-
-
 
     private static function named_callbacks( array $foreign ) {
         $shown = array_slice( $foreign, 0, 3 );
@@ -1398,15 +809,6 @@ class Check_Conflicts {
         return $named;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function rest_auth_override_active() {
         if ( ! class_exists( '\Easy_MCP_AI\MCP\Rest_Auth_Override' ) ) {
             return false;
@@ -1414,28 +816,7 @@ class Check_Conflicts {
         return \Easy_MCP_AI\MCP\Rest_Auth_Override::enabled();
     }
 
-    
-
-
-
     const REST_AUTH_OBSERVATION_OPTION = 'easy_mcp_ai_rest_auth_observed';
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function record_rest_auth_observation( $body, $secret ) {
         $reached = is_array( $body ) && ! empty( $body['proof'] )
@@ -1453,19 +834,11 @@ class Check_Conflicts {
                 'code'      => ( null !== $seen && isset( $seen['code'] ) ) ? (string) $seen['code'] : '',
                 'status'    => ( null !== $seen && isset( $seen['status'] ) && is_numeric( $seen['status'] ) ) ? (int) $seen['status'] : null,
                 'cleared'   => null !== $seen && ! empty( $seen['cleared'] ),
-                
                 'callbacks' => self::foreign_rest_auth_identities(),
             ),
             false
         );
     }
-
-    
-
-
-
-
-
 
     public static function rest_auth_observation() {
         $o = \get_option( self::REST_AUTH_OBSERVATION_OPTION, null );
@@ -1483,19 +856,7 @@ class Check_Conflicts {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function observation_matches( array $observation, array $foreign ) {
-        
-        
-        
         $then = array_values( array_map( 'strval', $observation['callbacks'] ) );
         $now  = array_values( array_map( 'strval', $foreign ) );
         sort( $then );
@@ -1503,20 +864,9 @@ class Check_Conflicts {
         return $then === $now;
     }
 
-    
-
-
     public static function has_third_party_rest_auth_hook( array $callback_names ) {
-        
-        
         return array() !== self::foreign_rest_auth_callbacks( $callback_names );
     }
-
-    
-
-
-
-
 
     public static function rest_auth_callback_names() {
         $names = array();
@@ -1525,25 +875,6 @@ class Check_Conflicts {
         }
         return $names;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function rest_auth_callbacks() {
         global $wp_filter;
@@ -1574,8 +905,6 @@ class Check_Conflicts {
                     $name  = $owner . '::' . $callback[1];
                     $out[] = array( 'name' => $name, 'id' => $name );
                 } elseif ( $callback instanceof \Closure ) {
-                    
-                    
                     $out[] = array( 'name' => 'closure', 'id' => self::closure_identity( $callback, (string) $priority . '#' . $i ) );
                 } elseif ( is_object( $callback ) && method_exists( $callback, '__invoke' ) ) {
                     $name  = get_class( $callback ) . '::__invoke';
@@ -1586,14 +915,6 @@ class Check_Conflicts {
 
         return $out;
     }
-
-    
-
-
-
-
-
-
 
     private static function closure_identity( $closure, $position ) {
         try {
@@ -1616,12 +937,6 @@ class Check_Conflicts {
         return 'closure:@' . $position;
     }
 
-    
-
-
-
-
-
     public static function foreign_rest_auth_identities() {
         $ids = array();
         foreach ( self::rest_auth_callbacks() as $cb ) {
@@ -1636,27 +951,12 @@ class Check_Conflicts {
         return (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_enabled', true );
     }
 
-    
-
-
-
-    
     const REASSERTION_WINDOW_DAYS = 30;
-
-    
-
-
-
-
-
-
-
-
 
     private static function count_hook_reassertions() {
         global $wpdb;
         if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) ) {
-            return null; 
+            return null;
         }
 
         $table = $wpdb->prefix . 'easy_mcp_ai_change_log';

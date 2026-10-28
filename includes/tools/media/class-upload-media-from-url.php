@@ -7,47 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Upload_Media_From_Url extends Base_Tool {
 
     const HTTP_TIMEOUT_SECONDS = 30;
@@ -73,7 +32,7 @@ class Upload_Media_From_Url extends Base_Tool {
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
             'destructiveHint' => false,
-            'openWorldHint'   => true, 
+            'openWorldHint'   => true,
         );
     }
 
@@ -129,49 +88,14 @@ class Upload_Media_From_Url extends Base_Tool {
                     'description' => 'With post_id: also set the imported image as that post\'s featured image. Default false. Refused, before anything is fetched, without post_id, for a post you cannot edit or whose type has no featured images; refused before import when the file is not an image.',
                 ),
             ),
-            
-            
-            
-            
-            
-            
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function get_definition() {
         $definition          = parent::get_definition();
         $definition['_meta'] = array( 'openai/fileParams' => array( 'file' ) );
         return $definition;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function get_redacted_arguments() {
         return array( 'url' );
@@ -180,9 +104,6 @@ class Upload_Media_From_Url extends Base_Tool {
     public function execute( array $arguments ) {
         $source = $this->resolve_source( $arguments );
 
-        
-        
-        
         self::refuse_non_text_description( $arguments );
         $slug     = $this->parse_slug( $arguments );
         $featured = $this->featured_image_target( $arguments );
@@ -193,10 +114,6 @@ class Upload_Media_From_Url extends Base_Tool {
         $max_bytes = wp_max_upload_size();
         $this->refuse_declared_oversize( $url, $max_bytes );
 
-        
-        
-        
-        
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -218,10 +135,6 @@ class Upload_Media_From_Url extends Base_Tool {
 
         $parent_post_id = self::attachable_parent( $arguments, $tmp_file );
 
-        
-        
-        
-        
         $attachment_id = media_handle_sideload( $file_array, $parent_post_id );
         if ( \is_wp_error( $attachment_id ) ) {
             \wp_delete_file( $tmp_file );
@@ -253,15 +166,6 @@ class Upload_Media_From_Url extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private function resolve_source( array $arguments ): array {
         $has_url  = array_key_exists( 'url', $arguments );
         $has_file = array_key_exists( 'file', $arguments );
@@ -287,34 +191,11 @@ class Upload_Media_From_Url extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function refuse_non_text_description( array $arguments ): void {
         if ( array_key_exists( 'description', $arguments ) && null !== $arguments['description'] && ! is_scalar( $arguments['description'] ) ) {
             throw new \InvalidArgumentException( 'description must be text. Nothing was imported.' );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function resolve_filename( array $arguments, string $filename_hint, bool $handoff, string $url, string $mime_hint = '' ): string {
         $filename = '';
@@ -329,15 +210,8 @@ class Upload_Media_From_Url extends Base_Tool {
             $filename = sanitize_file_name( basename( $path ) );
         }
         if ( $handoff ) {
-            
-            
-            
-            
             $type = wp_check_filetype( $filename );
             if ( empty( $type['type'] ) ) {
-                
-                
-                
                 $hinted   = self::image_filename_for_type( $filename, $mime_hint );
                 $filename = null !== $hinted ? $hinted : $filename;
                 $type     = wp_check_filetype( $filename );
@@ -351,17 +225,6 @@ class Upload_Media_From_Url extends Base_Tool {
         }
         return $filename;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function refuse_declared_oversize( string $url, int $max_bytes ): void {
         $head = wp_safe_remote_head(
@@ -386,23 +249,6 @@ class Upload_Media_From_Url extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function download_to( string $url, string $tmp_file, int $max_bytes ): int {
         $response = wp_safe_remote_get(
             $url,
@@ -416,11 +262,6 @@ class Upload_Media_From_Url extends Base_Tool {
         );
         if ( is_wp_error( $response ) ) {
             \wp_delete_file( $tmp_file );
-            
-            
-            
-            
-            
             throw new \RuntimeException(
                 sprintf( 'Could not fetch remote URL (%s). Request a fresh URL or file handoff and retry.', sanitize_key( (string) $response->get_error_code() ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
@@ -433,8 +274,6 @@ class Upload_Media_From_Url extends Base_Tool {
             );
         }
 
-        
-        
         // phpcs:ignore WordPress.WP.AlternativeFunctions.filesize_filesize
         $body_len = (int) @filesize( $tmp_file );
         if ( $body_len <= 0 ) {
@@ -450,20 +289,7 @@ class Upload_Media_From_Url extends Base_Tool {
         return $body_len;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function checked_file( string $tmp_file, string $filename, int $featured ): array {
-        
-        
-        
         $known = wp_check_filetype( $filename );
         if ( empty( $known['type'] ) ) {
             $renamed  = self::image_filename_from_bytes( $filename, $tmp_file );
@@ -474,8 +300,6 @@ class Upload_Media_From_Url extends Base_Tool {
             \wp_delete_file( $tmp_file );
             throw new \InvalidArgumentException( 'File type is not allowed for upload.' );
         }
-        
-        
         if ( ! empty( $check['proper_filename'] ) ) {
             $filename = $check['proper_filename'];
         }
@@ -490,21 +314,6 @@ class Upload_Media_From_Url extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function attachable_parent( array $arguments, string $tmp_file ): int {
         $parent_post_id = isset( $arguments['post_id'] ) ? (int) $arguments['post_id'] : 0;
         if ( $parent_post_id < 0 ) {
@@ -518,19 +327,6 @@ class Upload_Media_From_Url extends Base_Tool {
         }
         return $parent_post_id;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function apply_attachment_fields( int $attachment_id, array $arguments, ?string $slug ): void {
         $post_update = array( 'ID' => $attachment_id );
@@ -549,15 +345,6 @@ class Upload_Media_From_Url extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private function parse_slug( array $arguments ): ?string {
         if ( ! isset( $arguments['slug'] ) ) {
             return null;
@@ -568,23 +355,6 @@ class Upload_Media_From_Url extends Base_Tool {
         }
         return trim( $slug );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function featured_image_target( array $arguments ): int {
         if ( ! isset( $arguments['featured_image'] ) || ! rest_sanitize_boolean( $arguments['featured_image'] ) ) {
@@ -608,17 +378,6 @@ class Upload_Media_From_Url extends Base_Tool {
         return $post_id;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function featured_image_type_refusal( int $featured, string $type ): ?string {
         if ( $featured <= 0 || 0 === strpos( $type, 'image/' ) ) {
             return null;
@@ -626,20 +385,8 @@ class Upload_Media_From_Url extends Base_Tool {
         return sprintf( 'featured_image needs an image, and this file is %s. Nothing was imported.', '' !== $type ? $type : 'of an unknown type' );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function add_post_fields( array $post_update, array $arguments, ?string $slug ): array {
         if ( array_key_exists( 'description', $arguments ) ) {
-            
-            
             $post_update['post_content'] = wp_slash( (string) $arguments['description'] );
         }
         if ( null !== $slug ) {
@@ -647,16 +394,6 @@ class Upload_Media_From_Url extends Base_Tool {
         }
         return $post_update;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function set_featured_image( int $post_id, int $attachment_id ): void {
         set_post_thumbnail( $post_id, $attachment_id );
@@ -666,19 +403,6 @@ class Upload_Media_From_Url extends Base_Tool {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function validate_file_reference( $file ) {
         if ( ! is_array( $file ) ) {
@@ -698,20 +422,6 @@ class Upload_Media_From_Url extends Base_Tool {
         return $file;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function validate_remote_url( $url ) {
         $url    = trim( $url );
         $parsed = wp_parse_url( $url );
@@ -720,11 +430,6 @@ class Upload_Media_From_Url extends Base_Tool {
             throw new \InvalidArgumentException( 'Invalid URL.' );
         }
         $scheme = strtolower( isset( $parsed['scheme'] ) ? $parsed['scheme'] : '' );
-        
-        
-        
-        
-        
         $allow_http      = (bool) apply_filters( 'easy_mcp_ai_allow_http_media_url', false );
         $allowed_schemes = $allow_http ? array( 'http', 'https' ) : array( 'https' );
         if ( ! in_array( $scheme, $allowed_schemes, true ) ) {
@@ -738,18 +443,15 @@ class Upload_Media_From_Url extends Base_Tool {
         if ( '' === $host ) {
             throw new \InvalidArgumentException( 'URL host is empty.' );
         }
-        
         if ( '[' === $host[0] ) {
             $host = trim( $host, '[]' );
         }
 
-        
         if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
             $this->reject_if_unsafe_ip( $host );
             return esc_url_raw( $url );
         }
 
-        
         $resolved = $this->resolve_host( $host );
         if ( empty( $resolved ) ) {
             throw new \InvalidArgumentException(
@@ -763,25 +465,6 @@ class Upload_Media_From_Url extends Base_Tool {
         return esc_url_raw( $url );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function resolve_host( $host ) {
         if ( ! function_exists( 'dns_get_record' ) ) {
             throw new \RuntimeException(
@@ -791,8 +474,6 @@ class Upload_Media_From_Url extends Base_Tool {
 
         $ips = array();
 
-        
-        
         $records = @dns_get_record( $host, DNS_A | DNS_AAAA ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
         if ( ! is_array( $records ) ) {
             return $ips;
@@ -808,18 +489,6 @@ class Upload_Media_From_Url extends Base_Tool {
         return $ips;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function reject_if_unsafe_ip( $ip ) {
         if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
             throw new \InvalidArgumentException(
@@ -827,7 +496,6 @@ class Upload_Media_From_Url extends Base_Tool {
             );
         }
 
-        
         if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) && 0 === stripos( $ip, '::ffff:' ) ) {
             $maybe_v4 = substr( $ip, 7 );
             if ( filter_var( $maybe_v4, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {

@@ -63,13 +63,6 @@ class Upload_Media extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function renamed_image( string $filename, string $bytes ): string {
         $probe = tempnam( function_exists( 'get_temp_dir' ) ? get_temp_dir() : sys_get_temp_dir(), 'emai' );
         if ( false === $probe ) {
@@ -89,16 +82,10 @@ class Upload_Media extends Base_Tool {
 
         $filename = sanitize_file_name( $arguments['filename'] );
 
-        
-        
         $max_upload_bytes = wp_max_upload_size();
         if ( ! is_string( $arguments['filename'] ) || ! is_string( $arguments['content_base64'] ) ) {
             throw new \InvalidArgumentException( 'filename and content_base64 must be strings.' );
         }
-        
-        
-        
-        
         $encoded = $arguments['content_base64'];
         $offset  = 0;
         if ( 0 === strncasecmp( $encoded, 'data:', 5 ) ) {
@@ -130,9 +117,6 @@ class Upload_Media extends Base_Tool {
         $filetype = wp_check_filetype( $filename );
 
         if ( empty( $filetype['type'] ) ) {
-            
-            
-            
             $filename = self::renamed_image( $filename, $decoded );
             $filetype = wp_check_filetype( $filename );
         }
@@ -140,18 +124,13 @@ class Upload_Media extends Base_Tool {
             throw new \InvalidArgumentException( 'File type is not allowed.' );
         }
 
-        
         if ( function_exists( 'finfo_buffer' ) ) {
             $finfo         = finfo_open( FILEINFO_MIME_TYPE );
             $sniffed_mime  = finfo_buffer( $finfo, $decoded );
             finfo_close( $finfo );
 
-            
-            
-            
             $declared = $filetype['type'];
             if ( $sniffed_mime !== $declared ) {
-                
                 $safe_mismatches = array(
                     'image/svg+xml' => array( 'text/xml', 'image/svg+xml' ),
                     'text/csv'      => array( 'text/plain' ),
@@ -165,10 +144,6 @@ class Upload_Media extends Base_Tool {
             }
         }
 
-        
-        
-        
-        
         require_once ABSPATH . 'wp-admin/includes/file.php';
         if ( ! function_exists( 'media_handle_sideload' ) ) {
             require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -192,11 +167,6 @@ class Upload_Media extends Base_Tool {
             'size'     => strlen( $decoded ),
         );
 
-        
-        
-        
-        
-        
         $attachment_id = media_handle_sideload( $file_array, 0 );
 
         if ( \is_wp_error( $attachment_id ) ) {
@@ -204,7 +174,6 @@ class Upload_Media extends Base_Tool {
             throw new \RuntimeException( $attachment_id->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
         $meta_update_failed = false;
         $post_update        = array( 'ID' => $attachment_id );
         if ( ! empty( $arguments['title'] ) ) {

@@ -7,9 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
 class List_Logs extends Base_Tool {
 
     public function get_name() {
@@ -98,13 +95,6 @@ class List_Logs extends Base_Tool {
             'returned' => count( $page ),
         ) );
     }
-
-    
-
-
-
-
-
 
     private static function empty_listing( array $result, string $reason ): array {
         return array_merge( $result, array(

@@ -15,39 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class User_Application_Password_Handler extends Command_Handler {
 
-    
     const APPLICATION_PASSWORD_FIELDS = array( 'uuid', 'app_id', 'name', 'password', 'created', 'last_used', 'last_ip' );
 
     const NOT_CAPTURED = 'Application passwords live in user meta that change history stores redacted, so a deleted or renamed password cannot be restored from it.';
 
-    
     const MSG_CANNOT_LIST       = 'Sorry, you are not allowed to list application passwords for this user.';
     const MSG_CANNOT_READ       = 'Sorry, you are not allowed to read this application password.';
     const MSG_CANNOT_EDIT       = 'Sorry, you are not allowed to edit this application password.';
@@ -58,7 +31,6 @@ final class User_Application_Password_Handler extends Command_Handler {
     const REFUSE_UNKNOWN     = 'it is not a field of an application password (uuid, app_id, name, created, last_used, last_ip), and WP-CLI would ignore it';
     const REFUSE_UPDATE      = 'only --name can be changed; WordPress ignores every other field';
 
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $user_id    = $this->user_id( $inv, $ctx, 'list_app_passwords', self::MSG_CANNOT_LIST );
         $assoc_args = $inv->assoc;
@@ -78,7 +50,6 @@ final class User_Application_Password_Handler extends Command_Handler {
 
         $fields = self::APPLICATION_PASSWORD_FIELDS;
 
-        
         foreach ( array( 'app-id', 'last-used', 'last-ip' ) as $flag ) {
             if ( array_key_exists( $flag, $assoc_args ) ) {
                 $underscored_flag                = str_replace( '-', '_', $flag );
@@ -116,7 +87,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         }
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $user_id = $this->user_id( $inv, $ctx, 'read_app_password', self::MSG_CANNOT_READ );
         $uuid    = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
@@ -140,7 +110,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         $formatter->display_items( self::mask( array( $application_password ) ) );
     }
 
-    
     public function exists( Invocation $inv, Context $ctx ): void {
         $user_id  = $this->user_id( $inv, $ctx, 'list_app_passwords', self::MSG_CANNOT_LIST );
         $app_name = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
@@ -148,7 +117,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         if ( method_exists( '\\WP_Application_Passwords', 'application_name_exists_for_user' ) ) {
             $result = \WP_Application_Passwords::application_name_exists_for_user( $user_id, $app_name );
         } else {
-            
             $result = false;
             foreach ( (array) \WP_Application_Passwords::get_user_application_passwords( $user_id ) as $password ) {
                 if ( strtolower( $password['name'] ) === strtolower( $app_name ) ) {
@@ -163,10 +131,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         $ctx->out->halt( $result ? 0 : 1 );
     }
 
-    
-
-
-
     public function preflight_update( Invocation $inv, Context $ctx ): void {
         $errors = array();
         foreach ( array_keys( $inv->assoc ) as $key ) {
@@ -179,7 +143,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         }
     }
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $this->preflight_update( $inv, $ctx );
         $user_id = $this->user_id( $inv, $ctx, 'edit_app_password', self::MSG_CANNOT_EDIT );
@@ -198,7 +161,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         $ctx->out->success( 'Updated application password.' );
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $args    = array_values( $inv->args );
         $all     = true === Read_Value::flag( $inv->assoc, 'all', false );
@@ -218,11 +180,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         self::delete_uuids( $user_id, $args, $ctx );
     }
 
-    
-
-
-
-
     private static function delete_all( int $user_id, Context $ctx ): void {
         $result = \WP_Application_Passwords::delete_all_application_passwords( $user_id );
         if ( $result instanceof \WP_Error ) {
@@ -233,14 +190,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         }
         $ctx->out->success( 'Deleted all application passwords.' );
     }
-
-    
-
-
-
-
-
-
 
     private static function delete_uuids( int $user_id, array $args, Context $ctx ): void {
         $count = count( $args );
@@ -272,11 +221,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         $ctx->out->halt( 0 === $errors ? 0 : 1 );
     }
 
-    
-
-
-
-
     public function describe_update( Invocation $inv ): array {
         $user = self::peek_user( isset( $inv->args[0] ) ? $inv->args[0] : '' );
         $uuid = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
@@ -290,11 +234,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         $name = isset( $inv->assoc['name'] ) && is_string( $inv->assoc['name'] ) ? $inv->assoc['name'] : null;
         return array( sprintf( "User %s (%d) application password %s: name '%s' → %s", $user->user_login, (int) $user->ID, $uuid, $item['name'], null === $name ? 'no change' : "'" . $name . "'" ) );
     }
-
-    
-
-
-
 
     public function describe_delete( Invocation $inv ): array {
         $user = self::peek_user( isset( $inv->args[0] ) ? $inv->args[0] : '' );
@@ -326,16 +265,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         return $lines;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     private function user_id( Invocation $inv, Context $ctx, string $cap, string $refusal ): int {
         $user = Fetchers::of( 'user' )->get_check( isset( $inv->args[0] ) ? $inv->args[0] : '', $ctx->out );
         $id   = (int) $user->ID;
@@ -344,11 +273,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         }
         return $id;
     }
-
-    
-
-
-
 
     private function refuse_filters( Context $ctx, array $assoc ): void {
         $errors = array();
@@ -361,8 +285,6 @@ final class User_Application_Password_Handler extends Command_Handler {
                 $errors[] = sprintf( ' --%s parameter is not available through wp_cli_run: %s', $key, self::REFUSE_HASH_FILTER );
                 continue;
             }
-            
-            
             if ( ! in_array( str_replace( '-', '_', $key ), self::APPLICATION_PASSWORD_FIELDS, true ) ) {
                 $errors[] = sprintf( ' --%s parameter is not available through wp_cli_run: %s', $key, self::REFUSE_UNKNOWN );
             }
@@ -371,12 +293,6 @@ final class User_Application_Password_Handler extends Command_Handler {
             $ctx->out->error( "Parameter errors:\n" . implode( "\n", $errors ) );
         }
     }
-
-    
-
-
-
-
 
     private function report_redacted( Context $ctx, array $assoc, array $fields, bool $ids ): void {
         if ( $ids ) {
@@ -388,12 +304,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private static function mask( array $items ): array {
         foreach ( $items as $key => $item ) {
             if ( is_array( $item ) && array_key_exists( 'password', $item ) ) {
@@ -403,12 +313,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         return $items;
     }
 
-    
-
-
-
-
-
     private static function pluck( array $items, string $field ): array {
         $out = array();
         foreach ( $items as $key => $item ) {
@@ -416,15 +320,6 @@ final class User_Application_Password_Handler extends Command_Handler {
         }
         return $out;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function sort( array &$items, string $orderby, string $order ): void {
         if ( PHP_VERSION_ID >= 80000 ) {
@@ -444,18 +339,12 @@ final class User_Application_Password_Handler extends Command_Handler {
         usort(
             $items,
             static function ( array $a, array $b ) use ( $orderby, $order ): bool {
-                
                 return 'asc' === $order
                     ? $a[ $orderby ] > $b[ $orderby ]
                     : $a[ $orderby ] < $b[ $orderby ];
             }
         );
     }
-
-    
-
-
-
 
     private static function peek_user( string $arg ): ?object {
         $user = Fetchers::user( $arg, new Output() );

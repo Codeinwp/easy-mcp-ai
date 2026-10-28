@@ -1,62 +1,29 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Skills;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 final class Skill_Set {
 
-    
     const SOURCE_SYNCED  = 'synced';
     const SOURCE_BUNDLED = 'bundled';
     const SOURCE_LOCAL   = 'local';
     const SOURCE_NONE    = 'none';
 
-    
     private $skills;
 
-    
     private $source;
 
-    
     private $serial;
-
-    
-
-
-
 
     public function __construct( array $skills, string $source, ?int $serial = null ) {
         $this->skills = array_values( $skills );
         $this->source = $source;
         $this->serial = $serial;
     }
-
-    
-
-
-
-
-
 
     public static function from_release( array $release, string $source ): self {
         $skills = array();
@@ -68,10 +35,6 @@ final class Skill_Set {
         }
         return new self( $skills, $source, isset( $release['serial'] ) && is_int( $release['serial'] ) ? $release['serial'] : null );
     }
-
-    
-
-
 
     public static function normalise( $raw ): ?array {
         if ( ! is_array( $raw ) || ! isset( $raw['path'], $raw['frontmatter'], $raw['files'] ) || ! is_string( $raw['path'] )
@@ -122,12 +85,10 @@ final class Skill_Set {
         return $this->source;
     }
 
-    
     public function serial(): ?int {
         return $this->serial;
     }
 
-    
     public function skills(): array {
         return $this->skills;
     }
@@ -135,10 +96,6 @@ final class Skill_Set {
     public function is_empty(): bool {
         return empty( $this->skills );
     }
-
-    
-
-
 
     public function find( string $name ): ?array {
         foreach ( $this->skills as $skill ) {
@@ -148,12 +105,6 @@ final class Skill_Set {
         }
         return null;
     }
-
-    
-
-
-
-
 
     public function find_file_by_uri( string $uri ): ?array {
         foreach ( $this->skills as $skill ) {
@@ -169,42 +120,22 @@ final class Skill_Set {
         return null;
     }
 
-    
     public function filtered( callable $keep ): self {
         return new self( array_values( array_filter( $this->skills, $keep ) ), $this->source, $this->serial );
     }
 
-    
-
-
-
     public static function uri( array $skill, string $file = 'SKILL.md' ): string {
         return 'skill://' . $skill['path'] . '/' . $file;
     }
-
-    
-
-
 
     public static function version( array $skill ): ?string {
         $meta = isset( $skill['frontmatter']['metadata'] ) && is_array( $skill['frontmatter']['metadata'] ) ? $skill['frontmatter']['metadata'] : array();
         return isset( $meta['version'] ) && is_scalar( $meta['version'] ) ? (string) $meta['version'] : null;
     }
 
-    
-
-
-
     public static function description( array $skill ): string {
         return isset( $skill['frontmatter']['description'] ) && is_string( $skill['frontmatter']['description'] ) ? $skill['frontmatter']['description'] : '';
     }
-
-    
-
-
-
-
-
 
     public static function entry( array $skill ): array {
         $resources = array();
@@ -221,12 +152,6 @@ final class Skill_Set {
             'resources'   => $resources,
         );
     }
-
-    
-
-
-
-
 
     private static function as_object( $value ) {
         if ( ! is_array( $value ) ) {

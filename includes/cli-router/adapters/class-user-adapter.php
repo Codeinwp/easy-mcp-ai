@@ -15,67 +15,22 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class User_Adapter extends Db_Object_Command {
 
     protected $obj_type = 'user';
 
     protected $obj_fields = array( 'ID', 'user_login', 'display_name', 'user_email', 'user_registered', 'roles' );
 
-    
     const LIST_MAX = 1000;
 
-    
     const PAGE_SIZE = 100;
 
-    
     const LIST_FIELDS = array( 'ID', 'user_login', 'user_pass', 'user_nicename', 'user_email', 'user_url', 'user_registered', 'user_activation_key', 'user_status', 'display_name', 'spam', 'deleted', 'roles', 'url', 'caps', 'cap_key', 'allcaps', 'filter' );
 
-    
     const SECRET_FIELDS = array( 'user_pass', 'user_activation_key' );
 
-    
     const PLANNED_PASSWORD = Redactor::MASK;
 
-    
     const MSG_CANNOT_EDIT   = 'Sorry, you are not allowed to edit this user.';
     const MSG_CANNOT_DELETE = 'Sorry, you are not allowed to delete this user.';
 
@@ -92,7 +47,6 @@ final class User_Adapter extends Db_Object_Command {
     const MSG_ROLES_NOT_HELD = 'None of the roles named is on %s (%d), so nothing was removed.';
     const NOTE_ROLES_NOT_HELD = '%s (%d) did not have %s, so it was not removed.';
 
-    
     const LIST_QUERY = array(
         'role__in'           => array( 'roles', true ),
         'role__not_in'       => array( 'role__not_in', true ),
@@ -111,7 +65,6 @@ final class User_Adapter extends Db_Object_Command {
         'meta_type'          => array( 'meta_type', false ),
     );
 
-    
     const LIST_ORDERBY = array(
         'id'              => 'id',
         'ID'              => 'id',
@@ -132,7 +85,6 @@ final class User_Adapter extends Db_Object_Command {
         'meta_value_num'  => 'meta_value_num',
     );
 
-    
     const LIST_REFUSED = array(
         'offset'         => 'wp_list_users pages by page number; use --number=<n> with --paged=<n>',
         'blog_id'        => 'wp_cli_run lists the users of this site, or of the whole network with --network',
@@ -143,7 +95,6 @@ final class User_Adapter extends Db_Object_Command {
         'capability__in' => 'wp_list_users does not take it yet; use --role__in or --capability',
     );
 
-    
     const UPDATE_FIELDS = array(
         'user_pass'            => 'password',
         'user_nicename'        => 'slug',
@@ -159,10 +110,8 @@ final class User_Adapter extends Db_Object_Command {
         'admin_color'          => 'admin_color',
     );
 
-    
     const UPDATE_FLAGS = array( 'rich_editing', 'syntax_highlighting', 'comment_shortcuts', 'show_admin_bar_front', 'use_ssl' );
 
-    
     const UPDATE_REFUSED = array(
         'ID'                  => 'the user is named by <user>',
         'user_activation_key' => 'it is a password-reset secret; WordPress writes it itself',
@@ -172,11 +121,6 @@ final class User_Adapter extends Db_Object_Command {
         'meta_input'          => 'use `user meta update`',
     );
 
-    
-    
-    
-
-    
     public function exists( Invocation $inv, Context $ctx ): void {
         $arg = isset( $inv->args[0] ) ? $inv->args[0] : '';
         Fetchers::require_tool( $ctx, $inv, 'wp_get_user' );
@@ -196,7 +140,6 @@ final class User_Adapter extends Db_Object_Command {
         $ctx->out->success( "User with ID {$arg} exists." );
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $user   = $this->resolve( $inv, $ctx, 'wp_get_user', isset( $inv->args[0] ) ? $inv->args[0] : '', 'edit_user', self::MSG_CANNOT_EDIT, true );
         $result = $ctx->delegate( 'wp_get_user', array( 'user_id' => (int) $user->ID ) );
@@ -210,7 +153,6 @@ final class User_Adapter extends Db_Object_Command {
         $formatter->display_item( $user_data );
     }
 
-    
     public function list_caps( Invocation $inv, Context $ctx ): void {
         $user   = $this->resolve( $inv, $ctx, 'wp_get_user', isset( $inv->args[0] ) ? $inv->args[0] : '', 'edit_user', self::MSG_CANNOT_EDIT, true );
         $result = $ctx->delegate( 'wp_get_user', array( 'user_id' => (int) $user->ID ) );
@@ -236,15 +178,6 @@ final class User_Adapter extends Db_Object_Command {
         $formatter->display_items( $output_caps );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function active_caps( array $payload, $origin, bool $exclude_role_names ): array {
         $allcaps           = isset( $payload['capabilities'] ) && is_array( $payload['capabilities'] ) ? $payload['capabilities'] : array();
         $user_capabilities = isset( $payload['extra_capabilities'] ) && is_array( $payload['extra_capabilities'] ) ? $payload['extra_capabilities'] : array();
@@ -260,14 +193,6 @@ final class User_Adapter extends Db_Object_Command {
         return array();
     }
 
-    
-
-
-
-
-
-
-
     private static function all_caps( array $allcaps, array $user_roles, bool $exclude_role_names ): array {
         $caps = array();
         foreach ( $allcaps as $capability => $active ) {
@@ -281,14 +206,6 @@ final class User_Adapter extends Db_Object_Command {
         return $caps;
     }
 
-    
-
-
-
-
-
-
-
     private static function user_caps( array $user_capabilities, array $user_roles ): array {
         $caps = array();
         foreach ( $user_capabilities as $capability => $active ) {
@@ -298,16 +215,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return $caps;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function role_caps( array $allcaps, array $user_capabilities, array $user_roles, bool $exclude_role_names ): array {
         $caps = array();
@@ -322,11 +229,6 @@ final class User_Adapter extends Db_Object_Command {
         return $caps;
     }
 
-    
-    
-    
-
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $network    = (bool) Read_Value::flag( $assoc_args, 'network' );
@@ -364,14 +266,6 @@ final class User_Adapter extends Db_Object_Command {
         $formatter->display_items( $items );
     }
 
-    
-
-
-
-
-
-
-
     private function network_fields( Context $ctx, array $assoc_args ): array {
         if ( ! \is_multisite() ) {
             $ctx->out->error( 'This is not a multisite installation.' );
@@ -380,14 +274,6 @@ final class User_Adapter extends Db_Object_Command {
         $assoc_args['fields'] = array_diff( $fields, array( 'roles' ) );
         return $assoc_args;
     }
-
-    
-
-
-
-
-
-
 
     private static function wants_caps( Context $ctx, array $requested ): bool {
         $with_caps = false;
@@ -404,21 +290,10 @@ final class User_Adapter extends Db_Object_Command {
         return $with_caps;
     }
 
-    
-
-
-
-
-
     private function list_count( Context $ctx, array $query, int $number, int $paged ): int {
         $total = (int) $this->list_page( $ctx, $query, 1, 1 )['total'];
         return $number > 0 ? min( $number, max( 0, $total - ( $paged - 1 ) * $number ) ) : $total;
     }
-
-    
-
-
-
 
     private static function ids_line( array $users ): string {
         $ids = array();
@@ -427,15 +302,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return implode( ' ', $ids );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public function preflight_create( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
@@ -452,14 +318,6 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-
-
-
-
-
-
-
     public function plan_create( Invocation $inv ): array {
         return array(
             array(
@@ -469,7 +327,6 @@ final class User_Adapter extends Db_Object_Command {
         );
     }
 
-    
     public function create( Invocation $inv, Context $ctx ): void {
         $login = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
         $email = isset( $inv->args[1] ) ? (string) $inv->args[1] : '';
@@ -503,15 +360,6 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public function preflight_own_password( Invocation $inv, Context $ctx ): void {
         $is_update = 'user update' === $inv->command;
         if ( $is_update ) {
@@ -526,13 +374,6 @@ final class User_Adapter extends Db_Object_Command {
             }
         }
     }
-
-    
-
-
-
-
-
 
     public function plan_update( Invocation $inv ): array {
         $fields = self::update_arguments( null, $inv->assoc );
@@ -549,7 +390,6 @@ final class User_Adapter extends Db_Object_Command {
         return $plan;
     }
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         if ( isset( $assoc_args['user_login'] ) ) {
@@ -589,16 +429,6 @@ final class User_Adapter extends Db_Object_Command {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         $assoc    = $inv->assoc;
         $network  = Read_Value::flag( $assoc, 'network' ) && \is_multisite();
@@ -611,11 +441,6 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-
-
-
-
     public function plan_delete( Invocation $inv ): array {
         $plan = array();
         foreach ( $inv->args as $arg ) {
@@ -627,7 +452,6 @@ final class User_Adapter extends Db_Object_Command {
         return $plan;
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $network    = Read_Value::flag( $assoc_args, 'network' ) && \is_multisite();
@@ -664,11 +488,6 @@ final class User_Adapter extends Db_Object_Command {
         );
     }
 
-    
-    
-    
-
-    
     public function set_role( Invocation $inv, Context $ctx ): void {
         $user = $this->resolve( $inv, $ctx, 'wp_update_user', isset( $inv->args[0] ) ? $inv->args[0] : '', 'edit_user', self::MSG_CANNOT_EDIT, true );
         $role = isset( $inv->args[1] ) ? (string) $inv->args[1] : (string) \get_option( 'default_role' );
@@ -688,7 +507,6 @@ final class User_Adapter extends Db_Object_Command {
         $ctx->out->success( "Added {$user->user_login} ({$user->ID}) to " . \site_url() . " as {$role}." );
     }
 
-    
     public function add_role( Invocation $inv, Context $ctx ): void {
         $user  = $this->resolve( $inv, $ctx, 'wp_update_user', isset( $inv->args[0] ) ? $inv->args[0] : '', 'edit_user', self::MSG_CANNOT_EDIT, true );
         $roles = array_values( array_slice( $inv->args, 1 ) );
@@ -710,7 +528,6 @@ final class User_Adapter extends Db_Object_Command {
         $ctx->out->success( "Added '{$message}' {$label} for {$user->user_login} ({$user->ID})." );
     }
 
-    
     public function remove_role( Invocation $inv, Context $ctx ): void {
         $user = $this->resolve( $inv, $ctx, 'wp_update_user', isset( $inv->args[0] ) ? $inv->args[0] : '', 'edit_user', self::MSG_CANNOT_EDIT, true );
         if ( isset( $inv->args[1] ) ) {
@@ -718,8 +535,6 @@ final class User_Adapter extends Db_Object_Command {
             foreach ( $roles as $role ) {
                 self::validate_role( $ctx, (string) $role );
             }
-            
-            
             $held     = isset( $user->roles ) ? array_values( array_map( 'strval', (array) $user->roles ) ) : array();
             $not_held = array_values( array_unique( array_diff( array_map( 'strval', $roles ), $held ) ) );
             $this->role_call(
@@ -749,17 +564,6 @@ final class User_Adapter extends Db_Object_Command {
         $ctx->out->success( "Removed {$user->user_login} ({$user->ID}) from " . \site_url() . '.' );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     public function plan_reset_password( Invocation $inv ): array {
         $plan = array();
         foreach ( $inv->args as $arg ) {
@@ -771,7 +575,6 @@ final class User_Adapter extends Db_Object_Command {
         return $plan;
     }
 
-    
     public function reset_password( Invocation $inv, Context $ctx ): void {
         $users = $this->resolve_many( $inv, $ctx, 'wp_update_user', $inv->args, 'edit_user', self::MSG_CANNOT_EDIT, true );
         $this->refuse_own_account( $ctx, $users );
@@ -811,19 +614,6 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
     public static function user_data( array $payload ): array {
         $row          = array(
             'ID'                  => self::column( $payload, 'id' ),
@@ -841,13 +631,6 @@ final class User_Adapter extends Db_Object_Command {
         $row['roles'] = implode( ', ', self::role_names( $payload ) );
         return $row;
     }
-
-    
-
-
-
-
-
 
     public static function list_item( array $user ): \stdClass {
         $item           = array(
@@ -874,31 +657,13 @@ final class User_Adapter extends Db_Object_Command {
         return (object) $item;
     }
 
-    
-
-
-
-
-
     private static function column( array $row, string $key, string $fallback = '' ): string {
         return (string) ( isset( $row[ $key ] ) ? $row[ $key ] : $fallback );
     }
 
-    
-
-
-
-
-
     private static function map_column( array $row, string $key ): array {
         return isset( $row[ $key ] ) && is_array( $row[ $key ] ) ? $row[ $key ] : array();
     }
-
-    
-
-
-
-
 
     private static function spam_columns( array $row ): array {
         if ( ! array_key_exists( 'spam', $row ) ) {
@@ -910,22 +675,9 @@ final class User_Adapter extends Db_Object_Command {
         );
     }
 
-    
-
-
-
-
-
     private static function role_names( array $row ): array {
         return array_map( 'strval', isset( $row['roles'] ) ? array_values( (array) $row['roles'] ) : array() );
     }
-
-    
-
-
-
-
-
 
     private function resolve( Invocation $inv, Context $ctx, string $tool, string $arg, string $cap, string $refusal, bool $self_ok ): object {
         return Fetchers::of( 'user' )->get_check_for(
@@ -938,15 +690,6 @@ final class User_Adapter extends Db_Object_Command {
             }
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private function resolve_many( Invocation $inv, Context $ctx, string $tool, array $args, string $cap, string $refusal, bool $self_ok ): array {
         Fetchers::require_tool( $ctx, $inv, $tool );
@@ -970,35 +713,16 @@ final class User_Adapter extends Db_Object_Command {
         return $users;
     }
 
-    
-
-
-
-
-
     private function object_check( Context $ctx, object $user, string $cap, string $refusal, bool $self_ok ): void {
         if ( ! self::may_act( $ctx, $user, $cap, $self_ok ) ) {
             $ctx->out->error( $refusal );
         }
     }
 
-    
-
-
-
-
-
     private static function may_act( Context $ctx, object $user, string $cap, bool $self_ok ): bool {
         $id = isset( $user->ID ) ? (int) $user->ID : 0;
         return ( $self_ok && $id === $ctx->user_id() ) || \current_user_can( $cap, $id );
     }
-
-    
-
-
-
-
-
 
     private function role_call( Context $ctx, array $arguments ): void {
         $result = $ctx->delegate( 'wp_update_user', $arguments );
@@ -1010,12 +734,6 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-
-
-
-
-
     private function refuse_own_account( Context $ctx, array $users ): void {
         foreach ( $users as $user ) {
             if ( (int) $user->ID === $ctx->user_id() ) {
@@ -1023,12 +741,6 @@ final class User_Adapter extends Db_Object_Command {
             }
         }
     }
-
-    
-
-
-
-
 
     private static function names_caller( string $arg ): bool {
         $me = \wp_get_current_user();
@@ -1043,21 +755,9 @@ final class User_Adapter extends Db_Object_Command {
         return ( '' !== $login && $arg === $login ) || ( '' !== $email && $arg === $email );
     }
 
-    
-
-
-
-
-
     private static function planned_id( string $arg ) {
         return ctype_digit( $arg ) && (int) $arg > 0 ? (int) $arg : $arg;
     }
-
-    
-
-
-
-
 
     private static function validate_role( Context $ctx, string $role, bool $warn_user_only = false ): void {
         if ( '' === $role ) {
@@ -1074,14 +774,6 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function flag_value( ?Context $ctx, array $assoc, string $key ): ?bool {
         if ( ! array_key_exists( $key, $assoc ) ) {
             return null;
@@ -1093,12 +785,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return $flag;
     }
-
-    
-
-
-
-
 
     private static function read_flag( $value, string $key ): ?bool {
         if ( true === $value || 'true' === $value || '1' === $value ) {
@@ -1113,19 +799,9 @@ final class User_Adapter extends Db_Object_Command {
         return null;
     }
 
-    
-
-
-
-
     private static function text_value( $value ): string {
         return is_string( $value ) ? $value : ( true === $value ? '1' : '' );
     }
-
-    
-
-
-
 
     private static function create_arguments( Invocation $inv, string $password ): array {
         $assoc     = $inv->assoc;
@@ -1148,12 +824,6 @@ final class User_Adapter extends Db_Object_Command {
         return $arguments;
     }
 
-    
-
-
-
-
-
     private static function profile_arguments( array $assoc ): array {
         $map       = array(
             'first_name'      => 'first_name',
@@ -1173,15 +843,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return $arguments;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function update_arguments( ?Context $ctx, array $assoc ): array {
         $fields = array();
@@ -1204,16 +865,6 @@ final class User_Adapter extends Db_Object_Command {
         return $fields;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function update_field( ?Context $ctx, array $assoc, string $key, $value ) {
         if ( 'skip-email' === $key ) {
             return $value ? array( 'skip_email' => true ) : array();
@@ -1232,14 +883,6 @@ final class User_Adapter extends Db_Object_Command {
         return sprintf( ' --%s parameter is not available through wp_cli_run: %s', $key, $reason );
     }
 
-    
-
-
-
-
-
-
-
     private static function update_role( ?Context $ctx, $value ): array {
         if ( false === $value || '' === $value || true === $value ) {
             if ( null !== $ctx ) {
@@ -1249,12 +892,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return array( 'roles' => array( (string) $value ) );
     }
-
-    
-
-
-
-
 
     private static function delete_arguments( array $assoc ): array {
         $reassign  = Read_Value::flag( $assoc, 'reassign' );
@@ -1271,13 +908,6 @@ final class User_Adapter extends Db_Object_Command {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
     private static function reset_arguments( $user_id, string $password, array $assoc ): array {
         $arguments = array(
             'user_id'  => $user_id,
@@ -1288,15 +918,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return $arguments;
     }
-
-    
-
-
-
-
-
-
-
 
     private function list_query( Context $ctx, array $assoc, bool $network ): array {
         $query  = array(
@@ -1325,13 +946,6 @@ final class User_Adapter extends Db_Object_Command {
         return self::list_paging( $ctx, $query );
     }
 
-    
-
-
-
-
-
-
     private static function list_argument( string $key, $value ) {
         if ( isset( self::LIST_QUERY[ $key ] ) ) {
             list( $tool_key, $split ) = self::LIST_QUERY[ $key ];
@@ -1355,13 +969,6 @@ final class User_Adapter extends Db_Object_Command {
         return self::list_order_argument( $key, $value );
     }
 
-    
-
-
-
-
-
-
     private static function list_order_argument( string $key, $value ) {
         switch ( $key ) {
             case 'orderby':
@@ -1377,24 +984,12 @@ final class User_Adapter extends Db_Object_Command {
         return sprintf( ' --%s parameter is not available through wp_cli_run: %s', $key, $reason );
     }
 
-    
-
-
-
-
-
     private static function list_orderby( $value ) {
         if ( is_string( $value ) && isset( self::LIST_ORDERBY[ $value ] ) ) {
             return array( 'orderby' => self::LIST_ORDERBY[ $value ] );
         }
         return sprintf( ' --orderby=%s is not available through wp_cli_run: wp_list_users orders by %s', is_scalar( $value ) ? (string) $value : '', implode( ', ', array_keys( self::LIST_ORDERBY ) ) );
     }
-
-    
-
-
-
-
 
     private static function list_order( $value ) {
         $order = is_string( $value ) ? strtolower( $value ) : '';
@@ -1404,13 +999,6 @@ final class User_Adapter extends Db_Object_Command {
         return sprintf( ' --order=%s is not available through wp_cli_run: use asc or desc', is_scalar( $value ) ? (string) $value : '' );
     }
 
-    
-
-
-
-
-
-
     private static function list_role( $value ): array {
         if ( ! is_string( $value ) || '' === $value ) {
             return array();
@@ -1418,49 +1006,20 @@ final class User_Adapter extends Db_Object_Command {
         return array( 'role' => 'none' === $value ? array( 'none' ) : self::split_list( $value ) );
     }
 
-    
-
-
-
-
     private static function split_list( string $text ): array {
         return array_values( array_filter( array_map( 'trim', explode( ',', $text ) ), 'strlen' ) );
     }
-
-    
-
-
-
-
-
 
     private static function id_list( $value ): array {
         $ids = preg_split( '/[\s,]+/', is_string( $value ) ? $value : '' );
         return array_values( array_unique( array_filter( array_map( 'absint', is_array( $ids ) ? $ids : array() ) ) ) );
     }
 
-    
-
-
-
-
-
-
     private static function published_post_types( $value ): array {
         return true === $value && function_exists( 'get_post_types' )
             ? array_values( \get_post_types( array( 'public' => true ) ) )
             : array( (string) $value );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function list_paging( Context $ctx, array $query ): array {
         $number = isset( $query['__number'] ) ? (int) $query['__number'] : 0;
@@ -1471,15 +1030,6 @@ final class User_Adapter extends Db_Object_Command {
         return $query;
     }
 
-    
-
-
-
-
-
-
-
-
     private function list_all( Context $ctx, array $query, int $number, int $paged ): array {
         if ( $number > 0 && $number <= self::PAGE_SIZE ) {
             $payload = $this->list_page( $ctx, $query, $number, $paged );
@@ -1488,14 +1038,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return $this->list_pages( $ctx, $query, $number > 0 ? $number : PHP_INT_MAX );
     }
-
-    
-
-
-
-
-
-
 
     private function list_pages( Context $ctx, array $query, int $want ): array {
         $page    = 1;
@@ -1512,33 +1054,15 @@ final class User_Adapter extends Db_Object_Command {
         }
     }
 
-    
-
-
-
-
     private static function refuse_past_cap( Context $ctx, int $expected ): void {
         if ( $expected > self::LIST_MAX ) {
             $ctx->out->error( sprintf( self::MSG_LIST_CAP, self::LIST_MAX, $expected ) );
         }
     }
 
-    
-
-
-
-
-
     private static function page_users( array $payload ): array {
         return isset( $payload['users'] ) && is_array( $payload['users'] ) ? $payload['users'] : array();
     }
-
-    
-
-
-
-
-
 
     private static function take_users( array $users, array $rows, int $want ): array {
         foreach ( $rows as $row ) {
@@ -1549,13 +1073,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return $users;
     }
-
-    
-
-
-
-
-
 
     private function list_page( Context $ctx, array $query, int $per_page, int $page ): array {
         $result = $ctx->delegate(
@@ -1580,13 +1097,6 @@ final class User_Adapter extends Db_Object_Command {
         return $payload;
     }
 
-    
-
-
-
-
-
-
     private static function requested_fields( array $assoc, array $default ): array {
         if ( isset( $assoc['field'] ) && is_string( $assoc['field'] ) ) {
             return array( trim( $assoc['field'] ) );
@@ -1597,13 +1107,6 @@ final class User_Adapter extends Db_Object_Command {
         }
         return array_values( $default );
     }
-
-    
-
-
-
-
-
 
     private function report_redacted( Context $ctx, array $assoc, array $keys, ?array $requested = null ): void {
         $requested = null !== $requested ? $requested : self::requested_fields( $assoc, $this->obj_fields );

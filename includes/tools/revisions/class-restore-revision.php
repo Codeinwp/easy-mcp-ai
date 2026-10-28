@@ -11,7 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Restore_Revision extends Base_Tool {
 
-    
     private $purger = null;
 
     public function get_name() {
@@ -75,18 +74,6 @@ class Restore_Revision extends Base_Tool {
         return $reply;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function clear_elementor_caches( int $post_id ): ?array {
         if ( 'builder' !== get_post_meta( $post_id, '_elementor_edit_mode', true ) ) {
             return null;
@@ -101,21 +88,10 @@ class Restore_Revision extends Base_Tool {
         return null;
     }
 
-    
-
-
-
-
-
     public function with_purger( Cache_Purger $purger ): self {
         $this->purger = $purger;
         return $this;
     }
-
-    
-
-
-
 
     private function purger(): Cache_Purger {
         if ( null === $this->purger ) {

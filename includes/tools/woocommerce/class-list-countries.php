@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class List_Countries extends Base_Tool {
 
     use Store_Setup;
@@ -83,12 +78,6 @@ class List_Countries extends Base_Tool {
         }
         return array( 'countries' => $out );
     }
-
-    
-
-
-
-
 
     private static function states_of( $country ): array {
         $states = array();

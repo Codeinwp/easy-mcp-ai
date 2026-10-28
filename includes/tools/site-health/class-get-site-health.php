@@ -8,50 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Get_Site_Health extends Base_Tool {
-
-    
-
-
-
-
 
     const INFO_LIMIT = 65536;
 
-    
     const RESPONSE_JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES;
 
     public function get_name() {
@@ -71,7 +31,6 @@ class Get_Site_Health extends Base_Tool {
     }
 
     public function get_annotations() {
-        
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => true,
@@ -122,17 +81,7 @@ class Get_Site_Health extends Base_Tool {
         return $result;
     }
 
-    
     const REASON_BROWSER_SESSION = 'Needs a logged-in browser session; core skips it outside the Site Health screen too.';
-
-    
-
-
-
-
-
-
-
 
     protected function run_tests( array $tests, bool $include_async ): array {
         $out     = array();
@@ -142,11 +91,6 @@ class Get_Site_Health extends Base_Tool {
 
         return array( 'counts' => self::count_statuses( $out ), 'tests' => $out, 'skipped' => $skipped );
     }
-
-    
-
-
-
 
     private function run_direct( array $direct, array &$out, array &$skipped ): void {
         foreach ( $direct as $name => $test ) {
@@ -164,13 +108,6 @@ class Get_Site_Health extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function direct_callback( array $test ): ?callable {
         $spec = isset( $test['test'] ) ? $test['test'] : null;
         if ( is_string( $spec ) ) {
@@ -183,12 +120,6 @@ class Get_Site_Health extends Base_Tool {
         return is_callable( $spec ) ? $spec : null;
     }
 
-    
-
-
-
-
-
     private function run_async( array $async, bool $include_async, array &$out, array &$skipped ): void {
         foreach ( $async as $name => $test ) {
             $label  = isset( $test['label'] ) ? (string) $test['label'] : (string) $name;
@@ -200,13 +131,6 @@ class Get_Site_Health extends Base_Tool {
             $out[] = $this->perform( (string) $name, $label, $test['async_direct_test'] );
         }
     }
-
-    
-
-
-
-
-
 
     private static function async_skip_reason( array $test, bool $include_async ): ?string {
         if ( ! $include_async ) {
@@ -221,22 +145,9 @@ class Get_Site_Health extends Base_Tool {
         return null;
     }
 
-    
-
-
-
-
-
     private static function skipped_row( $name, string $label, string $reason ): array {
         return array( 'test' => (string) $name, 'label' => $label, 'reason' => $reason );
     }
-
-    
-
-
-
-
-
 
     private static function count_statuses( array $rows ): array {
         $counts = array( 'good' => 0, 'recommended' => 0, 'critical' => 0 );
@@ -247,14 +158,6 @@ class Get_Site_Health extends Base_Tool {
         }
         return $counts;
     }
-
-    
-
-
-
-
-
-
 
     private function perform( string $name, string $label, callable $callback ): array {
         try {
@@ -282,22 +185,6 @@ class Get_Site_Health extends Base_Tool {
             'actions'     => self::text( isset( $r['actions'] ) ? $r['actions'] : '' ),
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function build_info( $data ): array {
         $info    = array();
@@ -344,15 +231,6 @@ class Get_Site_Health extends Base_Tool {
         return array( 'info' => $info, 'truncated' => ! empty( $omitted ), 'omitted' => $omitted, 'order' => $order );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function info_value( $value, string $key, string $root ) {
         if ( is_array( $value ) ) {
             $out = array();
@@ -371,32 +249,12 @@ class Get_Site_Health extends Base_Tool {
         return $redacted;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function fit_info( array $result, array $order ): array {
         $json = \wp_json_encode( $result, self::RESPONSE_JSON_FLAGS );
         while ( false !== $json && strlen( $json ) > self::INFO_LIMIT && ! empty( $result['info'] ) ) {
             end( $result['info'] );
             $last = (string) key( $result['info'] );
             unset( $result['info'][ $last ] );
-            
-            
             $omitted                  = array_merge( $result['info_omitted'], array( $last ) );
             $result['info_omitted']   = array_values( array_intersect( $order, $omitted ) );
             $result['info_truncated'] = true;
@@ -405,29 +263,11 @@ class Get_Site_Health extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
     private static function text( $html ): string {
         $s = \wp_strip_all_tags( (string) $html );
         $s = html_entity_decode( $s, ENT_QUOTES, 'UTF-8' );
         return trim( preg_replace( '/\s+/u', ' ', $s ) );
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
 
     protected function load_core( $include_info ) {
         require_once ABSPATH . 'wp-admin/includes/admin.php';
@@ -443,26 +283,18 @@ class Get_Site_Health extends Base_Tool {
         }
     }
 
-    
     protected function get_tests() {
         $tests = \WP_Site_Health::get_tests();
-        
         if ( \WP_Site_Health::get_instance()->is_development_environment() ) {
             unset( $tests['async']['https_status'] );
         }
         return $tests;
     }
 
-    
-
-
-
-
     protected function site_health_instance() {
         return \WP_Site_Health::get_instance();
     }
 
-    
     protected function debug_data() {
         return \WP_Debug_Data::debug_data();
     }

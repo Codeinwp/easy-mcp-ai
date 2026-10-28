@@ -5,40 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Change_External_Intent {
 
-    
     const WRITE_VERBS = 'create|update|delete|set|add|remove|toggle|send|apply|import|save|change|refund|cancel|merge|assign|reorder|duplicate|publish|restore|enable|disable|manage|upsert|book|register';
-
-    
-
-
-
-
 
     const SUPPRESSED_PATTERNS = 'generation|summarization|editorial_updates|content_classification|comment_analysis';
 
-    
     private $repo;
 
-    
     private $emitted = false;
 
     public function __construct( Change_Log_Repository $repo ) {
@@ -47,9 +21,6 @@ class Change_External_Intent {
 
     public function register() {
         \add_action( 'http_api_debug', array( $this, 'on_http_api_debug' ), 10, 5 );
-        
-        
-        
         \add_action( 'easy_mcp_ai_change_context_disarming', array( $this, 'maybe_record' ), 30 );
         \add_action( 'easy_mcp_ai_change_context_armed', array( $this, 'on_armed' ) );
     }
@@ -57,11 +28,6 @@ class Change_External_Intent {
     public function on_armed() {
         $this->emitted = false;
     }
-
-    
-
-
-
 
     public function on_http_api_debug( $response, $context, $class, $parsed_args, $url ) {
         if ( ! Change_Context::is_active() ) {
@@ -82,15 +48,9 @@ class Change_External_Intent {
         }
     }
 
-    
     public function outbound_hosts() {
         return Change_Context::is_active() ? (array) Change_Context::get( '_outbound_hosts', array() ) : array();
     }
-
-    
-
-
-
 
     public static function is_write_shaped( $tool_name ) {
         $tool_name = (string) $tool_name;
@@ -103,15 +63,12 @@ class Change_External_Intent {
         return (bool) \apply_filters( 'easy_mcp_ai_change_log_is_write_ability', $is_write, $tool_name );
     }
 
-    
-
-
     public function maybe_record() {
         if ( $this->emitted || ! Change_Context::is_active() ) {
             return;
         }
         if ( Change_Context::rows_written() > 0 ) {
-            return; 
+            return;
         }
         $tool = (string) Change_Context::get( 'tool_name', '' );
         if ( ! self::is_write_shaped( $tool ) ) {
@@ -119,7 +76,7 @@ class Change_External_Intent {
         }
         $hosts = $this->outbound_hosts();
         if ( ! $hosts ) {
-            return; 
+            return;
         }
         $this->emitted = true;
 
@@ -146,21 +103,12 @@ class Change_External_Intent {
         ) );
     }
 
-    
     private static function ability_prefix( $tool ) {
         if ( preg_match( '/^wp_ability_([a-z0-9]+)_/', (string) $tool, $m ) ) {
             return $m[1];
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     private function redact_args( array $args ) {
         $out = array();

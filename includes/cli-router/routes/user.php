@@ -1,33 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -36,7 +8,6 @@ $emai_user_q19  = 'Change history records term relationships by post ID, so a us
 $emai_user_show = "it prints the new password, a credential, into this MCP response. Reset the password without it; WordPress emails the user a link unless --skip-email is given";
 
 return array(
-    
     'user add-cap'                           => array(
         'route'        => 'own',
         'handler'      => 'User_Handler',
@@ -62,7 +33,6 @@ return array(
         'not_captured' => array( 'User capability changes are stored in the user\'s capabilities meta, which change history records only while user meta capture is on.' ),
     ),
 
-    
     'user add-role'                          => array(
         'route'   => 'delegate',
         'adapter' => 'User_Adapter',
@@ -88,7 +58,6 @@ return array(
         'params'  => array( 'user', 'role' ),
     ),
 
-    
     'user application-password create'       => array( 'route' => 'refuse', 'reason' => 'it creates a credential that works on the whole REST API, outside this connection\'s allowlist and audit. Create it on the user\'s profile.' ),
     'user application-password delete'       => array(
         'route'        => 'own',
@@ -147,7 +116,6 @@ return array(
     ),
     'user check-password'                    => array( 'route' => 'refuse', 'reason' => 'it is a password oracle: it tests a password without the login checks and limiters that slow down guessing.' ),
 
-    
     'user create'                            => array(
         'route'          => 'delegate',
         'adapter'        => 'User_Adapter',
@@ -206,7 +174,6 @@ return array(
         'params'  => array( 'user', 'format', 'origin', 'exclude-role-names' ),
     ),
 
-    
     'user meta add'                          => array(
         'route'   => 'delegate',
         'adapter' => 'User_Meta_Adapter',
@@ -264,7 +231,6 @@ return array(
         'params'  => array( 'user', 'key', 'value', 'format' ),
     ),
 
-    
     'user reset-password'                    => array(
         'route'          => 'delegate',
         'adapter'        => 'User_Adapter',
@@ -281,7 +247,6 @@ return array(
         ),
     ),
 
-    
     'user session destroy'                   => array(
         'route'        => 'own',
         'handler'      => 'User_Session_Handler',
@@ -303,7 +268,6 @@ return array(
         'params'  => array( 'user', 'fields', 'format' ),
     ),
 
-    
     'user signup activate'                   => array(
         'route'        => 'own',
         'handler'      => 'User_Signup_Handler',
@@ -348,7 +312,6 @@ return array(
         'params'  => array( 'field', 'fields', 'format', 'per_page' ),
     ),
 
-    
     'user spam'                              => array(
         'route'        => 'own',
         'handler'      => 'User_Handler',
@@ -374,7 +337,6 @@ return array(
         'not_captured' => array( 'The spam flags of the user\'s sites are written to the sites table with direct database queries, which change history records only while database capture is on.' ),
     ),
 
-    
     'user term add'                          => array( 'route' => 'refuse', 'reason' => $emai_user_q19 ),
     'user term list'                         => array(
         'route'   => 'own',
@@ -388,7 +350,6 @@ return array(
     'user term remove'                       => array( 'route' => 'refuse', 'reason' => $emai_user_q19 ),
     'user term set'                          => array( 'route' => 'refuse', 'reason' => $emai_user_q19 ),
 
-    
     'user update'                            => array(
         'route'     => 'delegate',
         'adapter'   => 'User_Adapter',

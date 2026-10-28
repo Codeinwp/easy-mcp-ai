@@ -29,7 +29,7 @@ class Update_Media extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
@@ -69,10 +69,6 @@ class Update_Media extends Base_Tool {
         $media_id = $this->parse_required_id( $arguments['media_id'], 'media_id' );
         $params   = array();
 
-        
-        
-        
-        
         if ( isset( $arguments['title'] ) && '' !== $arguments['title'] ) {
             $params['title'] = sanitize_text_field( $arguments['title'] );
         }
@@ -100,14 +96,6 @@ class Update_Media extends Base_Tool {
             'source_url'  => $data['source_url'],
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function stored_text( $value ): string {
         if ( is_array( $value ) ) {

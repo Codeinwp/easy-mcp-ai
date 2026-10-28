@@ -12,65 +12,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Menu_Adapter extends Command_Handler {
 
-    
     const ROW_CAP = 1000;
 
-    
     const PER_PAGE = 100;
 
-    
     const MENU_FIELDS = array( 'term_id', 'name', 'slug', 'locations', 'count' );
 
-    
     const ITEM_FIELDS = array( 'db_id', 'type', 'title', 'link', 'position' );
 
-    
     const TARGETS = array( '', '_blank', '_self' );
 
     const ROW_CAP_MESSAGE    = "'wp %s' would print %d rows, and wp_cli_run returns at most %d rows in one command. WP-CLI's %s has no paging parameters; --format=count still counts every row.";
@@ -83,14 +34,8 @@ final class Menu_Adapter extends Command_Handler {
     const REFUSED_MENU_NOTE  = "%s refused the menu '%s': %s";
     const OVER_CAP           = "wp_cli_run runs at most %d items in one 'wp %s' command, and this one names %d. Run it in smaller groups.";
 
-    
     private static $reader = null;
 
-    
-    
-    
-
-    
     public function create( Invocation $inv, Context $ctx ): void {
         $result = $ctx->delegate( 'wp_create_menu', array( 'name' => (string) $inv->args[0] ) );
         if ( ! $result['ok'] ) {
@@ -105,11 +50,6 @@ final class Menu_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     public function delete( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_delete_menu' );
         $batch = new Batch( $inv, $ctx, 'menu', 'delete' );
@@ -122,7 +62,6 @@ final class Menu_Adapter extends Command_Handler {
                 if ( null === $menu ) {
                     $ctx->out->warning( "Couldn't delete menu '{$arg}'." );
                     if ( null !== $refusal ) {
-                        
                         $ctx->out->warning( $refusal );
                     }
                     return Batch::FAILURE;
@@ -147,7 +86,6 @@ final class Menu_Adapter extends Command_Handler {
         $batch->report();
     }
 
-    
     public function list_menus( Invocation $inv, Context $ctx ): void {
         $assoc = $inv->assoc;
         $menus = array();
@@ -155,8 +93,6 @@ final class Menu_Adapter extends Command_Handler {
             $menus[] = self::menu_row( $row );
         }
 
-        
-        
         if ( ! isset( $assoc['format'] ) || in_array( $assoc['format'], array( 'csv', 'table' ), true ) ) {
             foreach ( $menus as $menu ) {
                 $menu->locations = implode( ',', $menu->locations );
@@ -175,14 +111,8 @@ final class Menu_Adapter extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
     public function item_list( Invocation $inv, Context $ctx ): void {
         Fetchers::require_tool( $ctx, $inv, 'wp_list_menu_items' );
-        
         $menu = self::resolve_menu( (string) $inv->args[0], false );
         if ( null === $menu ) {
             $ctx->out->error( 'Invalid menu.' );
@@ -217,16 +147,6 @@ final class Menu_Adapter extends Command_Handler {
         $this->formatter( $ctx, $assoc, self::ITEM_FIELDS )->display_items( $items );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function all_pages( Invocation $inv, Context $ctx, string $tool, array $arguments, string $key ): array {
         $rows = array();
         $page = 1;
@@ -250,28 +170,12 @@ final class Menu_Adapter extends Command_Handler {
         return $rows;
     }
 
-    
-
-
-
-
-
-
     private static function refuse_over_row_cap( Invocation $inv, Context $ctx, array $payload ): void {
         $count = isset( $inv->assoc['format'] ) && 'count' === $inv->assoc['format'];
         if ( ! $count && isset( $payload['total'] ) && (int) $payload['total'] > self::ROW_CAP ) {
             $ctx->out->error( sprintf( self::ROW_CAP_MESSAGE, $inv->command, (int) $payload['total'], self::ROW_CAP, $inv->command ) );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function valid_items( array $rows ): array {
         $ids = array();
@@ -291,29 +195,22 @@ final class Menu_Adapter extends Command_Handler {
         return $items;
     }
 
-    
     public function item_add_custom( Invocation $inv, Context $ctx ): void {
         $this->add_item( $inv, $ctx, 'custom' );
     }
 
-    
     public function item_add_post( Invocation $inv, Context $ctx ): void {
         $this->add_item( $inv, $ctx, 'post_type' );
     }
 
-    
     public function item_add_term( Invocation $inv, Context $ctx ): void {
         $this->add_item( $inv, $ctx, 'taxonomy' );
     }
 
-    
     public function item_update( Invocation $inv, Context $ctx ): void {
         $fields = $this->item_fields( $inv, $ctx, false );
         Fetchers::require_tool( $ctx, $inv, 'wp_update_menu_item' );
         $db_id = (string) $inv->args[0];
-        
-        
-        
         $menu_id = ctype_digit( $db_id ) ? (int) self::wp( 'item_menu', array( (int) $db_id ), array( __CLASS__, 'live_item_menu' ) ) : 0;
         if ( $menu_id < 1 ) {
             $ctx->out->error( 'Invalid menu.' );
@@ -327,11 +224,6 @@ final class Menu_Adapter extends Command_Handler {
         }
         $ctx->out->success( 'Menu item updated.' );
     }
-
-    
-
-
-
 
     public function item_delete( Invocation $inv, Context $ctx ): void {
         $batch = new Batch( $inv, $ctx, 'menu item', 'delete' );
@@ -354,7 +246,6 @@ final class Menu_Adapter extends Command_Handler {
                 }
                 $ctx->mark_changed();
                 if ( isset( $result['payload']['error'] ) && is_string( $result['payload']['error'] ) ) {
-                    
                     $ctx->out->warning( $result['payload']['error'] );
                 }
                 return Batch::SUCCESS;
@@ -366,12 +257,6 @@ final class Menu_Adapter extends Command_Handler {
         $batch->report();
     }
 
-    
-
-
-
-
-
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         $cap = Batch::cap( $inv );
         if ( count( $inv->args ) > $cap ) {
@@ -379,20 +264,7 @@ final class Menu_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public function plan_delete( Invocation $inv ): array {
-        
         if ( count( $inv->args ) > Batch::cap( $inv ) || ! self::plan_may_read( 'wp_delete_menu' ) ) {
             return array();
         }
@@ -409,13 +281,6 @@ final class Menu_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
-
-
-
-
-
-
     public function plan_item_delete( Invocation $inv ): array {
         $plan = array();
         foreach ( $inv->args as $arg ) {
@@ -429,13 +294,6 @@ final class Menu_Adapter extends Command_Handler {
         return $plan;
     }
 
-    
-
-
-
-
-
-
     private static function plan_may_read( string $tool ): bool {
         if ( class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) && method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' )
             && false === \Easy_MCP_AI\MCP\Server::current_call_may_use( $tool ) ) {
@@ -443,22 +301,6 @@ final class Menu_Adapter extends Command_Handler {
         }
         return (bool) \current_user_can( 'edit_theme_options' );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function resolve_menu( string $arg, bool $strict, ?string &$refusal = null ): ?array {
         $refusal = null;
@@ -478,16 +320,6 @@ final class Menu_Adapter extends Command_Handler {
         return $menu;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function wp( string $key, array $args, callable $live ) {
         if ( null !== self::$reader ) {
             return call_user_func( self::$reader, $key, $args, $live );
@@ -495,26 +327,9 @@ final class Menu_Adapter extends Command_Handler {
         return call_user_func_array( $live, $args );
     }
 
-    
-
-
-
-
-
     public static function use_reader( ?callable $reader ): void {
         self::$reader = $reader;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     public static function live_menu( string $arg, bool $skip_id ): ?array {
         if ( $skip_id ) {
@@ -525,7 +340,6 @@ final class Menu_Adapter extends Command_Handler {
             if ( ! $menu || \is_wp_error( $menu ) ) {
                 $menu = false;
             }
-            
             $menu = \apply_filters( 'wp_get_nav_menu_object', $menu, $arg );
         } else {
             $menu = \wp_get_nav_menu_object( $arg );
@@ -540,29 +354,19 @@ final class Menu_Adapter extends Command_Handler {
         );
     }
 
-    
     public static function live_post_type( string $arg ): ?string {
         $post = \get_post( $arg );
         return $post ? (string) $post->post_type : null;
     }
 
-    
     public static function live_term_exists( string $taxonomy, string $term_id ): bool {
         return (bool) \get_term_by( 'id', $term_id, $taxonomy );
     }
 
-    
     public static function live_item_menu( int $item_id ): int {
         $terms = \get_the_terms( $item_id, 'nav_menu' );
         return ( $terms && ! \is_wp_error( $terms ) ) ? (int) $terms[0]->term_id : 0;
     }
-
-    
-
-
-
-
-
 
     public static function live_invalid_items( array $ids ): array {
         $invalid = array();
@@ -579,15 +383,6 @@ final class Menu_Adapter extends Command_Handler {
         return $invalid;
     }
 
-    
-    
-    
-
-    
-
-
-
-
     private function add_item( Invocation $inv, Context $ctx, string $type ): void {
         $fields = $this->item_fields( $inv, $ctx, true );
         Fetchers::require_tool( $ctx, $inv, 'wp_create_menu_item' );
@@ -595,16 +390,12 @@ final class Menu_Adapter extends Command_Handler {
         $arguments = self::object_arguments( $inv, $ctx, $type );
         $menu      = self::write_menu( (string) $inv->args[0], $ctx );
 
-        
-        
-        
         $result = $ctx->delegate( 'wp_create_menu_item', array_merge( array( 'menu_id' => $menu['term_id'] ), $arguments, $fields ) );
         if ( ! $result['ok'] ) {
             $ctx->out->error( (string) $result['error'] );
         }
         $ctx->mark_changed();
         if ( isset( $result['payload']['error'] ) && is_string( $result['payload']['error'] ) ) {
-            
             $ctx->out->warning( $result['payload']['error'] );
         }
         if ( ! empty( $inv->assoc['porcelain'] ) ) {
@@ -613,15 +404,6 @@ final class Menu_Adapter extends Command_Handler {
             $ctx->out->success( 'Menu item added.' );
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function object_arguments( Invocation $inv, Context $ctx, string $type ): array {
         $arguments = array( 'object_type' => $type );
@@ -648,14 +430,6 @@ final class Menu_Adapter extends Command_Handler {
         return $arguments;
     }
 
-    
-
-
-
-
-
-
-
     private static function write_menu( string $arg, Context $ctx ): array {
         $refusal = null;
         $menu    = self::resolve_menu( $arg, true, $refusal );
@@ -667,24 +441,6 @@ final class Menu_Adapter extends Command_Handler {
         }
         return $menu;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function item_fields( Invocation $inv, Context $ctx, bool $add ): array {
         $fields = array();
@@ -711,12 +467,6 @@ final class Menu_Adapter extends Command_Handler {
         return $fields;
     }
 
-    
-
-
-
-
-
     private static function item_field( string $flag, string $argument, string $value, Invocation $inv, Context $ctx, bool $add ): array {
         switch ( $flag ) {
             case 'target':
@@ -734,14 +484,6 @@ final class Menu_Adapter extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function number_field( string $flag, string $argument, string $value, Invocation $inv, Context $ctx, bool $add ): array {
         if ( ! ctype_digit( $value ) ) {
             $ctx->out->error( sprintf( self::BAD_NUMBER, $flag, $value, $inv->command ) );
@@ -752,19 +494,12 @@ final class Menu_Adapter extends Command_Handler {
         return array( $argument => (int) $value );
     }
 
-    
     private static function delete_item_arguments( string $db_id ): array {
         return array(
             'item_id'           => (int) $db_id,
             'reparent_children' => true,
         );
     }
-
-    
-
-
-
-
 
     private static function menu_row( array $row ): \stdClass {
         return (object) array(
@@ -781,15 +516,6 @@ final class Menu_Adapter extends Command_Handler {
             'locations'        => isset( $row['locations'] ) ? array_values( array_map( 'strval', (array) $row['locations'] ) ) : array(),
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function item_row( array $row, int $position ): \stdClass {
         $xfn = isset( $row['xfn'] ) && is_array( $row['xfn'] ) ? implode( ' ', array_map( 'strval', $row['xfn'] ) ) : '';
@@ -816,19 +542,9 @@ final class Menu_Adapter extends Command_Handler {
         );
     }
 
-    
-
-
-
-
     private static function int_field( array $row, string $key ): int {
         return isset( $row[ $key ] ) ? (int) $row[ $key ] : 0;
     }
-
-    
-
-
-
 
     private static function text_field( array $row, string $key, string $absent = '' ): string {
         return isset( $row[ $key ] ) ? (string) $row[ $key ] : $absent;

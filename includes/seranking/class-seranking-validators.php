@@ -5,9 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
 class SeRanking_Validators {
 
 	public static function validate_bare_domain( string $d ): void {
@@ -31,11 +28,6 @@ class SeRanking_Validators {
 		}
 	}
 
-	
-
-
-
-
 	public static function validate_source( string $s ): void {
 		if ( ! preg_match( '/^[a-z]{2}$/', $s ) ) {
 			throw new \InvalidArgumentException( 'source must be a 2-letter lowercase region code (e.g. us, uk, de).' );
@@ -47,9 +39,6 @@ class SeRanking_Validators {
 			throw new \InvalidArgumentException( 'keyword is required and must not be empty.' );
 		}
 	}
-
-	
-
 
 	public static function validate_keywords( array $k ): void {
 		$count = count( $k );
@@ -66,9 +55,6 @@ class SeRanking_Validators {
 		}
 	}
 
-	
-
-
 	public static function validate_target( string $t ): void {
 		if ( '' === trim( $t ) ) {
 			throw new \InvalidArgumentException( 'target is required.' );
@@ -81,18 +67,12 @@ class SeRanking_Validators {
 		}
 	}
 
-	
-
-
 	public static function validate_mode( string $m ): void {
 		$allowed = array( 'domain', 'host', 'url' );
 		if ( ! in_array( $m, $allowed, true ) ) {
 			throw new \InvalidArgumentException( 'mode must be one of: domain, host, url.' );
 		}
 	}
-
-	
-
 
 	public static function validate_scope( string $s ): void {
 		$allowed = array( 'base_domain', 'domain', 'url' );
@@ -101,19 +81,11 @@ class SeRanking_Validators {
 		}
 	}
 
-	
-
-
-
-
 	public static function validate_enum( string $v, array $allowed ): void {
 		if ( ! in_array( $v, $allowed, true ) ) {
 			throw new \InvalidArgumentException( 'value must be one of: ' . implode( ', ', $allowed ) . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
-
-	
-
 
 	public static function validate_limit( int $n, int $max ): void {
 		if ( $n < 1 || $n > $max ) {

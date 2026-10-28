@@ -5,80 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 abstract class Db_Object_Command extends Command_Handler {
 
-    
     protected $obj_type = '';
 
-    
     protected $obj_id_key = 'ID';
 
-    
     protected $obj_fields = null;
 
-    
     const DEFER_NOTE = '--defer-term-counting had no effect: each item ran through %s, which counts terms itself; the counts are the same.';
-
-    
-
-
-
-
-
-
 
     protected function _create( Invocation $inv, Context $ctx, array $args, array $assoc_args, callable $callback ): void {
         unset( $assoc_args[ $this->obj_id_key ] );
@@ -96,14 +31,6 @@ abstract class Db_Object_Command extends Command_Handler {
             $ctx->out->success( "Created {$this->obj_type} {$obj_id}." );
         }
     }
-
-    
-
-
-
-
-
-
 
     protected function _update( Invocation $inv, Context $ctx, array $args, array $assoc_args, callable $callback ): void {
         if ( empty( $assoc_args ) ) {
@@ -123,14 +50,6 @@ abstract class Db_Object_Command extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
     protected function _delete( Invocation $inv, Context $ctx, array $args, array $assoc_args, callable $callback ): void {
         $this->loop(
             $inv,
@@ -144,12 +63,6 @@ abstract class Db_Object_Command extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     protected static function process_csv_arguments_to_arrays( array $assoc_args ): array {
         foreach ( $assoc_args as $k => $v ) {
             if ( false !== strpos( (string) $k, '__' ) ) {
@@ -159,32 +72,15 @@ abstract class Db_Object_Command extends Command_Handler {
         return $assoc_args;
     }
 
-    
-
-
-
-
-
     protected function wp_error_to_resp( $response, string $success_msg ): array {
         return self::is_failure( $response )
             ? array( 'error', self::failure_message( $response ) )
             : array( 'success', $success_msg );
     }
 
-    
-
-
-
-
-
     protected function success_or_failure( Context $ctx, array $response ): int {
         return $this->respond( $ctx, $response );
     }
-
-    
-
-
-
 
     protected function get_formatter( Context $ctx, array &$assoc_args ): Formatter {
         if ( ! empty( $assoc_args['fields'] ) ) {
@@ -199,13 +95,6 @@ abstract class Db_Object_Command extends Command_Handler {
         return new Formatter( $ctx->out, $assoc_args, $fields, $this->obj_type );
     }
 
-    
-
-
-
-
-
-
     protected function _url( Context $ctx, array $args, Fetchers $fetcher, callable $callback ): void {
         foreach ( $args as $obj_id ) {
             $object = $fetcher->get_check( $obj_id, $ctx->out );
@@ -213,14 +102,6 @@ abstract class Db_Object_Command extends Command_Handler {
             $ctx->out->line( (string) call_user_func( $callback, is_object( $object ) ? $object->$key : $object[ $key ] ) );
         }
     }
-
-    
-
-
-
-
-
-
 
     public static function error_to_string( $errors ): string {
         if ( is_string( $errors ) ) {
@@ -230,7 +111,6 @@ abstract class Db_Object_Command extends Command_Handler {
             return (string) $errors['error'];
         }
 
-        
         $render_data = static function ( $data ) {
             if ( is_array( $data ) || is_object( $data ) ) {
                 return json_encode( $data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- the exact call WP-CLI makes.
@@ -255,12 +135,6 @@ abstract class Db_Object_Command extends Command_Handler {
         return '';
     }
 
-    
-
-
-
-
-
     public static function failure( string $message ) {
         if ( class_exists( '\\WP_Error' ) ) {
             return new \WP_Error( 'wp_cli_run', $message );
@@ -268,36 +142,13 @@ abstract class Db_Object_Command extends Command_Handler {
         return array( 'error' => $message );
     }
 
-    
-
-
-
-
-
     public static function missing( string $message ): array {
         return array( 'missing', $message );
     }
 
-    
-
-
-
-
     public static function is_failure( $value ): bool {
         return ( function_exists( 'is_wp_error' ) && \is_wp_error( $value ) ) || $value instanceof \WP_Error || ( is_array( $value ) && isset( $value['error'] ) && 1 === count( $value ) );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
 
     private function loop( Invocation $inv, Context $ctx, array $args, array $assoc_args, string $verb, callable $each ): void {
         $deferring = self::start_deferral( $inv, $ctx, $assoc_args );
@@ -323,14 +174,6 @@ abstract class Db_Object_Command extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function start_deferral( Invocation $inv, Context $ctx, array $assoc_args ): bool {
         $defer = (bool) Read_Value::flag( $assoc_args, 'defer-term-counting' );
         $own   = isset( $inv->route['route'] ) && 'own' === $inv->route['route'];
@@ -344,11 +187,6 @@ abstract class Db_Object_Command extends Command_Handler {
         }
         return $deferring;
     }
-
-    
-
-
-
 
     private function respond( Context $ctx, array $response ): int {
         $type = isset( $response[0] ) ? (string) $response[0] : 'error';
@@ -366,12 +204,6 @@ abstract class Db_Object_Command extends Command_Handler {
         }
         return 1;
     }
-
-    
-
-
-
-
 
     private static function failure_message( $failure ): string {
         if ( $failure instanceof \WP_Error ) {

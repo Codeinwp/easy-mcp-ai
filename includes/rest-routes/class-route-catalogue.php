@@ -1,42 +1,18 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Rest_Routes;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 final class Route_Catalogue {
 
-    
     const MAX_MATCHES = 25;
 
-    
     const MAX_ROUTES = 300;
 
-    
     const MAX_DESCRIPTION = 200;
-
-    
-
-
-
-
-
-
-
 
     public static function display( string $pattern ): string {
         $out    = '';
@@ -59,13 +35,6 @@ final class Route_Catalogue {
         }
         return $out;
     }
-
-    
-
-
-
-
-
 
     private static function group_end( string $pattern, int $start ): ?int {
         $depth    = 0;
@@ -92,12 +61,6 @@ final class Route_Catalogue {
         return null;
     }
 
-    
-
-
-
-
-
     public static function namespaces( $server ): array {
         $list = array();
         foreach ( (array) $server->get_namespaces() as $namespace ) {
@@ -119,13 +82,6 @@ final class Route_Catalogue {
         return $list;
     }
 
-    
-
-
-
-
-
-
     public static function find_namespace( $server, string $namespace ): ?string {
         $wanted = Namespace_State::normalize( $namespace );
         foreach ( (array) $server->get_namespaces() as $registered ) {
@@ -135,14 +91,6 @@ final class Route_Catalogue {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
 
     public static function routes_in( $server, string $namespace ): array {
         $routes = array();
@@ -162,16 +110,6 @@ final class Route_Catalogue {
             'truncated' => count( $routes ) > self::MAX_ROUTES,
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function route_detail( $server, string $route, bool $include_fields ): ?array {
         $pattern = self::find_pattern( $server, $route );
@@ -206,15 +144,6 @@ final class Route_Catalogue {
         return $detail;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function search( $server, string $search, array $namespaces ): array {
         $terms = array_values( array_filter( preg_split( '/\s+/', strtolower( trim( $search ) ) ) ) );
         $ranked = array( array(), array() );
@@ -242,29 +171,11 @@ final class Route_Catalogue {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function listed_routes( $server, string $namespace ): array {
         $routes = (array) $server->get_routes( $namespace );
         unset( $routes[ '/' . $namespace ] );
         return $routes;
     }
-
-    
-
-
-
-
-
 
     private static function find_pattern( $server, string $route ): ?string {
         $routes = (array) $server->get_routes();
@@ -282,12 +193,6 @@ final class Route_Catalogue {
         return null;
     }
 
-    
-
-
-
-
-
     private static function methods_of( array $handlers ): array {
         $methods = array();
         foreach ( $handlers as $handler ) {
@@ -299,12 +204,6 @@ final class Route_Catalogue {
         sort( $methods );
         return $methods;
     }
-
-    
-
-
-
-
 
     private static function args_of( array $args ): array {
         $out = array();
@@ -335,12 +234,6 @@ final class Route_Catalogue {
         return $out;
     }
 
-    
-
-
-
-
-
     private static function argument_text( array $handlers ): string {
         $parts = array();
         foreach ( $handlers as $handler ) {
@@ -353,13 +246,6 @@ final class Route_Catalogue {
         }
         return implode( ' ', $parts );
     }
-
-    
-
-
-
-
-
 
     private static function response_fields( $server, string $pattern ): ?array {
         $options = $server->get_route_options( $pattern );
@@ -382,11 +268,6 @@ final class Route_Catalogue {
         return $fields;
     }
 
-    
-
-
-
-
     private static function contains_all( string $text, array $terms ): bool {
         foreach ( $terms as $term ) {
             if ( false === strpos( $text, $term ) ) {
@@ -395,10 +276,6 @@ final class Route_Catalogue {
         }
         return true;
     }
-
-    
-
-
 
     private static function shorten( string $text ): string {
         $text = trim( preg_replace( '/\s+/', ' ', $text ) );

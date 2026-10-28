@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,24 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Events_Calendar extends Cache_Adapter {
 
-    
     const TRIGGER_CONSTANT = 'Tribe__Cache_Listener::TRIGGER_SAVE_POST';
 
     public function id(): string {
@@ -54,11 +33,6 @@ final class Events_Calendar extends Cache_Adapter {
     public function is_present(): bool {
         return $this->calls()->class_exists( 'Tribe__Events__Main' );
     }
-
-    
-
-
-
 
     public function noise_options(): array {
         return array( 'tribe_last_save_post' );

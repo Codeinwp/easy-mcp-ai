@@ -8,19 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Get_Log extends Base_Tool {
 
     public function get_name() {
@@ -133,22 +120,10 @@ class Get_Log extends Base_Tool {
         return Get_Error_Log::fit_response( array_merge( self::read_file( $source, $file_id, $date, $level, $lines, $grep ), $filters ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function read_file( string $source, string $file_id, string $date, string $level, int $lines, string $grep ): array {
         $dir = WC_Logs::directory();
         if ( null === $dir && '' !== $file_id ) {
-            self::by_id( array(), $file_id ); 
+            self::by_id( array(), $file_id );
         }
         if ( null === $dir ) {
             return self::nothing( $source, $date, 'WooCommerce\'s log folder does not exist: nothing has been logged to a file on this site yet.' );
@@ -186,16 +161,6 @@ class Get_Log extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function read_database( string $source, ?string $date, string $level, int $lines, string $grep ): array {
         $scan = array( 'rows' => 0, 'cut' => false );
         $min  = '' === $level ? 0 : WC_Logs::SEVERITY[ $level ];
@@ -221,35 +186,16 @@ class Get_Log extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function newest_of_source( array $files, string $source, string $date ): ?array {
         $matches = array_filter( $files, static function ( array $file ) use ( $source, $date ): bool {
             return $file['source'] === $source && ( '' === $date || $file['date'] === $date );
         } );
         usort( $matches, static function ( array $a, array $b ): int {
-            
             return array( (string) $b['date'], null === $a['rotation'] ? 0 : 1, $b['mtime'] )
                 <=> array( (string) $a['date'], null === $b['rotation'] ? 0 : 1, $a['mtime'] );
         } );
         return empty( $matches ) ? null : $matches[0];
     }
-
-    
-
-
-
-
-
-
-
 
     private static function by_id( array $files, string $file_id ): array {
         $matches = array_values( array_filter( $files, static function ( array $file ) use ( $file_id ): bool {
@@ -264,14 +210,6 @@ class Get_Log extends Base_Tool {
         return $matches[0];
     }
 
-    
-
-
-
-
-
-
-
     private static function nothing( string $source, string $date, string $reason ): array {
         return array(
             'storage'   => WC_Logs::STORAGE_FILE,
@@ -285,22 +223,9 @@ class Get_Log extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function text( array $arguments, string $name ): string {
         return isset( $arguments[ $name ] ) && is_scalar( $arguments[ $name ] ) ? trim( (string) $arguments[ $name ] ) : '';
     }
-
-    
-
-
-
-
 
     private static function is_date( string $value ): bool {
         return (bool) preg_match( '/^(\d{4})-(\d{2})-(\d{2})\z/', $value, $m ) && checkdate( (int) $m[2], (int) $m[3], (int) $m[1] );

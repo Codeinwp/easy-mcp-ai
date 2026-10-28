@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,30 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Pantheon extends Cache_Adapter {
 
@@ -110,25 +81,10 @@ final class Pantheon extends Cache_Adapter {
         return $keyed && Layer_Result::CLEARED === $result->status() ? $result->with( array( 'detail' => $keys . ' ' . (string) $result->get( 'detail' ) ) ) : $result;
     }
 
-    
-
-
-
-
-
-
     private function send( string $platform, array $args ) {
         $wrapper = str_replace( 'pantheon_', 'pantheon_wp_', $platform );
         return $this->calls()->call( $this->calls()->function_exists( $wrapper ) ? $wrapper : $platform, $args );
     }
-
-    
-
-
-
-
-
-
 
     private function paths( array $urls ): array {
         $paths = array();

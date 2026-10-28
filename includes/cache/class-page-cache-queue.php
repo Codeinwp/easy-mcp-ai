@@ -1,56 +1,24 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Page_Cache_Queue {
 
-    
     const ACTION = 'easy_mcp_ai_clear_page_cache';
 
-    
     const TIME_BUDGET = 10;
 
-    
     private static $post_ids = array();
 
-    
     private static $urls = array();
 
-    
     private static $listening = false;
 
-    
     private static $purger = null;
-
-    
-
-
-
 
     public static function listen(): void {
         if ( self::$listening ) {
@@ -60,17 +28,8 @@ final class Page_Cache_Queue {
         \add_action( self::ACTION, array( self::class, 'queue' ), 10, 2 );
     }
 
-    
-
-
-
-
-
-
-
     public static function queue( $post_ids, $urls = array() ): void {
         foreach ( (array) $post_ids as $id ) {
-            
             $id = is_int( $id ) || is_string( $id ) ? filter_var( $id, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) ) : false;
             if ( false !== $id ) {
                 self::$post_ids[ $id ] = true;
@@ -82,11 +41,6 @@ final class Page_Cache_Queue {
             }
         }
     }
-
-    
-
-
-
 
     public static function flush(): void {
         if ( array() === self::$post_ids && array() === self::$urls ) {
@@ -106,21 +60,9 @@ final class Page_Cache_Queue {
         }
     }
 
-    
-
-
-
-
-
     public static function use_purger( ?Cache_Purger $purger ): void {
         self::$purger = $purger;
     }
-
-    
-
-
-
-
 
     public static function reset(): void {
         self::$post_ids  = array();
@@ -129,28 +71,14 @@ final class Page_Cache_Queue {
         self::$purger    = null;
     }
 
-    
-
-
-
-
-
-
     private static function clear_posts( array $post_ids, float $deadline ): void {
         try {
             $expanded = Post_Urls::expand( $post_ids );
             self::run( new Purge_Request( Purge_Request::SCOPE_POSTS, array_column( $expanded['rows'], 'url' ), $post_ids ), $expanded['rows'], $deadline );
         } catch ( \Throwable $e ) {
-            unset( $e ); 
+            unset( $e );
         }
     }
-
-    
-
-
-
-
-
 
     private static function clear_urls( array $urls, float $deadline ): void {
         try {
@@ -167,17 +95,9 @@ final class Page_Cache_Queue {
                 self::run( new Purge_Request( Purge_Request::SCOPE_URLS, array_keys( $rows ) ), array_values( $rows ), $deadline );
             }
         } catch ( \Throwable $e ) {
-            unset( $e ); 
+            unset( $e );
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function run( Purge_Request $request, array $rows, float $deadline ): void {
         if ( null === self::$purger ) {

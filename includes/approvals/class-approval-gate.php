@@ -9,49 +9,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Approval_Gate {
 
-    
     const TTL_SECONDS = 900;
-    
     const RETENTION_DAYS = 7;
-    
     const REPLAY_SECONDS = 300;
-    
     const REQUEST_KEY = 'approve';
-    
-
-
-
-
-
-
     const FORM_PROTOCOL = '2026-07-28';
-    
     const META_KEY = 'easy-mcp-ai/approval';
-    
-
-
-
-
     const PREVIEW_MAX = 2000;
 
     const STATUS_PENDING  = 'pending';
@@ -60,11 +25,8 @@ class Approval_Gate {
     const STATUS_CONSUMED = 'consumed';
     const STATUS_EXPIRED  = 'expired';
 
-    
     private $store;
-    
     private $token_unattended;
-    
     private $now;
 
     public function __construct( Approval_Store $store, $token_unattended = null, $now = null ) {
@@ -77,34 +39,14 @@ class Approval_Gate {
         return $this->store;
     }
 
-    
-    
-    
-
-    
     public static function enabled() {
         return (bool) \Easy_MCP_AI\Config::get( 'approval_required' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function matches_any( $tool_name, array $patterns, ?string $route = null ) {
         foreach ( $patterns as $pattern ) {
             $pattern       = trim( (string) $pattern );
             $route_pattern = null;
-            
-            
-            
-            
             if ( 1 === preg_match( '/^(\S+)\s+(\S+)$/', $pattern, $parts ) ) {
                 $pattern       = $parts[1];
                 $route_pattern = strtolower( $parts[2] );
@@ -122,30 +64,10 @@ class Approval_Gate {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function route_glob_matches( string $glob, string $route ): bool {
-        
-        
         $regex = self::route_glob_regex( $glob );
         return null !== $regex && 1 === @preg_match( '#^' . $regex . '$#', $route ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a malformed stored entry matches nothing.
     }
-
-    
-
-
-
-
-
 
     private static function route_glob_regex( string $glob ): ?string {
         $regex  = '';
@@ -167,9 +89,6 @@ class Approval_Gate {
                 $i     = $close;
             } elseif ( '[' === $char && false !== $close ) {
                 $members = substr( $glob, $i + 1, $close - $i - 1 );
-                
-                
-                
                 if ( 1 === preg_match( '/\[[.=:]/', $members ) ) {
                     return null;
                 }
@@ -182,14 +101,6 @@ class Approval_Gate {
         return $regex;
     }
 
-    
-
-
-
-
-
-
-
     private static function with_placeholder( string $regex, bool $optional ): string {
         if ( ! $optional ) {
             return $regex . '[^/]+';
@@ -199,15 +110,6 @@ class Approval_Gate {
         }
         return $regex . '[^/]*';
     }
-
-    
-
-
-
-
-
-
-
 
     private static function class_end( string $glob, int $start ) {
         $from = $start + 1;
@@ -219,13 +121,6 @@ class Approval_Gate {
         }
         return strpos( $glob, ']', $from );
     }
-
-    
-
-
-
-
-
 
     private static function class_regex( string $members ): string {
         $negate = '' !== $members && ( '!' === $members[0] || '^' === $members[0] );
@@ -240,35 +135,12 @@ class Approval_Gate {
         return '[' . ( $negate ? '^' : '' ) . $out . ']';
     }
 
-    
-
-
-
-
-
-
     private static function name_matches( string $pattern, string $tool_name ): bool {
         if ( false === strpos( $pattern, '*' ) && false === strpos( $pattern, '?' ) ) {
             return $pattern === $tool_name;
         }
         return fnmatch( $pattern, $tool_name );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function is_destructive_by_annotation( $tool ) {
         $annotations = is_object( $tool ) && method_exists( $tool, 'get_annotations' ) ? $tool->get_annotations() : array();
@@ -281,18 +153,6 @@ class Approval_Gate {
         }
         return ! ( isset( $annotations['readOnlyHint'] ) && true === $annotations['readOnlyHint'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function requires_approval( $tool, array $arguments ) {
         $tool_name = $tool->get_name();
@@ -317,25 +177,8 @@ class Approval_Gate {
                 $reason   = 'annotation';
             }
         }
-        
-
-
-
-
-
-
-
-
         return (bool) \apply_filters( 'easy_mcp_ai_requires_approval', $required, $tool_name, $arguments, $reason );
     }
-
-    
-
-
-
-
-
-
 
     public static function default_pause_names( Tool_Registry $registry, $definitions = null ) {
         $names = array();
@@ -350,22 +193,6 @@ class Approval_Gate {
         return $names;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
     public function evaluate( $tool, array $arguments, array $identity, array $params, $client_caps = null, $client_protocol = null ) {
         if ( ! self::requires_approval( $tool, $arguments ) ) {
             return array( 'kind' => 'run' );
@@ -373,12 +200,6 @@ class Approval_Gate {
         if ( $this->is_unattended( $identity ) ) {
             return array( 'kind' => 'run' );
         }
-        
-        
-        
-        
-        
-        
         if ( method_exists( $tool, 'approval_refusal' ) ) {
             $refusal = $tool->approval_refusal( $arguments );
             if ( is_string( $refusal ) && '' !== $refusal ) {
@@ -389,22 +210,18 @@ class Approval_Gate {
         $tool_name = $tool->get_name();
         $hash      = self::args_hash( $tool_name, $arguments );
 
-        
         if ( isset( $params['requestState'] ) || isset( $params['inputResponses'] ) ) {
             return $this->evaluate_retry( $tool, $arguments, $identity, $params, $hash, $client_caps, $client_protocol );
         }
 
-        
         $approved = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_APPROVED );
         if ( $approved && $this->row_is_valid( $approved, $identity ) ) {
             return $this->redeem_or_refuse( $tool, $arguments, $approved );
         }
-        
         $replay = $this->consumed_replay( $identity, $tool_name, $hash );
         if ( $replay ) {
             return $replay;
         }
-        
         $pending = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_PENDING );
         if ( ! $pending || ! $this->row_is_valid( $pending, $identity ) ) {
             $pending = $this->create_row( $tool, $arguments, $identity, $hash, $client_caps, $client_protocol );
@@ -415,27 +232,10 @@ class Approval_Gate {
         return array( 'kind' => $this->offers_form( $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $pending );
     }
 
-    
-
-
-
-
-
-
-
-
     private function consumed_replay( array $identity, string $tool_name, string $hash ): ?array {
         $consumed = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_CONSUMED );
         return $consumed && $this->row_is_valid( $consumed, $identity ) ? $this->replay_of( $consumed ) : null;
     }
-
-    
-
-
-
-
-
-
 
     private function replay_of( array $row ): ?array {
         if ( '' === (string) $row['result'] || $this->timestamp( $row['consumed_at'] ) < $this->time() - self::REPLAY_SECONDS ) {
@@ -466,7 +266,6 @@ class Approval_Gate {
         $responses = isset( $params['inputResponses'] ) && is_array( $params['inputResponses'] ) ? $params['inputResponses'] : array();
         $answer    = isset( $responses[ self::REQUEST_KEY ] ) && is_array( $responses[ self::REQUEST_KEY ] ) ? $responses[ self::REQUEST_KEY ] : null;
         if ( null === $answer ) {
-            
             if ( self::STATUS_PENDING === $row['status'] ) {
                 return array( 'kind' => $this->offers_form( $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $row );
             }
@@ -480,9 +279,6 @@ class Approval_Gate {
                 } elseif ( 'decline' === $action || ( 'accept' === $action && 'deny' === $decision ) ) {
                     $this->store->decide( $row['approval_id'], self::STATUS_DENIED, (int) $identity['wp_user_id'], 'form', $this->now_mysql() );
                 } else {
-                    
-                    
-                    
                     return array( 'kind' => 'ask', 'row' => $row );
                 }
                 $row = $this->store->find( $row['approval_id'] ) ?: $row;
@@ -495,9 +291,6 @@ class Approval_Gate {
             return array( 'kind' => 'refused', 'reason' => 'denied', 'message' => 'The user denied this operation; nothing was run.' );
         }
         if ( self::STATUS_CONSUMED === $row['status'] ) {
-            
-            
-            
             $replay = $this->replay_of( $row );
             return $replay ? $replay : array( 'kind' => 'refused', 'reason' => 'consumed', 'message' => 'This approval was already used; call the tool again without the approval state to start over.' );
         }
@@ -507,7 +300,6 @@ class Approval_Gate {
         return array( 'kind' => 'ask', 'row' => $row );
     }
 
-    
     private function redeem_or_refuse( $tool, array $arguments, array $row ) {
         $preview = $this->preview( $tool, $arguments );
         if ( ! hash_equals( (string) $row['preview_hash'], hash( 'sha256', $preview ) ) ) {
@@ -517,16 +309,10 @@ class Approval_Gate {
         return array( 'kind' => 'redeem', 'row' => $row );
     }
 
-    
-
-
-
-
     public function claim( array $row ) {
         return $this->store->claim( $row['approval_id'], $this->now_mysql() );
     }
 
-    
     public function finish( array $row, $result, $status, $executed_audit_id = null ) {
         $encoded = \wp_json_encode( $result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
         if ( ! is_string( $encoded ) || strlen( $encoded ) > 65535 ) {
@@ -538,24 +324,11 @@ class Approval_Gate {
         ) );
     }
 
-    
     public function note_audit_id( array $row, $audit_id ) {
         if ( $audit_id && empty( $row['audit_id'] ) ) {
             $this->store->update( $row['approval_id'], array( 'audit_id' => (int) $audit_id ) );
         }
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
 
     public function build_input_required( $id, array $row ) {
         $state = $this->sign_state( array(
@@ -591,20 +364,8 @@ class Approval_Gate {
         ) );
     }
 
-    
-
-
-
-
-
     public function build_approval_result( array $row, $issue_card_secret = false ) {
         $url  = self::approve_url( $row['approval_id'] );
-        
-        
-        
-        
-        
-        
         $card_secret = null;
         if ( $issue_card_secret && self::STATUS_PENDING === $row['status'] ) {
             $card_secret = bin2hex( random_bytes( 16 ) );
@@ -634,14 +395,6 @@ class Approval_Gate {
         );
     }
 
-    
-
-
-
-
-
-
-
     public function decide_from_card( $approval_id, $secret, array $identity, $approve ) {
         $row = preg_match( '/^[0-9a-f-]{36}$/', (string) $approval_id ) ? $this->store->find( (string) $approval_id ) : null;
         if ( ! $row || ! $this->row_is_valid( $row, $identity ) ) {
@@ -667,21 +420,10 @@ class Approval_Gate {
         );
     }
 
-    
-
-
-
-
-
-
     public static function approve_url( $approval_id ) {
         $base = (string) \home_url( '/' );
         return $base . ( false === strpos( $base, '?' ) ? '?' : '&' ) . 'easy_mcp_ai_approve=' . rawurlencode( (string) $approval_id );
     }
-
-    
-    
-    
 
     private function create_row( $tool, array $arguments, array $identity, $hash, $client_caps = null, $client_protocol = null ) {
         $preview = $this->preview( $tool, $arguments );
@@ -694,8 +436,6 @@ class Approval_Gate {
             'oauth_client_id' => isset( $identity['oauth_client_id'] ) && is_string( $identity['oauth_client_id'] ) && '' !== $identity['oauth_client_id'] ? $identity['oauth_client_id'] : null,
             'wp_user_id'      => (int) $identity['wp_user_id'],
             'tool_name'       => $tool->get_name(),
-            
-            
             'client_protocol'     => is_string( $client_protocol ) && '' !== $client_protocol ? substr( $client_protocol, 0, 16 ) : null,
             'client_capabilities' => is_string( $caps ) && strlen( $caps ) <= 4000 ? $caps : null,
             'arguments'       => \wp_json_encode( $arguments, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
@@ -710,7 +450,6 @@ class Approval_Gate {
         return $this->store->create( $row ) ? $row : null;
     }
 
-    
     private function row_is_valid( array $row, array $identity ) {
         if ( ! hash_equals( self::sign_row( $row ), (string) $row['signature'] ) ) {
             return false;
@@ -723,13 +462,6 @@ class Approval_Gate {
         }
         return true;
     }
-
-    
-
-
-
-
-
 
     public static function client_summary( array $row ) {
         $caps = isset( $row['client_capabilities'] ) && is_string( $row['client_capabilities'] ) ? json_decode( $row['client_capabilities'], true ) : null;
@@ -744,7 +476,6 @@ class Approval_Gate {
         return __( 'Your AI client does not support in-chat approval prompts yet, so this page is used instead.', 'easy-mcp-ai' );
     }
 
-    
     public static function row_signature_valid( array $row ) {
         return hash_equals( self::sign_row( $row ), (string) $row['signature'] );
     }
@@ -753,7 +484,6 @@ class Approval_Gate {
         return $this->timestamp( $row['expires_at'] ) <= $this->time();
     }
 
-    
     public function now() {
         return $this->time();
     }
@@ -761,11 +491,6 @@ class Approval_Gate {
     public function decide( array $row, $approve, $decided_by, $via ) {
         return $this->store->decide( $row['approval_id'], $approve ? self::STATUS_APPROVED : self::STATUS_DENIED, (int) $decided_by, $via, $this->now_mysql() );
     }
-
-    
-
-
-
 
     public static function sign_row( array $row ) {
         $parts = array(
@@ -781,7 +506,6 @@ class Approval_Gate {
         return sprintf( '%s:%d:%s:%d', isset( $identity['auth_source'] ) ? $identity['auth_source'] : 'legacy', (int) $identity['token_id'], $client, (int) $identity['wp_user_id'] );
     }
 
-    
     public static function args_hash( $tool_name, array $arguments ) {
         return hash( 'sha256', (string) $tool_name . "\n" . self::canonical( $arguments ) );
     }
@@ -804,24 +528,9 @@ class Approval_Gate {
         return json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
     }
 
-    
-
-
-
-
-
     private static function is_list( array $value ): bool {
         return array_keys( $value ) === range( 0, count( $value ) - 1 );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function sort_keys( array $value ): array {
         if ( ! self::is_list( $value ) ) {
@@ -834,12 +543,6 @@ class Approval_Gate {
         }
         return $value;
     }
-
-    
-
-
-
-
 
     public function preview( $tool, array $arguments ) {
         $arguments = self::sort_keys( $arguments );
@@ -861,18 +564,9 @@ class Approval_Gate {
         return substr( $text, 0, self::PREVIEW_MAX );
     }
 
-    
     public static function flatten( $text ) {
         return trim( (string) preg_replace( '/\s+/', ' ', (string) $text ) );
     }
-
-    
-
-
-
-
-
-
 
     public static function preview_overflow( string $description ): ?int {
         $text   = self::flatten( $description );
@@ -880,17 +574,11 @@ class Approval_Gate {
         return $length > self::PREVIEW_MAX ? $length : null;
     }
 
-    
-    
-    
-
-    
     public function sign_state( array $payload ) {
         $body = \wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
         return bin2hex( $body ) . '.' . hash_hmac( 'sha256', $body, Token_Keys::signing_key() );
     }
 
-    
     public function verify_state( $state ) {
         if ( ! is_string( $state ) || false === strpos( $state, '.' ) ) {
             return null;
@@ -913,10 +601,6 @@ class Approval_Gate {
         return $payload;
     }
 
-    
-    
-    
-
     private function is_unattended( array $identity ) {
         if ( 'legacy' !== $identity['auth_source'] || null === $this->token_unattended ) {
             return false;
@@ -928,12 +612,10 @@ class Approval_Gate {
         }
     }
 
-    
     private function offers_form( $client_caps, $client_protocol ) {
         return self::FORM_PROTOCOL === $client_protocol && $this->client_supports_form( $client_caps );
     }
 
-    
     private function client_supports_form( $client_caps ) {
         if ( ! is_array( $client_caps ) || ! array_key_exists( 'elicitation', $client_caps ) ) {
             return false;
@@ -960,7 +642,6 @@ class Approval_Gate {
         return (int) strtotime( (string) $mysql . ' UTC' );
     }
 
-    
     public static function uuid4() {
         $b    = random_bytes( 16 );
         $b[6] = chr( ( ord( $b[6] ) & 0x0f ) | 0x40 );

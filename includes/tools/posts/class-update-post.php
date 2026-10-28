@@ -9,15 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Post extends Base_Tool {
 
-    
     const CLEARABLE = array( 'title', 'content', 'excerpt' );
-
-    
-
-
-
-
-
 
     const ECHOED_FIELDS = array( 'slug', 'date', 'date_gmt', 'author', 'sticky', 'comment_status', 'ping_status', 'format', 'template', 'featured_media', 'categories', 'tags' );
 
@@ -28,12 +20,6 @@ class Update_Post extends Base_Tool {
     public function get_description() {
         return 'Updates an existing WordPress post (PATCH semantics — only supplied fields change). Required: `post_id`. Optional: `title`, `content` (HTML/Gutenberg blocks), `status` (publish/draft/pending/private/future, or any other non-internal status registered on this site — "trash" is NOT accepted here and throws; to move a post to trash use `wp_delete_post`), `date` (ISO 8601 site time, use with status="future" to reschedule), `date_gmt` (ISO 8601 GMT; send `date` or `date_gmt`, not both), `excerpt`, `categories` (array of IDs, replaces existing), `tags` (array of IDs, replaces existing), `tag_names` (array of tag names or slugs; with `tags` they replace the post\'s tags, and a missing tag is created), `tax_input` (object: taxonomy slug → array of term IDs; each list replaces that taxonomy\'s terms), `password` (an empty string removes it), `featured_media`, `slug`, `format`, `author`, `template` (theme file slug for the post template), `comment_status`, `ping_status`, `sticky`, `clear` (array of title/content/excerpt to set to an empty string). Optional `meta` (object of meta key-value pairs; only REST-registered keys persist, including the SEO keys of enabled plugin integrations, and dropped keys are reported back as `meta_ignored` with a `notice`). Returns { id, title, status, link, modified, updated }, where `updated` maps each sent field among slug, date, date_gmt, author, sticky, comment_status, ping_status, format, template, featured_media, categories, tags and excerpt to the value WordPress stored (a taken slug comes back with its suffix), plus `created_tag_ids` when `tag_names` was given. Passing an empty string for a text field (`title`, `content`, `excerpt`) preserves the existing value (it is not cleared) — name the field in `clear` to blank it. For CPT items use `wp_update_cpt_item` instead.';
     }
-
-    
-
-
-
-
 
     public function get_redacted_arguments() {
         return array( 'password' );
@@ -51,7 +37,7 @@ class Update_Post extends Base_Tool {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
+            'destructiveHint' => false,
             'openWorldHint'   => false,
         );
     }
@@ -164,7 +150,6 @@ class Update_Post extends Base_Tool {
         );
     }
 
-    
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'post_id', 'post', 'update' );
     }
@@ -192,9 +177,6 @@ class Update_Post extends Base_Tool {
 
         $meta_sent = $this->apply_meta_argument( $arguments, $params );
 
-        
-        
-        
         foreach ( $clear as $field ) {
             $params[ $field ] = '';
         }
@@ -204,27 +186,12 @@ class Update_Post extends Base_Tool {
         $tag_names       = Create_Post::prepare_term_arguments( $arguments, $params );
         $created_tag_ids = null === $tag_names ? null : Create_Post::resolve_tag_names( $tag_names, $params );
 
-        
-        
-        
-        
         $echoed = self::echoed_fields( $params, self::ECHOED_FIELDS );
         $data   = $this->rest_request( 'PUT', '/wp/v2/posts/' . $post_id, $params, implode( ',', array_merge( array( 'id', 'title', 'status', 'modified', 'link' ), $echoed, $meta_sent ? array( 'meta' ) : array() ) ) );
 
         $result = $this->result( $data, $params, $created_tag_ids, $meta_sent );
         return self::with_updated( $result, $data, $echoed, $params, $post_id );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function text_params( array $arguments ): array {
         $params = array();
@@ -233,10 +200,6 @@ class Update_Post extends Base_Tool {
         }
 
         if ( isset( $arguments['content'] ) && '' !== $arguments['content'] ) {
-            
-            
-            
-            
             $params['content'] = $arguments['content'];
         }
 
@@ -245,23 +208,10 @@ class Update_Post extends Base_Tool {
         }
 
         if ( isset( $arguments['excerpt'] ) && '' !== $arguments['excerpt'] ) {
-            
-            
-            
-            
-            
             $params['excerpt'] = $arguments['excerpt'];
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
 
     private function term_and_media_params( array $arguments ): array {
         $params = array();
@@ -278,13 +228,6 @@ class Update_Post extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
 
     private static function detail_params( array $arguments ): array {
         $params = array();
@@ -322,16 +265,6 @@ class Update_Post extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function result( array $data, array $params, ?array $created_tag_ids, bool $meta_sent ): array {
         $result = array(
             'id'       => $data['id'],
@@ -349,32 +282,11 @@ class Update_Post extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
     public static function echoed_fields( array $params, array $echoable ): array {
         return array_values( array_filter( $echoable, static function ( $key ) use ( $params ) {
             return array_key_exists( $key, $params );
         } ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function with_updated( array $result, array $data, array $echoed, array $params, int $post_id ): array {
         $updated = array();
@@ -392,14 +304,6 @@ class Update_Post extends Base_Tool {
         }
         return $result;
     }
-
-    
-
-
-
-
-
-
 
     private function parse_clear( array $arguments ): array {
         if ( ! isset( $arguments['clear'] ) ) {

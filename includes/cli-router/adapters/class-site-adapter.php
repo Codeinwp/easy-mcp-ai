@@ -10,45 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Site_Adapter extends Command_Handler {
 
     const TOOL = 'wp_update_site_settings';
 
     const NOTE_UNCHANGED = "Nothing changed: the site language was already '%s'. WP-CLI prints the same Success line.";
-
-    
-
-
-
 
     public function switch_language( Invocation $inv, Context $ctx ): void {
         list( $language_code ) = array_values( $inv->args );
@@ -85,11 +51,6 @@ class Site_Adapter extends Command_Handler {
         $ctx->out->success( 'Language activated.' );
     }
 
-    
-
-
-
-
     protected function get_installed_languages(): array {
         if ( ! function_exists( 'wp_get_installed_translations' ) ) {
             return array( 'en_US' );
@@ -101,7 +62,6 @@ class Site_Adapter extends Command_Handler {
         return $available;
     }
 
-    
     protected function get_locale(): string {
         return (string) \get_locale();
     }

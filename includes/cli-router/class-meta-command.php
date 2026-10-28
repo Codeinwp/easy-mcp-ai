@@ -5,88 +5,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 abstract class Meta_Command extends Command_Handler {
 
-    
     protected $meta_type = '';
 
-    
     protected $ctx = null;
 
-    
     protected $inv = null;
 
-    
     private $batch = null;
 
     const MASK = '[REDACTED]';
 
-    
     const KEY_BYTES = 'wp_cli_run refuses to write a meta key containing a control character or a non-ASCII byte, or ending in a space: the meta tables compare keys without regard to accents, control characters or trailing spaces, so such a key can address another key\'s rows. Pass the key in plain ASCII, as `%s` prints it.';
 
     const DELETE_EMPTY_VALUE = "wp_cli_run refuses an empty <value>: WordPress cannot delete only the rows that hold an empty string, and WP-CLI would delete every row of '%s'. Omit <value> to delete every row of the key.";
@@ -97,7 +27,6 @@ abstract class Meta_Command extends Command_Handler {
 
     const OMITTED = 'Self-protection: wp_cli_run left out %d meta %s it never reads or writes: %s.';
 
-    
     const ROW_CAP = 1000;
 
     const OVER_ROW_CAP = "wp_cli_run lists at most %1\$d meta rows in one '%2\$s', and %3\$d match. Narrow it with --keys=<keys>, or ask for --format=count.";
@@ -106,69 +35,21 @@ abstract class Meta_Command extends Command_Handler {
 
     const NOTE_NO_PATH = "WP-CLI exits 1 without output here: '%s' has no value at that key path.";
 
-    
     const PREVIEW_DEPTH = 64;
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     abstract protected function check_object_id( $object_id, string $subcommand );
 
-    
-
-
-
-
-
-
     abstract protected function get_metadata( $object_id, string $meta_key = '', bool $single = false );
-
-    
-
-
-
-
 
     abstract protected function add_metadata( $object_id, string $meta_key, $meta_value ): bool;
 
-    
-
-
-
-
-
     abstract protected function update_metadata( $object_id, string $meta_key, $meta_value ): bool;
 
-    
-
-
-
-
-
     abstract protected function delete_metadata( $object_id, string $meta_key, string $meta_value = '' ): bool;
-
-    
-
-
-
-
 
     protected function resolve_args( array $args, string $subcommand ): array {
         return $args;
     }
-
-    
-
-
-
 
     protected function protect_key( string $key, bool $write ): ?string {
         if ( $write && self::unsafe_key( $key ) ) {
@@ -177,54 +58,26 @@ abstract class Meta_Command extends Command_Handler {
         return null;
     }
 
-    
-
-
-
     protected function key_is_secret( string $key ): bool {
         return Handlers\Option_Handler::key_is_secret( $key );
     }
-
-    
-
-
-
-
 
     protected function sanitize_meta( string $key, $value ) {
         return function_exists( 'sanitize_meta' ) ? \sanitize_meta( $key, $value, $this->meta_type ) : $value;
     }
 
-    
-
-
-
-
-
     protected function meta_rows( $object_id, string $meta_key ): array {
         throw new \LogicException( static::class . ' has no clean-duplicates backend.' );
     }
 
-    
     protected function delete_meta_by_mid( int $meta_id ): bool {
         throw new \LogicException( static::class . ' has no clean-duplicates backend.' );
     }
-
-    
-
-
-
-
 
     protected function delegate( string $tool, array $arguments ): array {
         return null !== $this->batch ? $this->batch->delegate( $tool, $arguments ) : $this->ctx->delegate( $tool, $arguments );
     }
 
-    
-    
-    
-
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $assoc_args = $inv->assoc;
@@ -233,13 +86,11 @@ abstract class Meta_Command extends Command_Handler {
 
         $keys   = ! empty( $assoc_args['keys'] ) ? explode( ',', (string) $assoc_args['keys'] ) : array();
         $fields = $this->list_fields( $assoc_args );
-        
         $prints_value = 'count' !== Read_Value::flag( $assoc_args, 'format' ) && in_array( 'meta_value', array_map( 'trim', $fields ), true );
 
         $object_id = $this->check_object_id( $object_id, 'list' );
 
         list( $items, $omitted, $redacted ) = $this->list_items( $object_id, $keys, (bool) Read_Value::flag( $assoc_args, 'unserialize' ), $prints_value );
-        
         if ( count( $items ) > self::ROW_CAP && 'count' !== Read_Value::flag( $assoc_args, 'format' ) ) {
             $ctx->out->error( sprintf( self::OVER_ROW_CAP, self::ROW_CAP, $inv->command, count( $items ) ) );
         }
@@ -254,29 +105,12 @@ abstract class Meta_Command extends Command_Handler {
         $formatter->display_items( $items );
     }
 
-    
-
-
-
-
-
     private function list_fields( array $assoc_args ): array {
         if ( ! empty( $assoc_args['fields'] ) ) {
             return explode( ',', (string) $assoc_args['fields'] );
         }
         return array( "{$this->meta_type}_id", 'meta_key', 'meta_value' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function list_items( $object_id, array $keys, bool $unserialize, bool $prints_value ): array {
         $metadata = $this->get_metadata( $object_id );
@@ -289,7 +123,6 @@ abstract class Meta_Command extends Command_Handler {
         $redacted = array();
         foreach ( $metadata as $key => $values ) {
 
-            
             if ( ! empty( $keys ) && ! in_array( $key, $keys, true ) ) {
                 continue;
             }
@@ -310,14 +143,6 @@ abstract class Meta_Command extends Command_Handler {
         return array( $items, $omitted, $redacted );
     }
 
-    
-
-
-
-
-
-
-
     private function list_item( $object_id, $key, $item_value, bool $unserialize, bool $secret ): object {
         if ( $unserialize ) {
             $item_value = self::unserialize( $item_value );
@@ -333,25 +158,17 @@ abstract class Meta_Command extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     private static function order_items( array &$items, array $assoc_args ): void {
         $order   = Read_Value::flag( $assoc_args, 'order' );
         $orderby = Read_Value::flag( $assoc_args, 'orderby' );
 
         if ( 'id' !== $orderby ) {
             self::sort_items( $items, (string) $orderby, (string) $order );
-        } elseif ( 'id' === $orderby && 'desc' === $order ) { 
+        } elseif ( 'id' === $orderby && 'desc' === $order ) {
             krsort( $items );
         }
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args      = $this->resolve_args( $inv->args, 'get' );
@@ -376,7 +193,6 @@ abstract class Meta_Command extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args       = $this->resolve_args( $inv->args, 'delete' );
@@ -406,27 +222,13 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private static function delete_value( array $args ): string {
         $meta_value = ! empty( $args[2] ) ? (string) $args[2] : '';
-        
         if ( isset( $args[2] ) && '0' === (string) $args[2] ) {
             $meta_value = '0';
         }
         return $meta_value;
     }
-
-    
-
-
-
-
-
 
     private function check_delete_args( array $args, string $meta_key, bool $all ): void {
         if ( empty( $meta_key ) && ! $all ) {
@@ -440,7 +242,6 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
     public function add( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args      = $this->resolve_args( $inv->args, 'add' );
@@ -464,7 +265,6 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
     public function update( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args      = $this->resolve_args( $inv->args, 'update' );
@@ -495,7 +295,6 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
     public function pluck( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args      = $this->resolve_args( $inv->args, 'pluck' );
@@ -522,7 +321,6 @@ abstract class Meta_Command extends Command_Handler {
         Values::print_value( $ctx->out, $value, $inv->assoc );
     }
 
-    
     public function patch( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args      = array_values( $this->resolve_args( $inv->args, 'patch' ) );
@@ -537,16 +335,12 @@ abstract class Meta_Command extends Command_Handler {
         if ( 'delete' === $action ) {
             $patch_value = null;
         } else {
-            
-            
-            
             if ( count( $key_path ) < 2 ) {
                 $ctx->out->error( self::PATCH_NO_VALUE );
             }
             $patch_value = Read_Value::read( $ctx->out, array_pop( $key_path ), $inv->assoc );
         }
 
-        
         $current_meta_value = $this->sanitize_meta( $meta_key, $this->get_metadata( $object_id, $meta_key, true ) );
         $old_meta_value     = $current_meta_value;
         if ( is_object( $current_meta_value ) ) {
@@ -577,7 +371,6 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
     public function clean_duplicates( Invocation $inv, Context $ctx ): void {
         $this->begin( $inv, $ctx );
         $args    = $inv->args;
@@ -594,7 +387,6 @@ abstract class Meta_Command extends Command_Handler {
         list( $uniq_metas, $dupe_metas ) = self::split_duplicates( $metas );
 
         if ( count( $dupe_metas ) ) {
-            
             Confirm::ask(
                 $inv,
                 $ctx,
@@ -622,16 +414,6 @@ abstract class Meta_Command extends Command_Handler {
             );
         }
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function describe( Invocation $inv ): array {
         $this->begin(
@@ -672,28 +454,11 @@ abstract class Meta_Command extends Command_Handler {
         return $this->describe_write( $inv, $sub, $args, $id, $key, $rows, $label );
     }
 
-    
-
-
-
-
-
-
-
-
     private function describe_delete( array $args, $id, string $key, array $rows, string $label ): array {
         $value  = isset( $args[2] ) ? (string) $args[2] : '';
         $effect = '' === $value ? 'delete every value' : 'delete the values equal to ' . $this->preview( $key, $value );
         return array( sprintf( "%s %s meta '%s': %s → %s", $label, $id, $key, self::count_values( $rows ), $effect ) );
     }
-
-    
-
-
-
-
-
-
 
     private function describe_clean_duplicates( array $args, string $label ): array {
         $id                   = isset( $args[0] ) ? $args[0] : '';
@@ -702,14 +467,6 @@ abstract class Meta_Command extends Command_Handler {
         sort( $dupes );
         return array( sprintf( "%s %s meta '%s': %d rows, %d duplicates → delete meta ids %s", $label, $id, $key, count( $uniq ) + count( $dupes ), count( $dupes ), $dupes ? implode( ', ', $dupes ) : 'none' ) );
     }
-
-    
-
-
-
-
-
-
 
     private function describe_patch( array $args, string $label ): array {
         $action  = isset( $args[0] ) ? $args[0] : '';
@@ -722,12 +479,6 @@ abstract class Meta_Command extends Command_Handler {
         $effect  = null === $value ? 'delete ' . implode( '.', $path ) : $action . ' ' . implode( '.', $path ) . ' = ' . $shown;
         return array( sprintf( "%s %s meta '%s': %s → %s", $label, $id, $key, $this->preview( $key, $current, true ), $effect ) );
     }
-
-    
-
-
-
-
 
     private function describe_delete_all( $id, string $label ): array {
         $all = $this->get_metadata( $id );
@@ -743,15 +494,6 @@ abstract class Meta_Command extends Command_Handler {
         return $lines;
     }
 
-    
-
-
-
-
-
-
-
-
     private function describe_write( Invocation $inv, string $sub, array $args, $id, string $key, array $rows, string $label ): array {
         $new = isset( $args[2] ) ? $args[2] : '';
         if ( 'json' === Read_Value::flag( $inv->assoc, 'format' ) ) {
@@ -765,25 +507,9 @@ abstract class Meta_Command extends Command_Handler {
         return array( sprintf( "%s %s meta '%s': %s → %s", $label, $id, $key, $current, $this->preview( $key, $new ) ) );
     }
 
-    
-    
-    
-    
-
-    
-
-
-
     public static function unsafe_key( string $key ): bool {
         return 1 !== preg_match( '/^[\x20-\x7E]*\z/', $key ) || ( '' !== $key && ' ' === substr( $key, -1 ) );
     }
-
-    
-
-
-
-
-
 
     public static function key_path( array $words ): array {
         return array_values(
@@ -799,14 +525,6 @@ abstract class Meta_Command extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
     public static function pluck_value( $data, array $key_path ) {
         $found = self::locate( $data, $key_path );
         if ( ! $found[0] ) {
@@ -814,23 +532,6 @@ abstract class Meta_Command extends Command_Handler {
         }
         return $found[1];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function patch_value( string $action, $data, array $key_path, $value ) {
         if ( 'update' === $action ) {
@@ -845,20 +546,10 @@ abstract class Meta_Command extends Command_Handler {
         return $data;
     }
 
-    
-    
-    
-
-    
     private function begin( Invocation $inv, Context $ctx ): void {
         $this->inv = $inv;
         $this->ctx = $ctx;
     }
-
-    
-
-
-
 
     private function guard_key( string $key, bool $write ): void {
         $refusal = $this->protect_key( $key, $write );
@@ -866,11 +557,6 @@ abstract class Meta_Command extends Command_Handler {
             $this->ctx->out->error( $refusal );
         }
     }
-
-    
-
-
-
 
     private function delete_all( Invocation $inv, Context $ctx, $object_id ): void {
         $metadata = $this->get_metadata( $object_id );
@@ -915,13 +601,6 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private function warn_omitted( array $omitted ): void {
         if ( ! $omitted ) {
             return;
@@ -930,7 +609,6 @@ abstract class Meta_Command extends Command_Handler {
         $this->ctx->out->warning( sprintf( self::OMITTED, count( $omitted ), 1 === count( $omitted ) ? 'key' : 'keys', Self_Protection::omitted_names_text( $omitted ) ) );
     }
 
-    
     private function list_command(): string {
         $command = null !== $this->inv ? $this->inv->command : $this->meta_type . ' meta x';
         $words   = explode( ' ', $command );
@@ -938,15 +616,6 @@ abstract class Meta_Command extends Command_Handler {
         $words[] = 'list';
         return implode( ' ', $words );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function sort_items( array &$items, string $orderby, string $order ): void {
         if ( PHP_VERSION_ID >= 80000 ) {
@@ -964,19 +633,12 @@ abstract class Meta_Command extends Command_Handler {
         usort(
             $items,
             static function ( object $a, object $b ) use ( $orderby, $order ): bool {
-                
                 return 'asc' === $order
                     ? $a->$orderby > $b->$orderby
                     : $a->$orderby < $b->$orderby;
             }
         );
     }
-
-    
-
-
-
-
 
     private static function split_duplicates( array $metas ): array {
         $uniq_metas = array();
@@ -990,14 +652,6 @@ abstract class Meta_Command extends Command_Handler {
         }
         return array( $uniq_metas, $dupe_metas );
     }
-
-    
-
-
-
-
-
-
 
     private static function locate( &$data, array $key_path ): array {
         $current = array_shift( $key_path );
@@ -1013,10 +667,6 @@ abstract class Meta_Command extends Command_Handler {
                 }
             }
             unset( $key_data );
-            
-            
-            
-            
             return array( false, null, $current, 'unmatched' );
         }
         $result    = array( false, null, $current );
@@ -1024,24 +674,10 @@ abstract class Meta_Command extends Command_Handler {
         return $result;
     }
 
-    
-
-
-
-
-
     private static function exists( $data, $key ): bool {
         return ( is_array( $data ) && array_key_exists( $key, $data ) ) ||
             ( is_object( $data ) && property_exists( $data, (string) $key ) );
     }
-
-    
-
-
-
-
-
-
 
     private static function set( &$data, array $key_path, $value ): void {
         $found = self::locate( $data, $key_path );
@@ -1051,16 +687,7 @@ abstract class Meta_Command extends Command_Handler {
         $found[1] = $value;
     }
 
-    
-
-
-
-
-
-
-
     private static function insert( &$data, array $key_path, $value ): void {
-        
         for ( $pass = 0; $pass <= count( $key_path ); $pass++ ) {
             $found = self::locate( $data, $key_path );
             if ( $found[0] ) {
@@ -1083,13 +710,6 @@ abstract class Meta_Command extends Command_Handler {
         throw new \OutOfBoundsException( 'No data exists for key "' . (string) end( $key_path ) . '"' );
     }
 
-    
-
-
-
-
-
-
     private static function remove( &$data, array $key_path ): void {
         $found = self::locate( $data, $key_path );
         if ( ! $found[0] || ! $key_path ) {
@@ -1109,46 +729,18 @@ abstract class Meta_Command extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
     private static function slash( $value ) {
         return function_exists( 'wp_slash' ) ? \wp_slash( $value ) : $value;
     }
-
-    
-
-
-
-
 
     private static function unserialize( $value ) {
         return function_exists( 'maybe_unserialize' ) ? \maybe_unserialize( $value ) : $value;
     }
 
-    
-
-
-
-
     private static function count_values( array $values ): string {
         $n = count( $values );
         return 1 === $n ? '1 value' : $n . ' values';
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function preview( string $key, $value, bool $stored = false ): string {
         if ( $this->key_is_secret( $key ) ) {
@@ -1168,15 +760,6 @@ abstract class Meta_Command extends Command_Handler {
         return strlen( $text ) > 120 ? Envelope::cut( $text, 117 ) . '...' : $text;
     }
 
-    
-
-
-
-
-
-
-
-
     private function mask_secret_keys( $value, int $depth ) {
         if ( is_string( $value ) ) {
             return $this->json_has_secret_key( $value ) ? self::MASK : $value;
@@ -1193,13 +776,6 @@ abstract class Meta_Command extends Command_Handler {
         return $this->mask_entries( $value, $depth );
     }
 
-    
-
-
-
-
-
-
     private function mask_entries( $value, int $depth ) {
         $entries = is_array( $value ) ? $value : get_object_vars( $value );
         $masked  = array();
@@ -1209,7 +785,6 @@ abstract class Meta_Command extends Command_Handler {
         return is_array( $value ) ? $masked : (object) $masked;
     }
 
-    
     private function json_has_secret_key( string $value ): bool {
         if ( '' === $value || ( '{' !== $value[0] && '[' !== $value[0] ) ) {
             return false;
@@ -1217,11 +792,6 @@ abstract class Meta_Command extends Command_Handler {
         $decoded = json_decode( $value, true );
         return is_array( $decoded ) && $this->mask_secret_keys( $decoded, 0 ) !== $decoded;
     }
-
-    
-
-
-
 
     private function path_is_secret( array $path ): bool {
         foreach ( $path as $element ) {
@@ -1232,7 +802,6 @@ abstract class Meta_Command extends Command_Handler {
         return false;
     }
 
-    
     private static function object_label( string $meta_type ): string {
         $labels = array(
             'post'    => 'Post',

@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,39 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Godaddy extends Cache_Adapter {
 
-    
     const CACHE_CLASS = 'WPaaS\\Cache_V2';
 
-    
     const PLUGIN_CLASS = 'WPaaS\\Plugin';
 
-    
     const MAX_PURGE_URLS = 20;
 
-    
     const BAN_KEY = 'wpaas_cache_cnt';
 
     public function id(): string {
@@ -120,30 +90,13 @@ final class Godaddy extends Cache_Adapter {
         return $this->parked( sprintf( 'GoDaddy queued an exact purge of %d page(s) over http and https; it runs when this request ends.', count( $urls ) ) );
     }
 
-    
-
-
-
-
-
     private function full_page_cdn(): bool {
         return $this->plugin_says( 'is_wpaas_v2' ) || (bool) $this->calls()->constant( 'GD_CDN_FULLPAGE' );
     }
 
-    
-
-
-
-
-
     private function plugin_says( string $method ): bool {
         return $this->calls()->method_exists( self::PLUGIN_CLASS, $method ) && (bool) $this->calls()->call( array( self::PLUGIN_CLASS, $method ) );
     }
-
-    
-
-
-
 
     private function cache(): ?object {
         $cache = $this->calls()->global_value( 'wpaas_cache_class' );

@@ -127,9 +127,6 @@ class Search extends Base_Tool {
                 'type'    => $item['type'],
                 'subtype' => isset( $item['subtype'] ) ? $item['subtype'] : '',
             );
-            
-            
-            
             if ( $want_snippet && 'post' === ( $item['type'] ?? '' ) ) {
                 $post = get_post( (int) $item['id'] );
                 if ( $post && isset( $post->post_content ) && ! post_password_required( $post ) ) {

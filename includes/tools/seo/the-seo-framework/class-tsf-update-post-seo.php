@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -154,9 +151,6 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 			if ( is_bool( $value ) ) {
 				throw new \InvalidArgumentException( sprintf( 'Field "%s" must be a tri-state value ("-1", "0", or "1"), not a boolean.', $arg ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
-			
-			
-			
 			if ( is_numeric( $value ) ) {
 				$value = (int) $value;
 			}
@@ -172,8 +166,6 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 			$updated[] = '_social_image_id';
 		}
 
-		
-		
 		if ( array() !== $updated ) {
 			$this->clear_page_cache( array( $post_id ) );
 		}

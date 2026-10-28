@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,45 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Elementor extends Cache_Adapter {
 
-    
     const CLEAR_HOOK = 'elementor/core/files/clear_cache';
-
-    
-
-
 
     const CASCADE_LISTENERS = array(
         'litespeed\\thirdparty\\elementor'         => 'LiteSpeed Cache',
@@ -63,19 +22,14 @@ final class Elementor extends Cache_Adapter {
         'spc\\modules\\cache_invalidation_hooks'   => 'Super Page Cache',
     );
 
-    
     const SPC_STORE = 'SPC\\Services\\Settings_Store';
 
-    
     const SPC_LISTENER = 'spc\\modules\\cache_invalidation_hooks';
 
-    
     const LITESPEED_CLOUDFLARE = 'litespeed.conf.cdn-cloudflare';
 
-    
     const POST_CSS_CLASS = 'Elementor\\Core\\Files\\CSS\\Post';
 
-    
     const ELEMENT_CACHE_KEY = 'Elementor\\Core\\Base\\Document::CACHE_META_KEY';
 
     public function id(): string {
@@ -128,11 +82,6 @@ final class Elementor extends Cache_Adapter {
             || array() !== $this->zone_purgers( $listeners );
     }
 
-    
-
-
-
-
     public function noise_options(): array {
         return array( 'elementor-custom-breakpoints-files', '_elementor_assets_data' );
     }
@@ -170,13 +119,6 @@ final class Elementor extends Cache_Adapter {
         return $this->clear_posts( array_values( array_unique( $request->post_ids ) ), array() );
     }
 
-    
-
-
-
-
-
-
     private function clear_posts( array $post_ids, array $unmapped ): Layer_Result {
         $calls = $this->calls();
         if ( ! $calls->method_exists( self::POST_CSS_CLASS, 'create' ) ) {
@@ -202,12 +144,6 @@ final class Elementor extends Cache_Adapter {
         return $this->sent( $detail );
     }
 
-    
-
-
-
-
-
     private function element_cache_key(): ?string {
         $calls = $this->calls();
         if ( ! $calls->defined( self::ELEMENT_CACHE_KEY ) ) {
@@ -216,11 +152,6 @@ final class Elementor extends Cache_Adapter {
         $key = $calls->constant( self::ELEMENT_CACHE_KEY );
         return is_string( $key ) && '' !== $key ? $key : null;
     }
-
-    
-
-
-
 
     private function files_manager(): ?object {
         $calls = $this->calls();
@@ -234,12 +165,6 @@ final class Elementor extends Cache_Adapter {
         return $calls->method_exists( $plugin->files_manager, 'clear_cache' ) ? $plugin->files_manager : null;
     }
 
-    
-
-
-
-
-
     private function post_id_of( string $url ): int {
         $calls = $this->calls();
         if ( $this->is_home_url( $url ) ) {
@@ -247,13 +172,6 @@ final class Elementor extends Cache_Adapter {
         }
         return (int) $calls->call( 'url_to_postid', array( $url ) );
     }
-
-    
-
-
-
-
-
 
     private function cascade_listeners(): array {
         if ( false === $this->calls()->has_action( self::CLEAR_HOOK ) ) {
@@ -276,28 +194,12 @@ final class Elementor extends Cache_Adapter {
         return $found;
     }
 
-    
-
-
-
-
-
-
     private function object_flushers( array $listeners ): array {
         if ( isset( $listeners[ self::SPC_LISTENER ] ) && ! $this->spc_says( 'cf_object_cache_purge_on_flush' ) ) {
             unset( $listeners[ self::SPC_LISTENER ] );
         }
         return $listeners;
     }
-
-    
-
-
-
-
-
-
-
 
     private function zone_purgers( array $listeners ): array {
         $calls     = $this->calls();
@@ -317,12 +219,6 @@ final class Elementor extends Cache_Adapter {
         return $found;
     }
 
-    
-
-
-
-
-
     private function spc_purges_zone(): bool {
         $store = $this->spc_store();
         $calls = $this->calls();
@@ -331,13 +227,6 @@ final class Elementor extends Cache_Adapter {
         }
         return (bool) $calls->call( array( $store, 'is_cloudflare_connected' ) ) && ! $this->spc_says( 'cf_purge_only_html' );
     }
-
-    
-
-
-
-
-
 
     private function spc_says( string $key ): bool {
         $store = $this->spc_store();
@@ -348,11 +237,6 @@ final class Elementor extends Cache_Adapter {
         return is_scalar( $value ) && (int) $value > 0;
     }
 
-    
-
-
-
-
     private function spc_store(): ?object {
         $calls = $this->calls();
         if ( ! $calls->method_exists( self::SPC_STORE, 'get_instance' ) ) {
@@ -361,13 +245,6 @@ final class Elementor extends Cache_Adapter {
         $store = $calls->call( array( self::SPC_STORE, 'get_instance' ) );
         return is_object( $store ) ? $store : null;
     }
-
-    
-
-
-
-
-
 
     private static function owner_of( $callable ): string {
         if ( is_string( $callable ) ) {

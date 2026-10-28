@@ -7,15 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class Add_Shipping_Method extends Base_Tool {
 
     use Store_Setup;
@@ -97,13 +88,6 @@ class Add_Shipping_Method extends Base_Tool {
         $method = $this->rest_request( 'POST', '/wc/v3/shipping/zones/' . $zone_id . '/methods', $params );
         return self::present_method( $method, $zone_id );
     }
-
-    
-
-
-
-
-
 
     protected function zone_method_fields(): array {
         if ( ! function_exists( 'WC' ) ) {

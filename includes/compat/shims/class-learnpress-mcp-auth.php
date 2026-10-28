@@ -1,11 +1,5 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Compat\Shims;
 
 use Easy_MCP_AI\Compat\Compat_Shim;
@@ -15,75 +9,29 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Learnpress_Mcp_Auth extends Compat_Shim {
 
-    
     const TOOL_PREFIX = 'wp_ability_learnpress_';
 
-    
     const SCOPE = 'read_write';
 
-    
     const CONTEXT_METHODS = array( 'is_api_key_auth', 'set_api_key_auth', 'reset', 'get_key_id', 'get_user_id', 'get_permissions' );
 
-    
     private $context;
-
-    
-
 
     public function __construct( string $context = '\\LearnPress\\MCP\\Auth\\AuthContext' ) {
         $this->context = $context;
     }
 
-    
-
-
     public function id(): string {
         return 'learnpress-mcp-auth';
     }
-
-    
-
 
     public function applies_to( $tool ): bool {
         return is_object( $tool )
             && method_exists( $tool, 'get_category' ) && 'abilities' === $tool->get_category()
             && method_exists( $tool, 'get_name' ) && 0 === strpos( (string) $tool->get_name(), self::TOOL_PREFIX );
     }
-
-    
-
 
     public function is_needed(): bool {
         if ( ! Learnpress_Abilities::group_enabled() || ! $this->context_available() ) {
@@ -95,11 +43,6 @@ final class Learnpress_Mcp_Auth extends Compat_Shim {
         $context = $this->context;
         return ! $context::is_api_key_auth();
     }
-
-    
-
-
-
 
     public function enter( array $arguments = array(), $tool = null ): \stdClass {
         $context = $this->context;
@@ -113,9 +56,6 @@ final class Learnpress_Mcp_Auth extends Compat_Shim {
         return $prior;
     }
 
-    
-
-
     public function leave( $state = null ): void {
         if ( ! $state instanceof \stdClass || ! $this->context_available() ) {
             return;
@@ -127,7 +67,6 @@ final class Learnpress_Mcp_Auth extends Compat_Shim {
         }
     }
 
-    
     private function context_available(): bool {
         if ( ! class_exists( $this->context ) ) {
             return false;

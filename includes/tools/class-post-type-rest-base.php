@@ -7,58 +7,21 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Type_Rest_Base {
 
-    
     const BUILTIN_TYPES = array( 'attachment', 'revision', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache', 'user_request', 'wp_block', 'wp_template', 'wp_template_part', 'wp_global_styles', 'wp_navigation', 'wp_font_family', 'wp_font_face' );
-
-    
-
-
-
-
 
     const RESERVED_REST_BASES = array( 'posts', 'pages', 'media', 'blocks', 'templates', 'template-parts', 'global-styles', 'navigation', 'menu-items', 'menus', 'menu-locations', 'font-families', 'font-collections', 'users', 'comments', 'taxonomies', 'categories', 'tags', 'types', 'statuses', 'settings', 'themes', 'plugins', 'block-types', 'block-renderer', 'block-directory', 'block-patterns', 'pattern-directory', 'search', 'sidebars', 'widgets', 'widget-types', 'application-passwords', 'revisions', 'autosaves' );
 
-    
     const OK = 'ok';
 
-    
     const NOT_REST = 'not_rest';
 
-    
     const FOREIGN_NAMESPACE = 'namespace';
 
-    
     const UNSAFE_BASE = 'base';
 
-    
     const SHARED_BASE = 'shared';
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function resolve( string $value ): string {
         $served = self::served_type( $value );
@@ -75,16 +38,6 @@ final class Post_Type_Rest_Base {
         }
         return $found['base'];
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function inspect( string $post_type, object $object ): array {
         $found = array(
@@ -116,27 +69,9 @@ final class Post_Type_Rest_Base {
         return $found;
     }
 
-    
-
-
-
-
-
     public static function is_builtin( string $post_type ): bool {
         return 'post' === $post_type || 'page' === $post_type || in_array( $post_type, self::BUILTIN_TYPES, true );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function served_type( string $base ): ?array {
         foreach ( self::wp_v2_types() as $name => $object ) {
@@ -147,18 +82,6 @@ final class Post_Type_Rest_Base {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function require_served_type( string $base ): array {
         $served = self::served_type( $base );
         if ( null === $served ) {
@@ -166,29 +89,6 @@ final class Post_Type_Rest_Base {
         }
         return $served;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function require_own_route( string $method, string $base, string $path ): void {
         $server = \function_exists( 'rest_get_server' ) ? \rest_get_server() : null;
@@ -211,12 +111,6 @@ final class Post_Type_Rest_Base {
         }
     }
 
-    
-
-
-
-
-
     private static function wp_v2_types(): array {
         $types = array();
         foreach ( (array) \get_post_types( array( 'show_in_rest' => true ), 'objects' ) as $key => $object ) {
@@ -228,30 +122,9 @@ final class Post_Type_Rest_Base {
         return $types;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function registers_routes( object $object ): bool {
         return ! method_exists( $object, 'get_rest_controller' ) || is_object( $object->get_rest_controller() );
     }
-
-    
-
-
-
-
-
-
 
     private static function owner( string $base ): ?string {
         foreach ( self::wp_v2_types() as $name => $other ) {
@@ -262,31 +135,9 @@ final class Post_Type_Rest_Base {
         return null;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function text( object $object, string $property, string $fallback ): string {
         return isset( $object->$property ) && is_string( $object->$property ) && ! empty( $object->$property ) ? $object->$property : $fallback;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function refusal( string $post_type, array $found ): string {
         switch ( $found['reason'] ) {

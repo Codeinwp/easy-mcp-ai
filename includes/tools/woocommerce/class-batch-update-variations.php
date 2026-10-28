@@ -81,8 +81,6 @@ class Batch_Update_Variations extends Base_Tool {
             if ( count( $arguments['create'] ) > $soft_cap ) {
                 throw new \InvalidArgumentException( sprintf( 'create exceeds the %d-item soft cap. Use the easy_mcp_ai_wc_batch_soft_cap filter to raise the limit.', $soft_cap ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-            
-            
             $create_items = array();
             foreach ( $arguments['create'] as $item ) {
                 if ( is_array( $item ) ) {

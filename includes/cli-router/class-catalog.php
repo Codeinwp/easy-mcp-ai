@@ -5,82 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Catalog {
 
-    
     private static $index = null;
 
-    
     private static $families = array();
 
-    
     public static function version(): string {
         return (string) self::index()['version'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function find( array $positional ): array {
         $rest  = array_values( $positional );
@@ -136,26 +69,12 @@ final class Catalog {
         return $found;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function not_found_message( array $found ): string {
         $word = isset( $found['rest'][0] ) ? (string) $found['rest'][0] : '';
         return $found['path']
             ? self::subcommand_not_found( $word, implode( ' ', $found['path'] ) )
             : self::command_not_found( $word );
     }
-
-    
-
-
 
     private static function subcommand_not_found( string $word, string $parent_name ): string {
         $suggestion = self::suggestion( $word, self::enumerate( $parent_name ) );
@@ -170,11 +89,6 @@ final class Catalog {
             ! empty( $suggestion ) ? PHP_EOL . "Did you mean '{$suggestion}'?" : ''
         );
     }
-
-    
-
-
-
 
     private static function command_not_found( string $word ): string {
         $suggestion = self::suggestion( $word, self::enumerate( '' ) );
@@ -192,21 +106,11 @@ final class Catalog {
         );
     }
 
-    
-
-
-
-
     public static function leaf( string $command ): ?array {
         $top    = (string) strtok( $command, ' ' );
         $family = self::family( $top );
         return isset( $family[ $command ] ) ? $family[ $command ] : null;
     }
-
-    
-
-
-
 
     public static function commands(): array {
         $commands = array();
@@ -219,87 +123,29 @@ final class Catalog {
         return $commands;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function global_parameters(): array {
         return self::index()['globals'];
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function composites(): array {
         return self::index()['composites'];
     }
 
-    
-
-
-
-
     public static function aliases(): array {
         return self::index()['aliases'];
     }
-
-    
-
-
-
-
-
 
     public static function root(): array {
         return self::index()['root'];
     }
 
-    
     public static function global_help(): string {
         return (string) self::index()['global_help'];
     }
 
-    
-
-
-
-
-
-
-
     public static function global_synopsis_names(): array {
         return self::index()['global_synopsis_names'];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function suggestion( string $word, array $candidates ): string {
         $suggestion_map = array(
@@ -338,7 +184,6 @@ final class Catalog {
             $levenshtein[ $option ] = levenshtein( (string) $option, $word );
         }
 
-        
         $order = array();
         $i     = 0;
         foreach ( $levenshtein as $key => $distance ) {
@@ -357,18 +202,10 @@ final class Catalog {
             : '';
     }
 
-    
     public static function reset(): void {
         self::$index    = null;
         self::$families = array();
     }
-
-    
-
-
-
-
-
 
     private static function enumerate( string $composite ): array {
         $index    = self::index();
@@ -389,12 +226,6 @@ final class Catalog {
         return $list;
     }
 
-    
-
-
-
-
-
     private static function index(): array {
         if ( null === self::$index ) {
             $file  = __DIR__ . '/catalog/index.php';
@@ -406,12 +237,6 @@ final class Catalog {
         }
         return self::$index;
     }
-
-    
-
-
-
-
 
     private static function family( string $top ): array {
         if ( ! isset( self::$families[ $top ] ) ) {

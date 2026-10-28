@@ -11,17 +11,7 @@ class Update_Redirect extends Base_Tool {
 
     use Redirection_Rest;
 
-    
-
-
-
-
     const CONTENT_FIELDS = array( 'source', 'action_type', 'target', 'code', 'group_id', 'title', 'regex', 'ignore_case', 'ignore_trailing_slash', 'query_handling', 'position' );
-
-    
-
-
-
 
     const COMPARED = array( 'source', 'match_type', 'action_type', 'code', 'target', 'title', 'group_id', 'position', 'enabled', 'regex', 'ignore_case', 'ignore_trailing_slash', 'query_handling', 'action_data' );
 
@@ -65,7 +55,6 @@ class Update_Redirect extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id = isset( $arguments['id'] ) && is_numeric( $arguments['id'] ) ? (int) $arguments['id'] : 0;
         try {
@@ -116,8 +105,6 @@ class Update_Redirect extends Base_Tool {
             $this->rest_request( 'POST', self::$redirection_ns . '/bulk/redirect/' . ( rest_sanitize_boolean( $arguments['enabled'] ) ? 'enable' : 'disable' ), array( 'items' => array( $id ) ) );
         }
 
-        
-        
         $after_item = $this->find_redirect( $id );
         if ( null === $after_item ) {
             throw new \RuntimeException( sprintf( 'Redirect %d could not be read back after the update. Check it under Tools › Redirection.', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -143,58 +130,25 @@ class Update_Redirect extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function refuse_protected_source( int $id, array $item, array $before, ?array $body, array $content, array $arguments ): void {
         $on = self::sent( $arguments, 'enabled' ) ? rest_sanitize_boolean( $arguments['enabled'] ) : ! empty( $before['enabled'] );
-        if ( ! $on || ( ! empty( $before['enabled'] ) && array() === array_diff( $content, array( 'title', 'position' ) ) ) ) {
+        if ( ! $on || Protected_Sources::overridden( $arguments ) ) {
             return;
         }
-        $source = null !== $body ? (string) $body['url'] : self::str_of( $item, 'url' );
-        $sent   = self::sent( $arguments, 'source' );
-        $host   = $sent ? Protected_Sources::host_of( $source ) : null;
-        if ( null === $host && 'server' === $before['match_type'] ) {
-            
-            $server = self::str_of( self::array_of( $item, 'action_data' ), 'server' );
-            $host   = '' === $server ? null : ( Protected_Sources::host_of( $server ) ?? strtolower( $server ) );
+        $after = null !== $body ? Protected_Sources::as_stored( $body ) : Protected_Sources::from_item( $item );
+        $taken = null !== $after ? Protected_Sources::taken_over( $after ) : null;
+        if ( null === $taken ) {
+            return;
         }
-        $regex = null !== $body ? 1 === $body['regex'] : ! empty( $before['regex'] );
-        $flags = null !== $body ? self::array_of( self::array_of( $body, 'match_data' ), 'source' ) : array( 'flag_query' => $before['query_handling'] );
-        $query = isset( $flags['flag_query'] ) && is_string( $flags['flag_query'] ) ? $flags['flag_query'] : 'exact';
-        Protected_Sources::refuse( sprintf( 'Redirect %d', $id ), $arguments, $host, $sent ? self::stored_source( $source, $regex ) : $source, $regex, $query );
+        if ( ! empty( $before['enabled'] ) && array() === array_diff( $content, array( 'title', 'position' ) ) && null !== Protected_Sources::taken_over( Protected_Sources::from_item( $item ) ) ) {
+            return;
+        }
+        throw new \InvalidArgumentException( Protected_Sources::refusal( sprintf( 'Redirect %d', $id ), $taken ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
 
     private static function sent( array $arguments, string $field ): bool {
         return array_key_exists( $field, $arguments ) && null !== $arguments[ $field ];
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function merged_body( array $item, array $arguments ): array {
         $match_type     = '' !== self::str_of( $item, 'match_type' ) ? self::str_of( $item, 'match_type' ) : 'url';
@@ -202,9 +156,6 @@ class Update_Redirect extends Base_Tool {
         $action_type    = isset( $arguments['action_type'] ) && '' !== $arguments['action_type'] ? $arguments['action_type'] : $current_action;
         $this->refuse_unless_one_of( 'action_type', $action_type, self::action_types(), $action_type, implode( ', ', self::action_types() ) );
         if ( 'url' !== $match_type && $action_type !== $current_action ) {
-            
-            
-            
             throw new \InvalidArgumentException( sprintf( 'This redirect matches on "%s", not on the URL alone; change its action under Tools › Redirection.', $match_type ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
@@ -234,16 +185,6 @@ class Update_Redirect extends Base_Tool {
         }
         return $body;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function merged_action_data( array $item, array $arguments, string $match_type, string $action_type ): array {
         $action_data = self::array_of( $item, 'action_data' );

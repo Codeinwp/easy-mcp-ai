@@ -7,43 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Theme_Mod_Value {
 
     const LIST_KIND   = 'a list';
@@ -52,7 +15,6 @@ final class Theme_Mod_Value {
     const EMPTY_KIND  = 'an object or a list';
     const NULL_KIND   = 'null';
 
-    
     const DEFAULT_SHOWN_LIMIT = 1500;
 
     const STRUCTURED_EXPECTED = '"%1$s" stores %2$s, not a single value, so "value" must be %2$s of the same shape as its default (see the details). Nothing was changed.';
@@ -61,39 +23,14 @@ final class Theme_Mod_Value {
     const NULL_INSIDE         = '"value" for "%1$s" holds null at %2$s. Leave that key out instead (wp_delete_theme_mod resets the whole setting). Nothing was changed.';
     const NOT_JSON            = '"value" for "%1$s" cannot be saved: the Customizer stores it as JSON, which cannot hold it (a number too large, or nesting too deep). Nothing was changed.';
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function conform( string $id, $default, $value ) {
         $value = self::shaped( $id, $default, $value );
-        
-        
-        
-        
-        
         $json = wp_json_encode( array( array( 'value' => $value ) ) );
         if ( ! is_string( $json ) || null === json_decode( $json, true ) ) {
             throw new Detailed_Tool_Error( self::fit( self::NOT_JSON, array( $id ) ) );
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function shaped( string $id, $default, $value ) {
         if ( ! is_array( $default ) ) {
@@ -127,15 +64,6 @@ final class Theme_Mod_Value {
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function mismatch( $model, $value, string $path ): ?array {
         if ( null === $value ) {
@@ -182,13 +110,6 @@ final class Theme_Mod_Value {
         return null;
     }
 
-    
-
-
-
-
-
-
     private static function null_inside( $value, string $path ): ?array {
         if ( null === $value ) {
             return array(
@@ -210,13 +131,6 @@ final class Theme_Mod_Value {
         return null;
     }
 
-    
-
-
-
-
-
-
     private static function item_model( array $list ) {
         $kind = self::kind_of( $list[0] );
         foreach ( $list as $entry ) {
@@ -227,12 +141,6 @@ final class Theme_Mod_Value {
         return $list[0];
     }
 
-    
-
-
-
-
-
     private static function problem( string $path, $model, $value ): array {
         return array(
             'path'     => $path,
@@ -240,10 +148,6 @@ final class Theme_Mod_Value {
             'sent'     => self::kind_of( $value ),
         );
     }
-
-    
-
-
 
     private static function kind_of( $value ): string {
         if ( null === $value ) {
@@ -258,24 +162,9 @@ final class Theme_Mod_Value {
         return self::is_list( $value ) ? self::LIST_KIND : self::OBJECT_KIND;
     }
 
-    
-
-
-
-
-
-
     private static function is_list( array $value ): bool {
         return array_values( $value ) === $value;
     }
-
-    
-
-
-
-
-
-
 
     private static function details( string $id, $default ): string {
         $json = wp_json_encode( $default, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -286,20 +175,8 @@ final class Theme_Mod_Value {
         return sprintf( "The default of \"%s\":\n%s\n", $id, $json ) . $tail;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function fit( string $format, array $parts, int $shortenable = 1 ): string {
         for ( $index = 0; $index < $shortenable; $index++ ) {
-            
-            
             if ( mb_strlen( $parts[ $index ] ) > Detailed_Tool_Error::MAX_MESSAGE ) {
                 $parts[ $index ] = mb_substr( $parts[ $index ], 0, Detailed_Tool_Error::MAX_MESSAGE ) . '…';
             }
@@ -309,10 +186,6 @@ final class Theme_Mod_Value {
         }
         return vsprintf( $format, $parts );
     }
-
-    
-
-
 
     private static function measure( string $text ): int {
         return strlen( class_exists( '\Easy_MCP_AI\Config' ) ? \Easy_MCP_AI\Config::brand( $text ) : $text );

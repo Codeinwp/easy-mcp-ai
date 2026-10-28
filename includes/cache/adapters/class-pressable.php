@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,27 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Pressable extends Cache_Adapter {
 
@@ -89,12 +63,6 @@ final class Pressable extends Cache_Adapter {
         $this->calls()->call( array( $edge, 'purge_uris_now' ), array( $request->urls ) );
         return $this->sent( sprintf( 'Pressable Edge Cache cleared %d page(s).', count( $request->urls ) ) );
     }
-
-    
-
-
-
-
 
     private function edge( string $method ): ?object {
         $calls = $this->calls();

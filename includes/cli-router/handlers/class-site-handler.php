@@ -15,67 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Site_Handler extends Command_Handler {
 
-    
     const NOT_MULTISITE = 'This is not a multisite installation.';
 
-    
     const MAIN_SITE = 'You are not allowed to change the main site.';
 
-    
     const IDS_OR_SLUG = 'Please specify one or more IDs of sites, or pass the slug for a single site using --slug.';
 
-    
     const SLUG_MISSING = "Could not find site with slug '%s'.";
 
-    
     const ROW_CAP = 1000;
 
-    
     const CHUNK = 500;
 
-    
     const STATUS = array(
         'activate'   => array( 'deleted', 0 ),
         'archive'    => array( 'archived', 1 ),
@@ -89,23 +42,14 @@ class Site_Handler extends Command_Handler {
         'unspam'     => array( 'spam', 0 ),
     );
 
-    
     const LOCKS_OUT = array( 'archive', 'deactivate', 'spam' );
 
-    
     const SITE_COLS = array( 'blog_id', 'last_updated', 'registered', 'site_id', 'domain', 'path', 'public', 'archived', 'mature', 'spam', 'deleted', 'lang_id' );
 
-    
     const RESERVED_FALLBACK = array( 'page', 'comments', 'blog', 'files', 'feed', 'wp-admin', 'wp-content', 'wp-includes', 'wp-json', 'embed' );
-
-    
-
-
-
 
     const EMPTY_CAPS_FLOOR = array( 'delete_posts', 'delete_others_posts', 'delete_published_posts', 'delete_private_posts', 'delete_pages', 'delete_others_pages', 'delete_published_pages', 'delete_private_pages', 'moderate_comments', 'manage_categories', 'manage_links' );
 
-    
     const POST_DELETE_CAPS = array( 'delete_posts', 'delete_others_posts', 'delete_published_posts', 'delete_private_posts' );
 
     const OTHER_NETWORK      = 'site %1$s belongs to network %2$d, and wp_cli_run acts only on the sites of the network this MCP connection belongs to (network %3$d): a super admin of one network is not one of another.';
@@ -121,30 +65,15 @@ class Site_Handler extends Command_Handler {
 
     const NOT_CAPTURED_STATUS = "Site status flags in the network's sites table (wp_blogs): change history does not record them.";
     const NOT_CAPTURED_CREATE = "The new site's tables, its wp_blogs row and its default content: change history does not record them (a user created for it is recorded).";
-    
     const CREATED_SETUP_STOPPED = 'Site %1$d was created (%2$s), but its setup was stopped: %3$s The site exists; do not create it again.';
     const NOT_CAPTURED_DELETE = "Dropping a site's tables and its wp_blogs row: change history does not record it, and the site's own audit log and change history are dropped with it.";
     const NOT_CAPTURED_EMPTY  = 'TRUNCATE of the posts, postmeta, comments, commentmeta, terms, term_taxonomy, term_relationships, termmeta and links tables: change history never records it; only the option writes (sticky_posts, wp_page_for_privacy_policy, <taxonomy>_children) can be.';
-
-    
-    
-    
-
-    
-
-
-
 
     public function preflight_multisite( Invocation $inv, Context $ctx ): void {
         if ( ! $this->is_multisite() ) {
             $ctx->out->error( self::NOT_MULTISITE );
         }
     }
-
-    
-
-
-
 
     public function preflight_list( Invocation $inv, Context $ctx ): void {
         $this->preflight_multisite( $inv, $ctx );
@@ -161,12 +90,6 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
     private static function refuse_unknown_filters( Invocation $inv, Context $ctx ): void {
         $named = array();
         foreach ( (array) $inv->leaf['params'] as $param ) {
@@ -182,41 +105,15 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function preflight_delete( Invocation $inv, Context $ctx ): void {
         $this->preflight_multisite( $inv, $ctx );
         $blog = $this->resolve_delete( $inv, $ctx );
         Confirm::ask( $inv, $ctx, "Are you sure you want to delete the '" . $this->trailingslashit( (string) $blog->siteurl ) . "' site?" );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function preflight_empty( Invocation $inv, Context $ctx ): void {
         foreach ( $this->empty_caps() as $cap ) {
             if ( 'manage_links' === $cap ) {
-                
-                
-                
-                
-                
-                
                 if ( ! $this->holds_capability( $cap ) ) {
                     $ctx->out->error( sprintf( 'Sorry, you are not allowed to do this: wp_cli_run needs the %s capability for this command.', $cap ) );
                 }
@@ -226,21 +123,6 @@ class Site_Handler extends Command_Handler {
         }
         Confirm::ask( $inv, $ctx, self::empty_question( $this->site_url() ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function empty_caps(): array {
         $caps = self::EMPTY_CAPS_FLOOR;
@@ -262,20 +144,9 @@ class Site_Handler extends Command_Handler {
         return array_values( array_unique( array_filter( $caps, 'strlen' ) ) );
     }
 
-    
     private static function empty_question( string $site_url ): string {
         return "Are you sure you want to empty the site at '" . $site_url . "' of all posts, links, comments, and terms?";
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function status( Invocation $inv, Context $ctx ): void {
         $sub = (string) $inv->leaf['name'];
@@ -285,12 +156,11 @@ class Site_Handler extends Command_Handler {
         $this->check_site_ids_and_slug( $args, $inv->assoc, $ctx );
         $ids = $this->get_sites_ids( $args, $inv->assoc, $ctx );
 
-        
         $network = $this->current_network_id();
         foreach ( $ids as $site_id ) {
             $site = $this->site_row( $site_id );
             if ( ! $site ) {
-                continue; 
+                continue;
             }
             $this->guard_network( $site, $network, $ctx );
             if ( in_array( $sub, self::LOCKS_OUT, true ) && ! $this->is_main_site( (int) $site->blog_id ) ) {
@@ -327,11 +197,6 @@ class Site_Handler extends Command_Handler {
             $ctx->out->success( "Site {$site->blog_id} {$action}." );
         }
     }
-
-    
-
-
-
 
     public function describe_status( Invocation $inv ): array {
         $sub = (string) $inv->leaf['name'];
@@ -371,17 +236,6 @@ class Site_Handler extends Command_Handler {
         return $lines;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
 
@@ -399,7 +253,6 @@ class Site_Handler extends Command_Handler {
         $where  = $filter['where'];
         $append = $filter['append'];
 
-        
         $this->scope_to_network( $where, $assoc_args, $ctx );
 
         if ( isset( $assoc_args['site_user'] ) ) {
@@ -411,7 +264,6 @@ class Site_Handler extends Command_Handler {
             }
         }
 
-        
         if ( isset( $where['blog_id'] ) && is_array( $where['blog_id'] ) ) {
             $where['blog_id'] = array_map( 'intval', $where['blog_id'] );
         }
@@ -426,14 +278,6 @@ class Site_Handler extends Command_Handler {
 
         $this->display_sites( $this->rows_with_url( $where, $append, (string) $format ), $assoc_args, $ctx );
     }
-
-    
-
-
-
-
-
-
 
     private static function list_filter( array $assoc_args ): array {
         $where  = array();
@@ -460,15 +304,6 @@ class Site_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function scope_to_network( array &$where, array $assoc_args, Context $ctx ): void {
         $network = $this->current_network_id();
         if ( isset( $where['site_id'] ) ) {
@@ -480,15 +315,6 @@ class Site_Handler extends Command_Handler {
             $where['site_id'] = (string) $network;
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private function scope_to_user( array &$where, array $assoc_args, Context $ctx ): ?string {
         $user = Fetchers::of( 'user' )->get_check( $assoc_args['site_user'], $ctx->out );
@@ -508,13 +334,6 @@ class Site_Handler extends Command_Handler {
         return 'ORDER BY FIELD( blog_id, ' . implode( ',', array_map( 'intval', $where['blog_id'] ) ) . ' )';
     }
 
-    
-
-
-
-
-
-
     private function rows_with_url( array $where, string $append, string $format ): \Generator {
         foreach ( $this->blog_rows( $where, $append ) as $blog ) {
             if ( ! in_array( $format, array( 'count', 'ids' ), true ) ) {
@@ -523,12 +342,6 @@ class Site_Handler extends Command_Handler {
             yield $blog;
         }
     }
-
-    
-
-
-
-
 
     private function display_sites( \Generator $iterator, array $assoc_args, Context $ctx ): void {
         if ( ! empty( $assoc_args['format'] ) && 'ids' === $assoc_args['format'] ) {
@@ -545,21 +358,11 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public function create( Invocation $inv, Context $ctx ): void {
         $plan = $this->plan_create( $inv, $ctx, true );
 
         $user_id = $plan['user_id'];
-        if ( ! $user_id ) { 
+        if ( ! $user_id ) {
             $password = $this->wp_generate_password( 24, false );
             $user_id  = $this->wpmu_create_user( $plan['base'], $password, $plan['email'] );
             if ( false === $user_id ) {
@@ -575,7 +378,7 @@ class Site_Handler extends Command_Handler {
             $id = $this->wpmu_create_blog( $plan['domain'], $plan['path'], $this->wp_slash( $plan['title'] ), (int) $user_id, array( 'public' => $plan['public'] ), (int) $plan['network_id'] );
         } catch ( \Throwable $e ) {
             $this->stop_after_failed_setup( $plan, $e, $ctx );
-            return; 
+            return;
         }
         if ( ! $this->is_wp_error( $id ) ) {
             $ctx->mark_changed();
@@ -594,24 +397,12 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function stop_after_failed_setup( array $plan, \Throwable $e, Context $ctx ): void {
         $id = $this->created_site_id( $plan['domain'], $plan['path'], (int) $plan['network_id'] );
         if ( null === $id ) {
             throw $e;
         }
         $ctx->mark_changed();
-        
-        
         try {
             $url = $this->trailingslashit( $this->get_site_url( $id ) );
         } catch ( \Throwable $lookup ) {
@@ -619,11 +410,6 @@ class Site_Handler extends Command_Handler {
         }
         $ctx->out->error( sprintf( self::CREATED_SETUP_STOPPED, $id, $url, $e->getMessage() ) );
     }
-
-    
-
-
-
 
     public function describe_create( Invocation $inv ): array {
         $ctx  = self::silent_context();
@@ -650,12 +436,6 @@ class Site_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
     private function plan_create( Invocation $inv, Context $ctx, bool $strict ): ?array {
         try {
             $assoc_args   = $inv->assoc;
@@ -667,20 +447,16 @@ class Site_Handler extends Command_Handler {
 
             $email = empty( $assoc_args['email'] ) ? '' : (string) $assoc_args['email'];
 
-            
             $network = $this->plan_network( $assoc_args, $current_site, $current_id, $ctx );
 
             $public = ! Read_Value::flag( $assoc_args, 'private' );
 
-            
             if ( preg_match( '|^([a-zA-Z0-9-])+$|', $base ) ) {
                 $base = strtolower( $base );
             }
 
-            
             $this->refuse_reserved_name( $base, $ctx );
 
-            
             $email = $this->plan_email( $email );
 
             list( $newdomain, $path ) = $this->plan_address( $base, $current_site );
@@ -703,15 +479,6 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private function plan_network( array $assoc_args, ?object $current_site, int $current_id, Context $ctx ): ?object {
         if ( empty( $assoc_args['network_id'] ) ) {
             return $current_site;
@@ -726,12 +493,6 @@ class Site_Handler extends Command_Handler {
         return $network;
     }
 
-    
-
-
-
-
-
     private function refuse_reserved_name( string $base, Context $ctx ): void {
         if ( $this->is_subdomain_install() ) {
             return;
@@ -742,10 +503,6 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
     private function plan_email( string $email ): string {
         $email = $this->sanitize_email( $email );
         if ( ! empty( $email ) && $this->is_email( $email ) ) {
@@ -754,7 +511,6 @@ class Site_Handler extends Command_Handler {
         $super_admins = $this->get_super_admins();
         $email        = '';
         if ( ! empty( $super_admins ) && is_array( $super_admins ) ) {
-            
             $super_login = reset( $super_admins );
             $super_user  = $this->get_user_by( 'login', (string) $super_login );
             if ( $super_user ) {
@@ -764,28 +520,12 @@ class Site_Handler extends Command_Handler {
         return $email;
     }
 
-    
-
-
-
-
-
-
     private function plan_address( string $base, ?object $current_site ): array {
         if ( $this->is_subdomain_install() ) {
             return array( $base . '.' . preg_replace( '|^www\.|', '', (string) $current_site->domain ), (string) $current_site->path );
         }
         return array( (string) $current_site->domain, $current_site->path . $base . '/' );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public function delete( Invocation $inv, Context $ctx ): void {
         $blog = $this->resolve_delete( $inv, $ctx );
@@ -805,11 +545,6 @@ class Site_Handler extends Command_Handler {
         $ctx->out->success( "The site at '{$site_url}' was deleted." );
     }
 
-    
-
-
-
-
     public function describe_delete( Invocation $inv ): array {
         $ctx = self::silent_context();
         try {
@@ -824,13 +559,6 @@ class Site_Handler extends Command_Handler {
         return array( sprintf( "Site %d '%s' (network %d): exists → %s", (int) $blog->blog_id, $this->trailingslashit( (string) $blog->siteurl ), (int) $blog->site_id, $effect ) );
     }
 
-    
-
-
-
-
-
-
     private function resolve_delete( Invocation $inv, Context $ctx ): object {
         $assoc_args = $inv->assoc;
         $args       = array_values( $inv->args );
@@ -840,7 +568,6 @@ class Site_Handler extends Command_Handler {
             if ( null === $blog_id ) {
                 $ctx->out->error( sprintf( self::SLUG_MISSING, $assoc_args['slug'] ) );
             }
-            
             if ( $this->is_main_site( (int) $blog_id ) ) {
                 $ctx->out->error( 'You cannot delete the root site.' );
             }
@@ -868,29 +595,14 @@ class Site_Handler extends Command_Handler {
         if ( null !== $refusal ) {
             $ctx->out->error( $refusal );
         }
-        
         $ctx->require_cap( 'delete_site', (int) $blog->blog_id );
         return $blog;
     }
-
-    
-    
-    
-
-    
-
-
-
-
 
     public function empty_( Invocation $inv, Context $ctx ): void {
         Confirm::ask( $inv, $ctx, self::empty_question( $this->site_url() ) );
 
         $ctx->not_captured( self::NOT_CAPTURED_EMPTY );
-        
-        
-        
-        
         $emptied = 0;
         foreach ( array( 'empty_posts', 'empty_links', 'empty_comments', 'empty_taxonomies' ) as $step ) {
             foreach ( $this->{$step}() as $table ) {
@@ -908,11 +620,6 @@ class Site_Handler extends Command_Handler {
         $ctx->out->success( "The site at '" . $this->site_url() . "' was emptied." );
     }
 
-    
-
-
-
-
     public function describe_empty( Invocation $inv ): array {
         $counts = $this->content_counts();
         return array(
@@ -927,31 +634,12 @@ class Site_Handler extends Command_Handler {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
     private function check_site_ids_and_slug( array $args, array $assoc_args, Context $ctx ): void {
         if ( ( empty( $args ) && empty( $assoc_args['slug'] ) )
             || ( ! empty( $args ) && ! empty( $assoc_args['slug'] ) ) ) {
             $ctx->out->error( self::IDS_OR_SLUG );
         }
     }
-
-    
-
-
-
-
-
-
 
     private function get_sites_ids( array $args, array $assoc_args, Context $ctx ): array {
         $slug = Read_Value::flag( $assoc_args, 'slug', false );
@@ -967,19 +655,12 @@ class Site_Handler extends Command_Handler {
         return $args;
     }
 
-    
-
-
-
-
-
     private function guard_network( object $site, int $network, Context $ctx ): void {
         if ( isset( $site->site_id ) && (int) $site->site_id !== $network ) {
             $ctx->out->error( sprintf( self::OTHER_NETWORK, (string) $site->blog_id, (int) $site->site_id, $network ) );
         }
     }
 
-    
     private static function action( string $pref, int $value ): string {
         switch ( $pref ) {
             case 'archived':
@@ -995,7 +676,6 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
     private static function silent_context(): Context {
         return new Context(
             new \Easy_MCP_AI\Cli_Router\Output(),
@@ -1008,13 +688,6 @@ class Site_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
     protected function site_check( $site_id, Context $ctx ): object {
         $site = $this->site_row( $site_id );
         if ( ! $site ) {
@@ -1022,15 +695,6 @@ class Site_Handler extends Command_Handler {
         }
         return $site;
     }
-
-    
-    
-    
-
-    
-
-
-
 
     protected function empty_posts(): array {
         global $wpdb;
@@ -1052,11 +716,6 @@ class Site_Handler extends Command_Handler {
         return array( (string) $wpdb->posts, (string) $wpdb->postmeta );
     }
 
-    
-
-
-
-
     protected function empty_links(): array {
         global $wpdb;
         \wp_cache_delete( 'get_bookmarks', 'bookmark' );
@@ -1074,11 +733,6 @@ class Site_Handler extends Command_Handler {
         return array( (string) $wpdb->links );
     }
 
-    
-
-
-
-
     protected function empty_comments(): array {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- WP-CLI's site empty.
@@ -1089,12 +743,6 @@ class Site_Handler extends Command_Handler {
         }
         return array( (string) $wpdb->comments, (string) $wpdb->commentmeta );
     }
-
-    
-
-
-
-
 
     protected function empty_taxonomies(): array {
         global $wpdb;
@@ -1125,11 +773,6 @@ class Site_Handler extends Command_Handler {
         return $tables;
     }
 
-    
-
-
-
-
     protected function truncate_table( string $table ): ?string {
         global $wpdb;
         $result = $wpdb->query( "TRUNCATE TABLE {$table}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- WP-CLI's site empty; the table name is one of WordPress's own ($wpdb's table properties).
@@ -1140,15 +783,9 @@ class Site_Handler extends Command_Handler {
         return '' !== $reason ? $reason : 'the database gave no reason';
     }
 
-    
-
-
-
-
     protected function insert_default_terms(): void {
         global $wpdb;
 
-        
         $cat_name = \__( 'Uncategorized' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain -- core's own string, as WP-CLI translates it.
 
         /* translators: Default category slug */
@@ -1196,19 +833,11 @@ class Site_Handler extends Command_Handler {
         );
     }
 
-    
     protected function reset_options(): void {
-        
         \update_option( 'wp_page_for_privacy_policy', 0 );
 
-        
         \update_option( 'sticky_posts', array() );
     }
-
-    
-
-
-
 
     protected function content_counts(): array {
         global $wpdb;
@@ -1221,24 +850,17 @@ class Site_Handler extends Command_Handler {
         return $counts;
     }
 
-    
     protected function holds_capability( string $cap ): bool {
         return Capability_Grants::holds( $cap );
     }
 
-    
     protected function post_type_objects(): array {
         return function_exists( 'get_post_types' ) ? (array) \get_post_types( array(), 'objects' ) : array();
     }
 
-    
     protected function taxonomy_objects(): array {
         return function_exists( 'get_taxonomies' ) ? (array) \get_taxonomies( array(), 'objects' ) : array();
     }
-
-    
-    
-    
 
     protected function is_multisite(): bool {
         return function_exists( 'is_multisite' ) && \is_multisite();
@@ -1247,11 +869,6 @@ class Site_Handler extends Command_Handler {
     protected function current_network_id(): int {
         return function_exists( 'get_current_network_id' ) ? (int) \get_current_network_id() : 1;
     }
-
-    
-
-
-
 
     protected function current_network(): ?object {
         global $current_site;
@@ -1265,40 +882,26 @@ class Site_Handler extends Command_Handler {
         return \is_main_site( $site_id );
     }
 
-    
-
-
-
-
-
     protected function site_row( $site_id ) {
         return Fetchers::of( 'site' )->get( $site_id );
     }
 
-    
     protected function get_id_from_blogname( string $slug ): ?int {
         return \get_id_from_blogname( $slug );
     }
-
-    
-
-
 
     protected function get_blog_details( $blog_id ) {
         return \get_blog_details( $blog_id );
     }
 
-    
     protected function get_blog_status( int $blog_id, string $pref ) {
         return \get_blog_status( $blog_id, $pref );
     }
 
-    
     protected function update_blog_status( int $blog_id, string $pref, int $value ) {
         return \update_blog_status( $blog_id, $pref, $value );
     }
 
-    
     protected function wpmu_delete_blog( int $blog_id, bool $drop ): void {
         if ( ! function_exists( 'wpmu_delete_blog' ) ) {
             require_once ABSPATH . 'wp-admin/includes/ms.php';
@@ -1306,7 +909,6 @@ class Site_Handler extends Command_Handler {
         \wpmu_delete_blog( $blog_id, $drop );
     }
 
-    
     protected function get_site( int $blog_id ): ?object {
         return \get_site( $blog_id );
     }
@@ -1327,18 +929,9 @@ class Site_Handler extends Command_Handler {
         return (string) \get_site_url( $blog_id );
     }
 
-    
     protected function get_blogs_of_user( int $user_id ): array {
         return array_values( (array) \get_blogs_of_user( $user_id ) );
     }
-
-    
-
-
-
-
-
-
 
     protected function blog_rows( array $where, string $append ): \Generator {
         global $wpdb;
@@ -1359,11 +952,6 @@ class Site_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     protected function count_blogs( array $where ): int {
         global $wpdb;
         $conditions = self::build_where_conditions( $where );
@@ -1371,12 +959,6 @@ class Site_Handler extends Command_Handler {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- as blog_rows().
         return (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$wpdb->blogs}` $where_sql" );
     }
-
-    
-
-
-
-
 
     public static function build_where_conditions( array $where ): string {
         global $wpdb;
@@ -1393,12 +975,6 @@ class Site_Handler extends Command_Handler {
         return implode( ' AND ', $conditions );
     }
 
-    
-
-
-
-
-
     protected function get_network_row( $network_id ) {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- WP-CLI's own query.
@@ -1413,7 +989,6 @@ class Site_Handler extends Command_Handler {
         return (bool) \is_subdomain_install();
     }
 
-    
     protected function get_subdirectory_reserved_names(): array {
         if ( function_exists( 'get_subdirectory_reserved_names' ) ) {
             return array_values( (array) \get_subdirectory_reserved_names() );
@@ -1426,22 +1001,18 @@ class Site_Handler extends Command_Handler {
         return (string) \sanitize_email( $email );
     }
 
-    
     protected function is_email( string $email ) {
         return \is_email( $email );
     }
 
-    
     protected function get_super_admins(): array {
         return (array) \get_super_admins();
     }
 
-    
     protected function get_user_by( string $field, string $value ) {
         return \get_user_by( $field, $value );
     }
 
-    
     protected function email_exists( string $email ) {
         return \email_exists( $email );
     }
@@ -1450,24 +1021,13 @@ class Site_Handler extends Command_Handler {
         return (string) \wp_generate_password( $length, $special_chars );
     }
 
-    
     protected function wpmu_create_user( string $user_name, string $password, string $email ) {
         return \wpmu_create_user( $user_name, $password, $email );
     }
 
-    
     protected function wp_new_user_notification( int $user_id ): void {
         \wp_new_user_notification( $user_id, null, 'both' );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function wpmu_create_blog( string $domain, string $path, string $title, int $user_id, array $options, int $network_id ) {
         global $wpdb;
@@ -1483,13 +1043,11 @@ class Site_Handler extends Command_Handler {
         return null !== $this->created_site_id( $domain, $path, $network_id );
     }
 
-    
     protected function created_site_id( string $domain, string $path, int $network_id ): ?int {
         $id = \domain_exists( $domain, $path, $network_id );
         return $id ? (int) $id : null;
     }
 
-    
     protected function is_wp_error( $value ): bool {
         return \is_wp_error( $value );
     }
@@ -1498,17 +1056,14 @@ class Site_Handler extends Command_Handler {
         return \is_super_admin( $user_id );
     }
 
-    
     protected function get_user_option( string $option, int $user_id ) {
         return \get_user_option( $option, $user_id );
     }
 
-    
     protected function update_user_option( int $user_id, string $option, int $value, bool $is_global ): void {
         \update_user_option( $user_id, $option, $value, $is_global );
     }
 
-    
     protected function wp_slash( string $value ): string {
         return \wp_slash( $value );
     }

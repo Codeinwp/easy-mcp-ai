@@ -1,31 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 use Easy_MCP_AI\Auth\Connect_Policy;
@@ -36,14 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Config {
 
-    
     const MIN_SANE_RATE_LIMIT = 10;
 
-    
     const EXPIRY_WARNING_DAYS = 7;
-
-    
-
 
     public static function run() {
         return array(
@@ -65,22 +34,9 @@ class Check_Config {
         );
     }
 
-    
-
-
-
     private static function privileged_state() {
         return array( 'enabled' => \Easy_MCP_AI\Privileged\Privileged_Groups::enabled_groups() );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function evaluate_privileged( array $state ) {
         $label = __( 'Privileged tools enabled on this site', 'easy-mcp-ai' );
@@ -95,7 +51,6 @@ class Check_Config {
         );
     }
 
-    
     private static function token_key_state() {
         return array(
             'source'  => \Easy_MCP_AI\Auth\Token_Keys::source(),
@@ -104,15 +59,6 @@ class Check_Config {
             'errors'  => \Easy_MCP_AI\Auth\Token_Keys::errors(),
         );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function evaluate_token_keys( array $state ) {
         $label = __( 'Credential hashing (token keys)', 'easy-mcp-ai' );
@@ -154,12 +100,9 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f12', Diagnostic_Result::TIER_INFO, $label, $detail, $state );
     }
 
-    
     public static function deployment_configuration() {
         $controlled = \Easy_MCP_AI\Config::controlled();
         $invalid = \Easy_MCP_AI\Config_Admin::invalid_settings();
-        
-        
         $credentials = \Easy_MCP_AI\Provider_Credentials::report();
         $label = __( 'Deployment-controlled settings', 'easy-mcp-ai' );
         if ( $credentials['invalid'] ) {
@@ -184,11 +127,6 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f11', Diagnostic_Result::TIER_INFO, $label, implode( ', ', array_keys( $all ) ), $all );
     }
 
-    
-
-
-
-
     public static function evaluate_dcr( $enabled ) {
         $label = __( 'Dynamic Client Registration', 'easy-mcp-ai' );
 
@@ -205,7 +143,6 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f1', Diagnostic_Result::TIER_INFO, $label, __( 'On.', 'easy-mcp-ai' ), array( 'dcr_enabled' => true ) );
     }
 
-    
     public static function evaluate_client_cap( $active, $max ) {
         $label    = __( 'OAuth client capacity', 'easy-mcp-ai' );
 
@@ -215,11 +152,6 @@ class Check_Config {
 
         $evidence = array( 'active_clients' => (int) $active, 'max_clients' => (int) $max );
 
-        
-        
-        
-        
-        
         if ( 0 === (int) $max ) {
             return Diagnostic_Result::warn(
                 'f2',
@@ -250,43 +182,13 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f2', Diagnostic_Result::TIER_WARNING, $label, sprintf( '%d/%d', (int) $active, (int) $max ), $evidence );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function resolved_min_capability() {
         return Connect_Policy::floor_capability();
     }
 
-    
-
-
-
-
-
     public static function connect_roles() {
         return Connect_Policy::is_filtered_for( Connect_Policy::CHANNEL_OAUTH ) ? array() : Connect_Policy::extra_roles();
     }
-
-    
-
-
-
-
-
 
     public static function evaluate_min_capability( $cap, array $roles = array() ) {
         $detail = sprintf(
@@ -314,16 +216,10 @@ class Check_Config {
         );
     }
 
-    
     public static function evaluate_rate_limit( $per_minute ) {
         $label    = __( 'Per-token rate limit', 'easy-mcp-ai' );
         $evidence = array( 'rate_limit_per_minute' => (int) $per_minute );
 
-        
-        
-        
-        
-        
         if ( 0 === (int) $per_minute ) {
             return Diagnostic_Result::warn(
                 'f4',
@@ -353,7 +249,6 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f4', Diagnostic_Result::TIER_WARNING, $label, sprintf( '%d/min', (int) $per_minute ), $evidence );
     }
 
-    
     public static function evaluate_force_draft( $enabled ) {
         $label = __( 'Force draft on create', 'easy-mcp-ai' );
 
@@ -369,11 +264,6 @@ class Check_Config {
 
         return Diagnostic_Result::pass( 'f6', Diagnostic_Result::TIER_INFO, $label, __( 'Off.', 'easy-mcp-ai' ), array( 'force_draft' => false ) );
     }
-
-    
-
-
-
 
     public static function evaluate_token_expiry( $tokens ) {
         $label   = __( 'API token expiry', 'easy-mcp-ai' );
@@ -424,20 +314,9 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f7', Diagnostic_Result::TIER_WARNING, $label, '', $evidence );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function evaluate_auth_presence( $active_tokens, $active_grants, $ever_existed ) {
         $label    = __( 'Working authentication present', 'easy-mcp-ai' );
 
-        
-        
         if ( null === $active_tokens || null === $active_grants || null === $ever_existed ) {
             return Diagnostic_Result::unknown( 'f8', Diagnostic_Result::TIER_BLOCKER, $label, __( 'Could not read the API tokens or OAuth grants.', 'easy-mcp-ai' ) );
         }
@@ -483,10 +362,6 @@ class Check_Config {
         );
     }
 
-    
-
-
-
     public static function evaluate_allow_http( $constant_set, $host ) {
         $label    = __( 'OAuth HTTPS requirement', 'easy-mcp-ai' );
         $host     = strtolower( trim( (string) $host ) );
@@ -508,11 +383,6 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f9', Diagnostic_Result::TIER_WARNING, $label, '', $evidence );
     }
 
-    
-
-
-
-
     public static function evaluate_oauth_enabled( $enabled ) {
         $label = __( 'OAuth layer active', 'easy-mcp-ai' );
 
@@ -530,25 +400,9 @@ class Check_Config {
         return Diagnostic_Result::pass( 'f10', Diagnostic_Result::TIER_WARNING, $label, '', array( 'oauth_enabled' => true ) );
     }
 
-    
-
     private static function option_bool( $name, $default ) {
         return (bool) \Easy_MCP_AI\Config::get( $name, $default );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function wpdb( $method = 'get_var' ) {
         global $wpdb;
@@ -558,33 +412,10 @@ class Check_Config {
         return $wpdb;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function count_or_null( $wpdb, $sql ) {
-        
-        
-        
-        
         if ( property_exists( $wpdb, 'last_error' ) ) {
             $wpdb->last_error = '';
         }
-        
-        
-        
-        
-        
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned tables; diagnostics must read live state.
         $value = $wpdb->get_var( $sql );
         if ( null === $value || '' !== (string) $wpdb->last_error ) {
@@ -596,7 +427,7 @@ class Check_Config {
     private static function count_active_clients() {
         $wpdb = self::wpdb();
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_clients';
         return self::count_or_null( $wpdb, "SELECT COUNT(*) FROM `{$table}` WHERE is_active = 1" );
@@ -605,53 +436,41 @@ class Check_Config {
     private static function count_active_tokens() {
         $wpdb = self::wpdb();
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
         $table = $wpdb->prefix . 'easy_mcp_ai_tokens';
         return self::count_or_null( $wpdb, "SELECT COUNT(*) FROM `{$table}` WHERE is_active = 1 AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP())" );
     }
 
-    
-
-
-
-
     private static function count_active_grants() {
         $wpdb = self::wpdb();
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
         return self::count_or_null( $wpdb, "SELECT COUNT(*) FROM `{$table}` WHERE is_active = 1 AND COALESCE(refresh_expires_at, expires_at) > UTC_TIMESTAMP()" );
     }
 
-    
-
-
-
     private static function auth_ever_existed() {
         $wpdb = self::wpdb();
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
         $tokens   = $wpdb->prefix . 'easy_mcp_ai_tokens';
         $consents = $wpdb->prefix . 'easy_mcp_ai_oauth_consents';
         $any_token   = self::count_or_null( $wpdb, "SELECT COUNT(*) FROM `{$tokens}` LIMIT 1" );
         $any_consent = self::count_or_null( $wpdb, "SELECT COUNT(*) FROM `{$consents}` LIMIT 1" );
         if ( null === $any_token || null === $any_consent ) {
-            return null; 
+            return null;
         }
 
         return $any_token > 0 || $any_consent > 0;
     }
 
-    
-
-
     private static function collect_token_expiries() {
         $wpdb = self::wpdb( 'get_results' );
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
         $table = $wpdb->prefix . 'easy_mcp_ai_tokens';
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; diagnostics must read live state.

@@ -5,9 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
 class Semrush_Validators {
 
 	public static function validate_bare_domain( string $d ): void {

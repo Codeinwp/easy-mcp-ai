@@ -7,51 +7,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 abstract class Privileged_Tool extends Base_Tool {
 
-    
     const META_KEY = 'easy-mcp-ai/privileged';
 
-    
     const DESCRIPTION_SUFFIX = 'Privileged: it runs code, reads server files or rewrites the database. While approvals are on, each call waits for a person to approve it.';
 
-    
     const READ_ONLY_DESCRIPTION_SUFFIX = 'Privileged: it reads files on the server. It writes nothing, so it never waits for approval; every call is in the audit log.';
 
-    
     abstract public function get_privileged_group();
 
-    
-
-
-
-
-
     abstract protected function run( array $arguments );
-
-    
-
-
-
-
-
-
 
     abstract protected function describe_payload( array $arguments );
 
@@ -63,21 +29,9 @@ abstract class Privileged_Tool extends Base_Tool {
         return Privileged_Groups::CATEGORY;
     }
 
-    
     final public function is_disabled_by_default() {
         return true;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     final public function get_approval_policy( array $arguments ) {
         if ( Privileged_Groups::is_read_only( $this->get_privileged_group() ) ) {
@@ -86,44 +40,17 @@ abstract class Privileged_Tool extends Base_Tool {
         return $this->is_status_read( $arguments ) ? 'never' : 'always';
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     protected function is_status_read( array $arguments ) {
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function records_own_history() {
         return false;
     }
 
-    
     final public function get_redacted_arguments() {
         return array();
     }
-
-    
-
-
 
     final public function describe( array $arguments ) {
         return sprintf(
@@ -147,10 +74,6 @@ abstract class Privileged_Tool extends Base_Tool {
         );
         return $definition;
     }
-
-    
-
-
 
     final public function execute( array $arguments ) {
         $previous = Privileged_Groups::apply_soft_limits();

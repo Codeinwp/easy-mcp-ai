@@ -1,36 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Access_Presets;
@@ -48,33 +17,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class OAuth_Controller extends Admin_Rest_Controller {
 
-    
     const ROWS_LIMIT = 200;
 
-    
     const TTL_MIN = 60;
 
     const FULL_SCOPE = 'mcp';
 
-    
     const SETTINGS_FIELDS = array(
         'accessTokenTtl'  => 'oauth_access_token_ttl',
         'refreshTokenTtl' => 'oauth_refresh_token_ttl',
         'dcrEnabled'      => 'oauth_dcr_enabled',
     );
 
-    
     private $wpdb;
 
-    
     private $presets;
 
-    
     private $site_move_rows = false;
-
-    
-
-
 
     public function __construct( $wpdb, Access_Presets $presets ) {
         $this->wpdb    = $wpdb;
@@ -104,22 +63,9 @@ class OAuth_Controller extends Admin_Rest_Controller {
         $this->register_route( '/oauth/site-move/dismiss', 'POST', array( $this, 'dismiss_site_move' ) );
     }
 
-    
-
-    
-
-
-
     public function get_settings( $request ) {
         return $this->ok( self::settings_payload() );
     }
-
-    
-
-
-
-
-
 
     public function patch_settings( $request ) {
         $current = self::settings_payload();
@@ -178,13 +124,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $this->ok( self::settings_payload() );
     }
 
-    
-
-
-
-
-
-
     public static function settings_payload() {
         return array(
             'accessTokenTtl'  => (int) Config::validate( 'oauth_access_token_ttl', Config::get( 'easy_mcp_ai_oauth_access_token_ttl', 3600 ) ),
@@ -201,7 +140,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
     private static function locked_by() {
         $names = array();
         foreach ( self::SETTINGS_FIELDS as $field => $suffix ) {
@@ -212,7 +150,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $names;
     }
 
-    
     private static function lock_sources(): array {
         $sources = array();
         foreach ( self::SETTINGS_FIELDS as $suffix ) {
@@ -222,12 +159,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         }
         return $sources;
     }
-
-    
-
-
-
-
 
     public static function ttl_seconds( $raw ) {
         if ( is_bool( $raw ) || is_array( $raw ) ) {
@@ -247,24 +178,13 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $seconds < self::TTL_MIN ? null : $seconds;
     }
 
-    
-
-    
-
-
-
     public function get_clients( $request ) {
         $clients = $this->wpdb->prefix . 'easy_mcp_ai_oauth_clients';
         $tokens  = $this->wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
         $now     = \current_time( 'mysql', true );
-        
-        
-        
         $document = Client_Metadata_Support::schema_ready() ? ' c.metadata_url,' : '';
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned tables; names prefixed by $wpdb->prefix.
-        
-        
         $rows = (array) $this->wpdb->get_results(
             $this->wpdb->prepare(
                 "SELECT c.id, c.client_id, c.client_name, c.redirect_uris, c.grant_types, c.token_endpoint_auth_method, c.client_secret_hash, c.created_at,{$document}
@@ -299,10 +219,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
-
-
-
     public function delete_client( $request ) {
         $client_id = \sanitize_text_field( (string) $request->get_param( 'id' ) );
         if ( '' === $client_id || ! $this->client_exists( $client_id ) ) {
@@ -311,12 +227,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         OAuth_Admin::revoke_client( $client_id );
         return $this->ok( array( 'deleted' => true, 'clientId' => $client_id ) );
     }
-
-    
-
-
-
-
 
     public function rotate_client_secret( $request ) {
         $client_id = \sanitize_text_field( (string) $request->get_param( 'id' ) );
@@ -334,27 +244,12 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'clientId' => $client_id, 'secret' => $secret ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function shape_client( array $row, bool $issued_elsewhere = false ): array {
         $method = Client_Registry::effective_auth_method( $row );
         $uris   = json_decode( (string) ( $row['redirect_uris'] ?? '' ), true );
         if ( ! is_array( $uris ) ) {
             $uris = '' === trim( (string) ( $row['redirect_uris'] ?? '' ) ) ? array() : array( (string) $row['redirect_uris'] );
         }
-        
-        
-        
         $grants = json_decode( (string) ( $row['grant_types'] ?? '' ), true );
         if ( ! is_array( $grants ) ) {
             $grants = explode( ' ', (string) ( $row['grant_types'] ?? '' ) );
@@ -376,12 +271,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
             'metadataUrl'  => isset( $row['metadata_url'] ) && '' !== (string) $row['metadata_url'] ? (string) $row['metadata_url'] : null,
         );
     }
-
-    
-
-    
-
-
 
     public function get_grants( $request ) {
         $rows  = $this->grant_rows();
@@ -405,10 +294,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
-
-
-
     public function delete_grant( $request ) {
         $row = $this->find_grant( $request );
         if ( \is_wp_error( $row ) ) {
@@ -417,14 +302,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         OAuth_Admin::revoke_grant( (int) $row['consent_id'] );
         return $this->ok( array( 'deleted' => true, 'id' => (int) $row['consent_id'] ) );
     }
-
-    
-
-
-
-
-
-
 
     public function patch_grant_scope( $request ) {
         $row = $this->find_grant( $request );
@@ -448,8 +325,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
             }
         }
         if ( empty( $scopes ) ) {
-            
-            
             return $this->fail( 'easy_mcp_ai_empty_scope', \__( 'Pick at least one category, or revoke the grant instead.', 'easy-mcp-ai' ), 400, array( 'field' => 'scopes' ) );
         }
 
@@ -470,20 +345,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'grant' => $this->shape_grant( \is_wp_error( $fresh ) ? array_merge( $row, array( 'scope' => implode( ' ', $scopes ) ) ) : $fresh ) ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function with_privileged_scopes( array $scopes, array $current, $keep, array $valid ) {
         if ( null === $keep ) {
             $keep = Privileged_Groups::split_scopes( $current )[0];
@@ -497,22 +358,9 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $scopes;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function is_narrower_or_equal( array $current, array $requested ) {
         $current   = Scope_Map::apply_legacy_scope_upgrades( array_values( $current ) );
         $requested = Scope_Map::apply_legacy_scope_upgrades( array_values( $requested ) );
-        
-        
-        
         if ( in_array( self::FULL_SCOPE, $current, true ) ) {
             return true;
         }
@@ -527,27 +375,13 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return true;
     }
 
-    
-
-
-
     public static function scope_parts( $scope ) {
         return array_values( array_filter( array_map( 'trim', explode( ' ', (string) $scope ) ), 'strlen' ) );
     }
 
-    
-
-
-
-
-
-
     public function shape_grant( array $row, array $names = array(), $issued_elsewhere = false ) {
         $scope   = (string) ( $row['scope'] ?? '' );
         $parts   = self::scope_parts( $scope );
-        
-        
-        
         list( $privileged, $ordinary ) = Privileged_Groups::split_scopes( $parts );
         $tools   = Scope_Map::resolve_allowed_tools( implode( ' ', $ordinary ) );
         $full    = in_array( '*', $tools, true );
@@ -565,7 +399,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
             ),
             'scope'        => $scope,
             'scopes'       => $parts,
-            
             'privilegedScopes' => $privileged,
             'preset'       => empty( $ordinary ) ? Access_Presets::CUSTOM : $this->presets->from_allowed_tools( $tools ),
             'fullAccess'   => $full,
@@ -577,12 +410,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
             'issuedElsewhere' => (bool) $issued_elsewhere,
         );
     }
-
-    
-
-
-
-
 
     private function grant_rows() {
         $consents = $this->wpdb->prefix . 'easy_mcp_ai_oauth_consents';
@@ -613,13 +440,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $out;
     }
 
-    
-
-
-
-
-
-
     private function find_grant( $request ) {
         $id = \absint( $request->get_param( 'id' ) );
         if ( $id ) {
@@ -631,12 +451,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         }
         return $this->fail( 'easy_mcp_ai_grant_not_found', \__( 'Grant not found.', 'easy-mcp-ai' ), 404 );
     }
-
-    
-
-
-
-
 
     public static function categories() {
         $out = array();
@@ -654,17 +468,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         }
         return $out;
     }
-
-    
-
-    
-
-
-
-
-
-
-
 
     public function get_device( $request ) {
         $device  = $this->wpdb->prefix . 'easy_mcp_ai_oauth_device_codes';
@@ -696,14 +499,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return $this->ok( array( 'logins' => $out ) );
     }
 
-    
-
-
-
-
-
-
-
     public static function shape_device( array $row, array $names = array() ) {
         $user_id = (int) ( $row['wp_user_id'] ?? 0 );
         return array(
@@ -724,29 +519,18 @@ class OAuth_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
-
-    
-
-
-
     private function client_exists( $client_id ) {
         $clients = $this->wpdb->prefix . 'easy_mcp_ai_oauth_clients';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; name prefixed by $wpdb->prefix.
         return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$clients} WHERE client_id = %s AND is_active = 1", $client_id ) ) > 0;
     }
 
-    
     public static function retention_days() {
         if ( class_exists( '\\Easy_MCP_AI\\Plugin' ) && method_exists( '\\Easy_MCP_AI\\Plugin', 'oauth_client_retention_days' ) ) {
             return (int) \Easy_MCP_AI\Plugin::oauth_client_retention_days();
         }
         return 7;
     }
-
-    
-
-
 
     private function user_names( array $ids ) {
         $ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
@@ -771,20 +555,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         return sprintf( \__( 'Unknown user #%d', 'easy-mcp-ai' ), (int) $user_id );
     }
 
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
     public function revoke_site_move( $request ) {
         $result = OAuth_Site_Move::revoke_mismatching();
         if ( \is_wp_error( $result ) ) {
@@ -794,7 +564,7 @@ class OAuth_Controller extends Admin_Rest_Controller {
                 500
             );
         }
-        $this->site_move_rows = false; 
+        $this->site_move_rows = false;
         return $this->ok( array(
             'tokens'   => (int) $result['tokens'],
             'consents' => (int) $result['consents'],
@@ -803,27 +573,10 @@ class OAuth_Controller extends Admin_Rest_Controller {
         ) );
     }
 
-    
-
-
-
-
-
-
-
     public function dismiss_site_move( $request ) {
         OAuth_Site_Move::record_current();
         return $this->ok( array( 'dismissed' => true, 'siteMove' => null ) );
     }
-
-    
-
-
-
-
-
-
-
 
     private function site_move_payload() {
         if ( ! OAuth_Site_Move::ensure_recorded() || ! OAuth_Site_Move::moved() ) {
@@ -831,10 +584,10 @@ class OAuth_Controller extends Admin_Rest_Controller {
         }
         $summary = OAuth_Site_Move::summary( $this->site_move_rows() );
         if ( null === $summary ) {
-            return null; 
+            return null;
         }
         if ( $summary['tokens'] < 1 ) {
-            OAuth_Site_Move::record_current(); 
+            OAuth_Site_Move::record_current();
             return null;
         }
         return array(
@@ -845,7 +598,6 @@ class OAuth_Controller extends Admin_Rest_Controller {
         );
     }
 
-    
     private function site_move_rows() {
         if ( false === $this->site_move_rows ) {
             $this->site_move_rows = OAuth_Site_Move::active_rows();

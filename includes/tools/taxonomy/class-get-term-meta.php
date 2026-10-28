@@ -22,10 +22,6 @@ class Get_Term_Meta extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
-        
         return 'read';
     }
 
@@ -71,9 +67,6 @@ class Get_Term_Meta extends Base_Tool {
             if ( is_protected_meta( $key, 'term' ) && ! current_user_can( 'manage_options' ) ) {
                 throw new \RuntimeException( 'Protected meta keys require administrator privileges.' );
             }
-            
-            
-            
             $value = get_term_meta( $term_id, $key, $single );
             return array(
                 'term_id'  => $term_id,
@@ -89,21 +82,9 @@ class Get_Term_Meta extends Base_Tool {
             'term_id'        => $term_id,
             'taxonomy'       => $term->taxonomy,
             'meta'           => $readable['meta'],
-            
-            
-            
             'withheld_count' => $readable['withheld_count'],
         );
     }
-
-    
-
-
-
-
-
-
-
 
     private function term_with_readable_meta( int $term_id ): object {
         $term = get_term( $term_id );
@@ -120,17 +101,6 @@ class Get_Term_Meta extends Base_Tool {
         return $term;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function single_arg( array $arguments, string $key ): bool {
         $single_sent = array_key_exists( 'single', $arguments ) && null !== $arguments['single'];
         if ( $single_sent && '' === $key ) {
@@ -138,13 +108,6 @@ class Get_Term_Meta extends Base_Tool {
         }
         return $single_sent ? rest_sanitize_boolean( $arguments['single'] ) : true;
     }
-
-    
-
-
-
-
-
 
     private function readable_meta( int $term_id ): array {
         $all      = get_term_meta( $term_id );

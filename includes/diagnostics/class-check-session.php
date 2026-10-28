@@ -1,34 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,11 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Session {
 
-    
     const PROBE_TTL = 60;
-
-    
-
 
     public static function run() {
         return array(
@@ -50,28 +17,9 @@ class Check_Session {
         );
     }
 
-    
-
-
-
-
     public static function probe_key() {
-        
-        
-        
-        
-        
         return 'easy_mcp_ai_diagnostics_probe_' . str_replace( '.', '', uniqid( '', true ) );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function evaluate_transient_roundtrip( $written, $sent, $read_back ) {
         $label = __( 'AI sessions can be stored', 'easy-mcp-ai' );
@@ -101,19 +49,6 @@ class Check_Session {
             );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $matches = is_array( $read_back );
 
         if ( $matches ) {
@@ -145,13 +80,6 @@ class Check_Session {
         return Diagnostic_Result::pass( 'b1', Diagnostic_Result::TIER_BLOCKER, $label, '', array( 'roundtrip' => true ) );
     }
 
-    
-
-
-
-
-
-
     public static function evaluate_object_cache( $dropin_present, $external_in_use, $probe_ok ) {
         $label    = __( 'Object cache is healthy', 'easy-mcp-ai' );
         $evidence = array(
@@ -160,9 +88,6 @@ class Check_Session {
             'probe_ok'        => $probe_ok,
         );
 
-        
-        
-        
         if ( ! $dropin_present ) {
             return Diagnostic_Result::pass(
                 'b2',
@@ -184,14 +109,6 @@ class Check_Session {
             );
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
         if ( null === $probe_ok ) {
             return Diagnostic_Result::unknown(
                 'b2',
@@ -216,15 +133,6 @@ class Check_Session {
         return Diagnostic_Result::pass( 'b2', Diagnostic_Result::TIER_WARNING, $label, __( 'In use and holding values.', 'easy-mcp-ai' ), $evidence );
     }
 
-    
-
-    
-
-
-
-
-
-
     private static function probe_transient_roundtrip() {
         if ( ! function_exists( 'set_transient' ) || ! function_exists( 'get_transient' ) ) {
             return self::evaluate_transient_roundtrip( null, array(), null );
@@ -236,45 +144,6 @@ class Check_Session {
         try {
             $written = (bool) \set_transient( $key, $sent, self::PROBE_TTL );
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             $flushed = false;
             if ( function_exists( 'wp_cache_flush_runtime' ) ) {
                 if ( ! function_exists( 'wp_cache_supports' ) || \wp_cache_supports( 'flush_runtime' ) ) {
@@ -285,9 +154,6 @@ class Check_Session {
 
             $read_back = \get_transient( $key );
 
-            
-            
-            
             if ( ! $flushed && \function_exists( 'wp_using_ext_object_cache' ) && \wp_using_ext_object_cache() ) {
                 return Diagnostic_Result::unknown(
                     'b1',
@@ -300,8 +166,6 @@ class Check_Session {
         } catch ( \Throwable $e ) {
             return self::evaluate_transient_roundtrip( null, array(), null );
         } finally {
-            
-            
             if ( function_exists( 'delete_transient' ) ) {
                 @\delete_transient( $key ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Cleanup must never surface as the check's result.
             }
@@ -320,10 +184,6 @@ class Check_Session {
             $expected = \wp_generate_password( 8, false, false );
             try {
                 \wp_cache_set( $key, $expected, 'easy_mcp_ai', self::PROBE_TTL );
-                
-                
-                
-                
                 $probe = ( \wp_cache_get( $key, 'easy_mcp_ai', true ) === $expected );
             } catch ( \Throwable $e ) {
                 $probe = null;

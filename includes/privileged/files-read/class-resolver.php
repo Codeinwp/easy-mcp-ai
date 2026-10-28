@@ -5,92 +5,46 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Resolver {
 
     const MAX_PATH_LENGTH = 1024;
 
-    
     const EXTENSIONS = array(
         'php', 'inc', 'css', 'scss', 'sass', 'less', 'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx',
         'json', 'html', 'htm', 'twig', 'txt', 'md', 'xml', 'svg', 'yml', 'yaml', 'po', 'pot',
     );
 
-    
     const BLOCKED_EXTENSIONS = array(
         'sql', 'log', 'gz', 'zip', 'tar', 'tgz', 'wpress', 'daf', 'bak', 'old', 'orig', 'swp', 'env',
         'ini', 'conf', 'cnf', 'key', 'pem', 'p12', 'pfx', 'crt', 'db', 'sqlite', 'dat', 'crypt',
     );
 
-    
-
-
-
-
-
-
     const DENIED_TOP_LEVEL = array(
         'uploads', 'updraft', 'ai1wm-backups', 'duplicator-backups', 'wpvividbackups', 'aiowps_backups',
         'backup-guard', 'wp_all_backup', 'w3tc-config', 'cache',
-        
         'blogs.dir',
     );
 
-    
     const DENIED_TOP_LEVEL_PREFIXES = array( 'backups-dup-', 'backup-migration-' );
 
-    
     const NOISE_DIRS = array( 'vendor', 'node_modules' );
 
     const EXTENSIONS_FILTER = 'easy_mcp_ai_files_read_extensions';
     const MU_PLUGINS_FILTER = 'easy_mcp_ai_files_read_include_mu_plugins';
 
-    
     private $content_root;
 
-    
     private $linked_roots = array();
 
-    
     private $denied_dirs = array();
 
-    
     private $include_mu_plugins;
 
-    
     private $extensions;
-
-    
-
-
-
-
-
 
     public function __construct( string $content_dir, array $plugin_links = array(), array $denied_dirs = array(), bool $include_mu_plugins = false, ?array $extensions = null ) {
         $root = self::real_dir( $content_dir );
         if ( null === $root ) {
-            
-            
             throw new \RuntimeException( 'The wp-content directory cannot be resolved; no file can be read.' );
         }
         $this->content_root = $root;
@@ -111,7 +65,6 @@ final class Resolver {
         $this->extensions         = null === $extensions ? self::filtered_extensions() : self::clean_extensions( $extensions );
     }
 
-    
     public static function for_site(): self {
         global $wp_plugin_paths;
         $include_mu = function_exists( 'apply_filters' ) && true === \apply_filters( self::MU_PLUGINS_FILTER, false );
@@ -129,16 +82,6 @@ final class Resolver {
         return new self( (string) WP_CONTENT_DIR, is_array( $wp_plugin_paths ) ? $wp_plugin_paths : array(), $denied, $include_mu );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function upload_dirs( string $basedir, bool $multisite ): array {
         if ( ! $multisite ) {
             return array( $basedir );
@@ -146,13 +89,6 @@ final class Resolver {
         $network = (string) preg_replace( '#/sites/\d+/?\z#', '', $basedir );
         return array_values( array_unique( array( $basedir, $network ) ) );
     }
-
-    
-
-
-
-
-
 
     public function resolve( string $path, bool $want_dir ): array {
         if ( null !== self::input_problem( $path, $want_dir ) ) {
@@ -172,17 +108,6 @@ final class Resolver {
         return array( 'abs' => $real, 'rel' => $rel );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public function walk( array $dir, int $max_depth, int $max_entries, float $deadline, callable $visit, array &$skipped ): bool {
         $walk = array(
             'max_depth'   => $max_depth,
@@ -193,14 +118,6 @@ final class Resolver {
         );
         return $this->walk_dir( $dir['abs'], $dir['rel'], 1, $walk, $visit, $skipped );
     }
-
-    
-
-
-
-
-
-
 
     private function walk_dir( string $abs, string $rel, int $depth, array &$walk, callable $visit, array &$skipped ): bool {
         $names = @scandir( $abs ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- open_basedir warnings name server paths.
@@ -230,7 +147,6 @@ final class Resolver {
         return true;
     }
 
-    
     private function skip_reason( string $child, string $child_rel, bool $noise_ok ): ?string {
         if ( is_link( $child ) ) {
             return 'symlink';
@@ -245,7 +161,6 @@ final class Resolver {
         return null;
     }
 
-    
     private function entry( string $child, string $child_rel ): array {
         $is_dir = is_dir( $child );
         return array(
@@ -257,17 +172,10 @@ final class Resolver {
         );
     }
 
-    
-
-
-
-
-
     private static function descends( array $entry, array $walk, int $depth ): bool {
         return 'dir' === $entry['type'] && $depth < $walk['max_depth'];
     }
 
-    
     public function readable_file( string $real ): bool {
         if ( ! is_file( $real ) ) {
             return false;
@@ -277,14 +185,8 @@ final class Resolver {
             return false;
         }
         $stat = @stat( $real ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-        
         return is_array( $stat ) && 1 === (int) $stat['nlink'];
     }
-
-    
-
-
-
 
     public function denied( string $rel, string $real ): bool {
         $segments = array_values( array_filter( explode( '/', strtolower( $rel ) ), 'strlen' ) );
@@ -300,8 +202,6 @@ final class Resolver {
         if ( false !== $last && 0 === strpos( $last, 'wp-config' ) ) {
             return true;
         }
-        
-        
         $real = strtolower( rtrim( $real, '/' ) . '/' );
         foreach ( $this->denied_dirs as $dir ) {
             if ( 0 === strpos( $real, $dir ) ) {
@@ -311,17 +211,9 @@ final class Resolver {
         return false;
     }
 
-    
     public function extensions(): array {
         return $this->extensions;
     }
-
-    
-
-
-
-
-
 
     public static function input_problem( string $path, bool $want_dir ): ?string {
         if ( '' === $path ) {
@@ -333,11 +225,9 @@ final class Resolver {
         if ( preg_match( '/[\x00-\x1f\x7f]/', $path ) ) {
             return 'control';
         }
-        
         if ( false !== strpbrk( $path, ':\\' ) ) {
             return 'scheme';
         }
-        
         foreach ( explode( '/', rtrim( $path, '/' ) ) as $segment ) {
             if ( self::segment_refused( $segment ) ) {
                 return 'segment';
@@ -345,10 +235,6 @@ final class Resolver {
         }
         return null;
     }
-
-    
-
-
 
     private static function segment_refused( string $segment ): bool {
         if ( '' === $segment || '.' === $segment[0] ) {
@@ -368,11 +254,6 @@ final class Resolver {
         }
         return false;
     }
-
-    
-
-
-
 
     private function display_path( string $real ): ?string {
         $probe = rtrim( $real, '/' ) . '/';
@@ -396,7 +277,6 @@ final class Resolver {
         return false;
     }
 
-    
     public static function real( string $path ): ?string {
         try {
             $real = @realpath( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -406,13 +286,11 @@ final class Resolver {
         return false === $real ? null : str_replace( '\\', '/', $real );
     }
 
-    
     private static function real_dir( string $dir ): ?string {
         $real = self::real( $dir );
         return null !== $real && is_dir( $real ) ? rtrim( $real, '/' ) . '/' : null;
     }
 
-    
     private static function relative_to( string $path, string $content_root, string $content_dir ): ?string {
         foreach ( array( $content_root, rtrim( wp_normalize_path_fallback( $content_dir ), '/' ) . '/' ) as $base ) {
             if ( 0 === strpos( $path, $base ) ) {
@@ -422,17 +300,10 @@ final class Resolver {
         return null;
     }
 
-    
     private static function filtered_extensions(): array {
         $list = function_exists( 'apply_filters' ) ? \apply_filters( self::EXTENSIONS_FILTER, self::EXTENSIONS ) : self::EXTENSIONS;
         return self::clean_extensions( is_array( $list ) ? $list : self::EXTENSIONS );
     }
-
-    
-
-
-
-
 
     private static function clean_extensions( array $list ): array {
         $out = array();
@@ -448,15 +319,10 @@ final class Resolver {
         return array_values( array_unique( $out ) );
     }
 
-    
     private static function count( array &$skipped, string $reason ): void {
         $skipped[ $reason ] = ( $skipped[ $reason ] ?? 0 ) + 1;
     }
 }
-
-
-
-
 
 function wp_normalize_path_fallback( string $path ): string {
     if ( function_exists( 'wp_normalize_path' ) ) {

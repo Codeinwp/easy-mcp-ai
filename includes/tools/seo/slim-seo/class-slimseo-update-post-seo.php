@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -88,8 +85,6 @@ class Slimseo_Update_Post_Seo extends Base_Tool {
 
 		$base = $this->resolve_post_rest_base( $post_id );
 
-		
-		
 		$current = $this->rest_request( 'GET', '/wp/v2/' . $base . '/' . $post_id, array( '_fields' => 'meta.slim_seo' ) );
 		$merged  = $current['meta']['slim_seo'] ?? array();
 		if ( ! is_array( $merged ) ) {

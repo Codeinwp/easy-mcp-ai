@@ -49,9 +49,6 @@ class List_Payment_Gateways extends Base_Tool {
 
         $data = $this->rest_request( 'GET', '/wc/v3/payment_gateways' );
 
-        
-        
-        
         return array_map( function( $gateway ) {
             return array(
                 'id'                 => $gateway['id'] ?? '',

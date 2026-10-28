@@ -5,24 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 class Approval_Card_Resource extends Base_Resource {
 
     const URI       = 'ui://easy-mcp-ai/approval';
     const MIME_TYPE = 'text/html;profile=mcp-app';
 
-    
     const I18N_MARKER = '<!-- easy-mcp-ai:i18n -->';
 
     public function get_uri() {
@@ -41,7 +28,6 @@ class Approval_Card_Resource extends Base_Resource {
         return self::MIME_TYPE;
     }
 
-    
     public function get_meta() {
         return array(
             'ui' => array(
@@ -67,13 +53,6 @@ class Approval_Card_Resource extends Base_Resource {
         return str_replace( self::I18N_MARKER, self::i18n_script( self::labels() ), $html );
     }
 
-    
-
-
-
-
-
-
     public static function labels() {
         return array(
             'connecting'      => __( 'Connecting to the chat host…', 'easy-mcp-ai' ),
@@ -98,18 +77,11 @@ class Approval_Card_Resource extends Base_Resource {
         );
     }
 
-    
-
-
-
-
-
     public static function i18n_script( array $labels ) {
         $json = \wp_json_encode( $labels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE );
         return '<script>window.EASY_MCP_AI_CARD_I18N = ' . ( is_string( $json ) ? $json : '{}' ) . ';</script>';
     }
 
-    
     private static function lang() {
         $locale = function_exists( 'determine_locale' ) ? \determine_locale() : \get_locale();
         return str_replace( '_', '-', (string) $locale );

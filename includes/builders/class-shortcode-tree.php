@@ -1,55 +1,16 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Shortcode_Tree {
 
-    
     const TEXT = '#text';
 
-    
     const MAX_DEPTH = 32;
-
-    
-
-
-
-
-
-
-
-
 
     public static function parse( string $content, array $tags, int $depth = 0, int $base = 0 ): array {
         $tags = array_values( array_filter( $tags, 'is_string' ) );
@@ -68,7 +29,6 @@ final class Shortcode_Tree {
             $start  = $match[0][1];
             $text  .= substr( $content, $cursor, $start - $cursor );
             $cursor = $start + strlen( $match[0][0] );
-            
             if ( '[' === $match[1][0] && ']' === $match[6][0] ) {
                 $text .= $match[0][0];
                 continue;
@@ -80,7 +40,6 @@ final class Shortcode_Tree {
             $closer   = '[/' . $match[2][0] . ']';
             $closed   = substr( $match[0][0], -strlen( $closer ) ) === $closer;
             $atts     = shortcode_parse_atts( $match[3][0] );
-            
             $content_at = $closed ? $match[5][1] : -1;
             $items[]    = array(
                 'tag'        => $match[2][0],
@@ -96,13 +55,6 @@ final class Shortcode_Tree {
         }
         return array_merge( $items, self::text_item( $text . substr( $content, $cursor ), $base + $from ) );
     }
-
-    
-
-
-
-
-
 
     private static function text_item( string $text, int $at = 0 ): array {
         if ( '' === trim( $text ) ) {

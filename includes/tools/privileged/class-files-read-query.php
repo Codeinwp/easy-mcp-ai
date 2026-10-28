@@ -14,18 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
 class Files_Read_Query extends Privileged_Tool {
 
-    
     const ACTIONS = array(
         'read'    => Read_Action::class,
         'list'    => List_Action::class,
@@ -33,9 +23,7 @@ class Files_Read_Query extends Privileged_Tool {
         'outline' => Outline_Action::class,
     );
 
-    
     private $resolver;
-    
     private $searcher;
 
     public function __construct( ?Resolver $resolver = null, ?Searcher $searcher = null ) {
@@ -140,12 +128,6 @@ class Files_Read_Query extends Privileged_Tool {
         return $this->action( $arguments )->run( $arguments );
     }
 
-    
-
-
-
-
-
     private function action( array $arguments ): Action {
         $name = $arguments['action'] ?? null;
         if ( ! is_string( $name ) || ! isset( self::ACTIONS[ $name ] ) ) {
@@ -159,15 +141,6 @@ class Files_Read_Query extends Privileged_Tool {
         return 'search' === $name ? new Search_Action( $this->resolver, $this->searcher ) : new $class( $this->resolver );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function refuse_foreign( string $name, array $accepted, array $arguments ): void {
         foreach ( $arguments as $key => $value ) {
             if ( 'action' === $key || in_array( $key, $accepted, true ) || null === $value || '' === $value || array() === $value ) {
@@ -176,11 +149,6 @@ class Files_Read_Query extends Privileged_Tool {
             throw new \InvalidArgumentException( sprintf( '%1$s is not an argument of action %2$s, which takes: %3$s.', $key, $name, implode( ', ', $accepted ) ) );
         }
     }
-
-    
-
-
-
 
     protected function describe_payload( array $arguments ) {
         return $this->get_name() . ' ' . Action::json( $arguments );

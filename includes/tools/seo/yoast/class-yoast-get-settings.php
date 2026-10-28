@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Easy_MCP_AI\Tools\Base_Tool;
 
-
-
-
-
-
 class Yoast_Get_Settings extends Base_Tool {
 
 	public function get_name() {
@@ -27,7 +22,6 @@ class Yoast_Get_Settings extends Base_Tool {
 	}
 
 	public function get_required_capability() {
-		
 		return 'wpseo_manage_options';
 	}
 

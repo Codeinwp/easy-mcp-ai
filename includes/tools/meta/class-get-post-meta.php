@@ -66,7 +66,6 @@ class Get_Post_Meta extends Base_Tool {
 
         $data = $this->rest_request( 'GET', self::post_type_route( $post_type, $post_id, 'GET' ), array( 'context' => 'edit' ) );
 
-        
         $meta = isset( $data['meta'] ) ? $data['meta'] : array();
 
         $key = isset( $arguments['key'] ) ? sanitize_text_field( (string) $arguments['key'] ) : '';

@@ -1,126 +1,36 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 abstract class Shortcode_Adapter extends Layout_Adapter {
 
-    
     private $save_filter;
-
-    
-
 
     public function __construct( ?callable $save_filter = null ) {
         $this->save_filter = $save_filter ?? array( __CLASS__, 'saved_content' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function saved_content( string $content ): string {
         $filtered = apply_filters( 'pre_post_content', wp_slash( $content ) );
         return wp_unslash( (string) apply_filters( 'content_save_pre', $filtered ) );
     }
 
-    
-
-
-
-
-
     abstract public function tested_versions(): array;
-
-    
-
-
-
-
-
-
-
-
-
 
     abstract public function encode_attribute( string $tag, string $name, array $spec, string $value ): string;
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     abstract public function link_attributes( string $tag, string $field, array $spec, array $decoded, string $url, ?bool $new_tab, ?bool $nofollow, array $fields );
 
-    
-
-
-
-
     abstract public function field_kinds(): array;
-
-    
-
-
-
-
-
-
-
 
     public function encode_content( string $tag, string $value ): string {
         unset( $tag );
         return str_replace( array( '[', ']' ), array( '&#91;', '&#93;' ), $value );
     }
-
-    
-
-
-
-
 
     public function element_refusal( string $tag ): ?string {
         if ( in_array( $tag, $this->code_tags(), true ) ) {
@@ -129,94 +39,39 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return null;
     }
 
-    
-
-
-
-
-
-
     public function element_access_refusal( string $tag ): ?string {
         unset( $tag );
         return null;
     }
 
-    
-
-
-
-
-
     public function masked( string $source ): string {
         return $this->mask( $source );
     }
-
-    
-
-
-
-
-
-
 
     public function link_view( string $tag, string $field, array $decoded ) {
         unset( $tag );
         return $decoded[ $field ] ?? null;
     }
 
-    
-
-
-
-
-
     public function layout_items( string $source ): array {
         return Shortcode_Tree::parse( $this->mask( $source ), $this->tags() );
     }
-
-    
-
-
-
-
-
 
     protected function mask( string $source ): string {
         return $source;
     }
 
-    
-
-
-
     public function element_roles( string $tag ): array {
         return $this->roles( $tag );
     }
-
-    
-
-
-
 
     public function decoded_atts( string $tag, array $atts ): array {
         return $this->decode_atts( $tag, $atts );
     }
 
-    
-
-
-
-
     public function decoded_content( string $tag, string $content ): string {
         return $this->decode_content( $tag, $content );
     }
-
-    
-
-
-
-
-
 
     public function edit_refusal( object $post ): ?string {
         if ( ! $this->is_present() ) {
@@ -232,22 +87,10 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return $this->builder_access_refusal( $post );
     }
 
-    
-
-
-
-
     protected function builder_access_refusal( object $post ): ?string {
         unset( $post );
         return null;
     }
-
-    
-
-
-
-
-
 
     public function edit( object $post, array $ops, bool $dry_run, ?callable $fence = null ): array {
         $post_id = (int) $post->ID;
@@ -290,7 +133,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         if ( null !== $fence ) {
             $fence();
         }
-        
         if ( self::stored_content( $post_id ) !== $original ) {
             throw new \RuntimeException( sprintf( 'The layout of post %d changed while this edit was being prepared, so nothing was saved. Read it again with wp_get_page_layout and redo the edit.', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -318,35 +160,14 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         );
     }
 
-    
-
-
-
-
-
-
-
     private static function fields_of( array $result ): array {
         $named = self::named_fields( $result );
         return isset( $result['written'] ) && is_array( $result['written'] ) ? array_values( array_unique( array_merge( $named, $result['written'] ) ) ) : $named;
     }
 
-    
-
-
-
-
-
     private static function named_fields( array $result ): array {
         return 'set_fields' === $result['op'] ? array_map( 'trim', explode( ',', $result['field'] ) ) : array( $result['field'] );
     }
-
-    
-
-
-
-
-
 
     private static function public_results( array $results ): array {
         foreach ( $results as $index => $result ) {
@@ -355,28 +176,11 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return $results;
     }
 
-    
-
-
-
-
     private static function stored_content( int $post_id ): string {
         wp_cache_delete( $post_id, 'posts' );
         $post = get_post( $post_id );
         return is_object( $post ) ? (string) $post->post_content : '';
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function save_problems( string $content ): array {
         if ( Shortcode_Editor::same_text( (string) ( $this->save_filter )( $content ), $content ) ) {
@@ -391,16 +195,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         }
         return array( sprintf( 'When this account saves, WordPress\'s save filters also change the rest of the page: this save would change %s too (HTML the account may not post is removed, by WordPress or by the page builder\'s Role Manager). Ask someone whose account may post that HTML to make this edit, or change those elements in the builder first.', $where ) );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function filter_losses( array $items, string $content, string $prefix, array &$affected ): void {
         foreach ( array_values( $items ) as $index => $item ) {
@@ -417,24 +211,12 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function read_back( array $results, string $planned, string $stored, array &$warnings ): array {
         if ( $planned === $stored ) {
             return $results;
         }
         $planned_items = $this->layout_items( $planned );
         $stored_items  = $this->layout_items( $stored );
-        
         $last = array();
         foreach ( $results as $index => $result ) {
             foreach ( self::fields_of( $result ) as $field ) {
@@ -465,67 +247,22 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return $results;
     }
 
-    
-
-
-
-
     abstract protected function tags(): array;
 
-    
-
-
-
-
-
-
     abstract protected function decode_atts( string $tag, array $atts ): array;
-
-    
-
-
-
-
-
-
 
     protected function decode_content( string $tag, string $content ): string {
         unset( $tag );
         return $content;
     }
 
-    
-
-
-
-
-
-
-
     abstract protected function roles( string $tag ): array;
 
-    
-
-
-
-
-
     abstract protected function tag_label( string $tag ): string;
-
-    
-
-
-
 
     protected function code_tags(): array {
         return array();
     }
-
-    
-
-
-
-
 
     public function source( object $post ): string {
         return (string) $post->post_content;
@@ -534,13 +271,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
     public function nodes( object $post ): array {
         return $this->build( $this->layout_items( $this->source( $post ) ), '' );
     }
-
-    
-
-
-
-
-
 
     private function build( array $items, string $prefix ): array {
         $nodes = array();
@@ -562,8 +292,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
             $atts     = $this->decode_atts( $tag, $item['atts'] );
             if ( null !== $item['content'] ) {
                 $decoded = $this->decode_content( $tag, $item['content'] );
-                
-                
                 if ( $decoded !== $item['content'] ) {
                     $item['content']  = $decoded;
                     $item['children'] = Shortcode_Tree::parse( $decoded, array() );
@@ -571,8 +299,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
             }
             $roles    = $this->roles( $tag );
             $children = $this->build( $item['children'], $address );
-            
-            
             if ( null !== $item['content'] && ! self::has_elements( $item['children'] ) ) {
                 $atts['content'] = $item['content'];
             }
@@ -593,12 +319,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return $nodes;
     }
 
-    
-
-
-
-
-
     private static function has_elements( array $items ): bool {
         foreach ( $items as $item ) {
             if ( Shortcode_Tree::TEXT !== $item['tag'] ) {
@@ -607,16 +327,6 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function role_text( array $roles, array $atts, array $item, array $children ): ?string {
         if ( ! isset( $roles['text'] ) ) {
@@ -637,24 +347,12 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return self::excerpt( implode( ' ', $own ) );
     }
 
-    
-
-
-
-
-
     private static function link( $value ): ?string {
         if ( is_array( $value ) ) {
             $value = $value['url'] ?? null;
         }
         return is_string( $value ) && '' !== $value ? $value : null;
     }
-
-    
-
-
-
-
 
     private static function image( $value ): ?array {
         if ( is_numeric( $value ) && (int) $value > 0 ) {

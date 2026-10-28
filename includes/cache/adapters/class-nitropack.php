@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -15,73 +10,27 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Nitropack extends Cache_Adapter {
 
-    
     const MIN_VERSION = '1.19';
 
-    
     const LIGHT_PURGE = 8;
 
-    
     const REASON = 'Easy MCP AI: wp_clear_cache';
 
-    
     const FULL_FANOUT = 'nitropack_execute_purge_all';
 
-    
     const URL_FANOUT = 'nitropack_execute_purge_url';
 
-    
     const OBJECT_FLUSHERS = array( 'nitropack\\integration\\hosting\\pressable' );
 
-    
     const ZONE_PURGERS = array(
         'nitropack\\integration\\plugin\\cloudflare',
         'nitropack\\integration\\hosting\\rocketnet',
         'nitropack\\integration\\server\\nestifycdn',
     );
 
-    
     const WP_ENGINE = 'nitropack\\integration\\hosting\\wpengine';
-
-    
-
-
-
-
-
 
     const NETWORK_PURGERS = array(
         'nitropack\\integration\\plugin\\nginxhelper',
@@ -94,7 +43,6 @@ final class Nitropack extends Cache_Adapter {
         'nitropack\\integration\\server\\nginxfastcgi',
     );
 
-    
     const URL_WIDENERS = array(
         'nitropack\\integration\\hosting\\wpx',
         'nitropack\\integration\\hosting\\raidboxes',
@@ -190,12 +138,6 @@ final class Nitropack extends Cache_Adapter {
         return $this->sent( $detail );
     }
 
-    
-
-
-
-
-
     private function api_missing(): ?Layer_Result {
         $version = (string) $this->calls()->constant( 'NITROPACK_VERSION' );
         if ( version_compare( $version, self::MIN_VERSION, '<' ) ) {
@@ -207,32 +149,13 @@ final class Nitropack extends Cache_Adapter {
         return null;
     }
 
-    
-
-
-
-
     private function no_sdk(): Layer_Result {
         return $this->layer( Layer_Result::FAILED, array( 'detail' => 'NitroPack could not load its SDK for this request\'s address (it is not connected for it), so nothing was purged.' ) );
     }
 
-    
-
-
-
-
-
-
     private function hooked( string $hook, array $classes ): bool {
         return array() !== array_intersect( $classes, $this->listener_classes( $hook ) );
     }
-
-    
-
-
-
-
-
 
     private function listener_classes( string $hook ): array {
         if ( false === $this->calls()->has_action( $hook ) ) {
@@ -251,12 +174,6 @@ final class Nitropack extends Cache_Adapter {
         }
         return array_values( array_filter( $classes ) );
     }
-
-    
-
-
-
-
 
     private static function class_of( $callable ): string {
         if ( is_string( $callable ) && false !== strpos( $callable, '::' ) ) {

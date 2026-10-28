@@ -25,9 +25,6 @@ class Site_Info_Resource extends Base_Resource {
         return array(
             'name'         => get_bloginfo( 'name' ),
             'description'  => get_bloginfo( 'description' ),
-            
-            
-            
             'url'          => home_url(),
             'wp_version'   => $wp_version,
             'timezone'     => wp_timezone_string(),

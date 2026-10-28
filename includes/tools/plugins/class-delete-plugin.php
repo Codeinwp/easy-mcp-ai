@@ -9,19 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Delete_Plugin extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -56,7 +43,6 @@ class Delete_Plugin extends Base_Tool {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -86,7 +72,6 @@ class Delete_Plugin extends Base_Tool {
         $plugin = $this->parse_plugin_argument( $arguments );
 
         $this->refuse_when_file_mods_are_off( 'plugins cannot be deleted' );
-        
         if ( ! current_user_can( 'delete_plugins' ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to delete plugins for this site.' );
         }
@@ -96,10 +81,6 @@ class Delete_Plugin extends Base_Tool {
         $this->load_plugin_admin_functions();
         $data  = $this->installed_plugin( $plugin );
         $label = $this->plugin_label( $plugin, $data );
-        
-        
-        
-        
         if ( is_plugin_active_for_network( $plugin ) ) {
             throw new \RuntimeException( sprintf( 'Plugin "%s" is network-active. A super admin must deactivate it network-wide first (wp_deactivate_plugin with network_wide: true).', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -136,13 +117,6 @@ class Delete_Plugin extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
     protected function remove_plugin_files( string $plugin ) {
         global $wp_filesystem;
         $plugins_dir = self::filesystem_plugins_dir();
@@ -150,10 +124,8 @@ class Delete_Plugin extends Base_Tool {
             return $plugins_dir;
         }
 
-        
         do_action( 'delete_plugin', $plugin ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's own hook, fired as delete_plugins() fires it.
 
-        
         $this_plugin_dir = rtrim( dirname( $plugins_dir . $plugin ), '/' ) . '/';
         if ( strpos( $plugin, '/' ) && $this_plugin_dir !== $plugins_dir ) {
             $deleted = $wp_filesystem->delete( $this_plugin_dir, true );
@@ -161,27 +133,16 @@ class Delete_Plugin extends Base_Tool {
             $deleted = $wp_filesystem->delete( $plugins_dir . $plugin );
         }
 
-        
         do_action( 'deleted_plugin', $plugin, $deleted ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's own hook.
 
         if ( ! $deleted ) {
             return new \WP_Error( 'could_not_remove_plugin', sprintf( 'Could not fully remove the plugin %s.', $plugin ) );
         }
-        
-        
         if ( function_exists( 'wp_clean_plugins_cache' ) ) {
             wp_clean_plugins_cache( false );
         }
         return true;
     }
-
-    
-
-
-
-
-
-
 
     private static function filesystem_plugins_dir() {
         global $wp_filesystem;

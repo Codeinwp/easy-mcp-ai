@@ -5,28 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Tabular {
-
-    
-
-
-
-
 
     public static function render( array $headers, array $rows ): string {
         $text = self::row( $headers ) . "\n";
@@ -36,12 +15,6 @@ final class Tabular {
         return $text;
     }
 
-    
-
-
-
-
-
     public static function body_lines( array $row ): string {
         $text = '';
         foreach ( explode( PHP_EOL, self::row( $row ) ) as $line ) {
@@ -49,14 +22,6 @@ final class Tabular {
         }
         return $text;
     }
-
-    
-
-
-
-
-
-
 
     public static function row( array $row ): string {
         $rows        = array();
@@ -68,7 +33,6 @@ final class Tabular {
             $value       = isset( $value ) ? (string) $value : '';
             $value       = str_replace( "\t", '    ', $value );
             $split_lines = preg_split( '/\r\n|\n/', $value );
-            
             $row[ $col ] = array_shift( $split_lines );
         }
 

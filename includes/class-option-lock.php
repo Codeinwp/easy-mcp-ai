@@ -1,39 +1,12 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Option_Lock {
-
-    
-
-
-
-
-
-
 
     public static function acquire( string $name, int $ttl ): string {
         global $wpdb;
@@ -45,8 +18,6 @@ final class Option_Lock {
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- an atomic lock cannot go through the options cache.
         $won = (int) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'off')", $name, $token ) );
         if ( 1 !== $won ) {
-            
-            
             if ( self::failed() ) {
                 return '';
             }
@@ -65,21 +36,10 @@ final class Option_Lock {
         return 1 === $won ? $token : '';
     }
 
-    
     private static function failed(): bool {
         global $wpdb;
         return '' !== (string) ( $wpdb->last_error ?? '' );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function renew( string $name, string $token ): string {
         global $wpdb;
@@ -95,13 +55,6 @@ final class Option_Lock {
         return 1 === $won ? $next : '';
     }
 
-    
-
-
-
-
-
-
     public static function holds( string $name, string $token ): bool {
         global $wpdb;
         if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) ) {
@@ -111,12 +64,6 @@ final class Option_Lock {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the lock row as stored now, not as cached.
         return (string) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $name ) ) === $token;
     }
-
-    
-
-
-
-
 
     public static function release( string $name, string $token ): void {
         global $wpdb;

@@ -21,14 +21,6 @@ class Update_Custom_Css extends Base_Tool {
         return 'appearance';
     }
 
-    
-
-
-
-
-
-
-
     public function get_required_capability() {
         return 'edit_css';
     }
@@ -96,10 +88,6 @@ class Update_Custom_Css extends Base_Tool {
                 if ( ! $setting ) {
                     throw new \RuntimeException( 'Additional CSS is not available on this site: the Customizer setting "' . $id . '" is not registered (a plugin may have removed it).' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
-                
-                
-                
-                
                 if ( $setting->capability && ! current_user_can( $setting->capability ) ) {
                     throw new \RuntimeException( sprintf( 'You do not have permission to edit Additional CSS on this site (it requires the "%s" capability).', is_array( $setting->capability ) ? implode( ', ', $setting->capability ) : $setting->capability ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
@@ -107,22 +95,12 @@ class Update_Custom_Css extends Base_Tool {
                     throw new \RuntimeException( 'Additional CSS belongs to a theme feature the active theme does not support, so the Customizer does not offer it.' );
                 }
 
-                
-                
-                
-                
-                
                 $value = $css;
                 if ( 'append' === $mode ) {
                     $existing = (string) $setting->value();
                     $value    = '' === $existing ? $css : $existing . "\n" . $css;
                 }
 
-                
-                
-                
-                
-                
                 $saved_post_id = 0;
                 $listener      = static function ( $post_id ) use ( &$saved_post_id ) {
                     $saved_post_id = (int) $post_id;

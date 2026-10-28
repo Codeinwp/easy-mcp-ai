@@ -65,7 +65,6 @@ class Delete_Block extends Base_Tool {
 
         $data = $this->rest_request( 'DELETE', '/wp/v2/blocks/' . $block_id, $params );
 
-        
         $returned_id = $force ? ( $data['previous']['id'] ?? null ) : $data['id'];
 
         return array(

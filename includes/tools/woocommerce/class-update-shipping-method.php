@@ -7,12 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class Update_Shipping_Method extends Base_Tool {
 
     use Store_Setup;

@@ -7,30 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Plugin {
 
-    
-
-
-
-
-
     const CLEANUP_MAX_ITERATIONS = 20;
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const DEFAULT_OAUTH_CLIENT_RETENTION = 7;
 
@@ -49,44 +26,17 @@ class Plugin {
 
     private function __construct() {
         Config_Admin::register();
-        
-        
-        
+        Admin\Review_Ask::register();
         \add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-        
-        
         \add_action( 'rest_api_init', array( __CLASS__, 'maybe_seed_abilities' ), 1 );
         \add_action( 'admin_init', array( __CLASS__, 'maybe_seed_abilities' ) );
         \add_action( 'init', array( $this, 'handle_well_known' ), 0 );
-        
-        
         \add_filter( 'rest_pre_serve_request', array( Cache\Page_Cache_Opt_Out::class, 'on_rest_pre_serve_request' ), 1, 4 );
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         \add_action( 'init', array( $this, 'handle_oauth_authorize_request' ), PHP_INT_MAX );
-        
-        
-        
         \add_action( 'init', array( $this, 'handle_approval_request' ), PHP_INT_MAX );
-        
-        
         \add_action( 'init', array( __CLASS__, 'maybe_register_preview_link' ) );
-        
-        
         \add_action( 'setup_theme', array( __CLASS__, 'maybe_autoload_customizer' ), 0 );
-        
-        
-        
         \add_action( 'parse_request', array( $this, 'handle_root_fallback' ), 1 );
-        
         \add_action( 'update_option_permalink_structure', array( $this, 'remove_plain_routes_after_permalink_change' ), 10, 2 );
         \add_action( 'easy_mcp_ai_cleanup_audit_log', array( $this, 'cleanup_audit_log' ) );
         \add_action( 'easy_mcp_ai_cleanup_oauth', array( $this, 'cleanup_oauth_storage' ) );
@@ -94,57 +44,28 @@ class Plugin {
         \add_action( 'easy_mcp_ai_cleanup_change_log', array( __CLASS__, 'cleanup_change_log' ) );
         \add_action( 'easy_mcp_ai_cleanup_tasks', array( $this, 'cleanup_tasks' ) );
         \add_action( 'easy_mcp_ai_cleanup_approvals', array( __CLASS__, 'cleanup_approvals' ) );
-        
-        
         \add_action( 'easy_mcp_ai_skills_sync', array( __CLASS__, 'run_skills_sync' ) );
-        
-        
-        
         \add_action( OAuth\Client_Metadata_Support::HOOK, array( __CLASS__, 'run_oauth_cimd_probe' ) );
         \add_action( 'easy_mcp_ai_task_tick', array( $this, 'run_task_tick' ), 10, 1 );
-        
         \add_action( 'easy_mcp_ai_search_replace_tick', array( __CLASS__, 'run_search_replace_tick' ), 10, 1 );
-        
         \add_action( 'plugins_loaded', array( 'Easy_MCP_AI\Activator', 'maybe_upgrade' ) );
         \add_action( 'plugins_loaded', array( $this, 'maybe_upgrade_oauth' ) );
-        
-        
         \add_filter( 'application_password_is_api_request', array( __CLASS__, 'exempt_oauth_client_credentials_from_application_passwords' ) );
-        
-        
-        
-        
-        
         \add_filter( 'map_meta_cap', array( __CLASS__, 'map_privileged_meta_cap' ), 10, 3 );
-        
-        
-        
-        
         \add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_learnpress_category' ), 1000 );
         \add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_learnpress_abilities' ), 1000 );
-        
-        
         \add_action( 'update_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'learnpress_group_updated' ), 10, 2 );
         \add_action( 'add_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'learnpress_group_added' ), 10, 2 );
-        
-        
-        
         \add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_elementor_abilities' ), 1000 );
         \add_action( 'update_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'elementor_group_updated' ), 10, 2 );
         \add_action( 'add_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'elementor_group_added' ), 10, 2 );
-        
-        
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
             Privileged\Privileged_Admin::register_cli();
         }
-        
         if ( \is_multisite() ) {
             \add_action( 'wp_initialize_site', array( $this, 'on_new_site' ), 10, 1 );
-            
-            
             \add_filter( 'wpmu_drop_tables', array( $this, 'on_drop_subsite_tables' ), 10, 1 );
         }
-        
         if ( \is_admin() && ! \wp_doing_cron() && ! \wp_doing_ajax() ) {
             \add_action( 'init', array( $this, 'init_admin' ) );
         }
@@ -153,13 +74,7 @@ class Plugin {
     public function init_admin() {
         $this->token_manager = new Auth\Token_Manager();
         $this->tool_registry = new Tools\Tool_Registry();
-        
-        
-        
         $this->tool_registry->set_lazy_loader( function () { $this->register_tools(); } );
-        
-        
-        
         if ( $this->is_plugin_admin_screen() ) {
             $this->register_tools();
         }
@@ -169,55 +84,16 @@ class Plugin {
         $this->register_diagnostics();
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function register_diagnostics() {
-        
-        
-        
-        
-        
-        
-        
-        
         Diagnostics\Diagnostics::register_core_checks( $this->tool_registry );
         Diagnostics\Diagnostics_Site_Health::register();
 
-        
-        
-        
-        
-        
         Diagnostics\Diagnostics::register_invalidation();
 
-        
-        
-        
         if ( $this->is_plugin_admin_screen() ) {
             \add_action( 'admin_init', array( Diagnostics\Diagnostics::class, 'maybe_run' ) );
         }
     }
-
-    
-
-
-
-
-
-
 
     private function is_plugin_admin_screen() {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen routing; mutates nothing.
@@ -225,27 +101,11 @@ class Plugin {
         return '' !== $page && 0 === strpos( $page, 'easy-mcp-ai' );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function handle_well_known() {
-        
-        
-        
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public routing check on REQUEST_URI; no state is mutated here.
         $request_uri_raw = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
         $is_well_known   = false !== strpos( $request_uri_raw, '/.well-known/' );
         if ( ! $is_well_known ) {
-            
-            
-            
             return;
         }
 
@@ -253,10 +113,8 @@ class Plugin {
             return;
         }
 
-        
         $request_uri = \wp_parse_url( $request_uri_raw, PHP_URL_PATH );
 
-        
         $home_path = trim( \wp_parse_url( \home_url(), PHP_URL_PATH ) ?? '', '/' );
         if ( $home_path ) {
             $request_uri = preg_replace( '#^/' . preg_quote( $home_path, '#' ) . '#', '', $request_uri );
@@ -267,24 +125,10 @@ class Plugin {
             return;
         }
 
-        
-        
         Cache\Page_Cache_Opt_Out::apply_to_direct_response();
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         ob_start();
 
-        
-        
-        
         $discovery = new OAuth\Discovery();
         $rest_req  = new \WP_REST_Request( 'GET' );
         if ( 'protected-resource' === $document['document'] ) {
@@ -293,9 +137,6 @@ class Plugin {
             $response = $discovery->authorization_server_response( $document['issuer'], $document['openid'] );
         }
 
-        
-        
-        
         if ( is_wp_error( $response ) ) {
             $err_data = $response->get_error_data();
             $status   = is_array( $err_data ) && isset( $err_data['status'] ) ? (int) $err_data['status'] : 400;
@@ -311,38 +152,12 @@ class Plugin {
             $body   = $response;
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         while ( ob_get_level() > 0 ) {
             if ( ! ob_end_clean() ) {
                 break;
             }
         }
 
-        
-        
-        
         if ( ! headers_sent() ) {
             \status_header( $status );
             header( 'Content-Type: application/json; charset=utf-8' );
@@ -354,58 +169,13 @@ class Plugin {
         exit;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function is_path_inserted_resource_metadata( $request_uri_raw, $home_path ) {
         $path = \wp_parse_url( $request_uri_raw, PHP_URL_PATH );
         if ( ! is_string( $path ) || '' === $path ) {
             return false;
         }
-        
-        
         $path = rtrim( $path, '/' );
 
-        
-        
-        
-        
-        
-        
         $resource_path = \wp_parse_url(
             \rest_url( 'easy-mcp-ai/v1/mcp' ),
             PHP_URL_PATH
@@ -420,37 +190,12 @@ class Plugin {
             return true;
         }
 
-        
-        
         if ( '' !== $home_path && $path === '/' . $home_path . $canonical ) {
             return true;
         }
 
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function is_path_inserted_auth_server_metadata( $request_uri_raw, $home_path ) {
         $home_path = trim( (string) $home_path, '/' );
@@ -473,24 +218,7 @@ class Plugin {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function well_known_document( string $request_uri_raw, string $request_uri, string $home_path ): ?array {
-        
         $root = '/' === substr( $request_uri, -1 ) ? substr( $request_uri, 0, -1 ) : $request_uri;
         if ( '/.well-known/oauth-protected-resource' === $root ) {
             return self::discovery_document( 'protected-resource', 'site', false );
@@ -513,16 +241,6 @@ class Plugin {
         return self::discovery_document( 'authorization-server', 'resource', 'openid-configuration' === $resource_issuer_doc );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function discovery_document( string $document, string $issuer, bool $openid ): array {
         return array(
             'document' => $document,
@@ -531,17 +249,6 @@ class Plugin {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function resource_issuer_document( $request_uri_raw ): ?string {
         $path = \wp_parse_url( (string) $request_uri_raw, PHP_URL_PATH );
         if ( ! is_string( $path ) || '' === $path ) {
@@ -549,7 +256,6 @@ class Plugin {
         }
         $path          = rtrim( $path, '/' );
         $resource_path = \wp_parse_url( \rest_url( 'easy-mcp-ai/v1/mcp' ), PHP_URL_PATH );
-        
         if ( ! is_string( $resource_path ) || '' === $resource_path || false !== strpos( \rest_url( 'easy-mcp-ai/v1/mcp' ), '?' ) ) {
             return null;
         }
@@ -561,21 +267,6 @@ class Plugin {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function authorize_path_mode( $request_uri_raw, string $home_path = '' ): ?string {
         $path = \wp_parse_url( (string) $request_uri_raw, PHP_URL_PATH );
@@ -595,23 +286,11 @@ class Plugin {
         return null;
     }
 
-    
-
-
-
-
-
-
     public function handle_approval_request() {
-        
-        
-        
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public routing check; the page verifies its own nonce on POST.
         if ( ! isset( $_GET['easy_mcp_ai_approve'] ) && ! isset( $_POST['easy_mcp_ai_approve'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
             return;
         }
-        
-        
         Cache\Page_Cache_Opt_Out::apply_to_direct_response();
         ob_start();
         \Easy_MCP_AI\Approvals\Approval_Schema::maybe_upgrade();
@@ -643,11 +322,6 @@ class Plugin {
         exit;
     }
 
-    
-
-
-
-
     public static function maybe_register_preview_link(): void {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public routing check; the link's signature is verified when the post is served.
         if ( ! isset( $_GET['easy_mcp_ai_preview'] ) || \is_admin() ) {
@@ -656,21 +330,12 @@ class Plugin {
         Preview\Preview_Link::register_front_end();
     }
 
-    
-
-
-
-
     public static function maybe_autoload_customizer(): void {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only routing check; nothing is acted on.
         if ( Tools\Appearance\Customizer_Autoload::is_mcp_post( $_SERVER, $_GET ) ) {
             Tools\Appearance\Customizer_Autoload::register();
         }
     }
-
-    
-
-
 
     public static function cleanup_approvals() {
         if ( function_exists( 'wp_installing' ) && \wp_installing() ) {
@@ -693,23 +358,9 @@ class Plugin {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function handle_oauth_authorize_request() {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public routing check; authorize handler enforces its own nonce downstream.
         $oauth_param = isset( $_GET['easy_mcp_ai_oauth'] ) ? sanitize_text_field( wp_unslash( $_GET['easy_mcp_ai_oauth'] ) ) : '';
-        
-        
-        
-        
         $iss_mode  = 'site';
         $path_mode = self::authorize_path_mode(
             isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '',
@@ -721,38 +372,15 @@ class Plugin {
         } elseif ( 'authorize' === $oauth_param && isset( $_GET['easy_mcp_ai_iss'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- bound into the consent nonce on POST; 'none' is honoured only while the root fallback is armed.
             $iss_mode = self::requested_iss_mode( sanitize_key( wp_unslash( $_GET['easy_mcp_ai_iss'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         }
-        
-        
-        
-        
-        
         if ( 'authorize' !== $oauth_param && 'device' !== $oauth_param ) {
             return;
         }
         if ( ! \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
             return;
         }
-        
-        
-        
         Activator::maybe_upgrade_core_tables();
         $this->handle_oauth_authorize( $oauth_param, $iss_mode );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function requested_iss_mode( string $requested ): string {
         if ( 'resource' === $requested ) {
@@ -764,23 +392,9 @@ class Plugin {
         return 'site';
     }
 
-    
-
-
-
-
-
     public static function home_path(): string {
         return trim( (string) \wp_parse_url( \home_url(), PHP_URL_PATH ), '/' );
     }
-
-    
-
-
-
-
-
-
 
     public static function strip_home_path( string $path, string $home_path ): string {
         $path      = '/' . trim( $path, '/' );
@@ -791,27 +405,10 @@ class Plugin {
         return $path;
     }
 
-    
-
-
-
-
-
     public function serve_oauth_authorize( string $iss_mode ): void {
         Activator::maybe_upgrade_core_tables();
         $this->handle_oauth_authorize( 'authorize', $iss_mode );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     public function remove_plain_routes_after_permalink_change( $old_value, $value ): void {
         if ( '' === (string) $value || ( function_exists( 'is_multisite' ) && \is_multisite() && ! \is_main_site() ) ) {
@@ -819,13 +416,6 @@ class Plugin {
         }
         Diagnostics\Htaccess_Plain_Routes::remove( Diagnostics\Htaccess_Auth_Rule::htaccess_path() );
     }
-
-    
-
-
-
-
-
 
     public function handle_root_fallback( \WP $wp ): void {
         $uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) \wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared, never output.
@@ -835,39 +425,9 @@ class Plugin {
         OAuth\Root_Fallback::dispatch( $wp );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private function handle_oauth_authorize( string $flow = 'authorize', string $iss_mode = 'site' ) {
-        
-        
-        
-        
         Cache\Page_Cache_Opt_Out::apply_to_direct_response();
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         ob_start();
 
         $method  = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
@@ -884,10 +444,6 @@ class Plugin {
         $endpoint = ( 'device' === $flow ) ? new OAuth\Device_Verification() : new OAuth\Authorization_Endpoint( $iss_mode );
         $response = 'POST' === $method ? $endpoint->handle_post( $request ) : $endpoint->handle_get( $request );
 
-        
-        
-        
-        
         while ( ob_get_level() > 0 ) {
             if ( ! ob_end_clean() ) {
                 break;
@@ -898,16 +454,6 @@ class Plugin {
         exit;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function send_authorize_response( $response ) {
         if ( \is_wp_error( $response ) ) {
             $status = 400;
@@ -915,10 +461,6 @@ class Plugin {
             if ( is_array( $data ) && ! empty( $data['status'] ) ) {
                 $status = (int) $data['status'];
             }
-            
-            
-            
-            
             if ( ! headers_sent() ) {
                 \status_header( $status );
                 header( 'Content-Type: text/html; charset=utf-8' );
@@ -953,17 +495,11 @@ class Plugin {
             return;
         }
 
-        
-        
-        
-        
         $can_send_headers = ! headers_sent();
 
         if ( $can_send_headers ) {
             \status_header( $response->get_status() );
 
-            
-            
             header_remove( 'Content-Security-Policy' );
         }
 
@@ -983,15 +519,11 @@ class Plugin {
             return;
         }
 
-        
-        
-        
         if ( is_string( $data ) && 0 === strpos( strtolower( $content_type ), 'text/html' ) ) {
             echo $data; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in template.
             return;
         }
 
-        
         if ( '' === $content_type && $can_send_headers ) {
             header( 'Content-Type: application/json; charset=utf-8' );
         }
@@ -999,21 +531,10 @@ class Plugin {
     }
 
     public function register_rest_routes() {
-        
-        
         \Easy_MCP_AI\History\Change_Log_Schema::maybe_upgrade();
-        
-        
-        
-        
         Activator::maybe_upgrade_core_tables();
-        
-        
         \Easy_MCP_AI\Tasks\Task_Schema::maybe_upgrade();
-        
-        
         \Easy_MCP_AI\Approvals\Approval_Schema::maybe_upgrade();
-
 
         $this->token_manager     = new Auth\Token_Manager();
         $this->tool_registry     = new Tools\Tool_Registry();
@@ -1023,35 +544,16 @@ class Plugin {
         $this->register_tools();
         $this->register_resources();
 
-        
-        
-        
-        
-        
-        
-
-        
-        
-        
         if ( \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_enabled', true ) ) {
             $change_recorder = new \Easy_MCP_AI\History\Change_Recorder(
                 new \Easy_MCP_AI\History\Change_Log_Repository()
             );
             $change_recorder->register();
 
-            
-            
-            
             \add_action( 'easy_mcp_ai_change_context_disarming', array( $change_recorder, 'reassert_hooks' ), 5 );
 
-            
-            
-            
-            
             self::wire_db_interceptor( (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_capture_db', false ) );
 
-            
-            
             if ( \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_external_intent', true ) ) {
                 ( new \Easy_MCP_AI\History\Change_External_Intent(
                     new \Easy_MCP_AI\History\Change_Log_Repository()
@@ -1062,62 +564,24 @@ class Plugin {
         $transport = new MCP\Transport( $this->server, $this->token_manager );
         $transport->register_routes();
 
-        
-        
-        
-        
-        
         MCP\Rest_Auth_Override::register();
 
-        
         if ( \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             OAuth\OAuth_Schema::maybe_upgrade();
 
             $oauth_routes = new OAuth\OAuth_Routes();
             $oauth_routes->register_routes();
         }
 
-        
-        
         ( new Admin\Rest\Admin_Routes( $this->tool_registry ) )->register();
     }
 
     private function register_tools(): void {
-        
-        
         $this->tool_registry->auto_discover();
         $this->register_ability_tools();
     }
 
-    
-
-
-
     private function register_ability_tools(): void {
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $registry          = $this->tool_registry;
         $dynamic_registrar = new Tools\Dynamic_Tool_Registrar();
         if ( \doing_action( 'init' ) ) {
@@ -1134,13 +598,10 @@ class Plugin {
 
     private function register_resources() {
         $this->resource_registry->auto_discover();
-        
-        
         \Easy_MCP_AI\Skills\Skills::use_registry( $this->tool_registry );
         $this->resource_registry->add_provider( array( __CLASS__, 'skill_resources' ) );
     }
 
-    
     public static function skill_resources(): array {
         $out = array();
         foreach ( \Easy_MCP_AI\Skills\Skills::served()->skills() as $skill ) {
@@ -1151,52 +612,13 @@ class Plugin {
         return $out;
     }
 
-    
     public static function run_skills_sync(): void {
         \Easy_MCP_AI\Skills\Skill_Sync::run();
     }
 
-    
     public static function run_oauth_cimd_probe(): void {
         OAuth\Client_Metadata_Support::run_probe();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public function cleanup_oauth_storage() {
         if ( ! \wp_doing_cron() ) {
@@ -1209,12 +631,6 @@ class Plugin {
         $consents_table = $wpdb->prefix . 'easy_mcp_ai_oauth_consents';
         $device_table   = $wpdb->prefix . 'easy_mcp_ai_oauth_device_codes';
 
-        
-        
-        
-        
-        
-        
         OAuth\OAuth_Site_Move::sweep();
 
         $i = 0;
@@ -1235,12 +651,6 @@ class Plugin {
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         } while ( $deleted > 0 && ++$i < self::CLEANUP_MAX_ITERATIONS );
 
-        
-        
-        
-        
-        
-        
         $i = 0;
         do {
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned tables; names prefixed by $wpdb->prefix.
@@ -1252,7 +662,7 @@ class Plugin {
 
         $client_retention = self::oauth_client_retention_days();
         if ( $client_retention < 1 ) {
-            return; 
+            return;
         }
 
         $i = 0;
@@ -1274,18 +684,6 @@ class Plugin {
         } while ( $deleted > 0 && ++$i < self::CLEANUP_MAX_ITERATIONS );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     public static function oauth_client_retention_days() {
         $stored = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_client_retention', self::DEFAULT_OAUTH_CLIENT_RETENTION );
         if ( ! is_numeric( $stored ) ) {
@@ -1300,11 +698,6 @@ class Plugin {
             $days = 3650;
         }
 
-        
-
-
-
-
         $days = (int) \apply_filters( 'easy_mcp_ai_oauth_client_retention', $days );
 
         return ( $days < 0 ) ? 0 : $days;
@@ -1316,18 +709,6 @@ class Plugin {
         }
         global $wpdb;
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         $draft_cutoff = time() - DAY_IN_SECONDS;
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- direct DB required for batched usermeta cleanup.
         $drafts = $wpdb->get_results( $wpdb->prepare(
@@ -1344,19 +725,9 @@ class Plugin {
                 }
             }
             if ( $expired ) {
-                
-                
-                
-                
-                
-                
                 $placeholders = implode( ',', array_fill( 0, count( $expired ), '%d' ) );
                 $wpdb->query(
                     $wpdb->prepare(
-                        
-                        
-                        
-                        
                         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is a generated list of %d and $wpdb->usermeta is a core table name; neither is input.
                         "DELETE FROM {$wpdb->usermeta} WHERE umeta_id IN ({$placeholders})",
                         $expired
@@ -1392,10 +763,6 @@ class Plugin {
             // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         } while ( $deleted > 0 && ++$i < self::CLEANUP_MAX_ITERATIONS );
 
-        
-        
-        
-        
         $tokens_table   = $wpdb->prefix . 'easy_mcp_ai_tokens';
         $inactive_cutoff = gmdate( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS );
         $i              = 0;
@@ -1404,31 +771,6 @@ class Plugin {
             $deleted = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM `{$tokens_table}` WHERE is_active = 0 AND updated_at < %s LIMIT 500", $inactive_cutoff ) );
         } while ( $deleted > 0 && ++$i < self::CLEANUP_MAX_ITERATIONS );
     }
-
-    
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function change_log_retention_days() {
         $stored = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_retention', 30 );
@@ -1444,33 +786,14 @@ class Plugin {
             return;
         }
         $retention = self::change_log_retention_days();
-        
-        
-        
-        
-        
-        
-        
-        
 
         if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Log_Repository' ) ) {
             return;
         }
         $repo = new \Easy_MCP_AI\History\Change_Log_Repository();
 
-        
-        
-        
         $budget = self::CLEANUP_MAX_ITERATIONS;
 
-        
-        
-        
-        
-        
-        
-        
-        
         $stored_db_retention = \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_db_retention', 7 );
         $db_retention        = is_numeric( $stored_db_retention ) ? (int) $stored_db_retention : 7;
         if ( $db_retention < 0 ) {
@@ -1487,9 +810,6 @@ class Plugin {
             }
         }
 
-        
-        
-        
         if ( $retention > 0 ) {
             $cutoff = \gmdate( 'Y-m-d H:i:s', time() - ( $retention * DAY_IN_SECONDS ) );
             while ( $budget > 0 ) {
@@ -1508,7 +828,6 @@ class Plugin {
         }
         global $wpdb;
         $retention = max( 1, (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_retention', 30 ) );
-        
         $i = 0;
         do {
             $table   = \esc_sql( $wpdb->prefix . 'easy_mcp_ai_audit_log' );
@@ -1521,16 +840,6 @@ class Plugin {
         } while ( $deleted > 0 && ++$i < self::CLEANUP_MAX_ITERATIONS );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function maybe_seed_abilities(): void {
         if ( ! \get_option( 'easy_mcp_ai_abilities_seed_pending' ) ) {
             return;
@@ -1541,16 +850,12 @@ class Plugin {
     public function on_new_site( $site ) {
         \switch_to_blog( $site->id );
         try {
-            
-            
-            
             self::seed_own_settings(
                 static function () {
                     Activator::activate( false, false );
                 }
             );
             \delete_option( 'rewrite_rules' );
-            
             if ( \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
                 self::seed_own_settings( array( OAuth\OAuth_Schema::class, 'create_tables' ) );
             }
@@ -1559,18 +864,6 @@ class Plugin {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function seed_own_settings( callable $write ): void {
         if ( \class_exists( '\\Easy_MCP_AI\\MCP\\Option_Guard' ) ) {
             \Easy_MCP_AI\MCP\Option_Guard::while_suspended( $write );
@@ -1578,15 +871,6 @@ class Plugin {
         }
         $write();
     }
-
-    
-
-
-
-
-
-
-
 
     public function on_drop_subsite_tables( $tables ) {
         global $wpdb;
@@ -1607,82 +891,35 @@ class Plugin {
         return $tables;
     }
 
-    
-
-
-
-
     public static function register_learnpress_category(): void {
         Compat\Learnpress_Abilities::register_category();
     }
-
-    
-
-
 
     public static function register_learnpress_abilities(): void {
         Compat\Learnpress_Abilities::register_abilities();
         Compat\Learnpress_Abilities::enable_pending();
     }
 
-    
-
-
-
-
-
     public static function learnpress_group_updated( $old_value, $value ): void {
         Compat\Learnpress_Abilities::group_changed( $old_value, $value );
     }
 
-    
-
-
-
-
-
     public static function learnpress_group_added( $option, $value ): void {
         Compat\Learnpress_Abilities::group_changed( array(), $value );
     }
-
-    
-
-
 
     public static function register_elementor_abilities(): void {
         Compat\Elementor_Abilities::register_abilities();
         Compat\Elementor_Abilities::enable_pending();
     }
 
-    
-
-
-
-
-
     public static function elementor_group_updated( $old_value, $value ): void {
         Compat\Elementor_Abilities::group_changed( $old_value, $value );
     }
 
-    
-
-
-
-
-
     public static function elementor_group_added( $option, $value ): void {
         Compat\Elementor_Abilities::group_changed( array(), $value );
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function map_privileged_meta_cap( $caps, $cap, $user_id ) {
         if ( ! is_string( $cap ) || 0 !== strpos( $cap, 'easy_mcp_ai_' ) ) {
@@ -1691,22 +928,12 @@ class Plugin {
         return \Easy_MCP_AI\Privileged\Privileged_Groups::map_meta_cap( $caps, $cap, (int) $user_id );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function wire_db_interceptor( $capture_db ) {
         $db_interceptor = new \Easy_MCP_AI\History\Change_DB_Interceptor(
             new \Easy_MCP_AI\History\Change_Log_Repository()
         );
         $armed = false;
         \add_action( 'easy_mcp_ai_change_context_armed', static function () use ( $db_interceptor, $capture_db, &$armed ) {
-            
             if ( \Easy_MCP_AI\History\Change_Context::get( 'own_history', false ) ) {
                 return;
             }
@@ -1723,41 +950,6 @@ class Plugin {
         }, 20 );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function exempt_oauth_client_credentials_from_application_passwords( $is_api_request ) {
         if ( ! $is_api_request ) {
             return $is_api_request;
@@ -1767,41 +959,19 @@ class Plugin {
         }
         $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Read-only path match; not stored or output.
 
-        
         if ( preg_match( '/^[a-f0-9]{32}$/', $_SERVER['PHP_AUTH_USER'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Shape test only; the value is neither stored nor output.
             && self::is_oauth_client_auth_path( $request_uri ) ) {
             return false;
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
         if ( self::is_api_key_basic_path( $request_uri ) ) {
             $pw = isset( $_SERVER['PHP_AUTH_PW'] ) && is_string( $_SERVER['PHP_AUTH_PW'] ) ? $_SERVER['PHP_AUTH_PW'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Shape test only; the value is neither stored nor output.
-            
-            
             if ( Auth_Header::pair_has_plugin_credential_shape( $_SERVER['PHP_AUTH_USER'], $pw ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Shape test only.
                 return false;
             }
         }
         return $is_api_request;
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function is_api_key_basic_path( $request_uri ) {
         $request_uri = (string) $request_uri;
@@ -1832,20 +1002,6 @@ class Plugin {
         return false;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function is_oauth_client_auth_path( $request_uri ) {
         $request_uri = (string) $request_uri;
         if ( '' === $request_uri ) {
@@ -1873,8 +1029,6 @@ class Plugin {
                         return true;
                     }
                 }
-                
-                
                 if ( rtrim( $path, '/' ) === $p && ( '/token' === $p || '/' . self::home_path() . '/token' === $p ) ) {
                     return true;
                 }
@@ -1883,12 +1037,7 @@ class Plugin {
         return false;
     }
 
-    
-
-
     public function maybe_upgrade_oauth() {
-        
-        
         if ( ! \is_admin() && ! ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
             return;
         }
@@ -1900,25 +1049,12 @@ class Plugin {
         }
     }
 
-    
-
-
-
     private function server_for_background_work() {
         if ( null === $this->server && function_exists( 'rest_get_server' ) ) {
             \rest_get_server();
         }
         return $this->server;
     }
-
-    
-
-
-
-
-
-
-
 
     public function run_task_tick( $task_id = null ) {
         $this->guarded_background_work( function ( $server ) use ( $task_id ) {
@@ -1928,30 +1064,20 @@ class Plugin {
         } );
     }
 
-    
     public function cleanup_tasks() {
         $this->guarded_background_work( function ( $server ) {
             $server->get_task_manager()->cleanup();
         } );
-        
-        
         self::guarded_search_replace( static function () {
             \Easy_MCP_AI\Privileged\Search_Replace\Jobs::cleanup();
         } );
     }
-
-    
-
-
 
     public static function run_search_replace_tick( $job_id = null ): void {
         self::guarded_search_replace( static function () use ( $job_id ) {
             \Easy_MCP_AI\Privileged\Search_Replace\Jobs::tick( $job_id );
         } );
     }
-
-    
-
 
     private static function guarded_search_replace( callable $work ): void {
         if ( function_exists( 'wp_installing' ) && \wp_installing() ) {

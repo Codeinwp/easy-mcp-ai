@@ -5,49 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Term_Meta_Auth_Guard {
-
-    
-
-
-
-
-
-
-
-
-
-
 
     protected function assert_term_meta_key_allowed( $key, $term, $cap ) {
         if ( ! is_protected_meta( $key, 'term' ) ) {
@@ -64,16 +22,6 @@ trait Term_Meta_Auth_Guard {
         }
         throw new \RuntimeException( sprintf( 'Protected meta keys require administrator privileges when nothing has registered them, and no plugin registers "%1$s" for taxonomy %2$s.', $key, $term->taxonomy ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function term_meta_key_is_registered( $key, $term ) {
         $taxonomy = (string) $term->taxonomy;

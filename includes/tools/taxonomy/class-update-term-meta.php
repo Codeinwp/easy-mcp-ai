@@ -24,12 +24,6 @@ class Update_Term_Meta extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
-        
-        
-        
         return 'read';
     }
 
@@ -55,10 +49,6 @@ class Update_Term_Meta extends Base_Tool {
                     'description' => 'Meta key to update.',
                 ),
                 'value'   => array(
-                    
-                    
-                    
-                    
                     'description' => 'Meta value to set: a string, number, boolean, array or object (null is refused). Scalars: for booleans use "1" / "0" (WordPress meta storage semantics). Arrays and objects — repeater rows, a settings blob — are stored serialised and wp_get_term_meta returns them structured; JSON-encoded text starting with "[" or "{" is decoded the same way. Consequence: with the default value_format a string that is itself valid JSON for an array or object cannot be stored as literal text; send value_format plaintext for that.',
                 ),
                 'value_format' => array(
@@ -82,23 +72,12 @@ class Update_Term_Meta extends Base_Tool {
         $this->assert_term_meta_key_allowed( $key, $term, 'edit_term_meta' );
         $this->refuse_blocked_key( $key );
 
-        
-        
-        
-        
-        
         $to_store = $this->value_to_store( $arguments['value'], $format );
         $result   = $this->write_term_meta( $term_id, $key, $to_store );
         if ( is_wp_error( $result ) ) {
             throw new \RuntimeException( $result->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
-        
-        
         $unchanged = ( false === $result ) && $this->already_stored( $term_id, $key, wp_unslash( $to_store ), (string) $term->taxonomy );
 
         return array(
@@ -110,14 +89,6 @@ class Update_Term_Meta extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
     private function refuse_missing_value( array $arguments ): void {
         if ( ! array_key_exists( 'value', $arguments ) ) {
             throw new \InvalidArgumentException( 'Missing required parameter: value' );
@@ -126,13 +97,6 @@ class Update_Term_Meta extends Base_Tool {
             throw new \InvalidArgumentException( 'Parameter value cannot be null. Use wp_delete_term_meta to remove the key.' );
         }
     }
-
-    
-
-
-
-
-
 
     private function value_format_arg( array $arguments ): string {
         $format = 'auto';
@@ -143,37 +107,17 @@ class Update_Term_Meta extends Base_Tool {
         return $format;
     }
 
-    
-
-
-
-
-
-
-
     private function meta_key_arg( array $arguments ): string {
         $key = sanitize_text_field( (string) $arguments['key'] );
         if ( '' === $key ) {
             throw new \InvalidArgumentException( 'Key cannot be empty.' );
         }
 
-        
-        
-        
         if ( 0 === strpos( $key, '_yoast_wpseo_' ) && class_exists( 'WPSEO_Taxonomy_Meta' ) ) {
             throw new \InvalidArgumentException( $this->yoast_term_key_refusal( $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $key;
     }
-
-    
-
-
-
-
-
-
-
 
     private function editable_term( int $term_id ): object {
         $term = get_term( $term_id );
@@ -184,23 +128,11 @@ class Update_Term_Meta extends Base_Tool {
         if ( ! $tax_obj ) {
             throw new \InvalidArgumentException( 'Invalid taxonomy.' );
         }
-        
-        
-        
         if ( ! current_user_can( 'edit_term', $term_id ) ) {
             throw new \RuntimeException( sprintf( 'Insufficient capability for taxonomy %s: WordPress does not grant edit_term for term %d to the current user.', $term->taxonomy, $term_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $term;
     }
-
-    
-
-
-
-
-
-
-
 
     private function refuse_blocked_key( string $key ): void {
         $blocked_patterns = apply_filters( 'easy_mcp_ai_term_meta_blocked_key_patterns', array() );
@@ -211,31 +143,9 @@ class Update_Term_Meta extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     protected function write_term_meta( int $term_id, string $key, $value ) {
         return update_term_meta( $term_id, $key, $value );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private function value_to_store( $value, string $format ) {
         if ( 'plaintext' === $format ) {
@@ -259,17 +169,6 @@ class Update_Term_Meta extends Base_Tool {
         return $this->normalize_value( $value );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function already_stored( int $term_id, string $key, $value, string $taxonomy ): bool {
         $rows = get_term_meta( $term_id, $key, false );
         if ( ! is_array( $rows ) || empty( $rows ) ) {
@@ -284,12 +183,6 @@ class Update_Term_Meta extends Base_Tool {
         return true;
     }
 
-    
-
-
-
-
-
     private static function stored_form( $value ): string {
         if ( is_array( $value ) || is_object( $value ) ) {
             return serialize( $value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- comparison with maybe_serialize()'s output.
@@ -300,14 +193,6 @@ class Update_Term_Meta extends Base_Tool {
         return null === $value ? '' : (string) $value;
     }
 
-    
-
-
-
-
-
-
-
     private function yoast_term_key_refusal( $key ) {
         $message = sprintf( 'Yoast SEO does not read term meta "%s": it keeps category and tag SEO in its own settings, so this write would change nothing on the site.', $key );
         $enabled = get_option( 'easy_mcp_ai_enabled_plugin_groups', array() );
@@ -317,21 +202,8 @@ class Update_Term_Meta extends Base_Tool {
         return $message . ' Enable the Yoast SEO integration under Easy MCP AI → Tools → Plugins to get wp_yoast_update_term_seo.';
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function normalize_value( $value ) {
         if ( is_object( $value ) ) {
-            
-            
             $value = json_decode( wp_json_encode( $value ), true );
         }
         if ( is_array( $value ) ) {

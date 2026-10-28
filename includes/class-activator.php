@@ -9,7 +9,6 @@ class Activator {
 
     public static function activate( $network_wide = false, $flush_rewrite = true ) {
         if ( \is_multisite() && $network_wide ) {
-            
             $sites = \get_sites( array( 'number' => 0, 'fields' => 'ids' ) );
             foreach ( $sites as $blog_id ) {
                 \switch_to_blog( $blog_id );
@@ -54,37 +53,21 @@ class Activator {
         if ( ! \wp_next_scheduled( 'easy_mcp_ai_cleanup_approvals' ) ) {
             \wp_schedule_event( time(), 'daily', 'easy_mcp_ai_cleanup_approvals' );
         }
-        
-        
-        
         if ( $flush_rewrite ) {
             \flush_rewrite_rules();
-            
-            
             if ( ! $network_wide ) {
                 Admin\Setup_State::arm_activation_redirect();
             }
         }
     }
 
-    
-
-
-
     public static function maybe_upgrade() {
-        
-        
-        
-        
-        
         $is_rest = defined( 'REST_REQUEST' ) && REST_REQUEST;
         $is_cli  = defined( 'WP_CLI' ) && WP_CLI;
         if ( ! \is_admin() && ! $is_rest && ! $is_cli && ! \wp_doing_cron() ) {
             return;
         }
         self::maybe_upgrade_core_tables();
-        
-        
         self::maybe_upgrade_oauth_tables();
         self::maybe_upgrade_change_log_tables();
         self::maybe_upgrade_tasks_tables();
@@ -109,86 +92,25 @@ class Activator {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     const AUDIT_REQUIRED_COLUMNS = array( 'auth_source', 'wp_user_id', 'oauth_client_id', 'duration_ms', 'approval_id', 'approved_by', 'approved_via', 'approved_at', 'error_message' );
-
-    
-
-
-
-
-
-
-
-
 
     const AUDIT_REQUIRED_INDEXES = array( 'user_time', 'source_time' );
 
-    
-
-
-
-
-
-
-
-
-
-
-
     const TOKENS_REQUIRED_COLUMNS = array( 'created_by', 'site_host_hash', 'unattended' );
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function maybe_upgrade_core_tables() {
         if ( \get_option( 'easy_mcp_ai_db_version' ) === EASY_MCP_AI_VERSION
             || ! Schema_Guard::may_retry( 'easy_mcp_ai_db_version', EASY_MCP_AI_VERSION ) ) {
             return;
         }
-        
         self::mark_setup_complete();
         self::create_tables();
         Schema_Guard::settle( 'easy_mcp_ai_db_version', EASY_MCP_AI_VERSION, \get_option( 'easy_mcp_ai_db_version' ) === EASY_MCP_AI_VERSION );
     }
 
-    
-
-
-
-
-
     private static function mark_setup_complete() {
         Admin\Setup_State::mark_complete();
     }
-
-    
-
-
-
 
     private static function column_exists( $table, $column ) {
         global $wpdb;
@@ -199,10 +121,6 @@ class Activator {
         $found = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$table}` LIKE %s", $column ) );
         return ! empty( $found );
     }
-
-    
-
-
 
     private static function index_exists( $table, $index_name ) {
         global $wpdb;
@@ -216,9 +134,6 @@ class Activator {
 
     private static function create_tables() {
         global $wpdb;
-        
-        
-        
         if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_charset_collate' ) ) {
             return;
         }
@@ -226,10 +141,6 @@ class Activator {
         $tokens_table = $wpdb->prefix . 'easy_mcp_ai_tokens';
         $audit_table  = $wpdb->prefix . 'easy_mcp_ai_audit_log';
 
-        
-        
-        
-        
         $sql = "CREATE TABLE {$tokens_table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
@@ -281,16 +192,8 @@ class Activator {
         }
         \dbDelta( $sql );
 
-        
-        
-        
-        
-        
-        
-        
-        
         if ( ! method_exists( $wpdb, 'esc_like' ) || ! method_exists( $wpdb, 'get_var' ) ) {
-            return; 
+            return;
         }
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off existence check on plugin-owned tables.
         $tokens_exists = Schema_Guard::table_found( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $tokens_table ) ) ), $tokens_table );
@@ -299,37 +202,17 @@ class Activator {
         if ( ! $tokens_exists || ! $audit_exists ) {
             return;
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
         foreach ( self::TOKENS_REQUIRED_COLUMNS as $column ) {
             if ( ! self::column_exists( $tokens_table, $column ) ) { return; }
         }
-        
-        
-        
-        
         if ( ! self::backfill_token_site_host( $tokens_table ) ) {
             return;
         }
-        
-        
-        
-        
-        
         foreach ( self::AUDIT_REQUIRED_COLUMNS as $column ) {
             if ( ! self::column_exists( $audit_table, $column ) ) {
                 return;
             }
         }
-        
-        
         foreach ( self::AUDIT_REQUIRED_INDEXES as $index_name ) {
             if ( ! self::index_exists( $audit_table, $index_name ) ) {
                 return;
@@ -338,43 +221,21 @@ class Activator {
         \update_option( 'easy_mcp_ai_db_version', EASY_MCP_AI_VERSION );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function backfill_token_site_host( $tokens_table ) {
         global $wpdb;
         if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) || ! method_exists( $wpdb, 'prepare' ) ) {
-            return true; 
+            return true;
         }
         $host_hash = \Easy_MCP_AI\Site_Host::current_hash();
         if ( '' === $host_hash ) {
-            return false; 
+            return false;
         }
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- one-off backfill on a plugin-owned table; the table name is plugin-controlled.
         $result = $wpdb->query( $wpdb->prepare( "UPDATE `{$tokens_table}` SET site_host_hash = %s WHERE site_host_hash IS NULL", $host_hash ) );
         return false !== $result;
     }
 
-    
-
-
-
     private static function create_oauth_tables() {
-        
-        
-        
-        
         if ( class_exists( OAuth\OAuth_Site_Move::class ) ) {
             OAuth\OAuth_Site_Move::ensure_recorded();
         }
@@ -383,60 +244,25 @@ class Activator {
         }
     }
 
-    
-
-
-
     private static function maybe_upgrade_oauth_tables() {
         if ( class_exists( \Easy_MCP_AI\OAuth\OAuth_Schema::class ) ) {
             \Easy_MCP_AI\OAuth\OAuth_Schema::maybe_upgrade();
         }
     }
 
-    
-
-
-
     private static function create_change_log_tables() {
         if ( ! class_exists( \Easy_MCP_AI\History\Change_Log_Schema::class ) ) {
             return;
         }
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         \Easy_MCP_AI\History\Change_Log_Schema::maybe_upgrade();
         \Easy_MCP_AI\History\Change_Log_Schema::create_tables();
 
-        
-        
         \add_option( 'easy_mcp_ai_change_log_retention', 30 );
         \add_option( 'easy_mcp_ai_change_log_enabled', true );
 
         self::ensure_view_all_history_cap();
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function ensure_view_all_history_cap() {
         $admin_role = \get_role( 'administrator' );
@@ -444,11 +270,6 @@ class Activator {
             $admin_role->add_cap( 'easy_mcp_ai_view_all_history' );
         }
     }
-
-    
-
-
-
 
     private static function create_tasks_tables() {
         if ( ! class_exists( \Easy_MCP_AI\Tasks\Task_Schema::class ) ) {
@@ -493,23 +314,6 @@ class Activator {
             'ip_whitelist'           => '',
             'enabled_categories'     => array( 'posts', 'pages', 'media', 'taxonomy', 'comments', 'users', 'site', 'menus', 'plugins', 'themes' ),
             'allowed_tool_patterns'  => array(),
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             'disabled_tools'         => array(
                 'wp_update_site_settings',
                 'wp_create_user',
@@ -519,17 +323,12 @@ class Activator {
                 'wp_update_template',
                 'wp_update_global_styles',
                 'wp_delete_user_meta',
-                
                 'wp_run_cron_event',
-                
-                
                 'wp_activate_plugin',
                 'wp_deactivate_plugin',
                 'wp_update_plugin',
                 'wp_switch_theme',
                 'wp_update_theme',
-                
-                
                 'wp_update_theme_mod',
                 'wp_delete_theme_mod',
                 'wp_update_custom_css',
@@ -537,9 +336,6 @@ class Activator {
             'enabled_abilities'      => array(),
             'enabled_hooks'          => array(),
         );
-        
-        
-        
         $fresh_abilities = ( false === \get_option( 'easy_mcp_ai_enabled_abilities' ) );
         foreach ( $defaults as $key => $value ) {
             if ( false === \get_option( 'easy_mcp_ai_' . $key ) ) {

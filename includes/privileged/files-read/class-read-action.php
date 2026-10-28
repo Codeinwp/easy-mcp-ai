@@ -5,16 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 final class Read_Action extends Action {
 
     const ARGUMENTS = array( 'path', 'offset', 'limit' );
 
-    
     const MAX_BYTES = 2097152;
     const DEFAULT_LIMIT = 500;
     const MAX_LIMIT = 2000;
@@ -36,7 +30,6 @@ final class Read_Action extends Action {
         }
     }
 
-    
     private function read( Text_File $text, string $rel, int $offset, int $limit ): array {
         if ( $text->size() > self::MAX_BYTES ) {
             throw new \RuntimeException( sprintf( '%1$s is %2$d KB, over the %3$d KB read limit; nothing was read. Find the lines you need with the search action.', $rel, (int) ceil( $text->size() / 1024 ), self::MAX_BYTES / 1024 ) );
@@ -67,13 +60,6 @@ final class Read_Action extends Action {
         );
     }
 
-    
-
-
-
-
-
-
     private function collect( Text_File $text, int $offset, int $limit ): array {
         $budget = self::RESPONSE_BUDGET - 1024;
         $used   = 2;
@@ -92,7 +78,7 @@ final class Read_Action extends Action {
                 continue;
             }
             $entry = $number . "\t" . $line . "\n";
-            $size  = strlen( self::json( $entry ) ) - 2; 
+            $size  = strlen( self::json( $entry ) ) - 2;
             $full  = $used + $size > $budget;
             if ( ! $full ) {
                 $used += $size;

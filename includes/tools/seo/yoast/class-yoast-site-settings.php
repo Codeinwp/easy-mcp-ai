@@ -5,42 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Yoast_Site_Settings {
 
 	const TITLES = 'wpseo_titles';
 	const SOCIAL = 'wpseo_social';
 
-	
 	const TEXT_PREFIXES = array(
 		'title'              => 'title-',
 		'description'        => 'metadesc-',
@@ -48,13 +17,11 @@ final class Yoast_Site_Settings {
 		'social_description' => 'social-description-',
 	);
 
-	
 	const HOME_SOCIAL = array(
 		'social_title'       => 'open_graph_frontpage_title',
 		'social_description' => 'open_graph_frontpage_desc',
 	);
 
-	
 	const SPECIAL = array(
 		'home'           => 'home-wpseo',
 		'author_archive' => 'author-wpseo',
@@ -62,12 +29,6 @@ final class Yoast_Site_Settings {
 		'search'         => 'search-wpseo',
 		'404'            => '404-wpseo',
 	);
-
-	
-
-
-
-
 
 	public static function instances(): array {
 		if ( ! class_exists( 'WPSEO_Options' ) ) {
@@ -80,13 +41,6 @@ final class Yoast_Site_Settings {
 		}
 		return array( $titles, $social );
 	}
-
-	
-
-
-
-
-
 
 	public static function content_types( array $defaults ): array {
 		$types    = array();
@@ -107,21 +61,11 @@ final class Yoast_Site_Settings {
 		}
 		foreach ( self::SPECIAL as $type => $suffix ) {
 			if ( array_key_exists( 'title-' . $suffix, $defaults ) ) {
-				
 				$types[] = (string) $type;
 			}
 		}
 		return $types;
 	}
-
-	
-
-
-
-
-
-
-
 
 	public static function text_key( string $content_type, string $field, array $defaults ): ?string {
 		if ( ! isset( self::TEXT_PREFIXES[ $field ] ) ) {
@@ -136,14 +80,6 @@ final class Yoast_Site_Settings {
 		return null !== $key && array_key_exists( $key, $defaults ) ? $key : null;
 	}
 
-	
-
-
-
-
-
-
-
 	public static function image_keys( string $content_type, array $defaults ): ?array {
 		if ( 'home' === $content_type ) {
 			$keys = array( 'open_graph_frontpage_image', 'open_graph_frontpage_image_id' );
@@ -156,13 +92,6 @@ final class Yoast_Site_Settings {
 		}
 		return array_key_exists( $keys[0], $defaults ) && array_key_exists( $keys[1], $defaults ) ? $keys : null;
 	}
-
-	
-
-
-
-
-
 
 	private static function suffix( string $content_type ): ?string {
 		if ( isset( self::SPECIAL[ $content_type ] ) ) {
@@ -180,12 +109,6 @@ final class Yoast_Site_Settings {
 		return isset( $prefixes[ $parts[0] ] ) ? $prefixes[ $parts[0] ] . $parts[1] : null;
 	}
 
-	
-
-
-
-
-
 	public static function separators( object $titles ): array {
 		$out = array();
 		foreach ( (array) $titles->get_separator_options() as $key => $character ) {
@@ -196,25 +119,10 @@ final class Yoast_Site_Settings {
 		return $out;
 	}
 
-	
-
-
-
-
-
-
 	public static function stored( string $name ): array {
 		$value = get_option( $name );
 		return is_array( $value ) ? $value : array();
 	}
-
-	
-
-
-
-
-
-
 
 	public static function read( object $titles, object $social ): array {
 		$defaults   = (array) $titles->get_defaults();
@@ -251,10 +159,6 @@ final class Yoast_Site_Settings {
 		);
 	}
 
-	
-
-
-
 	private static function separator_options( array $separators ): array {
 		$out = array();
 		foreach ( $separators as $key => $character ) {
@@ -263,14 +167,6 @@ final class Yoast_Site_Settings {
 		return $out;
 	}
 
-	
-
-
-
-
-
-
-
 	private static function image( array $stored, string $url_key, string $id_key ): array {
 		return array(
 			'id'  => isset( $stored[ $id_key ] ) && is_numeric( $stored[ $id_key ] ) ? (int) $stored[ $id_key ] : 0,
@@ -278,28 +174,9 @@ final class Yoast_Site_Settings {
 		);
 	}
 
-	
-
-
-
-
-
-
-
-
-
 	private static function text( array $stored, string $key ): string {
 		return isset( $stored[ $key ] ) && is_scalar( $stored[ $key ] ) ? (string) $stored[ $key ] : '';
 	}
-
-	
-
-
-
-
-
-
-
 
 	private static function locked( object $titles, object $social, array $defaults ): array {
 		$locked = array();

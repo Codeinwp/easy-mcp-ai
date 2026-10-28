@@ -1,18 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,7 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Tools_Controller extends Admin_Rest_Controller {
 
-    
     const EXTERNAL_LABELS = array(
         'gsc'       => 'Google Search Console',
         'ga'        => 'Google Analytics',
@@ -31,18 +17,11 @@ class Tools_Controller extends Admin_Rest_Controller {
         'ahrefs'    => 'Ahrefs (DR)',
     );
 
-    
     const CREDENTIAL_PROVIDERS = array( 'ga', 'gsc', 'dfs', 'semrush', 'seranking' );
 
-    
     private $groups;
 
-    
     private $catalogue;
-
-    
-
-
 
     public function __construct( callable $groups, $catalogue = null ) {
         $this->groups    = $groups;
@@ -54,20 +33,9 @@ class Tools_Controller extends Admin_Rest_Controller {
         $this->register_route( '/tools/enabled', self::UPDATABLE, array( $this, 'patch_enabled' ) );
     }
 
-    
-
-
-
     public function get_tools( $request ) {
         return $this->ok( $this->payload() );
     }
-
-    
-
-
-
-
-
 
     public function patch_enabled( $request ) {
         if ( ! $this->catalogue ) {
@@ -84,7 +52,6 @@ class Tools_Controller extends Admin_Rest_Controller {
         return $this->ok( $this->payload() );
     }
 
-    
     private function payload() {
         $groups = (array) call_user_func( $this->groups );
         $data   = self::shape( $groups );
@@ -93,12 +60,6 @@ class Tools_Controller extends Admin_Rest_Controller {
         }
         return $data;
     }
-
-    
-
-
-
-
 
     public static function shape( array $groups ) {
         $hints = isset( $groups['hints'] ) ? (array) $groups['hints'] : array();
@@ -179,10 +140,6 @@ class Tools_Controller extends Admin_Rest_Controller {
             'abilities' => $abilities,
         );
     }
-
-    
-
-
 
     private static function names( $tools ) {
         $names = array();

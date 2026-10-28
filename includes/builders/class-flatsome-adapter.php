@@ -1,69 +1,20 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Builders;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Flatsome_Adapter extends Shortcode_Adapter {
 
-    
     const TESTED_VERSIONS = array( '3.16.1', '3.20.11' );
-
-    
-
-
 
     const FIELD_KINDS = array( 'text', 'select', 'number', 'color', 'size', 'spacing' );
 
-    
     const BLOCKS_TYPE = 'blocks';
 
-    
-
-
-
-
-
-
     const MAX_INNER = 9;
-
-    
-
-
-
-
 
     const ELEMENTS = array(
         'section'      => array(
@@ -139,18 +90,11 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         ),
     );
 
-    
-
-
-
-
-
     const ADDED_IN = array(
         'title'     => array( 'rel' => '3.20.5' ),
         'ux_banner' => array( 'link_aria_label' => '3.20.5' ),
     );
 
-    
     const OTHER_TAGS = array(
         'accordion', 'accordion-item', 'blog_posts', 'bullet_item', 'col_grid', 'divider',
         'follow', 'gap', 'logo', 'map', 'page_header', 'scroll_to', 'search', 'share', 'tab',
@@ -185,8 +129,6 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         if ( self::BLOCKS_TYPE === $post->post_type ) {
             return true;
         }
-        
-        
         foreach ( $this->layout_items( $this->source( $post ) ) as $item ) {
             if ( Shortcode_Tree::TEXT !== $item['tag'] ) {
                 return true;
@@ -196,10 +138,6 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
     }
 
     protected function mask( string $source ): string {
-        
-        
-        
-        
         return (string) preg_replace_callback(
             '#<!--\s*/?wp:flatsome/uxbuilder\b[^>]*-->#',
             static function ( array $match ): string {
@@ -229,16 +167,10 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         return self::FIELD_KINDS;
     }
 
-    
     public function encode_attribute( string $tag, string $name, array $spec, string $value ): string {
         unset( $tag, $name, $spec );
         return str_replace( array( '"', '[', ']' ), array( '&quot;', '&#91;', '&#93;' ), $value );
     }
-
-    
-
-
-
 
     public function link_attributes( string $tag, string $field, array $spec, array $decoded, string $url, ?bool $new_tab, ?bool $nofollow, array $fields ) {
         $names   = array_column( $fields, 'name' );
@@ -262,11 +194,6 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         }
         return $changes;
     }
-
-    
-
-
-
 
     public function link_view( string $tag, string $field, array $decoded ) {
         unset( $tag );
@@ -299,12 +226,6 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         unset( $tag );
         return $atts;
     }
-
-    
-
-
-
-
 
     public function references( array $nodes ): array {
         $refs = array();
@@ -371,12 +292,6 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         }
         return $fields;
     }
-
-    
-
-
-
-
 
     public static function base_tag( string $tag ): string {
         return (string) preg_replace( '/_inner(?:_\d+)?$/', '', $tag );

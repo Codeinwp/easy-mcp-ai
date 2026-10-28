@@ -51,14 +51,6 @@ class Report_Top_Sellers extends Base_Tool {
                     'description' => 'Reporting period.',
                     'enum'        => array( 'week', 'month', 'last_month', 'year' ),
                 ),
-                
-                
-                
-                
-                
-                
-                
-                
             ),
             'required'   => array(),
         );
@@ -80,8 +72,6 @@ class Report_Top_Sellers extends Base_Tool {
         if ( isset( $arguments['period'] ) ) {
             $params['period'] = sanitize_text_field( $arguments['period'] );
         }
-        
-        
 
         $data = $this->rest_request( 'GET', '/wc/v3/reports/top_sellers', $params );
 

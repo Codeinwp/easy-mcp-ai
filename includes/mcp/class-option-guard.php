@@ -1,42 +1,15 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\MCP;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Option_Guard {
 
-    
     const PREFIX = 'easy_mcp_ai_';
 
-    
     const SWITCHES = array(
         'easy_mcp_ai_enabled_tools',
         'easy_mcp_ai_enabled_abilities',
@@ -44,16 +17,12 @@ final class Option_Guard {
         'easy_mcp_ai_rest_disabled_namespaces',
     );
 
-    
     const HOOKS = array( 'update_option', 'add_option', 'delete_option' );
 
-    
     private static $depth = 0;
 
-    
     private static $suspended = 0;
 
-    
     public static function arm(): void {
         if ( 0 === self::$depth++ ) {
             foreach ( self::HOOKS as $hook ) {
@@ -62,7 +31,6 @@ final class Option_Guard {
         }
     }
 
-    
     public static function release(): void {
         if ( self::$depth > 0 && 0 === --self::$depth ) {
             foreach ( self::HOOKS as $hook ) {
@@ -70,21 +38,6 @@ final class Option_Guard {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function while_suspended( callable $write ) {
         ++self::$suspended;
@@ -95,17 +48,9 @@ final class Option_Guard {
         }
     }
 
-    
     public static function is_armed(): bool {
         return self::$depth > 0;
     }
-
-    
-
-
-
-
-
 
     public static function refuse_protected( $option ): void {
         $option = (string) $option;
@@ -116,20 +61,6 @@ final class Option_Guard {
             throw new \RuntimeException( sprintf( 'This call tried to change %s, an Easy MCP AI setting; tool calls cannot change it, so the call was stopped at that write. An administrator can change it in the plugin\'s settings.', $option ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function is_database_alias( string $option ): bool {
         if ( 1 !== preg_match( '/[^\x20-\x7E]/', $option ) ) {
@@ -156,15 +87,6 @@ final class Option_Guard {
         return is_string( $row ) && self::is_protected( $row );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function option_name_collation( object $wpdb, string $table ): string {
         $key       = 'option_guard_collation_' . $table;
         $cached    = \wp_cache_get( $key, 'easy_mcp_ai' );
@@ -177,13 +99,6 @@ final class Option_Guard {
         }
         return $collation;
     }
-
-    
-
-
-
-
-
 
     public static function protected_names(): array {
         $names = self::SWITCHES;
@@ -199,16 +114,7 @@ final class Option_Guard {
         return array_values( array_unique( $names ) );
     }
 
-    
-
-
-
-
-
     public static function is_protected( string $option ): bool {
-        
-        
-        
         $option = strtolower( trim( $option ) );
         if ( 0 !== strpos( $option, self::PREFIX ) ) {
             return false;

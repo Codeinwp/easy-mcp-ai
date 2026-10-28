@@ -1,11 +1,5 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Compat\Shims;
 
 use Easy_MCP_AI\Compat\Compat_Shim;
@@ -14,64 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Buddypress_Loggedin_User extends Compat_Shim {
 
-    
     private $filter = null;
-
-    
-
 
     public function id() {
         return 'buddypress-loggedin-user';
     }
 
-    
-
-
     public function applies_to( $tool ) {
         return is_object( $tool ) && method_exists( $tool, 'get_category' ) && 'buddypress' === $tool->get_category();
     }
-
-    
-
 
     public function is_needed() {
         if ( ! function_exists( 'bp_loggedin_user_id' ) || ! function_exists( 'bp_is_user_active' ) ) {
@@ -87,13 +34,6 @@ final class Buddypress_Loggedin_User extends Compat_Shim {
         return (bool) bp_is_user_active( $wp_user_id );
     }
 
-    
-
-
-
-
-
-
     public function enter( array $arguments = array(), $tool = null ) {
         if ( null !== $this->filter ) {
             return null;
@@ -105,9 +45,6 @@ final class Buddypress_Loggedin_User extends Compat_Shim {
         add_filter( 'bp_loggedin_user_id', $this->filter, 0 );
         return null;
     }
-
-    
-
 
     public function leave( $state = null ): void {
         if ( null === $this->filter ) {

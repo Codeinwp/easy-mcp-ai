@@ -1,13 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Rest_Routes\Namespace_State;
@@ -17,15 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
 class Rest_Namespaces_Controller extends Admin_Rest_Controller {
 
-    
     const NAMESPACE_PATTERN = '#^[A-Za-z0-9][A-Za-z0-9._\-/]{0,99}$#';
 
     public function register_routes() {
@@ -33,16 +18,9 @@ class Rest_Namespaces_Controller extends Admin_Rest_Controller {
         $this->register_route( '/rest-namespaces', \WP_REST_Server::CREATABLE, array( $this, 'save_namespaces' ) );
     }
 
-    
-
-
     public function get_namespaces() {
         return $this->ok( $this->state() );
     }
-
-    
-
-
 
     public function save_namespaces( $request ) {
         $lists = array();
@@ -72,12 +50,6 @@ class Rest_Namespaces_Controller extends Admin_Rest_Controller {
         return $this->ok( $this->state() );
     }
 
-    
-
-
-
-
-
     private function state(): array {
         $server     = \rest_get_server();
         $namespaces = array();
@@ -95,7 +67,6 @@ class Rest_Namespaces_Controller extends Admin_Rest_Controller {
         $stored = Namespace_State::stored_off();
         return array(
             'namespaces'     => $namespaces,
-            
             'inactiveOff'    => null === $stored ? array() : array_values( array_diff( $stored, $registered ) ),
             'invalidStored'  => null === $stored,
             'overrideSource' => Namespace_State::override_source(),

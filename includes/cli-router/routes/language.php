@@ -1,32 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -114,9 +87,6 @@ return array_merge(
                 'preflight'   => 'preflight_core_install',
                 'describe'    => 'describe_core_install',
                 'bulk'        => 20,
-                
-                
-                
                 'split'       => 'split_activate',
                 'split_tools' => array( 'wp_cli_run', 'wp_update_site_settings' ),
             )

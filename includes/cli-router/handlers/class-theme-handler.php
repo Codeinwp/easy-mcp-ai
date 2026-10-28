@@ -12,68 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Theme_Handler extends Command_Handler {
 
-    
     const NOT_MULTISITE  = 'This is not a multisite installation.';
     const SPECIFY_THEMES = 'Please specify one or more themes, or use --all.';
 
-    
     const STATUS_SHORT = array(
         'inactive' => 'I',
         'active'   => 'A',
@@ -84,23 +27,18 @@ class Theme_Handler extends Command_Handler {
         'active'   => 'Active',
         'parent'   => 'Parent',
     );
-    
     const STATUS_COLOR = array(
         'inactive' => '',
         'active'   => '%g',
         'parent'   => '%p',
     );
 
-    
     const GET_FIELDS = array( 'name', 'title', 'version', 'status', 'parent_theme', 'template_dir', 'stylesheet_dir', 'template', 'stylesheet', 'screenshot', 'description', 'author', 'tags', 'theme_root', 'theme_root_uri' );
 
-    
     const PATH_FIELDS = array( 'template_dir', 'stylesheet_dir', 'theme_root' );
 
-    
     const STATUS_TEMPLATE = "Theme %9{{slug}}%n details:\n    Name: {{name}}\n    Status: {{status}}%n\n    Version: {{version}}\n    Author: {{author}}\n";
 
-    
     const COLOR_TOKENS = array( '%y', '%g', '%b', '%r', '%p', '%m', '%c', '%w', '%k', '%n', '%Y', '%G', '%B', '%R', '%P', '%M', '%C', '%W', '%K', '%N', '%3', '%2', '%4', '%1', '%5', '%6', '%7', '%0', '%F', '%U', '%8', '%9', '%_' );
 
     const NOTE_PATHS        = 'Paths are printed relative to the WordPress root (ABSPATH), not as the absolute server path WP-CLI prints (plan Q21); a path outside it is reduced to its last segment.';
@@ -117,21 +55,7 @@ class Theme_Handler extends Command_Handler {
     const NOT_CAPTURED_SITE_ALLOWED    = "The site's allowedthemes option is recorded by change history only while it records every option (not in allowlist mode); wp_history_apply cannot restore it.";
     const NOT_CAPTURED_NETWORK_ALLOWED = "The network's allowedthemes option (wp_sitemeta) is recorded by change history only while its meta capture setting is on (the default); wp_history_apply cannot restore it.";
 
-    
     private static $reader = null;
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
 
     public static function wp( string $key, array $args = array() ) {
         $live = array( __CLASS__, 'live_' . $key );
@@ -141,24 +65,9 @@ class Theme_Handler extends Command_Handler {
         return call_user_func_array( $live, $args );
     }
 
-    
-
-
-
-
-
     public static function use_reader( ?callable $reader ): void {
         self::$reader = $reader;
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public function preflight_name( Invocation $inv, Context $ctx ): void {
         $name = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
@@ -167,25 +76,12 @@ class Theme_Handler extends Command_Handler {
         }
     }
 
-    
-
-
-
-
     public function preflight_search( Invocation $inv, Context $ctx ): void {
         if ( ! self::file_mods_allowed() ) {
             $ctx->out->error( self::REFUSE_FILE_MODS );
         }
         $ctx->require_cap( 'install_themes' );
     }
-
-    
-
-
-
-
-
-
 
     public function preflight_allowed( Invocation $inv, Context $ctx ): void {
         if ( ! self::wp( 'is_multisite' ) ) {
@@ -195,15 +91,6 @@ class Theme_Handler extends Command_Handler {
             $ctx->require_network( 'manage_network_themes' );
         }
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public function get( Invocation $inv, Context $ctx ): void {
         $theme = Fetchers::of( 'theme' )->get_check( $inv->args[0], $ctx->out );
@@ -232,12 +119,6 @@ class Theme_Handler extends Command_Handler {
         $this->formatter( $ctx, $assoc, self::list_fields(), 'theme' )->display_item( $theme_obj );
     }
 
-    
-
-
-
-
-
     private static function note_paths_if_shown( Context $ctx, array $assoc ): void {
         $shown = isset( $assoc['field'] ) && is_string( $assoc['field'] ) ? array( $assoc['field'] ) : ( is_array( $assoc['fields'] ) ? $assoc['fields'] : explode( ',', (string) $assoc['fields'] ) );
         foreach ( $shown as $field ) {
@@ -248,11 +129,6 @@ class Theme_Handler extends Command_Handler {
             }
         }
     }
-
-    
-
-
-
 
     public function path( Invocation $inv, Context $ctx ): void {
         if ( empty( $inv->args ) ) {
@@ -269,20 +145,10 @@ class Theme_Handler extends Command_Handler {
         $ctx->out->line( self::display_path( $path, (string) self::wp( 'abspath' ) ) );
     }
 
-    
-
-
-
-
     public function is_installed( Invocation $inv, Context $ctx ): void {
         $theme = (array) self::wp( 'exists', array( (string) $inv->args[0] ) );
         $ctx->out->halt( ! empty( $theme['exists'] ) ? 0 : 1 );
     }
-
-    
-
-
-
 
     public function is_active( Invocation $inv, Context $ctx ): void {
         $theme = (array) self::wp( 'exists', array( (string) $inv->args[0] ) );
@@ -293,11 +159,6 @@ class Theme_Handler extends Command_Handler {
         $dir    = (string) $theme['stylesheet_dir'];
         $ctx->out->halt( ( $dir === $active[0] || $dir === $active[1] ) ? 0 : 1 );
     }
-
-    
-
-
-
 
     public function status( Invocation $inv, Context $ctx ): void {
         $args = array_values( $inv->args );
@@ -311,7 +172,6 @@ class Theme_Handler extends Command_Handler {
 
         $see_updates = $this->see_updates( $ctx );
         if ( $see_updates ) {
-            
             self::wp( 'wp_update_themes' );
         }
 
@@ -343,12 +203,6 @@ class Theme_Handler extends Command_Handler {
             )
         );
     }
-
-    
-
-
-
-
 
     public function search( Invocation $inv, Context $ctx ): void {
         $term       = (string) array_values( $inv->args )[0];
@@ -397,13 +251,6 @@ class Theme_Handler extends Command_Handler {
         $formatter->display_items( $items );
     }
 
-    
-
-
-
-
-
-
     private static function search_items( array $themes ): array {
         $items = array();
         foreach ( $themes as $item ) {
@@ -416,33 +263,13 @@ class Theme_Handler extends Command_Handler {
         return $items;
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public function enable( Invocation $inv, Context $ctx ): void {
         $this->allowed_write( $inv, $ctx, true );
     }
 
-    
-
-
-
-
     public function disable( Invocation $inv, Context $ctx ): void {
         $this->allowed_write( $inv, $ctx, false );
     }
-
-    
-
-
-
-
 
     public function describe_allowed( Invocation $inv ): array {
         $enable  = 'enable' === (string) $inv->leaf['name'];
@@ -459,14 +286,6 @@ class Theme_Handler extends Command_Handler {
         }
         return array( sprintf( "Theme '%s': %s → %s", $name, $before, $after ) );
     }
-
-    
-
-
-
-
-
-
 
     public function split_activate( Invocation $inv, Context $ctx ): ?array {
         if ( ! Read_Value::flag( $inv->assoc, 'activate' ) ) {
@@ -488,16 +307,6 @@ class Theme_Handler extends Command_Handler {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     public function render_activate( Invocation $inv, Context $ctx, array $result, array &$state ): bool {
         if ( empty( $result['ok'] ) ) {
             $ctx->out->error( (string) $result['error'] );
@@ -513,12 +322,6 @@ class Theme_Handler extends Command_Handler {
         $ctx->out->success( "Switched to '$label' theme." );
         return true;
     }
-
-    
-
-
-
-
 
     private function allowed_write( Invocation $inv, Context $ctx, bool $enable ): void {
         if ( ! self::wp( 'is_multisite' ) ) {
@@ -544,14 +347,6 @@ class Theme_Handler extends Command_Handler {
         $ctx->out->success( self::allowed_success( $network, $enable, $name ) );
     }
 
-    
-
-
-
-
-
-
-
     private static function allowed_after( $allowed_themes, string $stylesheet, bool $enable ) {
         if ( $enable ) {
             if ( empty( $allowed_themes ) ) {
@@ -564,24 +359,12 @@ class Theme_Handler extends Command_Handler {
         return $allowed_themes;
     }
 
-    
     private static function allowed_success( bool $network, bool $enable, string $name ): string {
         if ( $network ) {
             return ( $enable ? 'Network enabled' : 'Network disabled' ) . " the '$name' theme.";
         }
         return ( $enable ? 'Enabled' : 'Disabled' ) . " the '$name' theme.";
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     public static function theme_data( string $stylesheet ): array {
         $data = self::wp( 'theme', array( $stylesheet ) );
@@ -602,21 +385,10 @@ class Theme_Handler extends Command_Handler {
         return $data;
     }
 
-    
-
-
-
-
     public static function active_dirs(): array {
         $dirs = (array) self::wp( 'active_dirs' );
         return array( (string) ( $dirs[0] ?? '' ), (string) ( $dirs[1] ?? '' ) );
     }
-
-    
-
-
-
-
 
     public static function status_of( array $data ): string {
         $active = self::active_dirs();
@@ -629,16 +401,6 @@ class Theme_Handler extends Command_Handler {
         }
         return 'inactive';
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function check_optional_args_and_all( array $args, bool $all, Context $ctx, string $verb = 'install' ): array {
         if ( $all ) {
@@ -656,7 +418,6 @@ class Theme_Handler extends Command_Handler {
         return array_values( array_map( 'strval', $args ) );
     }
 
-    
     public static function list_fields(): array {
         $fields = array( 'name', 'status', 'update', 'version', 'update_version', 'auto_update' );
         if ( self::wp( 'is_multisite' ) ) {
@@ -665,20 +426,14 @@ class Theme_Handler extends Command_Handler {
         return $fields;
     }
 
-    
     public static function has_update( string $stylesheet ): bool {
         $update = self::wp( 'update_transient' );
         return is_array( $update ) && isset( $update['response'][ $stylesheet ] );
     }
 
-    
     public static function file_mods_allowed(): bool {
         return ! function_exists( 'wp_is_file_mod_allowed' ) || (bool) \wp_is_file_mod_allowed( 'capability_update_core' );
     }
-
-    
-
-
 
     public static function hidden_updates_cause(): ?string {
         if ( \current_user_can( 'update_themes' ) ) {
@@ -693,7 +448,6 @@ class Theme_Handler extends Command_Handler {
         return self::HIDDEN_CAPABILITY;
     }
 
-    
     private static function shell_word( string $word ): string {
         if ( '' !== $word && preg_match( '#^[A-Za-z0-9_\-.,:/@%+=]+\z#', $word ) ) {
             return $word;
@@ -701,17 +455,11 @@ class Theme_Handler extends Command_Handler {
         return "'" . str_replace( "'", "'\\''", $word ) . "'";
     }
 
-    
     public static function decolorize( string $string ): string {
         $string = str_replace( '%%', '%¾', $string );
         $string = str_replace( self::COLOR_TOKENS, '', $string );
         return str_replace( '%¾', '%', $string );
     }
-
-    
-
-
-
 
     public static function display_path( string $path, string $abspath ): string {
         $path = str_replace( '\\', '/', $path );
@@ -722,7 +470,6 @@ class Theme_Handler extends Command_Handler {
         return '' === $path ? '' : basename( $path );
     }
 
-    
     public static function escapes_theme_root( string $name ): bool {
         $name = str_replace( '\\', '/', $name );
         if ( 0 === strpos( $name, '/' ) || 1 === preg_match( '#^[A-Za-z]:#', $name ) ) {
@@ -731,22 +478,9 @@ class Theme_Handler extends Command_Handler {
         return in_array( '..', explode( '/', $name ), true );
     }
 
-    
-
-
-
-
-
     public static function header_text( $value ): string {
         return is_scalar( $value ) ? (string) $value : '';
     }
-
-    
-    
-    
-
-    
-
 
     private function status_all( Context $ctx, bool $see_updates ): void {
         $items = $this->status_items( $see_updates );
@@ -785,13 +519,6 @@ class Theme_Handler extends Command_Handler {
         $ctx->out->line( 'Legend: ' . self::decolorize( implode( ', ', $legend ) ) );
     }
 
-    
-
-
-
-
-
-
     private function status_items( bool $see_updates ): array {
         $update   = $see_updates ? self::wp( 'update_transient' ) : null;
         $response = is_array( $update ) && isset( $update['response'] ) && is_array( $update['response'] ) ? $update['response'] : array();
@@ -809,15 +536,6 @@ class Theme_Handler extends Command_Handler {
         return $items;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function update_state( ?array $update_info, array $versions ): string {
         if ( null === $update_info ) {
             return 'none';
@@ -833,7 +551,6 @@ class Theme_Handler extends Command_Handler {
         return 'available';
     }
 
-    
     private function see_updates( Context $ctx ): bool {
         $cause = self::hidden_updates_cause();
         if ( null !== $cause ) {
@@ -843,30 +560,13 @@ class Theme_Handler extends Command_Handler {
         return true;
     }
 
-    
-
-
-
-
-
-
     private static function mustache_value( $value ): string {
         return is_scalar( $value ) ? (string) $value : '';
     }
 
-    
     private static function translate( string $text ): string {
         return function_exists( '__' ) ? (string) \__( $text ) : $text; // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText, WordPress.WP.I18n.MissingArgDomain -- WP-CLI translates these exact strings with core's default text domain.
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public static function live_themes(): array {
         $out = array();
@@ -876,21 +576,10 @@ class Theme_Handler extends Command_Handler {
         return $out;
     }
 
-    
-
-
-
-
     public static function live_theme( string $stylesheet ): ?array {
         $themes = \wp_get_themes( array( 'errors' => null ) );
         return isset( $themes[ $stylesheet ] ) ? self::live_theme_data( $themes[ $stylesheet ] ) : null;
     }
-
-    
-
-
-
-
 
     public static function live_theme_vars( string $stylesheet ): array {
         $themes = \wp_get_themes( array( 'errors' => null ) );
@@ -905,11 +594,6 @@ class Theme_Handler extends Command_Handler {
         return $vars;
     }
 
-    
-
-
-
-
     public static function live_exists( string $name ): array {
         $theme = \wp_get_theme( $name );
         return array(
@@ -918,42 +602,21 @@ class Theme_Handler extends Command_Handler {
         );
     }
 
-    
     public static function live_active_dirs(): array {
         return array( (string) \get_stylesheet_directory(), (string) \get_template_directory() );
     }
-
-    
-
-
-
 
     public static function live_option( string $name ) {
         return \get_option( $name );
     }
 
-    
-
-
-
-
     public static function live_site_option( string $name ) {
         return \get_site_option( $name );
     }
 
-    
-
-
-
-
     public static function live_update_option( string $name, $value ): bool {
         return (bool) \update_option( $name, $value );
     }
-
-    
-
-
-
 
     public static function live_update_site_option( string $name, $value ): bool {
         return (bool) \update_site_option( $name, $value );
@@ -974,13 +637,6 @@ class Theme_Handler extends Command_Handler {
     public static function live_wp_content_dir(): string {
         return defined( 'WP_CONTENT_DIR' ) ? (string) WP_CONTENT_DIR : '';
     }
-
-    
-
-
-
-
-
 
     public static function live_update_transient(): ?array {
         $transient = \get_site_transient( 'update_themes' );
@@ -1004,7 +660,6 @@ class Theme_Handler extends Command_Handler {
         return $out;
     }
 
-    
     public static function live_wp_update_themes(): bool {
         if ( ! function_exists( 'wp_update_themes' ) ) {
             require_once ABSPATH . WPINC . '/update.php';
@@ -1013,7 +668,6 @@ class Theme_Handler extends Command_Handler {
         return true;
     }
 
-    
     public static function live_versions(): array {
         global $wp_version;
         return array(
@@ -1021,13 +675,6 @@ class Theme_Handler extends Command_Handler {
             'php' => PHP_VERSION,
         );
     }
-
-    
-
-
-
-
-
 
     public static function live_themes_api( string $action, array $args ): array {
         if ( ! function_exists( 'themes_api' ) ) {
@@ -1045,20 +692,6 @@ class Theme_Handler extends Command_Handler {
         $decoded = json_decode( (string) \wp_json_encode( $api ), true );
         return is_array( $decoded ) ? $decoded : array();
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function live_customizer_owned( array $names ): array {
         $candidates = array();
@@ -1094,22 +727,16 @@ class Theme_Handler extends Command_Handler {
         }
     }
 
-    
     public static function live_theme_mods(): array {
         $mods = \get_theme_mods();
         return is_array( $mods ) ? $mods : array();
     }
 
-    
     public static function live_remove_theme_mod( string $name ): bool {
         $before = \get_theme_mods();
         \remove_theme_mod( $name );
         return is_array( $before ) && isset( $before[ $name ] );
     }
-
-    
-
-
 
     public static function live_remove_theme_mods(): bool {
         $current = \get_option( 'stylesheet' );
@@ -1122,7 +749,6 @@ class Theme_Handler extends Command_Handler {
         return $existed;
     }
 
-    
     public static function live_theme_mods_options(): array {
         $name = \get_option( 'current_theme' );
         if ( false === $name ) {
@@ -1134,11 +760,6 @@ class Theme_Handler extends Command_Handler {
     public static function live_auto_update_enabled(): bool {
         return ! function_exists( 'wp_is_auto_update_enabled_for_type' ) || (bool) \wp_is_auto_update_enabled_for_type( 'theme' );
     }
-
-    
-
-
-
 
     private static function live_theme_data( \WP_Theme $theme ): array {
         $errors = $theme->errors();

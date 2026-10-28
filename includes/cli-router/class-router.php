@@ -5,110 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Router {
 
-    
     const CACHE_MAX = 32;
 
-    
     const DEFAULT_BULK = 50;
 
-    
     const PLUGIN_COMMANDS_NOTE = 'Commands added by plugins are not available through wp_cli_run.';
 
-    
     const REFUSED_GLOBALS = array(
         'path'          => 'it loads WordPress from another directory, and wp_cli_run runs on the site this MCP connection belongs to',
         'ssh'           => 'it runs the command on another host',
@@ -123,40 +27,28 @@ final class Router {
         'debug'         => 'debug output is not available inside a web request',
     );
 
-    
     const WP_DIE_FILTERS = array( 'wp_die_handler', 'wp_die_ajax_handler', 'wp_die_json_handler', 'wp_die_jsonp_handler', 'wp_die_xmlrpc_handler', 'wp_die_xml_handler' );
 
-    
     const PRINTED_NOTE_BYTES = 500;
 
-    
     const NESTED_SPLIT = "wp_cli_run refuses 'wp %s' as one part of another command: it would be split into further parts, and wp_cli_run splits a command one level deep only. Run it as a command of its own.";
 
-    
     const NESTED_SPLIT_RUN = "wp_cli_run refuses 'wp %s' here: it runs as one part of another wp_cli_run command, and a part cannot be split into further parts. Run it as a command of its own.";
 
-    
     const PART_FAILED = '%s refused the next call: %s';
 
-    
     private static $cache = array();
 
-    
     private static $depth = 0;
 
-    
     private static $split_frames = array();
 
-    
     private static $part_depth = 0;
 
-    
     private static $part_handoff = null;
 
-    
     private static $tool_resolver = null;
 
-    
     public static function classify( string $command ): Classification {
         $key = self::cache_key( $command );
         if ( isset( self::$cache[ $key ] ) ) {
@@ -170,16 +62,6 @@ final class Router {
         return $classification;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function approval_policy( Classification $c ): string {
         if ( 'own' === $c->kind ) {
             return $c->write ? 'always' : 'never';
@@ -190,18 +72,9 @@ final class Router {
         return self::plan_pauses( $c->plan ) ? 'always' : 'never';
     }
 
-    
-
-
-
-
-
-
     private static function plan_pauses( array $plan ): bool {
         foreach ( $plan as $call ) {
             $tool = self::tool( (string) $call['tool'] );
-            
-            
             if ( ! is_object( $tool ) || ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) ) {
                 return true;
             }
@@ -211,11 +84,6 @@ final class Router {
         }
         return false;
     }
-
-    
-
-
-
 
     public static function describe( Classification $c ): string {
         $lines = array( 'WP-CLI: ' . $c->masked );
@@ -230,12 +98,6 @@ final class Router {
         }
         return implode( "\n", $lines );
     }
-
-    
-
-
-
-
 
     private static function own_describe_lines( Invocation $inv ): array {
         $lines = array();
@@ -253,12 +115,6 @@ final class Router {
         return $lines;
     }
 
-    
-
-
-
-
-
     private static function tool_describe( array $call ): string {
         $tool = self::tool( (string) $call['tool'] );
         if ( ! is_object( $tool ) || ! method_exists( $tool, 'describe' ) ) {
@@ -271,22 +127,9 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public static function run( array $tool_arguments, Context $ctx ): array {
         $command = isset( $tool_arguments['command'] ) && is_string( $tool_arguments['command'] ) ? $tool_arguments['command'] : '';
         $c       = self::classify( $command );
-        
-        
         $part = self::in_split_frame();
         ++self::$depth;
         try {
@@ -297,8 +140,6 @@ final class Router {
                 $envelope[ $key ] = $value;
             }
             if ( $part ) {
-                
-                
                 self::$part_handoff = array(
                     'ctx'  => $ctx,
                     'exit' => $exit,
@@ -310,27 +151,15 @@ final class Router {
         }
     }
 
-    
-
-
-
     private static function start( Classification $c, Context $ctx ): void {
         $ctx->out = clone $c->output;
         foreach ( $c->notes as $note ) {
             $ctx->note( $note );
         }
         if ( null !== $c->plan ) {
-            
-            
             $ctx->approved_plan( $c->plan );
         }
     }
-
-    
-
-
-
-
 
     private static function run_dispatch( Classification $c, Context $ctx, array $tool_arguments, bool $part ): array {
         $exit  = $c->exit_code;
@@ -339,7 +168,6 @@ final class Router {
             $exit = 0;
             try {
                 if ( $part && $c->split ) {
-                    
                     $ctx->out->error( sprintf( self::NESTED_SPLIT_RUN, $c->invocation->command ) );
                 }
                 $paged = self::dispatch( $c, $ctx, $tool_arguments );
@@ -350,7 +178,6 @@ final class Router {
         return array( $exit, $paged );
     }
 
-    
     public static function reset(): void {
         self::$cache         = array();
         self::$tool_resolver = null;
@@ -360,31 +187,15 @@ final class Router {
         self::$part_handoff  = null;
     }
 
-    
-
-
-
-
-
     public static function set_tool_resolver( ?callable $resolver ): void {
         self::$tool_resolver = $resolver;
     }
 
-    
-    
-    
-
-    
     private static function cache_key( string $command ): string {
         $user = function_exists( 'get_current_user_id' ) ? (int) \get_current_user_id() : 0;
         $blog = function_exists( 'get_current_blog_id' ) ? (int) \get_current_blog_id() : 0;
         return $user . ':' . $blog . ':' . $command;
     }
-
-    
-
-
-
 
     private static function build( string $command ): Classification {
         $c          = new Classification( 'invalid' );
@@ -398,11 +209,6 @@ final class Router {
         }
         return $c;
     }
-
-    
-
-
-
 
     private static function classify_into( Classification $c, string $command ): void {
         $out     = $c->output;
@@ -436,17 +242,8 @@ final class Router {
             self::enforce_params( $c, $leaf, $route, $args, $parsed['assoc'] );
         }
 
-        
-        
         self::route_call( $c, new Invocation( $name, $valid['args'], $valid['assoc'], $runtime, $leaf, $route, $command ), self::classify_context( $out ) );
     }
-
-    
-
-
-
-
-
 
     private static function parse( Classification $c, string $command ): array {
         try {
@@ -456,21 +253,11 @@ final class Router {
         }
         $runtime = $parsed['runtime'];
         $c->output->set_quiet( array_key_exists( 'quiet', $runtime ) && (bool) $runtime['quiet'] );
-        
         foreach ( $parsed['notices'] as $notice ) {
             $c->output->err( $notice . "\n" );
         }
         return $parsed;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function find_leaf( Classification $c, array $positional ): ?array {
         $own = Self_Protection::own_command( implode( ' ', $positional ) );
@@ -483,7 +270,6 @@ final class Router {
             return $found;
         }
         if ( null !== $found['composite'] && ! $found['rest'] ) {
-            
             self::composite_usage( $found['composite'], $c->output );
             $c->kind   = 'catalog';
             $c->reason = 'usage';
@@ -493,16 +279,8 @@ final class Router {
             $c->notes[] = self::PLUGIN_COMMANDS_NOTE;
         }
         self::stop( $c, 'invalid', 'unknown', Catalog::not_found_message( $found ) );
-        return null; 
+        return null;
     }
-
-    
-
-
-
-
-
-
 
     private static function route_kind( Classification $c, string $name, ?array $route ): string {
         $route_of = is_array( $route ) && isset( $route['route'] ) ? $route['route'] : null;
@@ -518,22 +296,12 @@ final class Router {
         return $route_of;
     }
 
-    
-
-
-
-
-
     private static function runs_route( ?string $route_of, ?array $route ): bool {
         if ( ! in_array( $route_of, array( 'catalog', 'delegate', 'own' ), true ) ) {
             return false;
         }
         return 'catalog' !== $route_of || in_array( isset( $route['method'] ) ? $route['method'] : null, Catalog_Commands::ANSWERED, true );
     }
-
-    
-
-
 
     private static function classify_context( Output $out ): Context {
         return new Context(
@@ -547,18 +315,9 @@ final class Router {
         );
     }
 
-    
-
-
-
-
     private static function route_call( Classification $c, Invocation $declared, Context $ctx ): void {
-        
-        
         $route_of = (string) $declared->route['route'];
 
-        
-        
         $parts = 'catalog' !== $route_of ? self::split_of( $c, $declared, $ctx ) : null;
         $inv   = $declared;
         if ( null !== $parts ) {
@@ -576,12 +335,6 @@ final class Router {
         $c->kind       = $c->split ? 'delegate' : (string) $inv->route['route'];
         $c->invocation = $c->split ? $declared : $inv;
     }
-
-    
-
-
-
-
 
     private static function route_single( Classification $c, Invocation $inv, Context $ctx ): Invocation {
         $route    = $inv->route;
@@ -606,13 +359,6 @@ final class Router {
         return $inv;
     }
 
-    
-
-
-
-
-
-
     private static function require_route_caps( Classification $c, array $route, Context $ctx ): void {
         $c->reason = 'capability';
         $ctx->require_cap( isset( $route['cap'] ) && is_string( $route['cap'] ) && '' !== $route['cap'] ? $route['cap'] : 'manage_options' );
@@ -621,11 +367,6 @@ final class Router {
         }
         $c->reason = null;
     }
-
-    
-
-
-
 
     private static function preflight( Classification $c, Invocation $inv, Context $ctx ): void {
         $route     = $inv->route;
@@ -644,10 +385,6 @@ final class Router {
         $c->reason = null;
     }
 
-    
-
-
-
     private static function stopped( Classification $c, Cli_Exit $e ): void {
         $c->exit_code = $e->get_exit_code();
         if ( 'invalid' === $c->kind && in_array( $c->reason, array( 'capability', 'preflight', 'bulk', 'param', 'split', 'split_depth', 'delegate_when', 'read_only_when' ), true ) ) {
@@ -660,22 +397,11 @@ final class Router {
         $c->error = $errors ? strtok( (string) $errors[0], "\n" ) : null;
     }
 
-    
-
-
-
-
     private static function stop( Classification $c, string $kind, string $reason, string $message ): void {
         $c->kind   = $kind;
         $c->reason = $reason;
         $c->output->error( $message );
     }
-
-    
-
-
-
-
 
     private static function apply_globals( Classification $c, array $runtime ): void {
         foreach ( array_keys( $runtime ) as $key ) {
@@ -691,19 +417,6 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     private static function check_url( Classification $c, $url ): void {
         if ( true === $url ) {
             $c->output->warning( 'The --url parameter expects a value.' );
@@ -718,12 +431,6 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
     private static function url_names_this_site( string $url, string $home ): bool {
         $parts = self::parse_url( $url );
         if ( ! isset( $parts['scheme'] ) ) {
@@ -737,24 +444,9 @@ final class Router {
         return $match;
     }
 
-    
-
-
-
-
-
     private static function same_path( array $parts, array $home_parts ): bool {
         return rtrim( isset( $parts['path'] ) ? (string) $parts['path'] : '', '/' ) === rtrim( isset( $home_parts['path'] ) ? (string) $home_parts['path'] : '', '/' );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function check_user( Classification $c, $arg ): void {
         $out = $c->output;
@@ -771,18 +463,6 @@ final class Router {
             self::stop( $c, 'refuse', 'user', sprintf( 'wp_cli_run never switches user: --user=%s is user %d, and this MCP connection runs as user %d.', $label, (int) $user->ID, $caller ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function composite_usage( array $composite, Output $out ): void {
         $path = (string) $composite['command'];
@@ -802,25 +482,11 @@ final class Router {
         $out->line( "See 'wp help $path <command>' for more information on a specific command." );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function enforce_params( Classification $c, array $leaf, array $route, array $args, array $assoc ): void {
         $handled = isset( $route['params'] ) && is_array( $route['params'] ) ? array_map( 'strval', $route['params'] ) : array();
         $refused = isset( $route['refused_params'] ) && is_array( $route['refused_params'] ) ? $route['refused_params'] : array();
 
         list( $errors, $named ) = self::synopsis_param_errors( $leaf, $handled, $refused, $args, $assoc );
-        
-        
         if ( empty( $route['generic'] ) ) {
             $errors = array_merge( $errors, self::unknown_param_errors( $named, $refused, $assoc ) );
         }
@@ -829,19 +495,6 @@ final class Router {
             $c->output->error( "Parameter errors:\n" . implode( "\n", $errors ) );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function synopsis_param_errors( array $leaf, array $handled, array $refused, array $args, array $assoc ): array {
         $errors = array();
@@ -864,35 +517,13 @@ final class Router {
         return array( $errors, $named );
     }
 
-    
-
-
-
-
-
-
     private static function positional_given( array $param, array $args, int $index ): bool {
         return ! empty( $param['repeating'] ) ? count( $args ) > $index : array_key_exists( $index, $args );
     }
 
-    
-
-
-
-
-
-
     private static function unhandled_param( string $format, string $name, array $handled, array $refused ): ?string {
         return in_array( $name, $handled, true ) ? null : sprintf( $format, $name, self::param_reason( $refused, $name ) );
     }
-
-    
-
-
-
-
-
-
 
     private static function unknown_param_errors( array $named, array $refused, array $assoc ): array {
         $errors = array();
@@ -904,20 +535,9 @@ final class Router {
         return $errors;
     }
 
-    
-
-
-
-
     private static function param_reason( array $refused, string $name ): string {
         return isset( $refused[ $name ] ) && is_string( $refused[ $name ] ) && '' !== $refused[ $name ] ? $refused[ $name ] : 'not supported yet';
     }
-
-    
-
-
-
-
 
     private static function enforce_bulk( Classification $c, Invocation $inv, Context $ctx ): void {
         $route = $inv->route;
@@ -953,14 +573,6 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function valid_plan( $plan, array $tools ): ?array {
         if ( ! is_array( $plan ) ) {
             return null;
@@ -978,7 +590,6 @@ final class Router {
         return $valid;
     }
 
-    
     private static function item_count( Invocation $inv ): int {
         $index = 0;
         foreach ( isset( $inv->leaf['params'] ) ? (array) $inv->leaf['params'] : array() as $param ) {
@@ -992,17 +603,6 @@ final class Router {
         }
         return 1;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function split_of( Classification $c, Invocation $inv, Context $ctx ): ?array {
         $route = $inv->route;
@@ -1027,8 +627,6 @@ final class Router {
             return null;
         }
         if ( self::$part_depth > 0 ) {
-            
-            
             $c->reason = 'split_depth';
             $ctx->out->error( sprintf( self::NESTED_SPLIT, $inv->command ) );
         }
@@ -1042,14 +640,6 @@ final class Router {
         return $valid;
     }
 
-    
-
-
-
-
-
-
-
     private static function valid_split( Invocation $inv, Context $ctx, Command_Handler $handler, $parts ): array {
         $tools = isset( $inv->route['split_tools'] ) ? array_map( 'strval', (array) $inv->route['split_tools'] ) : array();
         if ( ! is_array( $parts ) ) {
@@ -1061,17 +651,6 @@ final class Router {
         }
         return $valid;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function valid_part( Invocation $inv, Context $ctx, Command_Handler $handler, array $tools, $part ): array {
         if ( ! is_array( $part ) || ! isset( $part['tool'] ) || ! is_string( $part['tool'] ) || ! in_array( $part['tool'], $tools, true ) ) {
@@ -1097,13 +676,6 @@ final class Router {
         return $entry;
     }
 
-    
-
-
-
-
-
-
     private static function part_render( Invocation $inv, Context $ctx, Command_Handler $handler, array $part, string $tool ): ?string {
         if ( isset( $part['render'] ) ) {
             if ( ! is_string( $part['render'] ) || '' === $part['render'] || ! is_callable( array( $handler, $part['render'] ) ) ) {
@@ -1112,28 +684,14 @@ final class Router {
             return $part['render'];
         }
         if ( 'wp_cli_run' !== $tool ) {
-            
             $ctx->out->error( "wp_cli_run cannot run 'wp {$inv->command}': its split hands a part to {$tool} without a render method." );
         }
         return null;
     }
 
-    
-
-
-
-
     private static function part_label( array $part ): ?string {
         return isset( $part['label'] ) && is_string( $part['label'] ) && '' !== $part['label'] ? $part['label'] : null;
     }
-
-    
-
-
-
-
-
-
 
     private static function split_command( Invocation $inv, Context $ctx, array $arguments ): string {
         $command = isset( $arguments['command'] ) && is_string( $arguments['command'] ) ? trim( $arguments['command'] ) : '';
@@ -1151,12 +709,6 @@ final class Router {
         return $command;
     }
 
-    
-
-
-
-
-
     private static function refuse_part( Invocation $inv, Context $ctx, string $command, Classification $part ): void {
         $errors = $part->output->errors();
         $ctx->out->error(
@@ -1165,7 +717,6 @@ final class Router {
         );
     }
 
-    
     private static function classify_part( string $command ): Classification {
         ++self::$part_depth;
         try {
@@ -1174,14 +725,6 @@ final class Router {
             --self::$part_depth;
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function delegates( Classification $c, Invocation $inv, Context $ctx ): bool {
         $route     = $inv->route;
@@ -1206,16 +749,6 @@ final class Router {
         return $answer;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function delegated_route( array $route ): array {
         $effective = array_diff_key( $route, array_flip( array( 'handler', 'cap', 'network', 'describe', 'preflight', 'plan', 'not_captured', 'delegate_when', 'delegate_method', 'delegate_tools', 'delegate_plan', 'delegate_preflight', 'read_only_when', 'split', 'split_tools' ) ) );
 
@@ -1231,14 +764,6 @@ final class Router {
         }
         return $effective;
     }
-
-    
-
-
-
-
-
-
 
     private static function read_only( Classification $c, Invocation $inv, Context $ctx ): bool {
         $route     = $inv->route;
@@ -1259,11 +784,6 @@ final class Router {
         return $answer;
     }
 
-    
-
-
-
-
     private static function over_cap( Classification $c, Invocation $inv, Context $ctx, int $count, int $cap ): void {
         if ( $count > $cap ) {
             $c->reason = 'bulk';
@@ -1271,26 +791,9 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
     public static function in_split_frame(): bool {
         return array() !== self::$split_frames && end( self::$split_frames ) === self::$depth;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     private static function dispatch( Classification $c, Context $ctx, array $tool_arguments ): array {
         $inv    = $c->invocation;
@@ -1322,9 +825,6 @@ final class Router {
             return array();
         }
 
-        
-        
-        
         $start      = $ctx->out;
         $page_out   = clone $start;
         $stdout_at  = strlen( $page_out->stdout() );
@@ -1342,12 +842,6 @@ final class Router {
         );
     }
 
-    
-
-
-
-
-
     private static function output_offset( array $tool_arguments, Context $ctx ): int {
         if ( ! array_key_exists( 'output_offset', $tool_arguments ) || null === $tool_arguments['output_offset'] ) {
             return 0;
@@ -1362,28 +856,6 @@ final class Router {
         $ctx->out->error( 'output_offset must be a whole number of 0 or more, as the previous result\'s next_offset gave it.' );
         return 0;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function run_split( Classification $c, Context $ctx ): void {
         $inv                  = $c->invocation;
@@ -1404,22 +876,12 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function delegate_part( Context $ctx, array $parts, int $index ): array {
         $part               = $parts[ $index ];
         self::$part_handoff = null;
         try {
             $result = $ctx->delegate( (string) $part['tool'], (array) $part['arguments'] );
         } catch ( Cli_Exit $e ) {
-            
             self::$part_handoff = null;
             self::split_not_run( $ctx, $parts, $index );
             throw $e;
@@ -1430,15 +892,6 @@ final class Router {
         $result['exit_code'] = null !== $handoff ? (int) $handoff['exit'] : ( $result['ok'] ? 0 : 1 );
         return $result;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function render_part( Invocation $inv, Context $ctx, ?Command_Handler $handler, array $parts, int $index, array $result, array &$state ): bool {
         $part = $parts[ $index ];
@@ -1454,17 +907,6 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function fail_part( Context $ctx, array $parts, int $index, array $result, int $errors ): void {
         if ( count( $ctx->out->errors() ) === $errors && null === $ctx->missing_target() ) {
             $ctx->out->error_continue( sprintf( self::PART_FAILED, (string) $parts[ $index ]['tool'], null !== $result['error'] ? (string) $result['error'] : 'the call failed' ) );
@@ -1474,44 +916,23 @@ final class Router {
         throw new Cli_Exit( null !== $ctx->missing_target() && null === $ctx->pending_approval() && 0 === $exit ? 0 : max( 1, $exit ) );
     }
 
-    
-
-
-
-
-
     private static function merge_part_result( Context $ctx, array $result ): bool {
         if ( $result['part'] instanceof Context ) {
             self::merge_part( $ctx, $result['part'] );
             return ! empty( $result['ok'] );
         }
         if ( ! empty( $result['ok'] ) ) {
-            
-            
             self::merge_envelope( $ctx, (array) $result['payload'] );
             return true;
         }
         return false;
     }
 
-    
-
-
-
-
-
-
     public static function merge_part( Context $into, Context $part, ?string $stdout = null ): void {
         $into->out->out( null !== $stdout ? $stdout : $part->out->stdout() );
         self::merge_stderr( $into->out, $part->out->stderr(), $part->out->warnings(), $part->out->errors() );
         $into->merge_part( $part );
     }
-
-    
-
-
-
-
 
     private static function merge_envelope( Context $ctx, array $envelope ): void {
         $ctx->out->out( isset( $envelope['output'] ) && is_string( $envelope['output'] ) ? $envelope['output'] : '' );
@@ -1522,12 +943,6 @@ final class Router {
         self::merge_stderr( $ctx->out, isset( $envelope['stderr'] ) && is_string( $envelope['stderr'] ) ? $envelope['stderr'] : '', $warnings, array() );
         self::merge_envelope_records( $ctx, $envelope );
     }
-
-    
-
-
-
-
 
     private static function merge_envelope_records( Context $ctx, array $envelope ): void {
         foreach ( isset( $envelope['notes'] ) ? (array) $envelope['notes'] : array() as $note ) {
@@ -1543,15 +958,6 @@ final class Router {
             $ctx->mark_changed();
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function merge_stderr( Output $into, string $stderr, array $warnings, array $errors ): void {
         $w      = 0;
@@ -1585,12 +991,6 @@ final class Router {
         }
     }
 
-    
-
-
-
-
-
     private static function line_at( string $stderr, int $at, string $prefix, array $messages, int $i ): int {
         if ( ! isset( $messages[ $i ] ) ) {
             return 0;
@@ -1598,11 +998,6 @@ final class Router {
         $line = $prefix . $messages[ $i ] . "\n";
         return substr( $stderr, $at, strlen( $line ) ) === $line ? strlen( $line ) : 0;
     }
-
-    
-
-
-
 
     private static function split_not_run( Context $ctx, array $parts, int $from ): void {
         foreach ( array_slice( $parts, $from ) as $part ) {
@@ -1615,26 +1010,6 @@ final class Router {
             }
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function guarded( callable $fn, Context $ctx ): void {
         $handler  = static function ( $message = '', $title = '', $args = array() ) use ( $ctx ) {
@@ -1670,7 +1045,6 @@ final class Router {
         }
     }
 
-    
     private static function printed_note( string $printed ): string {
         $excerpt = Envelope::cut( $printed, self::PRINTED_NOTE_BYTES );
         return sprintf(
@@ -1680,17 +1054,6 @@ final class Router {
             strlen( $excerpt ) < strlen( $printed ) ? '...' : ''
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function wp_die_message( $message ): string {
         if ( $message instanceof \WP_Error ) {
@@ -1706,7 +1069,6 @@ final class Router {
         return self::clean_error_message( is_scalar( $text ) ? (string) $text : '' );
     }
 
-    
     private static function clean_error_message( string $message ): string {
         $original = trim( $message );
         $message  = $original;
@@ -1723,13 +1085,6 @@ final class Router {
         return html_entity_decode( $message, ENT_COMPAT, 'UTF-8' );
     }
 
-    
-
-
-
-
-
-
     private static function finish( Classification $c, Context $ctx, int $exit, array $envelope ): array {
         $missing = $ctx->missing_target();
         if ( null !== $missing ) {
@@ -1745,28 +1100,12 @@ final class Router {
         throw self::tool_error( null, true, $ctx, $exit, $envelope );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function tool_error( ?string $message, bool $from_output, Context $ctx, int $exit, array $envelope ): \Easy_MCP_AI\MCP\Detailed_Tool_Error {
         $stdout = $ctx->out->stdout();
         $rest   = $ctx->out->stderr();
         if ( $from_output ) {
             list( $message, $rest ) = self::message_from_output( $ctx, $exit );
         }
-        
         if ( null === $message || '' === trim( $message ) ) {
             $message = sprintf( 'The command exited with code %d.', $exit );
         }
@@ -1782,13 +1121,6 @@ final class Router {
         }
         return new \Easy_MCP_AI\MCP\Detailed_Tool_Error( (string) $message, $details );
     }
-
-    
-
-
-
-
-
 
     private static function message_from_output( Context $ctx, int $exit ): array {
         $stderr = $ctx->out->stderr();
@@ -1810,14 +1142,6 @@ final class Router {
         return array( $message, $stderr );
     }
 
-    
-
-
-
-
-
-
-
     private static function failure_summary( int $exit, array $envelope ): array {
         $summary = array(
             'exit_code'        => $exit,
@@ -1836,12 +1160,6 @@ final class Router {
         return $summary;
     }
 
-    
-
-
-
-
-
     private static function cut_by_server( string $message ): bool {
         $max = \Easy_MCP_AI\MCP\Detailed_Tool_Error::MAX_MESSAGE;
         if ( strlen( trim( $message ) ) > $max ) {
@@ -1857,7 +1175,6 @@ final class Router {
         return false;
     }
 
-    
     private static function first_line( string $text ): string {
         foreach ( explode( "\n", $text ) as $line ) {
             if ( '' !== trim( $line ) ) {
@@ -1866,17 +1183,6 @@ final class Router {
         }
         return '';
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
 
     private static function handler_object( string $kind, array $route ): ?Command_Handler {
         if ( 'catalog' === $kind ) {
@@ -1895,7 +1201,6 @@ final class Router {
         return new $class();
     }
 
-    
     private static function tool( string $name ): ?object {
         if ( null !== self::$tool_resolver ) {
             return call_user_func( self::$tool_resolver, $name );
@@ -1907,7 +1212,6 @@ final class Router {
         return null;
     }
 
-    
     private static function masked( string $command ): string {
         try {
             return Redactor::mask_command( $command )[0];
@@ -1915,12 +1219,6 @@ final class Router {
             return Redactor::MASK;
         }
     }
-
-    
-
-
-
-
 
     private static function parse_url( string $url ): array {
         $parts = function_exists( 'wp_parse_url' ) ? \wp_parse_url( $url ) : parse_url( $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- fallback.

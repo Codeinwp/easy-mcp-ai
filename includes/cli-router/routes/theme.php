@@ -1,33 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -141,12 +113,10 @@ return array(
         'method'         => 'install',
         'tools'          => array( 'wp_install_theme', 'wp_switch_theme' ),
         'write'          => true,
-        
         'params'         => array( 'theme|zip|url', 'version', 'force', 'ignore-requirements', 'activate' ),
         'refused_params' => array(
             'insecure' => 'wp_cli_run never downloads without certificate checks',
         ),
-        
         'bulk'           => 10,
         'plan'           => 'plan_install',
         'preflight'      => 'preflight_install',
@@ -220,7 +190,6 @@ return array(
             'patch'    => 'wp_update_theme cannot limit an update to patch releases yet. Pass the version you want with --version, or update without --patch',
             'insecure' => 'wp_cli_run never downloads without certificate checks',
         ),
-        
         'bulk'           => 6,
         'plan'           => 'plan_update',
         'preflight'      => 'preflight_batch',

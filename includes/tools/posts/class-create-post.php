@@ -17,12 +17,6 @@ class Create_Post extends Base_Tool {
         return 'Creates a new WordPress post. Required: `title` (unless `allow_empty_title` is true and `content` or `excerpt` is given). Optional: `content` (HTML/Gutenberg blocks accepted; sanitized by WordPress per the calling user capability), `status` (publish/draft/pending/private/future, or any other non-internal status registered on this site — default draft; use "future" with `date` or `date_gmt` to schedule), `date` (ISO 8601 site time, e.g. 2026-06-01T09:00:00), `date_gmt` (ISO 8601 GMT; send `date` or `date_gmt`, not both), `excerpt`, `categories` (array of category IDs), `tags` (array of tag IDs), `tag_names` (array of tag names or slugs; a missing tag is created, as WordPress does for tags typed in the editor), `tax_input` (object: taxonomy slug → array of term IDs, for any taxonomy of posts shown in the REST API), `password` (protects the post; a password-protected post cannot be sticky), `featured_media` (attachment ID), `slug`, `format` (standard/aside/chat/gallery/link/image/quote/status/video/audio), `author` (user ID), `template` (theme file slug for the post template), `comment_status` (open/closed), `ping_status` (open/closed), `sticky`, `allow_empty_title` (boolean, default false: WordPress itself refuses only a post whose title, content and excerpt are all empty). If **Easy MCP AI → Settings → Force draft on create** is enabled, `status` is silently overridden to `draft` regardless of the value supplied. Optional `meta` (object of meta key-value pairs; only REST-registered keys persist, including the SEO keys of enabled plugin integrations, and dropped keys are reported back as `meta_ignored` with a `notice`). Returns { id, title, status, link, date }, plus `created_tag_ids` when `tag_names` was given. Revisions are created automatically on each update.';
     }
 
-    
-
-
-
-
-
     public function get_redacted_arguments() {
         return array( 'password' );
     }
@@ -169,13 +163,8 @@ class Create_Post extends Base_Tool {
 
         $this->maybe_force_draft( $params );
 
-        
-        
         $created_tag_ids = null === $tag_names ? null : self::resolve_tag_names( $tag_names, $params );
 
-        
-        
-        
         $data = $this->rest_request( 'POST', '/wp/v2/posts', $params, 'id,title,status,link,date' . ( $meta_sent ? ',meta' : '' ) );
 
         $result = array(
@@ -195,33 +184,14 @@ class Create_Post extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private function require_title_or_body( array $arguments, bool $has_title ): void {
         $allow_empty_title = isset( $arguments['allow_empty_title'] ) && rest_sanitize_boolean( $arguments['allow_empty_title'] );
         if ( ! $allow_empty_title ) {
             $this->validate_required( $arguments, array( 'title' ) );
         } elseif ( ! $has_title && ! self::non_empty_text( $arguments, 'content' ) && ! self::non_empty_text( $arguments, 'excerpt' ) ) {
-            
-            
             throw new \InvalidArgumentException( 'Missing required parameters: title, content or excerpt (at least one must be non-empty; WordPress refuses a post whose title, content and excerpt are all empty).' );
         }
     }
-
-    
-
-
-
-
-
-
 
     private static function body_params( array $arguments, bool $has_title ): array {
         $params = array(
@@ -232,30 +202,14 @@ class Create_Post extends Base_Tool {
         }
 
         if ( isset( $arguments['content'] ) ) {
-            
-            
-            
-            
             $params['content'] = $arguments['content'];
         }
 
         if ( isset( $arguments['excerpt'] ) ) {
-            
-            
-            
-            
-            
             $params['excerpt'] = $arguments['excerpt'];
         }
         return $params;
     }
-
-    
-
-
-
-
-
 
     private function term_and_media_params( array $arguments ): array {
         $params = array();
@@ -272,13 +226,6 @@ class Create_Post extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
 
     private static function detail_params( array $arguments ): array {
         $params = array();
@@ -316,31 +263,11 @@ class Create_Post extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
     private static function refuse_future_without_date( array $params ): void {
         if ( isset( $params['status'] ) && 'future' === $params['status'] && empty( $params['date'] ) && empty( $params['date_gmt'] ) ) {
             throw new \InvalidArgumentException( 'The "date" field is required when status is "future".' );
         }
     }
-
-    
-
-    
-
-
-
-
-
-
-
-
-
 
     public static function status_enum(): array {
         $core = array( 'publish', 'draft', 'pending', 'private', 'future' );
@@ -358,19 +285,6 @@ class Create_Post extends Base_Tool {
         return array_values( array_unique( array_merge( $core, $extra ) ) );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function apply_date_gmt_and_password( array $arguments, array &$params ): void {
         if ( ! empty( $arguments['date_gmt'] ) ) {
             if ( ! empty( $params['date'] ) ) {
@@ -382,21 +296,9 @@ class Create_Post extends Base_Tool {
             if ( ! is_string( $arguments['password'] ) ) {
                 throw new \InvalidArgumentException( 'password must be a string.' );
             }
-            
-            
             $params['password'] = $arguments['password'];
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     public static function prepare_term_arguments( array $arguments, array &$params ): ?array {
         $tag_names = isset( $arguments['tag_names'] ) ? self::tag_names_arg( $arguments['tag_names'] ) : null;
@@ -407,14 +309,6 @@ class Create_Post extends Base_Tool {
 
         return $tag_names;
     }
-
-    
-
-
-
-
-
-
 
     private static function tag_names_arg( $raw ): array {
         if ( is_string( $raw ) ) {
@@ -435,14 +329,6 @@ class Create_Post extends Base_Tool {
         return $tag_names;
     }
 
-    
-
-
-
-
-
-
-
     private static function tax_input_object( $tax_input ): array {
         if ( is_string( $tax_input ) ) {
             $decoded   = json_decode( $tax_input, true );
@@ -453,16 +339,6 @@ class Create_Post extends Base_Tool {
         }
         return $tax_input;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function apply_tax_input( array $tax_input, array &$params, ?array $tag_names ): void {
         $map = self::rest_taxonomy_bases( 'post' );
@@ -487,20 +363,6 @@ class Create_Post extends Base_Tool {
             $params[ $base ] = self::parse_term_ids( $ids, 'tax_input.' . $taxonomy );
         }
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function resolve_tag_names( array $tag_names, array &$params ): array {
         $ids     = isset( $params['tags'] ) && is_array( $params['tags'] ) ? $params['tags'] : array();
@@ -534,13 +396,6 @@ class Create_Post extends Base_Tool {
         return $created;
     }
 
-    
-
-
-
-
-
-
     private static function rest_taxonomy_bases( string $object_type ): array {
         $map = array();
         foreach ( (array) get_object_taxonomies( $object_type, 'objects' ) as $key => $tax ) {
@@ -552,15 +407,6 @@ class Create_Post extends Base_Tool {
         }
         return $map;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function parse_term_ids( $ids, string $label ): array {
         if ( is_scalar( $ids ) ) {
@@ -581,13 +427,6 @@ class Create_Post extends Base_Tool {
         }
         return array_values( array_unique( $out ) );
     }
-
-    
-
-
-
-
-
 
     private static function non_empty_text( array $arguments, string $key ): bool {
         return isset( $arguments[ $key ] ) && is_string( $arguments[ $key ] ) && '' !== $arguments[ $key ];

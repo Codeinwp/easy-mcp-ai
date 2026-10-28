@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Delete_Shipping_Zone extends Base_Tool {
 
     use Store_Setup;
@@ -54,7 +49,6 @@ class Delete_Shipping_Zone extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id   = isset( $arguments['id'] ) ? (int) $arguments['id'] : 0;
         $zone = $id > 0 ? $this->peek( '/wc/v3/shipping/zones/' . $id, 'id,name' ) : null;

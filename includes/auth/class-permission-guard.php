@@ -6,20 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Permission_Guard {
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     const EVERY_CREDENTIAL = array( 'wp_send_feedback', 'wp_get_skill', 'wp_list_disabled_tools' );
 
     private $token_manager;
@@ -28,59 +14,13 @@ class Permission_Guard {
         $this->token_manager = $token_manager;
     }
 
-    
-
-
-
-
     public function can_use_tool( $token_id, $tool_name ) {
         return self::allowlist_permits( $this->get_allowed_tools( $token_id ), $tool_name, false );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public function can_use_tool_with_scope( array $allowed_tools, $tool_name ) {
         return self::allowlist_permits( $allowed_tools, $tool_name );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function allowlist_permits( array $allowed, $tool_name, $globs = true ) {
         if ( in_array( (string) $tool_name, self::EVERY_CREDENTIAL, true ) ) {

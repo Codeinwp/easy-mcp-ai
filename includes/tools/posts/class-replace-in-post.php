@@ -8,30 +8,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Replace_In_Post extends Base_Tool {
 
-    const MAX_SUBJECT_BYTES   = 204800; 
+    const MAX_SUBJECT_BYTES   = 204800;
     const MAX_PATTERN_LENGTH  = 500;
     const PCRE_BACKTRACK_LIMIT = 100000;
-
-    
-
-
-
 
     const SITE_CSS_TYPES = array( 'wp_global_styles', 'custom_css' );
 
@@ -96,35 +77,13 @@ class Replace_In_Post extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     public function get_approval_policy( array $arguments ) {
         try {
             return null !== $this->site_css_target( $arguments ) ? 'always' : 'inherit';
         } catch ( \Throwable $e ) {
-            
             return 'always';
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     public function describe( array $arguments ) {
         $target = $this->site_css_target( $arguments );
@@ -155,20 +114,10 @@ class Replace_In_Post extends Base_Tool {
         return $text;
     }
 
-    
-
-
-
-
-
-
-
-
     public function approval_refusal( array $arguments ): ?string {
         try {
             $preview = Approval_Gate::flatten( (string) $this->describe( $arguments ) );
         } catch ( \Throwable $e ) {
-            
             return null;
         }
         $length = function_exists( 'mb_strlen' ) ? mb_strlen( $preview ) : strlen( $preview );
@@ -183,20 +132,6 @@ class Replace_In_Post extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         $target = $this->site_css_target( $arguments );
         if ( null === $target ) {
@@ -207,8 +142,6 @@ class Replace_In_Post extends Base_Tool {
             throw new \RuntimeException( 'You do not have permission to edit this post.' );
         }
         if ( null !== $checked['pattern'] ) {
-            
-            
             $previous = $this->lower_backtrack_limit();
             if ( false !== $previous ) {
                 @ini_set( 'pcre.backtrack_limit', (string) $previous ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Restoring the PCRE backtrack limit this check lowered.
@@ -217,40 +150,15 @@ class Replace_In_Post extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
     private static function check_regex_bound( string $search, bool $bounded ): void {
         if ( ! $bounded && strlen( $search ) > (int) ( self::MAX_PATTERN_LENGTH / 2 ) ) {
             throw new \RuntimeException( 'Cannot lower pcre.backtrack_limit on this host; regex patterns longer than 250 chars are not permitted here for ReDoS safety.' );
         }
     }
 
-    
-
-
-
-
-
-
-
     protected function lower_backtrack_limit() {
         return @ini_set( 'pcre.backtrack_limit', (string) self::PCRE_BACKTRACK_LIMIT ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Scoped lowering of PCRE backtrack limit for ReDoS mitigation; the caller restores it.
     }
-
-    
-
-
-
-
-
-
 
     private function site_css_target( array $arguments ): ?array {
         try {
@@ -268,30 +176,9 @@ class Replace_In_Post extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function as_text( $value ): string {
         return is_array( $value ) ? 'Array' : (string) $value;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function shown( string $value ): string {
         $json = (string) wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE );
@@ -304,22 +191,7 @@ class Replace_In_Post extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function check_arguments( array $arguments ): array {
-        
-        
-        
-        
-        
         $this->validate_required( $arguments, array( 'id', 'field', 'search' ) );
         if ( ! array_key_exists( 'replace', $arguments ) ) {
             throw new \InvalidArgumentException( 'Missing required parameters: replace' );
@@ -340,7 +212,6 @@ class Replace_In_Post extends Base_Tool {
 
         $max = isset( $arguments['max_replacements'] ) ? (int) $arguments['max_replacements'] : -1;
         if ( 0 === $max ) {
-            
             throw new \InvalidArgumentException( 'max_replacements must be -1 (unlimited) or a positive integer.' );
         }
 
@@ -351,14 +222,12 @@ class Replace_In_Post extends Base_Tool {
                 throw new \InvalidArgumentException( 'Regex replacement is disabled on this site (filter: easy_mcp_ai_replace_in_post_allow_regex).' );
             }
 
-            
             if ( preg_match( '/\([^)]*[+*?][^)]*\)[+*?]/', $search ) ) {
                 throw new \InvalidArgumentException( 'Search pattern contains nested quantifiers which can cause catastrophic backtracking. Simplify the pattern or use literal mode.' );
             }
 
             $pattern = '/' . str_replace( '/', '\\/', $search ) . '/u';
 
-            
             $compile_check = @preg_match( $pattern, '' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
             if ( false === $compile_check ) {
                 throw new \InvalidArgumentException( 'Invalid regex pattern. Provide the pattern body only — do not include delimiters or trailing modifiers (e.g. send `foo` not `/foo/i`; use inline modifiers like `(?i)foo`).' );
@@ -413,9 +282,6 @@ class Replace_In_Post extends Base_Tool {
             try {
                 $result = preg_replace( $pattern, $replace, $subject, $limit, $count );
             } finally {
-                
-                
-                
                 if ( false !== $previous_backtrack ) {
                     @ini_set( 'pcre.backtrack_limit', (string) $previous_backtrack ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Restoring previous PCRE backtrack limit.
                 }
@@ -434,7 +300,6 @@ class Replace_In_Post extends Base_Tool {
             $new_value = $result;
             $replacements_count = $count;
         } else {
-            
             if ( $max > 0 ) {
                 $new_value = $this->str_replace_limited( $search, $replace, $subject, $max, $replacements_count );
             } else {
@@ -445,7 +310,6 @@ class Replace_In_Post extends Base_Tool {
         }
 
         if ( 0 === $replacements_count ) {
-            
             return array(
                 'id'                    => $post_id,
                 'field'                 => $field,
@@ -459,10 +323,6 @@ class Replace_In_Post extends Base_Tool {
             'ID'   => $post_id,
             $field => $new_value,
         );
-        
-        
-        
-        
         $updated = wp_update_post( wp_slash( $update ), true );
         if ( is_wp_error( $updated ) ) {
             throw new \RuntimeException( $updated->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -470,12 +330,6 @@ class Replace_In_Post extends Base_Tool {
 
         $this->invalidate_post_cache( $post_id );
 
-        
-        
-        
-        
-        
-        
         $after_post = get_post( $post_id );
         $after_len  = $after_post ? strlen( (string) $after_post->{$field} ) : strlen( $new_value );
 
@@ -487,17 +341,6 @@ class Replace_In_Post extends Base_Tool {
             'content_length_after'  => $after_len,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function str_replace_limited( $needle, $replacement, $haystack, $max, &$count ) {
         $count = 0;

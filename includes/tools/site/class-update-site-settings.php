@@ -10,7 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Site_Settings extends Base_Tool {
 
-    
     const PAGE_FIELDS = array( 'page_on_front', 'page_for_posts' );
 
     public function get_name() {
@@ -92,9 +91,6 @@ class Update_Site_Settings extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
-        
-        
         $settable = array_keys( $this->get_input_schema()['properties'] );
         $unknown  = array_diff( array_keys( $arguments ), $settable );
         if ( $unknown ) {
@@ -133,15 +129,6 @@ class Update_Site_Settings extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function settings_params( array $arguments ): array {
         $params = self::text_params( $arguments );
 
@@ -155,13 +142,6 @@ class Update_Site_Settings extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
     private static function text_params( array $arguments ): array {
         $params = array();
 
@@ -173,9 +153,6 @@ class Update_Site_Settings extends Base_Tool {
             $params['description'] = sanitize_text_field( $arguments['description'] );
         }
 
-        
-        
-        
         if ( isset( $arguments['timezone'] ) ) {
             $params['timezone'] = sanitize_text_field( $arguments['timezone'] );
         } elseif ( isset( $arguments['timezone_string'] ) ) {
@@ -192,33 +169,9 @@ class Update_Site_Settings extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private static function posts_per_page_value( $ppp ): int {
         return ( is_numeric( $ppp ) && -1 === (int) $ppp ) ? -1 : absint( $ppp );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     private static function refuse_unknown_timezone( array $params ): void {
         $zone_group = version_compare( (string) get_bloginfo( 'version' ), '6.1', '>=' ) ? \DateTimeZone::ALL_WITH_BC : \DateTimeZone::ALL;
@@ -229,16 +182,6 @@ class Update_Site_Settings extends Base_Tool {
             );
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function stored_settings( array $params ): array {
         $before = $this->rest_request( 'GET', '/wp/v2/settings' );
@@ -252,17 +195,6 @@ class Update_Site_Settings extends Base_Tool {
         }
         return $before;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function changed_and_unchanged( array $params, array $before, array $data ): array {
         $changed   = array();
@@ -279,21 +211,6 @@ class Update_Site_Settings extends Base_Tool {
         return array( $changed, $unchanged );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function resolve_language( $value ): string {
         if ( ! is_string( $value ) ) {
             throw new \InvalidArgumentException( 'language must be a locale string such as "de_DE", or "en_US" for English; nothing was changed.' );
@@ -309,12 +226,6 @@ class Update_Site_Settings extends Base_Tool {
         throw self::language_not_installed( $locale, $allowed );
     }
 
-    
-
-
-
-
-
     private static function installed_languages(): array {
         $allowed = function_exists( 'get_available_languages' ) ? (array) get_available_languages() : array();
         if ( ! is_multisite() && defined( 'WPLANG' ) && '' !== WPLANG && 'en_US' !== WPLANG ) {
@@ -322,14 +233,6 @@ class Update_Site_Settings extends Base_Tool {
         }
         return $allowed;
     }
-
-    
-
-
-
-
-
-
 
     private static function language_not_installed( string $locale, array $allowed ): \InvalidArgumentException {
         $shown     = function_exists( 'mb_substr' ) ? mb_substr( $locale, 0, 30 ) : substr( $locale, 0, 30 );
@@ -340,36 +243,12 @@ class Update_Site_Settings extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function comparable( string $field, $value ) {
         if ( 'language' === $field && ( '' === $value || 'en_US' === $value || null === $value ) ) {
             return 'en_US';
         }
         return $value;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function front_page_params( array $arguments ): array {
         $params = array();
@@ -391,8 +270,6 @@ class Update_Site_Settings extends Base_Tool {
             return $params;
         }
 
-        
-        
         $registered = get_registered_settings();
         foreach ( array_keys( $params ) as $field ) {
             if ( empty( $registered[ $field ]['show_in_rest'] ) ) {
@@ -405,8 +282,6 @@ class Update_Site_Settings extends Base_Tool {
         $front       = $params['page_on_front'] ?? (int) get_option( 'page_on_front', 0 );
         $blog        = $params['page_for_posts'] ?? (int) get_option( 'page_for_posts', 0 );
 
-        
-        
         if ( 'page' === $show && 'page' !== $stored_show ) {
             foreach ( array( 'page_on_front' => $front, 'page_for_posts' => $blog ) as $field => $id ) {
                 if ( 0 !== $id ) {
@@ -427,15 +302,6 @@ class Update_Site_Settings extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function page_id( string $field, $value ): int {
         if ( is_int( $value ) && $value >= 0 ) {
             return $value;
@@ -445,15 +311,6 @@ class Update_Site_Settings extends Base_Tool {
         }
         throw new \InvalidArgumentException( sprintf( '%s must be a page ID, or 0 to clear it; nothing was changed.', $field ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
-
 
     private static function require_published_page( string $field, int $id ): void {
         $page = get_post( $id );
@@ -477,13 +334,6 @@ class Update_Site_Settings extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     private static function unsupported_message( array $keys ): string {
         $head  = 'Nothing was changed: unsupported setting(s) ';
         $tail  = '. This tool sets only the fields in its schema; change others in wp-admin > Settings.';
@@ -498,13 +348,6 @@ class Update_Site_Settings extends Base_Tool {
         }
         return $head . implode( ', ', $shown ) . $tail;
     }
-
-    
-
-
-
-
-
 
     private static function printable_key( $key ): string {
         return (string) preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) $key );

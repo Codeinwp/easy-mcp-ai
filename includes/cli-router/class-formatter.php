@@ -5,77 +5,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Formatter {
-
-    
-
-
-
 
     const STOP_AFTER_BYTES = Envelope::OUTPUT_MAX_BYTES;
 
-    
     private $out;
 
-    
     private $args;
 
-    
     private $prefix;
-
-    
-
-
 
     public function __construct( Output $out, array &$assoc_args, ?array $fields = null, ?string $prefix = null ) {
         $format_args = array(
@@ -92,7 +30,6 @@ final class Formatter {
         }
 
         if ( ! is_array( $format_args['fields'] ) ) {
-            
             $format_args['fields'] = explode( ',', (string) $format_args['fields'] );
         }
 
@@ -108,19 +45,9 @@ final class Formatter {
         $this->prefix = $prefix;
     }
 
-    
-
-
     public static function past_cap( Output $out, int $pending = 0 ): bool {
         return $out->stdout_bytes() + $pending > self::STOP_AFTER_BYTES;
     }
-
-    
-
-
-
-
-
 
     public function display_items( $items, bool $ascii_pre_colorized = false ): void {
         if ( $this->args['field'] ) {
@@ -134,22 +61,11 @@ final class Formatter {
 
         $transform = in_array( $this->args['format'], array( 'table', 'csv' ), true );
         if ( $transform && is_array( $items ) ) {
-            
-            
-            
             $this->check_fields( $items );
         }
 
         $this->format( $items, $transform );
     }
-
-    
-
-
-
-
-
-
 
     private function resolve_fields( $items ) {
         $item = is_array( $items ) && ! empty( $items ) ? array_shift( $items ) : false;
@@ -162,13 +78,6 @@ final class Formatter {
         return $items;
     }
 
-    
-
-
-
-
-
-
     private function check_fields( array $items ): void {
         foreach ( $items as $item ) {
             foreach ( $this->args['fields'] as $field ) {
@@ -176,12 +85,6 @@ final class Formatter {
             }
         }
     }
-
-    
-
-
-
-
 
     public function display_item( $item, bool $ascii_pre_colorized = false ): void {
         if ( isset( $this->args['field'] ) ) {
@@ -203,22 +106,9 @@ final class Formatter {
         }
     }
 
-    
-
-
-
-
     public function __get( string $key ) {
         return array_key_exists( $key, $this->args ) ? $this->args[ $key ] : null;
     }
-
-    
-
-
-
-
-
-
 
     public function transform_item_values_to_json( $item ) {
         foreach ( $this->args['fields'] as $field ) {
@@ -234,11 +124,6 @@ final class Formatter {
         }
         return $item;
     }
-
-    
-
-
-
 
     private function format( $items, bool $transform ): void {
         $fields = $this->args['fields'];
@@ -275,23 +160,12 @@ final class Formatter {
         }
     }
 
-    
-
-
-
-
     private function show_count( $items ): void {
         if ( ! is_array( $items ) ) {
             $items = iterator_to_array( $items );
         }
         $this->out->out( (string) count( $items ) );
     }
-
-    
-
-
-
-
 
     private function show_ids( $items ): void {
         if ( ! is_array( $items ) ) {
@@ -302,19 +176,10 @@ final class Formatter {
             if ( self::past_cap( $this->out ) ) {
                 break;
             }
-            
             $this->out->out( $separator . implode( ' ', array( $id ) ) );
             $separator = ' ';
         }
     }
-
-    
-
-
-
-
-
-
 
     private function show_json( $items, array $fields ): void {
         $this->out->out( '[' );
@@ -329,13 +194,6 @@ final class Formatter {
         $this->out->out( ']' );
     }
 
-    
-
-
-
-
-
-
     private function show_yaml( $items, array $fields ): void {
         $this->out->out( "---\n" );
         foreach ( $items as $item ) {
@@ -345,13 +203,6 @@ final class Formatter {
             $this->out->out( Yaml_Dumper::sequence_entry( Values::pick_fields( $item, $fields ) ) );
         }
     }
-
-    
-
-
-
-
-
 
     private function show_single_field( $items, $field ): void {
         $key     = null;
@@ -373,8 +224,6 @@ final class Formatter {
 
             $value = self::read_property( $item, $key );
             if ( $is_json ) {
-                
-                
                 $piece = json_encode( $value ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- the exact call WP-CLI makes.
                 if ( false === $piece ) {
                     $failed = true;
@@ -398,27 +247,12 @@ final class Formatter {
         }
     }
 
-    
-
-
-
-
-
-
-
     private static function read_property( object $item, $key ) {
         if ( property_exists( $item, (string) $key ) || isset( $item->$key ) || method_exists( $item, '__get' ) ) {
             return $item->$key;
         }
         return null;
     }
-
-    
-
-
-
-
-
 
     private function find_item_key( $item, $field ): string {
         foreach ( array( $field, $this->prefix . '_' . $field ) as $maybe_key ) {
@@ -434,12 +268,6 @@ final class Formatter {
 
         return $key;
     }
-
-    
-
-
-
-
 
     private function show_multiple_fields( $data, $format ): void {
         $true_fields = array();
@@ -478,16 +306,6 @@ final class Formatter {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function keep_fields( $data, array $true_fields ) {
         foreach ( $data as $key => $value ) {
             if ( ! in_array( $key, $true_fields, true ) ) {
@@ -500,16 +318,6 @@ final class Formatter {
         }
         return $data;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function show_table( $items, array $fields, ?callable $map ): void {
         $text = Tabular::row( $fields ) . "\n";
@@ -526,12 +334,6 @@ final class Formatter {
 
         $this->out->out( $text );
     }
-
-    
-
-
-
-
 
     private function assoc_array_to_rows( $fields ): array {
         $rows = array();

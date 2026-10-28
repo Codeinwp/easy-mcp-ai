@@ -1,32 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -41,28 +14,15 @@ class Access_Presets {
     const ROLE   = 'role';
     const CUSTOM = 'custom';
 
-    
     const ROLES = array( 'editor', 'author' );
 
-    
     private $tool_registry;
 
-    
     private $lists = null;
-
-    
-
-
-
 
     public function __construct( $tool_registry = null ) {
         $this->tool_registry = $tool_registry;
     }
-
-    
-
-
-
 
     public static function ids() {
         $ids = array( self::READ, self::WRITE, self::FULL );
@@ -72,14 +32,6 @@ class Access_Presets {
         $ids[] = self::CUSTOM;
         return $ids;
     }
-
-    
-
-
-
-
-
-
 
     public static function split( $preset, $role = null ) {
         $preset = is_string( $preset ) ? $preset : '';
@@ -96,13 +48,6 @@ class Access_Presets {
         return array( self::CUSTOM, null );
     }
 
-    
-
-
-
-
-
-
     public function to_allowed_tools( $preset, $role = null ) {
         list( $preset, $role ) = self::split( $preset, $role );
         if ( self::CUSTOM === $preset ) {
@@ -112,12 +57,6 @@ class Access_Presets {
         $id    = self::ROLE === $preset ? self::ROLE . ':' . $role : $preset;
         return isset( $lists[ $id ] ) ? $lists[ $id ] : null;
     }
-
-    
-
-
-
-
 
     public function from_allowed_tools( array $list ) {
         $needle = self::normalize( $list );
@@ -132,12 +71,6 @@ class Access_Presets {
         return self::CUSTOM;
     }
 
-    
-
-
-
-
-
     public static function normalize( array $list ) {
         $out = array();
         foreach ( $list as $item ) {
@@ -150,7 +83,6 @@ class Access_Presets {
         return $out;
     }
 
-    
     private function lists() {
         if ( null !== $this->lists ) {
             return $this->lists;
@@ -167,13 +99,6 @@ class Access_Presets {
         return $lists;
     }
 
-    
-
-
-
-
-
-
     private function role_tools( $role ) {
         $wp_role  = \get_role( $role );
         $registry = $this->registry();
@@ -186,9 +111,6 @@ class Access_Presets {
             if ( ! $tool ) {
                 continue;
             }
-            
-            
-            
             if ( $tool instanceof \Easy_MCP_AI\Tools\Privileged_Tool ) {
                 continue;
             }
@@ -203,13 +125,10 @@ class Access_Presets {
         return self::normalize( $tools );
     }
 
-    
     private function registry() {
         if ( $this->tool_registry ) {
             return $this->tool_registry;
         }
-        
-        
         if ( class_exists( '\\Easy_MCP_AI\\Plugin' ) && method_exists( '\\Easy_MCP_AI\\Plugin', 'instance' ) ) {
             $registry = \Easy_MCP_AI\Plugin::instance()->get_tool_registry();
             if ( $registry ) {

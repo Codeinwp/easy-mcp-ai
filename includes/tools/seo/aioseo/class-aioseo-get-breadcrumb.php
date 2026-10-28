@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -57,8 +54,6 @@ class Aioseo_Get_Breadcrumb extends Base_Tool {
 		}
 
 		$post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
-		
-		
 		$base = $this->resolve_post_rest_base( $post_id );
 
 		$data = $this->rest_request( 'GET', '/wp/v2/' . $base . '/' . $post_id );

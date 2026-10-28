@@ -8,16 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 class Delete_Key_Event extends Base_Tool {
 
-    
     const NAME_PATTERN = '#^properties/(\d+)/keyEvents/([A-Za-z0-9_-]+)\z#';
 
     public function get_name() { return 'wp_ga_delete_key_event'; }
@@ -51,12 +43,6 @@ class Delete_Key_Event extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     public function describe( array $arguments ) {
         $event_name = self::text_arg( $arguments, 'event_name' );
         $key_event  = self::text_arg( $arguments, 'key_event' );
@@ -81,8 +67,6 @@ class Delete_Key_Event extends Base_Tool {
             ? self::by_resource_name( self::resource_name( $key_event, $arguments ) )
             : self::by_event_name( self::property( $arguments ), $event_name );
 
-        
-        
         if ( ! preg_match( self::NAME_PATTERN, $existing['name'] ) ) {
             throw new \RuntimeException( 'Google Analytics returned an unexpected key event name; nothing was changed.' );
         }
@@ -100,22 +84,9 @@ class Delete_Key_Event extends Base_Tool {
         );
     }
 
-    
-
-
-
     private static function property( array $arguments ): string {
         return GA_Client::write_property( $arguments );
     }
-
-    
-
-
-
-
-
-
-
 
     private static function resource_name( string $key_event, array $arguments ): string {
         if ( preg_match( self::NAME_PATTERN, $key_event, $m ) ) {
@@ -134,10 +105,6 @@ class Delete_Key_Event extends Base_Tool {
         throw new \RuntimeException( 'key_event must be a key event ID or "properties/{id}/keyEvents/{id}".' );
     }
 
-    
-
-
-
     private static function by_resource_name( string $name ): array {
         $event = GA_Client::edit( 'GET', 'https://analyticsadmin.googleapis.com/v1beta/' . $name );
         if ( empty( $event['name'] ) || ! is_string( $event['name'] ) ) {
@@ -145,10 +112,6 @@ class Delete_Key_Event extends Base_Tool {
         }
         return $event;
     }
-
-    
-
-
 
     private static function by_event_name( string $property, string $event_name ): array {
         foreach ( GA_Client::key_events( $property ) as $event ) {

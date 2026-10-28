@@ -12,32 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Theme_Auto_Updates_Handler extends Command_Handler {
 
     const SITE_OPTION = 'auto_update_themes';
@@ -48,24 +22,12 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
     const NOT_CAPTURED_SINGLE  = 'The auto_update_themes option is recorded by change history only while it records every option (not in allowlist mode); wp_history_apply cannot restore it.';
     const NOT_CAPTURED_NETWORK = 'The auto_update_themes network option (wp_sitemeta) is recorded by change history only while its meta capture setting is on (the default), and a deleted network option is recorded without its previous value; wp_history_apply cannot restore it.';
 
-    
-
-
-
-
-
-
     public function preflight( Invocation $inv, Context $ctx ): void {
         if ( ! Theme_Handler::file_mods_allowed() ) {
             $ctx->out->error( self::REFUSE_FILE_MODS );
         }
         $ctx->require_cap( 'update_themes' );
     }
-
-    
-
-
-
 
     public function enable( Invocation $inv, Context $ctx ): void {
         $this->refuse_when_type_off( $ctx );
@@ -108,11 +70,6 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
 
         Values::report_batch( $ctx->out, 'theme auto-update', 'enable', $count, $successes, $count - $successes );
     }
-
-    
-
-
-
 
     public function disable( Invocation $inv, Context $ctx ): void {
         $this->refuse_when_type_off( $ctx );
@@ -161,11 +118,6 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'theme auto-update', 'disable', $count, $successes, $count - $successes );
     }
 
-    
-
-
-
-
     public function status( Invocation $inv, Context $ctx ): void {
         $all           = (bool) Read_Value::flag( $inv->assoc, 'all', false );
         $enabled_only  = (bool) Read_Value::flag( $inv->assoc, 'enabled-only', false );
@@ -189,14 +141,6 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
         $this->formatter( $ctx, $assoc, array( 'name', 'status' ), 'theme' )->display_items( $results );
     }
 
-    
-
-
-
-
-
-
-
     private static function status_rows( array $themes, array $auto_updates, bool $enabled_only, bool $disabled_only ): array {
         $results = array();
         foreach ( $themes as $theme ) {
@@ -216,12 +160,6 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
         return $results;
     }
 
-    
-
-
-
-
-
     public function describe( Invocation $inv ): array {
         $enable = 'enable' === (string) $inv->leaf['name'];
         $names  = array_values( array_map( 'strval', $inv->args ) );
@@ -239,7 +177,6 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
         return $lines ? $lines : array( 'No theme named → nothing changes' );
     }
 
-    
     private static function describe_line( string $name, bool $on, bool $enable ): string {
         if ( $enable ) {
             return sprintf( "Theme '%s': auto-updates %s → %s", $name, $on ? 'on' : 'off', $on ? 'on (no change; WP-CLI counts it as a failure)' : 'on' );
@@ -247,22 +184,10 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
         return sprintf( "Theme '%s': auto-updates %s → %s", $name, $on ? 'on' : 'off', $on ? 'off' : 'off (no change; WP-CLI counts it as a failure)' );
     }
 
-    
-
-
-
-
-
     private static function stored_list(): array {
         $auto_updates = Theme_Handler::wp( 'site_option', array( self::SITE_OPTION ) );
         return is_array( $auto_updates ) ? $auto_updates : array();
     }
-
-    
-
-
-
-
 
     private function refuse_when_type_off( Context $ctx ): void {
         if ( ! Theme_Handler::wp( 'auto_update_enabled' ) ) {
@@ -270,7 +195,6 @@ class Theme_Auto_Updates_Handler extends Command_Handler {
         }
     }
 
-    
     private function not_captured_phrase(): string {
         return Theme_Handler::wp( 'is_multisite' ) ? self::NOT_CAPTURED_NETWORK : self::NOT_CAPTURED_SINGLE;
     }

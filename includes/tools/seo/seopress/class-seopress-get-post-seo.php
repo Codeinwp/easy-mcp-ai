@@ -1,8 +1,5 @@
 <?php
 
-
-
-
 namespace Easy_MCP_AI\Tools\SEO;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -62,9 +59,6 @@ class Seopress_Get_Post_Seo extends Base_Tool {
 			throw new \RuntimeException( 'Post not found.' );
 		}
 
-		
-		
-		
 		$get = static function ( $key ) use ( $post_id ) {
 			$v = get_post_meta( $post_id, $key, true );
 			return ( '' === $v || false === $v ) ? null : $v;

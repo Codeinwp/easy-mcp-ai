@@ -10,33 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Post_Type_Handler extends Command_Handler {
 
-    
     const FIELDS = array( 'name', 'label', 'description', 'hierarchical', 'public', 'capability_type' );
 
     const MSG_COUNT_CAP = "Sorry, you are not allowed to do this: the count field counts every post of type '%s', and wp_cli_run shows it only to users with that type's %s capability.";
 
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $formatter  = $this->post_type_formatter( $ctx, $assoc_args );
@@ -46,8 +25,6 @@ final class Post_Type_Handler extends Command_Handler {
         $types  = is_array( $types ) ? $types : array();
         $counts = array();
 
-        
-        
         if ( count( $types ) > 0 && in_array( 'count', (array) $fields, true ) ) {
             foreach ( $types as $type ) {
                 $this->require_count_cap( $ctx, $type );
@@ -65,7 +42,6 @@ final class Post_Type_Handler extends Command_Handler {
         $formatter->display_items( $listed );
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $assoc_args = $inv->assoc;
         $arg        = isset( $inv->args[0] ) ? (string) $inv->args[0] : '';
@@ -104,14 +80,6 @@ final class Post_Type_Handler extends Command_Handler {
         $formatter->display_item( $data );
     }
 
-    
-
-
-
-
-
-
-
     public static function get_counts( array $post_types ): array {
         global $wpdb;
 
@@ -129,7 +97,6 @@ final class Post_Type_Handler extends Command_Handler {
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above; WP-CLI's own query.
         $counts = $wpdb->get_results( $query );
 
-        
         $plucked = array();
         foreach ( is_array( $counts ) ? $counts : array() as $row ) {
             $plucked[ $row->post_type ] = $row->count;
@@ -137,21 +104,9 @@ final class Post_Type_Handler extends Command_Handler {
         return array_merge( array_fill_keys( $post_types, 0 ), $plucked );
     }
 
-    
-
-
-
-
     private function post_type_formatter( Context $ctx, array &$assoc_args ): Formatter {
         return new Formatter( $ctx->out, $assoc_args, self::FIELDS, 'post-type' );
     }
-
-    
-
-
-
-
-
 
     private function require_count_cap( Context $ctx, object $type ): void {
         $cap = isset( $type->cap->edit_posts ) ? (string) $type->cap->edit_posts : 'edit_posts';
@@ -159,12 +114,6 @@ final class Post_Type_Handler extends Command_Handler {
             $ctx->out->error( sprintf( self::MSG_COUNT_CAP, (string) $type->name, $cap ) );
         }
     }
-
-    
-
-
-
-
 
     private static function pluck_names( array $types ): array {
         $names = array();

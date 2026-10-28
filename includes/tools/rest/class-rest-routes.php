@@ -10,25 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Rest_Routes extends Rest_Route_Tool {
 
-    
     const CALL_TOOLS = array(
         'wp_rest_read'   => array( 'GET' ),
         'wp_rest_write'  => array( 'POST', 'PUT', 'PATCH' ),
         'wp_rest_delete' => array( 'DELETE' ),
     );
-
-    
-
-
-
-
 
     const LIFECYCLE_ROUTES = array(
         '/wp/v2/plugins' => array( 'wp_install_plugin', 'wp_delete_plugin', 'wp_uninstall_plugin' ),
@@ -80,13 +68,6 @@ class Rest_Routes extends Rest_Route_Tool {
         return 'GET';
     }
 
-    
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
     }
 
@@ -120,11 +101,6 @@ class Rest_Routes extends Rest_Route_Tool {
         );
     }
 
-    
-
-
-
-
     private function describe_namespace( $server, string $namespace ): array {
         $registered = Route_Catalogue::find_namespace( $server, $namespace );
         if ( null === $registered || in_array( Namespace_State::normalize( $registered ), Route_Gate::OWN_NAMESPACES, true ) ) {
@@ -140,12 +116,6 @@ class Rest_Routes extends Rest_Route_Tool {
         return $result + Route_Catalogue::routes_in( $server, $registered );
     }
 
-    
-
-
-
-
-
     private function describe_route( $server, string $route, bool $include_fields ): array {
         $detail = Route_Catalogue::route_detail( $server, $route, $include_fields );
         if ( null === $detail || in_array( Namespace_State::normalize( (string) $detail['namespace'] ), Route_Gate::OWN_NAMESPACES, true ) ) {
@@ -154,13 +124,6 @@ class Rest_Routes extends Rest_Route_Tool {
         $detail['tools'] = isset( $detail['refused'] ) ? array() : $this->tools_on( (string) $detail['namespace'] );
         return $detail;
     }
-
-    
-
-
-
-
-
 
     private function tools_on( string $namespace ): array {
         if ( '' === $namespace || ! Namespace_State::is_enabled( $namespace ) ) {
@@ -175,12 +138,6 @@ class Rest_Routes extends Rest_Route_Tool {
         return $tools;
     }
 
-    
-
-
-
-
-
     private function unavailable_reason( string $namespace ): string {
         $refusal = $this->namespace_refusal( $namespace );
         if ( null !== $refusal ) {
@@ -188,17 +145,6 @@ class Rest_Routes extends Rest_Route_Tool {
         }
         return 'This key cannot use wp_rest_read, wp_rest_write or wp_rest_delete here: each is switched off on the site or outside this key\'s tools.';
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function switched_off_note( array $matches ): string {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_tool_status' ) ) {
@@ -234,13 +180,6 @@ class Rest_Routes extends Rest_Route_Tool {
             \Easy_MCP_AI\MCP\Tool_Status::names( $named )
         ) . ' Tell the user which tool to switch on, by its name, and that ' . \Easy_MCP_AI\MCP\Tool_Status::who_switches_on( $off, $locked, \Easy_MCP_AI\MCP\Tool_Status::switch_path( $named[0], true ) ) . '.';
     }
-
-    
-
-
-
-
-
 
     private static function caller_may_use( string $tool ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server' ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' ) ) {

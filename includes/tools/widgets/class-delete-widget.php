@@ -61,12 +61,6 @@ class Delete_Widget extends Base_Tool {
         $widget_id = $this->validate_rest_route_segment( $arguments['widget_id'], 'widget_id' );
         $force     = isset( $arguments['force'] ) ? rest_sanitize_boolean( $arguments['force'] ) : false;
 
-        
-        
-        
-        
-        
-        
         $data = (array) $this->rest_request( 'DELETE', '/wp/v2/widgets/' . $widget_id, array( 'force' => $force ) );
 
         if ( $force ) {

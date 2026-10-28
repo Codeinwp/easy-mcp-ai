@@ -9,12 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Menu_Item extends Base_Tool {
 
-    
-
-
-
-
-
     const UPDATE_FIELDS = array(
         'title'       => array( 'title', 'text' ),
         'url'         => array( 'url', 'url' ),
@@ -29,12 +23,6 @@ class Update_Menu_Item extends Base_Tool {
         'object'      => array( 'object', 'text' ),
         'object_id'   => array( 'object_id', 'int' ),
     );
-
-    
-
-
-
-
 
     const RESULT_DEFAULTS = array(
         'url'         => '',
@@ -145,12 +133,6 @@ class Update_Menu_Item extends Base_Tool {
 
         $item_id = $this->parse_required_id( $arguments['item_id'], 'item_id' );
 
-        
-        
-        
-        
-        
-        
         $before = $this->read_item( $item_id );
 
         $request = new \WP_REST_Request( 'POST', '/wp/v2/menu-items/' . $item_id );
@@ -170,14 +152,6 @@ class Update_Menu_Item extends Base_Tool {
         return self::item_result( is_array( $data ) ? $data : array(), $before );
     }
 
-    
-
-
-
-
-
-
-
     private static function item_result( array $data, array $before ): array {
         $result = array(
             'id'    => $data['id'],
@@ -189,18 +163,6 @@ class Update_Menu_Item extends Base_Tool {
         $result['changed'] = self::comparable( $before ) !== self::comparable( $data );
         return $result;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function param_value( string $kind, $value ) {
         switch ( $kind ) {
@@ -218,13 +180,6 @@ class Update_Menu_Item extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function read_item( int $item_id ): array {
         $request = new \WP_REST_Request( 'GET', '/wp/v2/menu-items/' . $item_id );
         $request->set_param( 'context', 'edit' );
@@ -236,14 +191,6 @@ class Update_Menu_Item extends Base_Tool {
         return is_array( $data ) ? $data : array();
     }
 
-    
-
-
-
-
-
-
-
     private static function throw_rest_error( \WP_REST_Response $response ): void {
         $wp_error = $response->as_error();
         if ( 'rest_no_route' === $wp_error->get_error_code() ) {
@@ -253,14 +200,6 @@ class Update_Menu_Item extends Base_Tool {
         }
         throw new \RuntimeException( $wp_error->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
-
-    
-
-
-
-
-
-
 
     private static function comparable( array $data ): array {
         $title = $data['title'] ?? '';

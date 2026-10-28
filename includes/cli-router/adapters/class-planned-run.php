@@ -10,42 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait Planned_Run {
-
-    
-
-
-
-
-
-
 
     private function planned_calls( Invocation $inv, string $method, array $tools, array $reads ): array {
         foreach ( $tools as $tool ) {
@@ -71,34 +36,22 @@ trait Planned_Run {
                 );
             },
             static function (): bool {
-                return true; 
+                return true;
             }
         );
         try {
             ( new static() )->$method( $inv, $ctx );
         } catch ( Cli_Exit $e ) {
-            
             unset( $e );
         }
         return $planned;
     }
-
-    
-
-
-
-
-
-
 
     private static function planning_read( string $tool, string $source, array $arguments ): array {
         $object = self::planning_tool( $tool, $source );
         if ( ! method_exists( $object, 'execute' ) ) {
             return self::planning_error( $tool . ' is not available.' );
         }
-        
-        
-        
         \Easy_MCP_AI\MCP\Tool_Call_Stack::enter( $tool );
         try {
             $result = $object->execute( $arguments );
@@ -110,12 +63,6 @@ trait Planned_Run {
         $text = function_exists( 'wp_json_encode' ) ? \wp_json_encode( $result, JSON_UNESCAPED_SLASHES ) : json_encode( $result, JSON_UNESCAPED_SLASHES ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- fallback outside WordPress.
         return self::planning_text( (string) $text );
     }
-
-    
-
-
-
-
 
     private static function planning_tool( string $tool, string $source ): object {
         $object = null;
@@ -129,12 +76,10 @@ trait Planned_Run {
         return new $source();
     }
 
-    
     private static function planning_text( string $text ): array {
         return array( 'result' => array( 'content' => array( array( 'type' => 'text', 'text' => $text ) ) ) );
     }
 
-    
     private static function planning_error( string $message ): array {
         return array(
             'result' => array(
@@ -143,11 +88,6 @@ trait Planned_Run {
             ),
         );
     }
-
-    
-
-
-
 
     private static function planning_may_use( string $tool ): bool {
         if ( ! class_exists( '\\Easy_MCP_AI\\MCP\\Server', false ) || ! method_exists( '\\Easy_MCP_AI\\MCP\\Server', 'current_call_may_use' ) ) {

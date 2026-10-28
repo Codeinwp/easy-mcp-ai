@@ -15,37 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class User_Signup_Handler extends Command_Handler {
 
-    
     const OBJ_FIELDS = array( 'signup_id', 'user_login', 'user_email', 'registered', 'active', 'activation_key' );
 
-    
     const COLUMNS = array( 'signup_id', 'domain', 'path', 'title', 'user_login', 'user_email', 'registered', 'activated', 'active', 'activation_key', 'meta' );
 
-    
     const LIST_MAX = 1000;
 
     const NOT_CAPTURED = 'The signups table is written with direct database queries, which change history records only while database capture is on.';
@@ -54,7 +29,6 @@ final class User_Signup_Handler extends Command_Handler {
     const REFUSE_KEY     = 'it filters on the activation key, which wp_cli_run never prints';
     const REFUSE_UNKNOWN = 'it is not a column of the signups table, and WP-CLI would ignore it';
 
-    
     public function list_( Invocation $inv, Context $ctx ): void {
         global $wpdb;
         $this->require_multisite( $ctx );
@@ -93,15 +67,6 @@ final class User_Signup_Handler extends Command_Handler {
         $formatter->display_items( $signups );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function matching( array $results, array $assoc_args ): array {
         $signups = array();
         foreach ( $results as $item ) {
@@ -115,7 +80,6 @@ final class User_Signup_Handler extends Command_Handler {
         return $signups;
     }
 
-    
     public function get( Invocation $inv, Context $ctx ): void {
         $this->require_multisite( $ctx );
         $signup     = Fetchers::of( 'signup' )->get_check( isset( $inv->args[0] ) ? $inv->args[0] : '', $ctx->out );
@@ -128,7 +92,6 @@ final class User_Signup_Handler extends Command_Handler {
         $formatter->display_items( array( (object) $rows[0] ) );
     }
 
-    
     public function activate( Invocation $inv, Context $ctx ): void {
         $this->require_multisite( $ctx );
         $args    = array_values( $inv->args );
@@ -154,7 +117,6 @@ final class User_Signup_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'signup', 'activate', count( $args ), $successes, $errors );
     }
 
-    
     public function delete( Invocation $inv, Context $ctx ): void {
         global $wpdb;
         $this->require_multisite( $ctx );
@@ -198,12 +160,6 @@ final class User_Signup_Handler extends Command_Handler {
         Values::report_batch( $ctx->out, 'signup', 'delete', $count, $successes, $errors );
     }
 
-    
-
-
-
-
-
     public function describe_activate( Invocation $inv ): array {
         if ( ! \is_multisite() ) {
             return array( 'This is not a multisite installation → nothing to activate' );
@@ -228,11 +184,6 @@ final class User_Signup_Handler extends Command_Handler {
         return $lines;
     }
 
-    
-
-
-
-
     public function describe_delete( Invocation $inv ): array {
         global $wpdb;
         if ( ! \is_multisite() ) {
@@ -255,23 +206,11 @@ final class User_Signup_Handler extends Command_Handler {
         return $lines;
     }
 
-    
-    
-    
-
-    
     private function require_multisite( Context $ctx ): void {
         if ( ! \is_multisite() ) {
             $ctx->out->error( 'This is not a multisite installation.' );
         }
     }
-
-    
-
-
-
-
-
 
     private function get_many( Context $ctx, array $args ): array {
         $fetcher = Fetchers::of( 'signup' );
@@ -289,12 +228,6 @@ final class User_Signup_Handler extends Command_Handler {
         return $signups;
     }
 
-    
-
-
-
-
-
     private function formatter_for( Context $ctx, array &$assoc_args ): Formatter {
         if ( ! empty( $assoc_args['fields'] ) ) {
             $fields = is_string( $assoc_args['fields'] ) ? explode( ',', $assoc_args['fields'] ) : (array) $assoc_args['fields'];
@@ -303,17 +236,6 @@ final class User_Signup_Handler extends Command_Handler {
         }
         return new Formatter( $ctx->out, $assoc_args, $fields, 'signup' );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function mask( Context $ctx, array $rows, array $assoc_args ): array {
         $shown = self::shown_fields( $assoc_args );
@@ -332,24 +254,11 @@ final class User_Signup_Handler extends Command_Handler {
         return $rows;
     }
 
-    
-
-
-
-
-
-
     private static function shown_fields( array $assoc_args ): array {
         return isset( $assoc_args['field'] ) && is_string( $assoc_args['field'] )
             ? array( trim( $assoc_args['field'] ) )
             : array_map( 'trim', array_map( 'strval', (array) ( isset( $assoc_args['fields'] ) ? $assoc_args['fields'] : self::OBJ_FIELDS ) ) );
     }
-
-    
-
-
-
-
 
     private static function mask_row_meta( Context $ctx, array $row, bool $meta_shown ): string {
         $keys   = array();
@@ -361,15 +270,6 @@ final class User_Signup_Handler extends Command_Handler {
         }
         return $masked;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function mask_meta( string $raw, array &$masked ): string {
         $masked = array();
@@ -389,14 +289,6 @@ final class User_Signup_Handler extends Command_Handler {
         return serialize( $data );
     }
 
-    
-
-
-
-
-
-
-
     private static function mask_secret_values( array $data, array &$masked ): array {
         foreach ( $data as $key => $value ) {
             if ( is_string( $key ) && Option_Handler::key_is_secret( $key ) ) {
@@ -408,11 +300,6 @@ final class User_Signup_Handler extends Command_Handler {
         }
         return $data;
     }
-
-    
-
-
-
 
     private function refuse_filters( Context $ctx, array $assoc ): void {
         $errors = array();

@@ -7,26 +7,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 class Edit_Media_Image extends Base_Tool {
 
     use Local_Image;
 
-    
     const MAX_OPERATIONS = 10;
 
-    
     const ANGLES = array( 90, 180, 270 );
 
     public function get_name() {
@@ -45,15 +31,12 @@ class Edit_Media_Image extends Base_Tool {
         return 'upload_files';
     }
 
-    
-
-
     public function get_annotations() {
         return array(
             'title'           => $this->get_title(),
             'readOnlyHint'    => false,
-            'destructiveHint' => false, 
-            'idempotentHint'  => false, 
+            'destructiveHint' => false,
+            'idempotentHint'  => false,
             'openWorldHint'   => false,
         );
     }
@@ -136,7 +119,6 @@ class Edit_Media_Image extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id    = isset( $arguments['media_id'] ) ? (int) $arguments['media_id'] : 0;
         $media = $id > 0 ? $this->peek( '/wp/v2/media/' . $id, 'id,title,source_url' ) : null;
@@ -177,8 +159,6 @@ class Edit_Media_Image extends Base_Tool {
         $alt    = $this->text_argument( $arguments, 'alt_text', (string) \get_post_meta( $media_id, '_wp_attachment_image_alt', true ) );
         $meta   = $this->finish_copy( $new_id, $media_id, $saved, $source, $alt );
 
-        
-        
         $post = \get_post( $new_id );
         return array(
             'id'         => $new_id,
@@ -193,15 +173,6 @@ class Edit_Media_Image extends Base_Tool {
             'operations' => $applied,
         );
     }
-
-    
-
-
-
-
-
-
-
 
     protected function parse_operations( $value ): array {
         if ( is_string( $value ) ) {
@@ -220,12 +191,6 @@ class Edit_Media_Image extends Base_Tool {
         }
         return $parsed;
     }
-
-    
-
-
-
-
 
     private function parse_operation( int $index, $operation ): array {
         $at   = sprintf( 'operations[%d]', $index );
@@ -291,17 +256,6 @@ class Edit_Media_Image extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     private function operation_int( array $operation, string $key, string $at, int $min, bool $required ): ?int {
         if ( ! array_key_exists( $key, $operation ) || null === $operation[ $key ] ) {
             if ( $required ) {
@@ -319,15 +273,6 @@ class Edit_Media_Image extends Base_Tool {
         return $value;
     }
 
-    
-
-
-
-
-
-
-
-
     private function operation_bool( array $operation, string $key, string $at ): bool {
         if ( ! array_key_exists( $key, $operation ) || null === $operation[ $key ] ) {
             return false;
@@ -337,26 +282,6 @@ class Edit_Media_Image extends Base_Tool {
         }
         return $operation[ $key ];
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     protected function open_in_frame( int $media_id, array $source ) {
         $editor = $this->image_editor( $source['path'] );
@@ -372,13 +297,6 @@ class Edit_Media_Image extends Base_Tool {
         $frame_w = isset( $source['meta']['width'] ) ? (int) $source['meta']['width'] : 0;
         $frame_h = isset( $source['meta']['height'] ) ? (int) $source['meta']['height'] : 0;
         $size    = $editor->get_size();
-        
-        
-        
-        
-        
-        
-        
         $sideways = ( $size['width'] > $size['height'] && $frame_w < $frame_h ) || ( $size['width'] < $size['height'] && $frame_w > $frame_h );
         if ( $frame_w > 0 && $frame_h > 0 && ! $sideways && ( $size['width'] > $frame_w || $size['height'] > $frame_h ) ) {
             $scaled = $editor->resize( $frame_w, $frame_h, true );
@@ -389,16 +307,6 @@ class Edit_Media_Image extends Base_Tool {
         }
         return $editor;
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function apply_operation( $editor, int $index, array $operation ): array {
         $at   = sprintf( 'operations[%d] (%s)', $index, $operation['type'] );
@@ -418,23 +326,16 @@ class Edit_Media_Image extends Base_Tool {
                 break;
 
             case 'rotate':
-                
                 $result = $editor->rotate( 0 - $operation['angle'] );
                 break;
 
             case 'flip':
-                
-                
-                
                 $result = $editor->flip( $operation['vertical'], $operation['horizontal'] );
                 break;
 
             default:
                 $width  = $operation['width'] ?? null;
                 $height = $operation['height'] ?? null;
-                
-                
-                
                 if ( $operation['crop'] && ( $width > $w || $height > $h ) ) {
                     throw new \RuntimeException( sprintf( '%1$s cannot fill %2$dx%3$d from the %4$dx%5$d image: WordPress never enlarges an image. Ask for at most %4$dx%5$d.', $at, $width, $height, $w, $h ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
@@ -457,15 +358,6 @@ class Edit_Media_Image extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     protected function save_copy( $editor, string $original_path ): array {
         $uploads = $this->upload_dir();
         if ( ! empty( $uploads['error'] ) ) {
@@ -477,9 +369,6 @@ class Edit_Media_Image extends Base_Tool {
         $name = preg_match( '/-edited(-\d+)?$/', $name ) ? preg_replace( '/-edited(-\d+)?$/', '-edited', $name ) : $name . '-edited';
         $file = $this->unique_filename( $uploads['path'], $name . '.' . $ext );
 
-        
-        
-        
         $saved = $editor->save( rtrim( $uploads['path'], '/' ) . '/' . $file );
         if ( ! is_array( $saved ) || empty( $saved['path'] ) || ! $this->file_exists( (string) $saved['path'] ) ) {
             $message = \is_wp_error( $saved ) ? ': ' . $this->redact_paths( $saved->get_error_message() ) : '.';
@@ -488,16 +377,6 @@ class Edit_Media_Image extends Base_Tool {
         $saved['url'] = rtrim( $uploads['url'], '/' ) . '/' . basename( (string) $saved['path'] );
         return $saved;
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function insert_copy( int $media_id, array $saved, array $arguments ): int {
         $source = \get_post( $media_id );
@@ -519,19 +398,6 @@ class Edit_Media_Image extends Base_Tool {
         return (int) $new_id;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     protected function finish_copy( int $new_id, int $media_id, array $saved, array $source, string $alt ): array {
         try {
             if ( '' !== $alt ) {
@@ -543,9 +409,6 @@ class Edit_Media_Image extends Base_Tool {
                 throw new \RuntimeException( 'WordPress generated no metadata for the edited image' );
             }
 
-            
-            
-            
             if ( isset( $source['meta']['image_meta'], $meta['image_meta'] ) && is_array( $meta['image_meta'] ) ) {
                 foreach ( (array) $source['meta']['image_meta'] as $key => $value ) {
                     if ( empty( $meta['image_meta'][ $key ] ) && ! empty( $value ) ) {
@@ -561,16 +424,11 @@ class Edit_Media_Image extends Base_Tool {
                 'file'          => \_wp_relative_upload_path( $source['original'] ),
             );
 
-            
             $meta = \apply_filters( 'wp_edited_image_metadata', $meta, $new_id, $media_id );
             $this->update_attachment_metadata( $new_id, $meta );
             return $meta;
         } catch ( \Throwable $e ) {
             $this->delete_attachment( $new_id );
-            
-            
-            
-            
             if ( $this->file_exists( (string) $saved['path'] ) ) {
                 $this->delete_file( (string) $saved['path'] );
             }
@@ -578,28 +436,12 @@ class Edit_Media_Image extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function text_argument( array $arguments, string $key, string $fallback ): string {
         if ( isset( $arguments[ $key ] ) && is_scalar( $arguments[ $key ] ) && '' !== (string) $arguments[ $key ] ) {
             return \sanitize_text_field( (string) $arguments[ $key ] );
         }
         return $fallback;
     }
-
-    
-
-
-
-
 
     private function summarize_operation( array $operation ): string {
         switch ( $operation['type'] ) {
@@ -615,67 +457,33 @@ class Edit_Media_Image extends Base_Tool {
         }
     }
 
-    
-
-
-
     protected function image_editor( string $path ) {
         return \wp_get_image_editor( $path );
     }
-
-    
-
 
     protected function upload_dir(): array {
         return \wp_upload_dir();
     }
 
-    
-
-
-
-
     protected function unique_filename( string $dir, string $filename ): string {
         return \wp_unique_filename( $dir, $filename );
     }
-
-    
-
-
-
 
     protected function insert_attachment( array $post, string $path ) {
         return \wp_insert_attachment( \wp_slash( $post ), $path, 0, true );
     }
 
-    
-
-
-
-
     protected function generate_metadata( int $attachment_id, string $path ): array {
         return (array) \wp_generate_attachment_metadata( $attachment_id, $path );
     }
-
-    
-
-
 
     protected function delete_attachment( int $attachment_id ): void {
         \wp_delete_attachment( $attachment_id, true );
     }
 
-    
-
-
-
     protected function delete_file( string $path ): void {
         \wp_delete_file( $path );
     }
-
-    
-
-
 
     protected function attachment_url( int $attachment_id ) {
         return \wp_get_attachment_url( $attachment_id );

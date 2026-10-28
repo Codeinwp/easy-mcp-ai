@@ -5,33 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Runner {
 
     const SLICE_SECONDS  = 20;
@@ -41,20 +14,11 @@ final class Runner {
     const SAMPLE_CONTEXT = 40;
     const REPORT_MAX     = 200;
     const LOCK_TTL       = 120;
-    
     const SAVE_EVERY = 2;
-    
     const STALLED_AFTER = 300;
-    
     const LOG_MAX   = 200;
     const LOG_BYTES = 16384;
-    
     const CHECKED_MAX = 1000;
-    
-
-
-
-
     const RESULT_BUDGET = 60000;
 
     const PLUGIN_MARK          = 'easy_mcp_ai_';
@@ -62,17 +26,11 @@ final class Runner {
     const SITE_ADDRESS_OPTIONS = array( 'siteurl', 'home' );
     const NAME_COLUMNS         = array( 'option_name', 'meta_key' );
 
-    
     private $db;
-    
     private $store;
-    
     private $clock;
-    
     private $on_finish;
-    
     private $flush_cache;
-    
     private $reverse = null;
 
     public function __construct( Database $db, Job_Store $store, ?callable $clock = null, ?callable $on_finish = null, ?callable $flush_cache = null ) {
@@ -85,38 +43,10 @@ final class Runner {
         $this->flush_cache = $flush_cache;
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function resolve_tables( array $all, array $args, array $site ): array {
         $prefix      = (string) $site['prefix'];
         $base        = (string) $site['base_prefix'];
         $multisite   = ! empty( $site['multisite'] );
-        
-        
-        
-        
-        
         $base_site   = $multisite && $prefix === $base;
         $globals     = array_map( 'strval', (array) ( $site['global_tables'] ?? array() ) );
         $network_ok  = ! empty( $site['network_user'] );
@@ -206,18 +136,6 @@ final class Runner {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
-
-
     public function create( array $args, array $site, array $identity, string $args_hash ): array {
         $scope = self::resolve_tables( $this->db->base_tables(), $args, $site );
         $now   = (int) floor( ( $this->clock )() );
@@ -257,20 +175,10 @@ final class Runner {
         return $job;
     }
 
-    
-
-
-
-
-
-
-
     public function run_slice( array $job, float $seconds = self::SLICE_SECONDS ): array {
         if ( 'running' !== $job['status'] ) {
             return $job;
         }
-        
-        
         if ( ! empty( $job['in_batch'] ) ) {
             self::add_named( $job, 'interrupted', (string) $job['in_batch'] );
             $job['in_batch'] = '';
@@ -279,9 +187,6 @@ final class Runner {
         $last_save = ( $this->clock )();
         $options   = self::replacer_options( $job['args'] );
         $replacer  = new Replacer( (string) $job['args']['old'], (string) $job['args']['new'], $options );
-        
-        
-        
         $this->reverse = ( '' === (string) $job['args']['new'] || $replacer->is_regex() )
             ? null
             : new Replacer( (string) $job['args']['new'], (string) $job['args']['old'], array( 'recurse_objects' => $options['recurse_objects'] ) );
@@ -292,9 +197,6 @@ final class Runner {
             if ( 'done' === $job['cursor']['phase'] ) {
                 return $this->complete( $job );
             }
-            
-            
-            
             if ( ( $this->clock )() - $last_save >= self::SAVE_EVERY ) {
                 $this->store->save( $job );
                 $last_save = ( $this->clock )();
@@ -304,12 +206,6 @@ final class Runner {
         return $job;
     }
 
-    
-
-
-
-
-
     public function stop( array $job, string $status, string $reason ): array {
         if ( 'running' !== $job['status'] ) {
             return $job;
@@ -318,12 +214,6 @@ final class Runner {
         $job['stop_reason'] = $reason;
         return $this->end( $job );
     }
-
-    
-
-
-
-
 
     private function step( array $job, Replacer $replacer ): array {
         $phase = $job['cursor']['phase'];
@@ -359,7 +249,6 @@ final class Runner {
         }
         $from = $job['cursor']['after'];
         $rows = $this->db->fetch( $name, $column['name'], $table['pk'], $replacer->needles(), $from, self::BATCH, $table['scan'] );
-        
         if ( count( $rows ) < self::BATCH ) {
             $job['cursor']['c']       = $c + 1;
             $job['cursor']['after']   = null;
@@ -371,11 +260,6 @@ final class Runner {
             }, $table['pk'] );
         }
         if ( $rows && ! $job['dry_run'] ) {
-            
-            
-            
-            
-            
             $first = reset( $rows );
             $last  = end( $rows );
             $ahead = $job;
@@ -398,10 +282,6 @@ final class Runner {
         return $job;
     }
 
-    
-
-
-
     private static function next_table( array $job ): array {
         $job['cursor']['t']       = (int) $job['cursor']['t'] + 1;
         $job['cursor']['table']   = null;
@@ -410,13 +290,6 @@ final class Runner {
         $job['cursor']['started'] = false;
         return $job;
     }
-
-    
-
-
-
-
-
 
     private function open_table( array &$job, string $name ) {
         $pk = $this->db->primary_key( $name );
@@ -445,7 +318,6 @@ final class Runner {
                 continue;
             }
             if ( in_array( $col, $pk, true ) ) {
-                
                 self::add_named( $job, 'primary_key_column', $name . '.' . $col );
                 continue;
             }
@@ -476,23 +348,11 @@ final class Runner {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private function open_column( array $job, string $name, array $table, array $column ): array {
         if ( ! empty( $job['args']['verbose'] ) ) {
             self::add_checked( $job, $name . '.' . $column['name'] );
         }
         if ( ! empty( $job['args']['regex'] ) ) {
-            
-            
-            
             return $job;
         }
         $new = (string) $job['args']['new'];
@@ -513,18 +373,6 @@ final class Runner {
         return $job;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private function process_row( array $job, Replacer $replacer, string $name, array $table, array $column, array $row ): array {
         $col   = $column['name'];
         $value = $row[ $col ] ?? null;
@@ -533,7 +381,7 @@ final class Runner {
         }
         $key = self::row_key( $table['pk'], $row );
         if ( '' === (string) $value && $replacer->is_regex() ) {
-            return $job; 
+            return $job;
         }
         $label  = $name . '.' . $col . ' ' . implode( ',', $key );
         $result = $replacer->replace( (string) $value );
@@ -556,13 +404,6 @@ final class Runner {
         return $this->record_change( $job, $replacer, $cell, $result, true );
     }
 
-    
-
-
-
-
-
-
     private static function row_key( array $pk, array $row ): array {
         $key = array();
         foreach ( $pk as $column ) {
@@ -570,15 +411,6 @@ final class Runner {
         }
         return $key;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function note_result( array &$job, array $result, string $label ): bool {
         if ( in_array( $result['status'], array( 'corrupt', 'too_deep', 'unsafe_object', 'regex_error' ), true ) ) {
@@ -590,18 +422,6 @@ final class Runner {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function write_cell( bool $dry_run, string $name, array $column, array $key, string $new ): ?string {
         if ( in_array( $column['name'], self::NAME_COLUMNS, true ) && false !== strpos( $new, self::PLUGIN_MARK ) ) {
@@ -615,18 +435,6 @@ final class Runner {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function record_change( array $job, Replacer $replacer, array $cell, array $result, bool $with_sample ): array {
         $table  = $cell['table'];
@@ -648,22 +456,12 @@ final class Runner {
         return $job;
     }
 
-    
-
-
-
-
-
-
-
-
     private function site_address( array $job, Replacer $replacer ): array {
         foreach ( $job['tables'] as $name ) {
             $pk = $this->site_address_key( $job, $name );
             if ( null === $pk ) {
                 continue;
             }
-            
             foreach ( self::SITE_ADDRESS_OPTIONS as $option ) {
                 $job = $this->replace_site_address( $job, $replacer, $name, $pk, $option );
             }
@@ -674,15 +472,6 @@ final class Runner {
         }
         return $job;
     }
-
-    
-
-
-
-
-
-
-
 
     private function site_address_key( array $job, string $name ): ?array {
         $names = array_map(
@@ -701,32 +490,12 @@ final class Runner {
         return $pk ? $pk : null;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function column_in_scope( array $args, string $table, string $column ): bool {
         $skip    = array_map( 'strval', (array) ( $args['skip_columns'] ?? array() ) );
         $include = array_map( 'strval', (array) ( $args['include_columns'] ?? array() ) );
         $ids     = array( $column, $table . '.' . $column );
         return ! ( array_intersect( $ids, $skip ) || ( $include && ! array_intersect( $ids, $include ) ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function replace_site_address( array $job, Replacer $replacer, string $name, array $pk, string $option ): array {
         $rows = $this->db->fetch( $name, 'option_value', $pk, $replacer->needles(), null, 1, array( array( 'option_name', 'in', array( $option ) ) ) );
@@ -761,13 +530,11 @@ final class Runner {
         return $this->record_change( $job, $replacer, $cell, $result, false );
     }
 
-    
     private function complete( array $job ): array {
         $job['status'] = 'completed';
         return $this->end( $job );
     }
 
-    
     private function end( array $job ): array {
         $job['finished'] = gmdate( 'Y-m-d H:i:s', (int) floor( ( $this->clock )() ) );
         $job['updated']  = (int) floor( ( $this->clock )() );
@@ -777,22 +544,6 @@ final class Runner {
         }
         return $job;
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public function summary( array $job, bool $with_lists = false ): array {
         $now     = (int) floor( ( $this->clock )() );
@@ -818,7 +569,6 @@ final class Runner {
             $out['report_more'] = $more;
         }
         if ( ! $job['dry_run'] ) {
-            
             $out['changed'] = (int) $job['totals']['cells'] > 0;
         }
         $out         = self::with_outcome( $out, $job, $status );
@@ -828,13 +578,6 @@ final class Runner {
         }
         return $out;
     }
-
-    
-
-
-
-
-
 
     private static function report_rows( array $report ): array {
         $rows = array();
@@ -856,14 +599,6 @@ final class Runner {
         return array( $rows, $more );
     }
 
-    
-
-
-
-
-
-
-
     private static function progress( array $job, string $status ): array {
         return array(
             'tables_done'  => min( (int) $job['cursor']['t'], count( $job['tables'] ) ),
@@ -871,16 +606,6 @@ final class Runner {
             'current'      => 'running' === $status && isset( $job['tables'][ $job['cursor']['t'] ] ) ? (string) $job['tables'][ $job['cursor']['t'] ] : '',
         );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function with_outcome( array $out, array $job, string $status ): array {
         $skipped = array_filter(
@@ -913,13 +638,6 @@ final class Runner {
         return $out;
     }
 
-    
-
-
-
-
-
-
     private static function site_address_summary( array $job ): array {
         return array(
             'changed' => ! $job['dry_run'],
@@ -929,14 +647,6 @@ final class Runner {
                 : 'The site address changed. API keys bound to the old host are refused until re-bound (Connections > API tokens > Re-bind to this site); OAuth grants issued for the old address stop working, and clients must authorize again.',
         );
     }
-
-    
-
-
-
-
-
-
 
     private static function with_lists( array $out, array $job ): array {
         if ( ! empty( $job['args']['log'] ) ) {
@@ -950,15 +660,6 @@ final class Runner {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function fit( array $out ): array {
         $size = static function ( $value ): int {
             $json = \wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -969,8 +670,6 @@ final class Runner {
             while ( $total > self::RESULT_BUDGET && ! empty( $out[ $list ] ) ) {
                 $dropped = array_pop( $out[ $list ] );
                 ++$out[ $list . '_more' ];
-                
-                
                 $total -= $size( $dropped ) + 16;
                 if ( $total <= self::RESULT_BUDGET ) {
                     $total = $size( $out );
@@ -979,13 +678,6 @@ final class Runner {
         }
         return $out;
     }
-
-    
-
-
-
-
-
 
     public static function replacer_options( array $args ): array {
         return array(
@@ -998,21 +690,6 @@ final class Runner {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static function add_log( array $job, string $table, string $column, array $key, array $leaves, Replacer $replacer ): array {
         $row   = $table . '.' . $column . ( $key ? ':' . implode( ',', array_values( $key ) ) : '' );
         $entry = self::log_entry( $job['args'], $row, $leaves, $replacer );
@@ -1021,8 +698,6 @@ final class Runner {
         }
         $bytes = strlen( $entry['row'] ) + strlen( $entry['old'] ) + strlen( $entry['new'] );
         $used  = (int) ( $job['log_bytes'] ?? 0 );
-        
-        
         if ( ! empty( $job['log_more'] ) || count( (array) ( $job['log'] ?? array() ) ) >= self::LOG_MAX || $used + $bytes > self::LOG_BYTES ) {
             $job['log_more'] = (int) ( $job['log_more'] ?? 0 ) + 1;
             return $job;
@@ -1031,18 +706,6 @@ final class Runner {
         $job['log_bytes'] = $used + $bytes;
         return $job;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private static function log_entry( array $args, string $row, array $leaves, Replacer $replacer ): ?array {
         $before   = isset( $args['before_context'] ) ? (int) $args['before_context'] : 40;
@@ -1064,13 +727,6 @@ final class Runner {
         );
     }
 
-    
-
-
-
-
-
-
     private static function add_checked( array &$job, string $item ): void {
         if ( count( (array) ( $job['checked'] ?? array() ) ) >= self::CHECKED_MAX ) {
             $job['checked_more'] = (int) ( $job['checked_more'] ?? 0 ) + 1;
@@ -1079,30 +735,12 @@ final class Runner {
         $job['checked'][] = $item;
     }
 
-    
-
-
-
-
-
-
-
-
     private function note_reverse( array $job, string $before, string $after ): array {
         if ( null !== $this->reverse && $this->reverse->replace( $after )['value'] !== $before ) {
             $job['reverse_differs'] = (int) ( $job['reverse_differs'] ?? 0 ) + 1;
         }
         return $job;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function reversible( array $job ): array {
         if ( ! empty( $job['args']['regex'] ) ) {
@@ -1120,7 +758,6 @@ final class Runner {
         return array( 'value' => true, 'reason' => 'new_absent_before' );
     }
 
-    
     private static function next_hint( array $job, bool $stalled ): string {
         $id = (string) $job['id'];
         if ( $stalled ) {
@@ -1142,7 +779,6 @@ final class Runner {
         return 'Stopped. Tables before the stopping point keep their changes; none after it were touched. Read stop_reason.';
     }
 
-    
     private static function too_long( string $value, array $column ): bool {
         if ( null !== ( $column['max_chars'] ?? null ) ) {
             $length = function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
@@ -1154,14 +790,9 @@ final class Runner {
         return false;
     }
 
-    
     private static function is_options_table( string $table, array $names ): bool {
         return '' !== $table && 'options' === substr( $table, -7 ) && in_array( 'option_name', $names, true );
     }
-
-    
-
-
 
     private static function named_list( array $items ): array {
         return array(
@@ -1170,7 +801,6 @@ final class Runner {
         );
     }
 
-    
     private static function add_named( array &$job, string $bucket, string $item ): void {
         if ( ! isset( $job['skipped'][ $bucket ] ) ) {
             $job['skipped'][ $bucket ] = array( 'count' => 0, 'items' => array() );
@@ -1180,15 +810,6 @@ final class Runner {
             $job['skipped'][ $bucket ]['items'][] = $item;
         }
     }
-
-    
-
-
-
-
-
-
-
 
     private static function sample( string $label, string $before, string $after, Replacer $replacer ): array {
         $pos   = $replacer->first_match( $before );

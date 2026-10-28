@@ -67,7 +67,6 @@ class Update_Menu extends Base_Tool {
         $menu_id  = $this->parse_required_id( $arguments['menu_id'], 'menu_id' );
         $has_slug = isset( $arguments['slug'] ) && '' !== $arguments['slug'];
         if ( ! isset( $arguments['name'] ) && ! isset( $arguments['description'] ) && ! $has_slug ) {
-            
             throw new \InvalidArgumentException( 'Nothing to update: pass at least one of name, slug or description.' );
         }
         $slug    = $has_slug ? $this->requested_menu_slug( $arguments['slug'], $menu_id ) : null;
@@ -98,16 +97,6 @@ class Update_Menu extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function reapply_slug( int $menu_id, ?string $slug, $current ): ?string {
         if ( null === $slug && null !== $current ) {
             $slug = (string) $current->slug;
@@ -121,16 +110,6 @@ class Update_Menu extends Base_Tool {
             throw new \RuntimeException( 'Any name or description in this call was saved, but the slug was not: ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function menu_request( int $menu_id, array $arguments, ?object $current ): \WP_REST_Request {
         $request = new \WP_REST_Request( 'POST', '/wp/v2/menus/' . $menu_id );

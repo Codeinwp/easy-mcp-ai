@@ -7,11 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
 class Update_Term extends Base_Tool {
 
     public function get_name() {
@@ -27,9 +22,6 @@ class Update_Term extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
-        
         return 'read';
     }
 
@@ -95,18 +87,11 @@ class Update_Term extends Base_Tool {
 
         $params = $this->update_params( $arguments );
 
-        
-        
         $rest_base = ! empty( $tax_obj->rest_base ) ? $tax_obj->rest_base : $taxonomy;
         $rest_base = $this->validate_rest_route_segment( $rest_base, 'rest_base' );
 
-        
-        
         $namespace = List_Terms::taxonomy_rest_namespace( $tax_obj, $taxonomy );
 
-        
-        
-        
         $before = get_term( $term_id, $taxonomy );
 
         $data = $this->rest_request( 'POST', '/' . $namespace . '/' . $rest_base . '/' . $term_id, $params );
@@ -124,20 +109,9 @@ class Update_Term extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
     private function update_params( array $arguments ): array {
         $params = array_merge( $this->name_and_slug_params( $arguments ), $this->description_param( $arguments ) );
         if ( array_key_exists( 'parent', $arguments ) ) {
-            
-            
-            
             $params['parent'] = absint( $arguments['parent'] );
         }
         if ( empty( $params ) ) {
@@ -146,19 +120,10 @@ class Update_Term extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
     private function name_and_slug_params( array $arguments ): array {
         $params = array();
         if ( isset( $arguments['name'] ) ) {
             $params['name'] = sanitize_text_field( (string) $arguments['name'] );
-            
-            
             if ( '' === $params['name'] ) {
                 throw new \InvalidArgumentException( 'name cannot be empty.' );
             }
@@ -172,25 +137,11 @@ class Update_Term extends Base_Tool {
         return $params;
     }
 
-    
-
-
-
-
-
-
-
     private function description_param( array $arguments ): array {
         $params = array();
-        
         if ( isset( $arguments['description'] ) && '' !== $arguments['description'] ) {
             $params['description'] = wp_kses_post( (string) $arguments['description'] );
         }
-        
-        
-        
-        
-        
         if ( isset( $arguments['clear_description'] ) && rest_sanitize_boolean( $arguments['clear_description'] ) ) {
             if ( isset( $params['description'] ) ) {
                 throw new \InvalidArgumentException( 'clear_description cannot be combined with a non-empty description: send one or the other.' );
@@ -199,17 +150,6 @@ class Update_Term extends Base_Tool {
         }
         return $params;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private static function term_changed( $before, array $after ): bool {
         if ( ! is_object( $before ) || is_wp_error( $before ) || ! isset( $before->name, $before->slug ) ) {

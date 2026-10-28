@@ -5,10 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 final class Search_Action extends Action {
 
     const ARGUMENTS = array( 'text', 'path', 'regex', 'case_sensitive', 'extensions', 'max_results' );
@@ -16,7 +12,6 @@ final class Search_Action extends Action {
     const DEFAULT_RESULTS = 100;
     const MAX_RESULTS = 500;
 
-    
     private $searcher;
 
     public function __construct( Resolver $resolver, ?Searcher $searcher = null ) {
@@ -51,13 +46,6 @@ final class Search_Action extends Action {
             'matches'
         );
     }
-
-    
-
-
-
-
-
 
     private function extensions( array $arguments ): array {
         $allowed = $this->resolver->extensions();

@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Tools;
 
 use Easy_MCP_AI\MCP\Detailed_Tool_Error;
@@ -16,42 +11,21 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 abstract class Rest_Route_Tool extends Base_Tool {
 
-    
     const MAX_RESPONSE_BYTES = 100000;
 
-    
     const MAX_RESPONSE_FILTER = 'easy_mcp_ai_rest_max_response_bytes';
 
-    
     const NAME_PREFIX = 'wp_rest_';
 
     public function get_category() {
         return 'rest';
     }
 
-    
-
-
-
     public function get_required_capability() {
         return 'read';
     }
-
-    
-
-
-
-
-
 
     public function approval_route( array $arguments ): ?string {
         try {
@@ -60,12 +34,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
             return null;
         }
     }
-
-    
-
-
-
-
 
     public function describe( array $arguments ) {
         $path = $this->approval_route( $arguments );
@@ -87,42 +55,19 @@ abstract class Rest_Route_Tool extends Base_Tool {
         return strlen( $text ) > 600 ? substr( $text, 0, 597 ) . '…' : $text;
     }
 
-    
-
-
-
-
-
-
     abstract protected function method_for( array $arguments ): string;
 
-    
     protected function sends_body(): bool {
         return false;
     }
 
-    
     protected function reports_changes(): bool {
         return false;
     }
 
-    
-
-
-
-
-
-
     protected function around_dispatch( callable $dispatch, array &$notes ): \WP_REST_Response {
         return $dispatch();
     }
-
-    
-
-
-
-
-
 
     protected function call_route( array $arguments ): array {
         list( $method, $path, $query, $body, $resolved ) = $this->checked_call( $arguments );
@@ -149,8 +94,8 @@ abstract class Rest_Route_Tool extends Base_Tool {
             },
             $notes
         );
-        if ( null !== $fields && function_exists( 'rest_filter_response_fields' ) ) {
-            $response = \rest_filter_response_fields( $response, $server, $request );
+        if ( null !== $fields ) {
+            $response = self::filter_fields( $response, $server, $request );
         }
         if ( $response->is_error() ) {
             throw self::error_for( $method, $path, $response );
@@ -158,29 +103,39 @@ abstract class Rest_Route_Tool extends Base_Tool {
         return $this->result( $method, $path, $resolved, $query, $response, $before, $notes );
     }
 
-    
+    private static function filter_fields( \WP_REST_Response $response, $server, \WP_REST_Request $request ): \WP_REST_Response {
+        if ( ! function_exists( 'rest_filter_response_fields' ) || $response->is_error() ) {
+            return $response;
+        }
+        if ( ! self::fields_can_filter( $response->get_data() ) ) {
+            $json = \wp_json_encode( $response->get_data() );
+            $data = is_string( $json ) ? json_decode( $json, true ) : null;
+            if ( array() === $data || ! self::fields_can_filter( $data ) ) {
+                return $response;
+            }
+            $response->set_data( $data );
+        }
+        return \rest_filter_response_fields( $response, $server, $request );
+    }
 
-
-
-
-
-
-
-
+    private static function fields_can_filter( $data ): bool {
+        if ( ! is_array( $data ) ) {
+            return false;
+        }
+        if ( ! \wp_is_numeric_array( $data ) ) {
+            return true;
+        }
+        foreach ( $data as $item ) {
+            if ( ! is_array( $item ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     public function precheck( array $arguments ): void {
         $this->checked_call( $arguments );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function checked_call( array $arguments ): array {
         $method   = $this->method_for( $arguments );
@@ -202,25 +157,8 @@ abstract class Rest_Route_Tool extends Base_Tool {
         return array( $method, $path, $query, $body, $resolved );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private function refuse_builder_owned_route_write( string $path, array $query, array $body ): void {
         $sent = array_merge( $query, $body );
-        
         if ( 1 === preg_match( '#^/wc/v\d+/products/(\d+)/?$#i', $path, $product ) ) {
             $this->refuse_builder_owned_product_writes( array( array( 'id' => (int) $product[1] ) + $sent ) );
             return;
@@ -245,13 +183,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         $this->refuse_builder_owned_write( (int) $post->ID, array_key_exists( 'content', $sent ), isset( $sent['meta'] ) && is_array( $sent['meta'] ) ? $sent['meta'] : array() );
     }
 
-    
-
-
-
-
-
-
     protected function namespace_refusal( string $namespace ): ?string {
         if ( ! Namespace_State::is_enabled( $namespace ) ) {
             return 'constant' === Namespace_State::off_by( $namespace )
@@ -260,25 +191,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         }
         return null;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function dispatch( \WP_REST_Request $request, array $resolved ): \WP_REST_Response {
         $server  = \rest_get_server();
@@ -304,28 +216,10 @@ abstract class Rest_Route_Tool extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
     private static function request_params( \WP_REST_Request $request ): array {
         $json = $request->get_json_params();
         return array_merge( (array) $request->get_query_params(), (array) $request->get_body_params(), is_array( $json ) ? $json : array() );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     private function result( string $method, string $path, array $resolved, array $query, \WP_REST_Response $response, ?int $before, array $notes ): array {
         $data   = $response->get_data();
@@ -373,15 +267,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         return $result;
     }
 
-    
-
-
-
-
-
-
-
-
     private static function error_for( string $method, string $path, \WP_REST_Response $response ): \Exception {
         $status  = (int) $response->get_status();
         $data    = $response->get_data();
@@ -398,13 +283,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         return new Detailed_Tool_Error( $short, $message );
     }
 
-    
-
-
-
-
-
-
     private static function pagination( array $headers, array $query ): ?array {
         if ( ! isset( $headers['x-wp-total'] ) && ! isset( $headers['x-wp-totalpages'] ) ) {
             return null;
@@ -420,12 +298,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     private static function changes_so_far(): ?int {
         if ( ! class_exists( '\\Easy_MCP_AI\\History\\Change_Context' ) || ! \Easy_MCP_AI\History\Change_Context::is_active() ) {
             return null;
@@ -435,14 +307,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         }
         return \Easy_MCP_AI\History\Change_Context::rows_written();
     }
-
-    
-
-
-
-
-
-
 
     private static function object_argument( array $arguments, string $name ): array {
         if ( ! isset( $arguments[ $name ] ) || array() === $arguments[ $name ] ) {
@@ -454,12 +318,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         return $arguments[ $name ];
     }
 
-    
-
-
-
-
-
     private static function fields_argument( array $arguments ): ?string {
         $fields = $arguments['fields'] ?? null;
         if ( is_array( $fields ) ) {
@@ -470,11 +328,6 @@ abstract class Rest_Route_Tool extends Base_Tool {
         }
         return trim( $fields );
     }
-
-    
-
-
-
 
     protected static function shared_properties(): array {
         return array(

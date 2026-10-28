@@ -52,7 +52,6 @@ class Delete_Media extends Base_Tool {
         );
     }
 
-    
     public function describe( array $arguments ) {
         $id = isset( $arguments['media_id'] ) ? (int) $arguments['media_id'] : 0;
         $media = $id > 0 ? $this->peek( '/wp/v2/media/' . $id, 'id,title,source_url,mime_type' ) : null;
@@ -75,9 +74,6 @@ class Delete_Media extends Base_Tool {
 
         $data = $this->rest_request( 'DELETE', '/wp/v2/media/' . $media_id, array( 'force' => $force ) );
 
-        
-        
-        
         $id = $data['previous']['id'] ?? null;
 
         return array(

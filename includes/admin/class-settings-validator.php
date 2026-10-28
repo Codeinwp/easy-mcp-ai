@@ -1,11 +1,5 @@
 <?php
 
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,12 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Settings_Validator {
-
-    
-
-
-
-
 
     public static function destructive_tools() {
         return array(
@@ -41,29 +29,18 @@ class Settings_Validator {
             'wp_update_site_settings',
             'wp_update_template',
             'wp_update_global_styles',
-            
             'wp_run_cron_event',
-            
             'wp_activate_plugin',
             'wp_deactivate_plugin',
             'wp_update_plugin',
             'wp_switch_theme',
             'wp_update_theme',
-            
             'wp_update_theme_mod',
             'wp_delete_theme_mod',
             'wp_update_custom_css',
-            
-            
             'wp_rest_delete',
         );
     }
-
-    
-
-
-
-
 
     public static function parse_patterns( $raw ) {
         $parts = is_array( $raw ) ? $raw : explode( ',', (string) $raw );
@@ -77,26 +54,9 @@ class Settings_Validator {
         return $clean;
     }
 
-    
-
-
-
-
-
-
-
     public static function is_valid_pattern( $pattern ) {
         return is_string( $pattern ) && '' !== $pattern && 1 === preg_match( '/^[A-Za-z0-9_*?\[\]!\-]+$/', $pattern );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function is_valid_approval_entry( $entry ): bool {
         if ( self::is_valid_pattern( $entry ) ) {
@@ -105,20 +65,10 @@ class Settings_Validator {
         if ( ! is_string( $entry ) || 1 !== preg_match( '/^(\S+) +(\S+)$/', $entry, $parts ) ) {
             return false;
         }
-        
-        
         return self::is_valid_pattern( $parts[1] )
             && 1 === preg_match( '#^/[A-Za-z0-9_.~%@{}*?!\[\]/\-]*$#', $parts[2] )
             && 1 !== preg_match( '/\[!?\]?[^\]]*\[/', $parts[2] );
     }
-
-    
-
-
-
-
-
-
 
     public static function sanitize_ip_whitelist( $raw ) {
         $raw = is_string( $raw ) ? $raw : '';
@@ -129,7 +79,6 @@ class Settings_Validator {
         $valid   = array();
         $invalid = array();
         foreach ( $lines as $line ) {
-            
             list( $ip_part ) = explode( '#', $line, 2 );
             $ip_part         = trim( $ip_part );
 
@@ -155,10 +104,6 @@ class Settings_Validator {
         );
     }
 
-    
-
-
-
     public static function is_valid_cidr( $cidr ) {
         if ( substr_count( $cidr, '/' ) !== 1 ) {
             return false;
@@ -176,15 +121,6 @@ class Settings_Validator {
         }
         return false;
     }
-
-    
-
-
-
-
-
-
-
 
     public static function integer_in_range( $raw, $min, $max ) {
         if ( is_bool( $raw ) ) {

@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -14,28 +9,6 @@ use Easy_MCP_AI\Cache\Purge_Request;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 final class Proxy_Cache_Purge extends Cache_Adapter {
 
@@ -123,24 +96,11 @@ final class Proxy_Cache_Purge extends Cache_Adapter {
         return $this->sent( $detail . ' It sends the posts\' related URLs when this request ends, after the reply.', 'after_response' );
     }
 
-    
-
-
-
-
-
     private function send( array $urls ): void {
         foreach ( self::encoded( $urls ) as $url ) {
             $this->calls()->call( array( self::VENDOR, 'purge_url' ), array( $url ) );
         }
     }
-
-    
-
-
-
-
-
 
     private static function encoded( array $urls ): array {
         return array_values(
@@ -159,12 +119,6 @@ final class Proxy_Cache_Purge extends Cache_Adapter {
         );
     }
 
-    
-
-
-
-
-
     private function post_purger(): ?object {
         $calls  = $this->calls();
         $purger = $calls->global_value( 'purger' );
@@ -174,30 +128,15 @@ final class Proxy_Cache_Purge extends Cache_Adapter {
         return null;
     }
 
-    
-
-
-
-
     private function tags_mode(): bool {
         return ! empty( $this->calls()->call( 'get_site_option', array( 'vhp_varnish_use_tags' ) ) ) && $this->calls()->class_exists( 'VarnishTags' );
     }
-
-    
-
-
-
 
     private function cron_mode(): bool {
         $calls = $this->calls();
         return $calls->method_exists( self::VENDOR, 'is_cron_purging_enabled_static' )
             && true === (bool) $calls->call( array( self::VENDOR, 'is_cron_purging_enabled_static' ) );
     }
-
-    
-
-
-
 
     private function is_nginx_backend(): bool {
         $calls = $this->calls();

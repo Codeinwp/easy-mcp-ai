@@ -22,7 +22,7 @@ class Create_Block extends Base_Tool {
     }
 
     public function get_required_capability() {
-        return 'publish_posts'; 
+        return 'publish_posts';
     }
 
     public function get_annotations() {

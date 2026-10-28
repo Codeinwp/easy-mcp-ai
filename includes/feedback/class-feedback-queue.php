@@ -8,81 +8,36 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Feedback_Queue {
 
-    
     const ROW_TOOL = '_feedback_report';
-    
-    const TTL_SECONDS = 1209600; 
-    
-
-
-
+    const TTL_SECONDS = 1209600;
     const MAX_PENDING = 10;
-    
     const REPLACED = 'replaced';
     const SUMMARY_MIN = 10;
     const SUMMARY_MAX = 200;
     const DETAILS_MAX = 1500;
 
-    
     const ENDPOINT = 'https://api.themeisle.com/tracking/feedback';
     const SLUG     = 'easy-mcp-ai';
-    
     const AREA     = 'agent';
 
-    
     const KINDS = array(
         'missing_feature' => 'Missing feature',
         'bug'             => 'Bug',
     );
 
-    
     private $store;
-    
     private $now;
-
-    
-
-
 
     public function __construct( Approval_Store $store, ?callable $now = null ) {
         $this->store = $store;
         $this->now   = is_callable( $now ) ? $now : 'time';
     }
 
-    
     public static function create(): self {
         return new self( new Wpdb_Feedback_Store() );
     }
-
-    
-    
-    
-
-    
-
-
-
-
-
-
-
-
 
     public static function compose( $kind, $summary, $details = '' ): array {
         $kind = is_string( $kind ) ? $kind : '';
@@ -108,24 +63,14 @@ class Feedback_Queue {
         );
     }
 
-    
-
-
-
-
     public static function clean( string $text, bool $single_line ): string {
         $text = \wp_strip_all_tags( (string) $text );
         $text = str_replace( array( "\r\n", "\r" ), "\n", $text );
-        
         $text = preg_replace( '/[\x00-\x09\x0B-\x1F\x7F]/u', ' ', $text );
         $text = \Easy_MCP_AI\Text_Redactor::redact( (string) $text );
         $text = preg_replace( '/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[email]', (string) $text );
-        
-        
         $hosts = class_exists( '\\Easy_MCP_AI\\Site_Host' ) ? array( \Easy_MCP_AI\Site_Host::current(), \Easy_MCP_AI\Site_Host::request_host() ) : array();
         foreach ( array_unique( array_filter( $hosts ) ) as $host ) {
-            
-            
             $text = preg_replace( '/(?<![A-Za-z0-9.\-])(?:www\.)*' . preg_quote( $host, '/' ) . '(?![A-Za-z0-9\-]|\.[A-Za-z0-9])/i', '[site]', (string) $text );
         }
         if ( $single_line ) {
@@ -137,20 +82,10 @@ class Feedback_Queue {
         return trim( (string) $text );
     }
 
-    
     public static function text_hash( string $text ): string {
         $normal = strtolower( preg_replace( '/\s+/u', ' ', trim( (string) $text ) ) );
         return hash( 'sha256', self::ROW_TOOL . "\n" . $normal );
     }
-
-    
-
-
-
-
-
-
-
 
     public function queue( array $identity, $kind, $summary, $details = '' ): array {
         $composed = self::compose( $kind, $summary, $details );
@@ -184,25 +119,9 @@ class Feedback_Queue {
         if ( ! $this->store->create( $row ) ) {
             throw new \RuntimeException( 'The report could not be stored, so nothing was queued or sent. Try again shortly.' );
         }
-        
-        
         $this->make_room( $now );
         return $this->reply( $row, true, $composed['arguments']['kind'] );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function make_room( int $now ): void {
         $waiting = $this->store->list_pending( $this->mysql( $now ), 100 );
@@ -213,12 +132,6 @@ class Feedback_Queue {
             }
         }
     }
-
-    
-
-
-
-
 
     private function reply( array $row, bool $queued, string $kind ): array {
         $url     = Approval_Gate::approve_url( $row['approval_id'] );
@@ -245,15 +158,6 @@ class Feedback_Queue {
         );
     }
 
-    
-    
-    
-
-    
-
-
-
-
     public function find_report( string $approval_id ): ?array {
         if ( ! preg_match( '/^[0-9a-f-]{36}$/', (string) $approval_id ) ) {
             return null;
@@ -265,29 +169,14 @@ class Feedback_Queue {
         return $row;
     }
 
-    
-
-
-
-
     public static function may_decide( array $row ): bool {
         $user = (int) \get_current_user_id();
         return ( $user > 0 && $user === (int) $row['wp_user_id'] ) || \current_user_can( 'manage_options' );
     }
 
-    
     public function is_expired( array $row ): bool {
         return (int) strtotime( (string) $row['expires_at'] . ' UTC' ) <= $this->time();
     }
-
-    
-
-
-
-
-
-
-
 
     public function mark_sent( string $approval_id, int $decided_by, string $via ): array {
         $row = $this->find_report( $approval_id );
@@ -308,12 +197,6 @@ class Feedback_Queue {
         return array( 'ok' => true, 'status' => 'sent', 'message' => \__( 'Sent. Thank you, we will take it from here.', 'easy-mcp-ai' ) );
     }
 
-    
-
-
-
-
-
     public function deny( string $approval_id, int $decided_by, string $via ): array {
         $row = $this->find_report( $approval_id );
         $out = $this->undecidable( $row );
@@ -326,12 +209,6 @@ class Feedback_Queue {
         $this->store->update( $row['approval_id'], array( 'arguments' => null ) );
         return array( 'ok' => true, 'status' => 'denied', 'message' => \__( 'Discarded. Nothing was sent.', 'easy-mcp-ai' ) );
     }
-
-    
-
-
-
-
 
     private function undecidable( ?array $row ): ?array {
         if ( ! is_array( $row ) ) {
@@ -346,7 +223,6 @@ class Feedback_Queue {
         return null;
     }
 
-    
     public static function status_sentence( array $row ): string {
         switch ( $row['status'] ) {
             case Approval_Gate::STATUS_CONSUMED:
@@ -360,16 +236,6 @@ class Feedback_Queue {
         }
     }
 
-    
-    
-    
-
-    
-
-
-
-
-
     public static function payload( array $row ): array {
         return array(
             'slug'     => self::SLUG,
@@ -379,15 +245,9 @@ class Feedback_Queue {
         );
     }
 
-    
     public static function privacy_sentence(): string {
         return \__( 'Only this text and the plugin version reach us. Your browser sends it, the same way as the Share feedback form; no e-mail or user details are included.', 'easy-mcp-ai' );
     }
-
-    
-
-
-
 
     public static function kind_of( array $row ): string {
         $arguments = isset( $row['arguments'] ) && is_string( $row['arguments'] ) ? json_decode( $row['arguments'], true ) : null;
@@ -397,19 +257,9 @@ class Feedback_Queue {
         return 0 === strpos( (string) ( $row['preview'] ?? '' ), '[' . self::KINDS['bug'] . ']' ) ? 'bug' : 'missing_feature';
     }
 
-    
     public static function send_label( string $kind ): string {
         return 'bug' === $kind ? \__( 'Send for a fix', 'easy-mcp-ai' ) : \__( 'Send for development', 'easy-mcp-ai' );
     }
-
-    
-    
-    
-
-    
-
-
-
 
     public function pending( int $limit = 50 ): array {
         if ( ! $this->store instanceof Feedback_Report_Store ) {
@@ -420,13 +270,6 @@ class Feedback_Queue {
             return is_array( $row ) && Approval_Gate::row_signature_valid( $row );
         } ) );
     }
-
-    
-
-
-
-
-
 
     public function instructions_line( array $identity ): string {
         if ( ! $this->store instanceof Feedback_Report_Store ) {

@@ -7,18 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 class GSC_Query_Performance extends Base_Tool {
 
     use Site_Kit_Rest;
 
-    
     const DIMENSIONS = array( 'query', 'page', 'country', 'device', 'date', 'searchAppearance' );
 
     public function get_name() {
@@ -65,13 +57,6 @@ class GSC_Query_Performance extends Base_Tool {
             'count' => count( $rows ),
         );
     }
-
-    
-
-
-
-
-
 
     public static function query_params( array $arguments ): array {
         $params     = array();

@@ -1,16 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\Admin\Setup_State;
@@ -26,21 +15,9 @@ class Setup_Controller extends Admin_Rest_Controller {
         $this->register_route( '/setup/skip', \WP_REST_Server::CREATABLE, array( $this, 'skip' ) );
     }
 
-    
-
-
-
-
-
     public function complete( $request ) {
         return $this->finish( false );
     }
-
-    
-
-
-
-
 
     public function skip( $request ) {
         return $this->finish( true );
@@ -49,7 +26,6 @@ class Setup_Controller extends Admin_Rest_Controller {
     private function finish( $skipped ) {
         Setup_State::mark_complete();
         return $this->ok( array(
-            
             'setupComplete' => Setup_State::is_complete(),
             'skipped'       => (bool) $skipped,
         ) );

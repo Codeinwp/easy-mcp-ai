@@ -122,13 +122,6 @@ class Update_Coupon extends Base_Tool {
             if ( ! is_numeric( $amount ) || floatval( $amount ) < 0 ) {
                 throw new \InvalidArgumentException( 'Coupon amount must be a non-negative number.' );
             }
-            
-            
-            
-            
-            
-            
-            
             $type = isset( $arguments['discount_type'] ) ? $arguments['discount_type'] : '';
             if ( 'percent' === $type && floatval( $amount ) > 100 ) {
                 throw new \InvalidArgumentException( 'Percent discount amount cannot exceed 100.' );
@@ -136,15 +129,6 @@ class Update_Coupon extends Base_Tool {
             $params['amount'] = number_format( floatval( $amount ), 2, '.', '' );
         }
         if ( isset( $arguments['date_expires'] ) ) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
             $params['date_expires'] = sanitize_text_field( $arguments['date_expires'] );
         }
         if ( isset( $arguments['usage_limit'] ) ) {

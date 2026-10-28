@@ -7,29 +7,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
 class Get_Store_Settings extends Base_Tool {
 
     use Store_Setup;
 
-    
     const GROUPS = array( 'general', 'tax', 'shipping' );
 
-    
-
-
-
     const OPTIONS_LIMIT = 25;
-
-    
-
-
-
-
-
 
     const UNUSED = array(
         'woocommerce_tax_classes' => 'Tax classes are not a setting since WooCommerce 3.7: use wp_wc_list_tax_classes, wp_wc_create_tax_class and wp_wc_delete_tax_class.',
@@ -102,13 +86,6 @@ class Get_Store_Settings extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
     public static function settings_of( $data ): array {
         $settings = array();
         foreach ( is_array( $data ) ? $data : array() as $setting ) {
@@ -119,13 +96,6 @@ class Get_Store_Settings extends Base_Tool {
         }
         return $settings;
     }
-
-    
-
-
-
-
-
 
     private static function present( array $setting, bool $all_options ): array {
         $row = array(

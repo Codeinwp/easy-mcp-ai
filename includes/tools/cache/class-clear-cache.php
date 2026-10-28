@@ -13,31 +13,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
 class Clear_Cache extends Base_Tool {
 
-    
     const MAX_ITEMS = 50;
 
-    
     const COOLDOWN_SECONDS = 300;
 
-    
     const COOLDOWN_OPTION = 'easy_mcp_ai_cache_site_purge_at';
 
-    
     const TIME_BUDGET = 25;
 
-    
     private $purger = null;
 
     public function get_name() {
@@ -53,8 +38,6 @@ class Clear_Cache extends Base_Tool {
     }
 
     public function get_required_capability() {
-        
-        
         return 'edit_posts';
     }
 
@@ -117,27 +100,10 @@ class Clear_Cache extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     public function get_approval_policy( array $arguments ) {
         $site = isset( $arguments['scope'] ) && Purge_Request::SCOPE_SITE === $arguments['scope'];
         return $site && ! self::flag( $arguments, 'dry_run' ) ? 'always' : 'never';
     }
-
-    
-
-
-
-
-
-
 
     public function describe( array $arguments ) {
         $text = __( 'Clear every page and asset cache of this site that its cache plugins let you clear.', 'easy-mcp-ai' );
@@ -150,25 +116,10 @@ class Clear_Cache extends Base_Tool {
         return $text . ' ' . __( 'Visitors refill the caches from the server afterwards; no content or setting is deleted.', 'easy-mcp-ai' );
     }
 
-    
-
-
-
-
-
-
-
     public function precheck( array $arguments ): void {
         $request = $this->build_request( $arguments );
         $this->refuse_cooldown( $request['request'] );
     }
-
-    
-
-
-
-
-
 
     public function execute( array $arguments ) {
         $built   = $this->build_request( $arguments );
@@ -188,31 +139,18 @@ class Clear_Cache extends Base_Tool {
             $reply['dropped_urls'] = $built['dropped'];
         }
         if ( $request->include_object_cache && ! in_array( 'object-cache', array_column( $reply['layers'], 'id' ), true ) ) {
-            
             $reply['notes'][] = 'No persistent object cache (Redis, Memcached) is in use on this site, so there was no object cache to flush.';
         }
         if ( null !== $claim && ! self::attempted( $reply ) ) {
-            
             $this->release_site_slot( $claim );
         }
         return $reply;
     }
 
-    
-
-
-
-
-
     public function with_purger( Cache_Purger $purger ): self {
         $this->purger = $purger;
         return $this;
     }
-
-    
-
-
-
 
     private function purger(): Cache_Purger {
         if ( null === $this->purger ) {
@@ -220,13 +158,6 @@ class Clear_Cache extends Base_Tool {
         }
         return $this->purger;
     }
-
-    
-
-
-
-
-
 
     private function build_request( array $arguments ): array {
         $scope = $this->parse_scope( $arguments );
@@ -264,26 +195,11 @@ class Clear_Cache extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function refuse_site_without_manage_options( string $scope ): void {
         if ( Purge_Request::SCOPE_SITE === $scope && ! \current_user_can( 'manage_options' ) ) {
             throw new \RuntimeException( 'Clearing the whole site needs the manage_options capability (administrators). Clear the pages that changed with scope "posts" or "urls" instead.' );
         }
     }
-
-    
-
-
-
 
     private function parse_scope( array $arguments ): string {
         $scope = isset( $arguments['scope'] ) ? $arguments['scope'] : null;
@@ -292,11 +208,6 @@ class Clear_Cache extends Base_Tool {
         }
         return $scope;
     }
-
-    
-
-
-
 
     private function parse_caches( array $arguments ): ?array {
         if ( ! isset( $arguments['caches'] ) || array() === $arguments['caches'] ) {
@@ -315,15 +226,6 @@ class Clear_Cache extends Base_Tool {
         return array_values( array_unique( $ids ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private function refuse_unused( array $arguments, string $scope ): void {
         $belongs = array(
             'urls'     => Purge_Request::SCOPE_URLS,
@@ -341,11 +243,6 @@ class Clear_Cache extends Base_Tool {
         }
     }
 
-    
-
-
-
-
     private function parse_post_ids( array $arguments ): array {
         $list = $this->required_list( $arguments, 'post_ids', 'posts' );
         $ids  = array();
@@ -360,11 +257,6 @@ class Clear_Cache extends Base_Tool {
         return array_values( array_unique( $ids ) );
     }
 
-    
-
-
-
-
     private function parse_urls( array $arguments ): array {
         $urls = array();
         foreach ( $this->required_list( $arguments, 'urls', 'urls' ) as $value ) {
@@ -376,15 +268,6 @@ class Clear_Cache extends Base_Tool {
         return array_values( array_unique( $urls ) );
     }
 
-    
-
-
-
-
-
-
-
-
     private function required_list( array $arguments, string $name, string $scope ): array {
         if ( ! isset( $arguments[ $name ] ) || ! is_array( $arguments[ $name ] ) || array() === $arguments[ $name ] ) {
             throw new \InvalidArgumentException( sprintf( 'Missing %1$s: scope "%2$s" needs a non-empty %1$s list.', $name, $scope ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -394,13 +277,6 @@ class Clear_Cache extends Base_Tool {
         }
         return array_values( $arguments[ $name ] );
     }
-
-    
-
-
-
-
-
 
     private function refuse_inactive_caches( ?array $caches ): void {
         if ( null === $caches ) {
@@ -414,26 +290,12 @@ class Clear_Cache extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
     private function refuse_cooldown( Purge_Request $request ): void {
         if ( Purge_Request::SCOPE_SITE !== $request->scope || $request->dry_run ) {
             return;
         }
         self::refuse_if_recent( self::stamp( self::stored_stamp() ), time() );
     }
-
-    
-
-
-
-
-
 
     private static function stored_stamp(): ?string {
         global $wpdb;
@@ -446,12 +308,6 @@ class Clear_Cache extends Base_Tool {
         return null === $value ? null : (string) $value;
     }
 
-    
-
-
-
-
-
     private static function forget_cached_stamp(): void {
         $missing = \wp_cache_get( 'notoptions', 'options' );
         if ( is_array( $missing ) && isset( $missing[ self::COOLDOWN_OPTION ] ) ) {
@@ -460,16 +316,6 @@ class Clear_Cache extends Base_Tool {
         }
         \wp_cache_delete( self::COOLDOWN_OPTION, 'options' );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function claim_site_slot(): array {
         global $wpdb;
@@ -496,12 +342,6 @@ class Clear_Cache extends Base_Tool {
         return array( 'previous' => $held );
     }
 
-    
-
-
-
-
-
     private function release_site_slot( array $claim ): void {
         if ( null === $claim['previous'] ) {
             \delete_option( self::COOLDOWN_OPTION );
@@ -510,24 +350,9 @@ class Clear_Cache extends Base_Tool {
         \update_option( self::COOLDOWN_OPTION, $claim['previous'], false );
     }
 
-    
-
-
-
-
-
-
     private static function stamp( $value ): int {
         return is_numeric( $value ) ? (int) $value : 0;
     }
-
-    
-
-
-
-
-
-
 
     private static function refuse_if_recent( int $last, int $now ): void {
         $wait = $last + self::COOLDOWN_SECONDS - $now;
@@ -535,12 +360,6 @@ class Clear_Cache extends Base_Tool {
             throw new \RuntimeException( sprintf( 'A whole-site cache clear ran %d seconds ago. Wait %d seconds (retry_after: %d) or clear specific URLs or posts instead.', $now - $last, $wait, $wait ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
-
-    
-
-
-
-
 
     private static function attempted( array $reply ): bool {
         foreach ( (array) $reply['layers'] as $layer ) {
@@ -550,13 +369,6 @@ class Clear_Cache extends Base_Tool {
         }
         return false;
     }
-
-    
-
-
-
-
-
 
     private static function flag( array $arguments, string $name ): bool {
         return isset( $arguments[ $name ] ) && \rest_sanitize_boolean( $arguments[ $name ] );

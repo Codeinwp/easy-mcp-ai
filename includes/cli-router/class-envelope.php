@@ -5,48 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Envelope {
 
     const OUTPUT_MAX_BYTES = 65536;
 
-    
     const LIST_MAX = 100;
 
-    
     const ITEM_MAX_BYTES = 2048;
-
-    
-
-
-
-
-
 
     public static function build( Context $ctx, int $exit_code, bool $delegated ): array {
         $stdout    = $ctx->out->stdout();
@@ -57,9 +22,6 @@ final class Envelope {
         $notes     = self::cut_list( $ctx->notes() );
         $truncated = strlen( $output ) < strlen( $stdout ) || strlen( $error ) < strlen( $stderr ) || $warnings[1] || $notes[1];
 
-        
-        
-        
         if ( $delegated && ( array() !== $ctx->calls() || $ctx->changed() ) ) {
             $recorded_as = 'inner tools';
         } elseif ( $ctx->changed() ) {
@@ -89,30 +51,18 @@ final class Envelope {
         );
     }
 
-    
-
-
-
     public static function cut( string $text, int $max ): string {
         if ( strlen( $text ) <= $max ) {
             return $text;
         }
         if ( function_exists( 'mb_strcut' ) ) {
             $cut = mb_strcut( $text, 0, $max, 'UTF-8' );
-            
-            
             if ( is_string( $cut ) && strlen( $cut ) <= $max ) {
                 return $cut;
             }
         }
         return substr( $text, 0, $max );
     }
-
-    
-
-
-
-
 
     private static function cut_list( array $items ): array {
         $cut  = count( $items ) > self::LIST_MAX;

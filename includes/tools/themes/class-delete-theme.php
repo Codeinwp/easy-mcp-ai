@@ -9,18 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 class Delete_Theme extends Base_Tool {
 
     use Lifecycle_Guard;
@@ -55,7 +43,6 @@ class Delete_Theme extends Base_Tool {
         return true;
     }
 
-    
     public function get_approval_policy( array $arguments ) {
         return 'always';
     }
@@ -94,13 +81,11 @@ class Delete_Theme extends Base_Tool {
         $stylesheet = $this->parse_stylesheet( $arguments );
 
         $this->refuse_when_file_mods_are_off( 'themes cannot be deleted' );
-        
         if ( ! current_user_can( 'delete_themes' ) ) {
             throw new \RuntimeException( 'Sorry, you are not allowed to delete themes on this site.' );
         }
         $this->refuse_unless_network_file_admin( 'manage_network_themes', 'deleting themes' );
 
-        
         $theme = wp_get_theme( $stylesheet );
         if ( ! $theme->exists() ) {
             throw new \RuntimeException( sprintf( 'Theme "%s" is not installed. Use wp_list_themes to see installed themes.', $stylesheet ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -127,8 +112,6 @@ class Delete_Theme extends Base_Tool {
             throw new \RuntimeException( sprintf( 'Theme "%s" was not deleted: %s', $stylesheet, $this->upgrader_error_text( $deleted ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( true !== $deleted ) {
-            
-            
             throw new \RuntimeException( sprintf( 'Theme "%s" could not be deleted.', $stylesheet ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
@@ -145,15 +128,6 @@ class Delete_Theme extends Base_Tool {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
-
     private function parse_stylesheet( array $arguments ): string {
         $raw = isset( $arguments['stylesheet'] ) && is_string( $arguments['stylesheet'] ) ? trim( $arguments['stylesheet'] ) : '';
         if ( '' === $raw ) {
@@ -167,13 +141,6 @@ class Delete_Theme extends Base_Tool {
         }
         return $stylesheet;
     }
-
-    
-
-
-
-
-
 
     protected function run_delete_theme( string $stylesheet ) {
         if ( ! function_exists( 'delete_theme' ) ) {

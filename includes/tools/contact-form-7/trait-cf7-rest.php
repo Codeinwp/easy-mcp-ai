@@ -5,49 +5,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 trait CF7_Rest {
-
-    
-
-
-
 
     protected static string $cf7_route = '/contact-form-7/v1/contact-forms';
 
-    
-
-
-
-
     protected static array $cf7_string_fields = array( 'title', 'locale', 'form', 'additional_settings' );
 
-    
-
-
-
-
     protected static array $cf7_keyed_fields = array( 'mail', 'mail_2', 'messages' );
-
-    
-
-
-
 
     protected static array $cf7_mail_flags = array( 'active', 'use_html', 'exclude_blank' );
 
@@ -55,32 +19,15 @@ trait CF7_Rest {
         return 'contact-form-7';
     }
 
-    
-
-
-
-
-
-
-
-
     protected static function cf7_capability( string $cap ): string {
         return class_exists( '\\WPCF7_ContactForm' ) ? $cap : 'manage_options';
     }
-
-    
-
 
     protected function require_cf7(): void {
         if ( ! class_exists( '\\WPCF7_ContactForm' ) ) {
             throw new \RuntimeException( 'Contact Form 7 is not active on this site. Install and activate the Contact Form 7 plugin.' );
         }
     }
-
-    
-
-
-
 
     protected static function write_properties(): array {
         $mail = array(
@@ -160,42 +107,16 @@ trait CF7_Rest {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
     protected function require_form_capability( int $id ): void {
         if ( ! current_user_can( $this->get_required_capability(), $id ) ) {
             throw new \RuntimeException( 'You are not allowed to access the requested contact form.' );
         }
     }
 
-    
-
-
-
-
-
-
     protected function read_form( int $id ): array {
         $data = $this->rest_request( 'GET', self::$cf7_route . '/' . $id );
         return is_array( $data ) ? $data : array();
     }
-
-    
-
-
-
-
-
-
 
     protected static function normalize_form( array $data ): array {
         $props    = isset( $data['properties'] ) && is_array( $data['properties'] ) ? $data['properties'] : array();
@@ -217,11 +138,6 @@ trait CF7_Rest {
         );
     }
 
-    
-
-
-
-
     protected static function shortcode_of( int $id ): ?string {
         if ( $id < 1 || ! function_exists( 'wpcf7_contact_form' ) ) {
             return null;
@@ -229,16 +145,6 @@ trait CF7_Rest {
         $contact_form = wpcf7_contact_form( $id );
         return is_object( $contact_form ) && method_exists( $contact_form, 'shortcode' ) ? (string) $contact_form->shortcode() : null;
     }
-
-    
-
-
-
-
-
-
-
-
 
     protected function save_body( array $arguments, array $base ): array {
         $body = array( 'context' => 'save' );
@@ -256,12 +162,6 @@ trait CF7_Rest {
         return $body;
     }
 
-    
-
-
-
-
-
     protected static function sent_fields( array $arguments ): array {
         return array_values(
             array_filter(
@@ -273,23 +173,9 @@ trait CF7_Rest {
         );
     }
 
-    
-
-
-
-
-
     protected static function sent( array $arguments, string $field ): bool {
         return array_key_exists( $field, $arguments ) && null !== $arguments[ $field ];
     }
-
-    
-
-
-
-
-
-
 
     private static function string_argument( $value, string $field ): string {
         if ( ! is_string( $value ) && ! is_int( $value ) && ! is_float( $value ) ) {
@@ -297,15 +183,6 @@ trait CF7_Rest {
         }
         return (string) $value;
     }
-
-    
-
-
-
-
-
-
-
 
     private static function keyed_argument( $value, string $field ): array {
         if ( ! is_array( $value ) || ( ! empty( $value ) && array_keys( $value ) === range( 0, count( $value ) - 1 ) ) ) {
@@ -323,14 +200,6 @@ trait CF7_Rest {
         return $out;
     }
 
-    
-
-
-
-
-
-
-
     protected static function changed_fields( array $before, array $after ): array {
         $changed = array();
         foreach ( array_merge( self::$cf7_string_fields, self::$cf7_keyed_fields ) as $field ) {
@@ -347,18 +216,6 @@ trait CF7_Rest {
         return $changed;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function comparable( string $field, array $value ): array {
         if ( 'mail' === $field ) {
             unset( $value['active'] );
@@ -374,24 +231,9 @@ trait CF7_Rest {
         return $value;
     }
 
-    
-
-
-
-
-
     protected static function config_errors_of( $data ): array {
         return is_array( $data ) && isset( $data['config_errors'] ) && is_array( $data['config_errors'] ) ? $data['config_errors'] : array();
     }
-
-    
-
-
-
-
-
-
-
 
     protected function preview_target( array $arguments ): ?array {
         $id    = isset( $arguments['id'] ) && is_numeric( $arguments['id'] ) ? (int) $arguments['id'] : 0;
@@ -404,13 +246,6 @@ trait CF7_Rest {
             'title' => $title,
         );
     }
-
-    
-
-
-
-
-
 
     protected static function title_of( int $id ): ?string {
         if ( ! function_exists( 'wpcf7_contact_form' ) ) {

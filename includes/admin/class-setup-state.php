@@ -1,14 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,38 +10,15 @@ class Setup_State {
 
     const OPTION = 'easy_mcp_ai_setup_complete';
 
-    
     const REDIRECT_TRANSIENT = 'easy_mcp_ai_setup_redirect';
-
-    
-
-
-
-
-
-
 
     public static function is_complete() {
         return in_array( \get_option( self::OPTION, false ), array( true, 1, '1', 'true' ), true );
     }
 
-    
-
-
-
-
     public static function mark_complete() {
         \update_option( self::OPTION, 1 );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function mark_complete_if_in_use() {
         global $wpdb;
@@ -61,7 +29,6 @@ class Setup_State {
         $queries = array(
             "SELECT 1 FROM `{$prefix}tokens` LIMIT 1",
             "SELECT 1 FROM `{$prefix}oauth_consents` LIMIT 1",
-            
             "SELECT 1 FROM `{$prefix}audit_log` WHERE tool_name NOT LIKE '\\_%' AND result_status IN ('success', 'error') LIMIT 1",
         );
         $suppressed = method_exists( $wpdb, 'suppress_errors' ) ? $wpdb->suppress_errors( true ) : null;
@@ -81,13 +48,6 @@ class Setup_State {
         }
         return $in_use;
     }
-
-    
-
-
-
-
-
 
     public static function arm_activation_redirect() {
         \set_transient( self::REDIRECT_TRANSIENT, 1, 60 );

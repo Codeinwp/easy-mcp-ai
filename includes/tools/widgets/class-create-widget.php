@@ -71,10 +71,6 @@ class Create_Widget extends Base_Tool {
         $position = $this->position_argument( $arguments );
         $settings = isset( $arguments['instance'] ) ? $this->instance_argument( $arguments['instance'] ) : array();
 
-        
-        
-        
-        
         $status = $this->widget_type_status( $id_base );
         if ( 'legacy' === $status ) {
             throw $this->legacy_widget_error( $id_base );
@@ -83,11 +79,6 @@ class Create_Widget extends Base_Tool {
             throw new \InvalidArgumentException( sprintf( 'Unknown widget type "%s". Call wp_list_widget_types for the registered id_base values.', $id_base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        
-        
-        
-        
-        
         $this->sidebar_widget_ids( $sidebar );
 
         $data = $this->rest_request(

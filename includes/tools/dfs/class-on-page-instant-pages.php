@@ -116,18 +116,15 @@ class On_Page_Instant_Pages extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['url'] ) || empty( $arguments['url'] ) ) {
 			throw new \RuntimeException( 'url is required.' );
 		}
 		$url = (string) $arguments['url'];
 
-		
 		if ( ! \wp_http_validate_url( $url ) ) {
 			throw new \RuntimeException( 'url must be a valid absolute URL.' );
 		}
 
-		
 		if ( isset( $arguments['browser_preset'] ) ) {
 			$preset = (string) $arguments['browser_preset'];
 			if ( ! in_array( $preset, array( 'desktop', 'mobile', 'tablet' ), true ) ) {
@@ -137,7 +134,6 @@ class On_Page_Instant_Pages extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['browser_screen_width'] ) ) {
 			$width = (int) $arguments['browser_screen_width'];
 			if ( $width < 240 || $width > 9999 ) {
@@ -147,7 +143,6 @@ class On_Page_Instant_Pages extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['browser_screen_height'] ) ) {
 			$height = (int) $arguments['browser_screen_height'];
 			if ( $height < 240 || $height > 9999 ) {
@@ -157,7 +152,6 @@ class On_Page_Instant_Pages extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['browser_screen_scale_factor'] ) ) {
 			$scale = (float) $arguments['browser_screen_scale_factor'];
 			if ( $scale < 0.5 || $scale > 3 ) {
@@ -167,7 +161,6 @@ class On_Page_Instant_Pages extends Base_Tool {
 			}
 		}
 
-		
 		$has_preset = isset( $arguments['browser_preset'] );
 		$has_js     = isset( $arguments['enable_javascript'] ) && $arguments['enable_javascript'];
 		$has_render = isset( $arguments['enable_browser_rendering'] ) && $arguments['enable_browser_rendering'];
@@ -177,7 +170,6 @@ class On_Page_Instant_Pages extends Base_Tool {
 			);
 		}
 
-		
 		$has_width  = isset( $arguments['browser_screen_width'] );
 		$has_height = isset( $arguments['browser_screen_height'] );
 		$has_scale  = isset( $arguments['browser_screen_scale_factor'] );
@@ -187,24 +179,20 @@ class On_Page_Instant_Pages extends Base_Tool {
 			);
 		}
 
-		
 		if ( isset( $arguments['enable_xhr'] ) && $arguments['enable_xhr'] && ! $has_js ) {
 			throw new \RuntimeException(
 				'enable_xhr requires enable_javascript=true.'
 			);
 		}
 
-		
 		if ( isset( $arguments['custom_js'] ) && ! empty( $arguments['custom_js'] ) && ! $has_js ) {
 			throw new \RuntimeException(
 				'custom_js requires enable_javascript=true.'
 			);
 		}
 
-		
 		$task = array( 'url' => $url );
 
-		
 		if ( isset( $arguments['custom_user_agent'] ) ) {
 			$task['custom_user_agent'] = (string) $arguments['custom_user_agent'];
 		}
@@ -251,14 +239,12 @@ class On_Page_Instant_Pages extends Base_Tool {
 			$task['checks_threshold'] = $arguments['checks_threshold'];
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/on_page/instant_pages',
 			$task
 		);
 
-		
 		return array_merge(
 			$result['tasks'][0]['result'][0]['items'][0] ?? array(),
 			array( '_cost_usd' => $result['cost'] ?? 0 )

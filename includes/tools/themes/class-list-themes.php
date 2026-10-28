@@ -8,25 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 class List_Themes extends Base_Tool {
 
     use Lifecycle_Guard;
 
-    
     const UPDATE_FIELDS = 'update, update_version, update_unavailable_reason, auto_update';
 
-    
     const VERSION_HIGHER = 'version higher than expected';
 
     public function get_name() {
@@ -36,9 +23,6 @@ class List_Themes extends Base_Tool {
     public function get_description() {
         return 'Lists all installed WordPress themes. Optional: `skip_update_check` (boolean, default true: read WordPress\'s stored update data and contact nobody; false deletes it and asks wordpress.org again first, as `wp theme list` does — only for a user with update_themes). Returns { themes: [{ stylesheet (theme folder name / identifier), name, version, status ("active"/"inactive"), author, update_available (boolean), new_version (only when an update is available), update ("none" | "available" | "unavailable" | "version higher than expected"), update_version, update_unavailable_reason, auto_update (boolean: in WordPress\'s auto-update list), requires (WordPress version), requires_php, active_parent (true for the parent of the active child theme, whose status stays "inactive"), enabled (multisite only: "network,site" | "network" | "site" | "no"; null on a single site) }], total, warnings }. The active theme has `status="active"`. update_available and new_version come from WordPress\'s stored update data (the same data Appearance → Themes shows). The fields update, update_version, update_unavailable_reason and auto_update are null for a user without the update_themes capability (a warning names the cause). requires and requires_php are those of the offered update when there is one, otherwise the theme\'s own header. Use `wp_get_active_theme` if you only need the current theme\'s details, `wp_switch_theme` to activate one and `wp_update_theme` to update one. Requires administrator access. ' . self::lifecycle_hint();
     }
-
-    
-
 
     public static function lifecycle_hint(): string {
         return \Easy_MCP_AI\Config::brand( 'Installing and deleting themes have their own tools, which are off by default: when none is in your tools, tell the user an administrator can switch them on in wp-admin under Easy MCP AI › Settings › Advanced › Disabled tools, or allow them for this connection.' );
@@ -57,7 +41,6 @@ class List_Themes extends Base_Tool {
             'title'           => $this->get_title(),
             'readOnlyHint'    => true,
             'destructiveHint' => false,
-            
             'openWorldHint'   => true,
         );
     }
@@ -76,7 +59,6 @@ class List_Themes extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
-        
         $skip_check  = isset( $arguments['skip_update_check'] ) ? rest_sanitize_boolean( $arguments['skip_update_check'] ) : true;
         $warnings    = array();
         $see_updates = $this->prepare_update_data( $skip_check, $warnings );
@@ -96,16 +78,6 @@ class List_Themes extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function prepare_update_data( bool $skip_check, array &$warnings ): bool {
         $see_updates = current_user_can( 'update_themes' );
         if ( ! $see_updates ) {
@@ -116,16 +88,6 @@ class List_Themes extends Base_Tool {
         }
         return $see_updates;
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function list_context( bool $see_updates, array $data ): array {
         $transient = get_site_transient( 'update_themes' );
@@ -140,14 +102,6 @@ class List_Themes extends Base_Tool {
             'network_allow' => is_multisite() ? $this->allowed_map( get_site_option( 'allowedthemes' ) ) : array(),
         );
     }
-
-    
-
-
-
-
-
-
 
     private function theme_item( $theme, array $response ): array {
         $stylesheet = isset( $theme['stylesheet'] ) ? $theme['stylesheet'] : '';
@@ -165,13 +119,6 @@ class List_Themes extends Base_Tool {
         return $item;
     }
 
-    
-
-
-
-
-
-
     private function with_update( array $item, $entry ): array {
         $new_version              = (string) $this->update_field( $entry, 'new_version' );
         $item['update_available'] = true;
@@ -180,14 +127,6 @@ class List_Themes extends Base_Tool {
         }
         return $item;
     }
-
-    
-
-
-
-
-
-
 
     private function with_cli_fields( array $item, $theme, array $context ): array {
         $stylesheet = (string) $item['stylesheet'];
@@ -216,38 +155,13 @@ class List_Themes extends Base_Tool {
         return $this->in_cli_order( $item, $auto_update, $stylesheet, $context );
     }
 
-    
-
-
-
-
-
-
     private static function string_header( $theme, string $field ): string {
         return isset( $theme[ $field ] ) && is_string( $theme[ $field ] ) ? $theme[ $field ] : '';
     }
 
-    
-
-
-
-
-
-
     private static function entry_for( array $map, string $stylesheet ) {
         return ( '' !== $stylesheet && isset( $map[ $stylesheet ] ) ) ? $map[ $stylesheet ] : null;
     }
-
-    
-
-
-
-
-
-
-
-
-
 
     private function in_cli_order( array $item, ?bool $auto_update, string $stylesheet, array $context ): array {
         $ordered = array();
@@ -265,24 +179,6 @@ class List_Themes extends Base_Tool {
         }
         return $item + $ordered;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function update_fields( string $installed, $offer, $no_update, string $header_wp, string $header_php ): array {
         $requires     = null !== $offer ? $this->update_field( $offer, 'requires' ) : null;
@@ -303,15 +199,6 @@ class List_Themes extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function update_status( bool $offered, $requires, $requires_php ): array {
         $wp_version = (string) get_bloginfo( 'version' );
         if ( ! empty( $requires_php ) && ! version_compare( PHP_VERSION, (string) $requires_php, '>=' ) ) {
@@ -323,14 +210,6 @@ class List_Themes extends Base_Tool {
         return array( $offered ? 'available' : 'none', '' );
     }
 
-    
-
-
-
-
-
-
-
     private function active_parent_stylesheet( array $data ): string {
         foreach ( $data as $theme ) {
             if ( ! is_array( $theme ) || ! isset( $theme['status'], $theme['stylesheet'], $theme['template'] ) || 'active' !== $theme['status'] ) {
@@ -340,14 +219,6 @@ class List_Themes extends Base_Tool {
         }
         return '';
     }
-
-    
-
-
-
-
-
-
 
     private function enabled_value( string $stylesheet, array $site_allowed, array $network_allow ): string {
         $site    = ! empty( $site_allowed[ $stylesheet ] );
@@ -361,29 +232,13 @@ class List_Themes extends Base_Tool {
         return $site ? 'site' : 'no';
     }
 
-    
-
-
-
     private function allowed_map( $value ): array {
         return is_array( $value ) ? $value : array();
     }
 
-    
-
-
-
     private function string_list( $value ): array {
         return is_array( $value ) ? array_values( $value ) : array();
     }
-
-    
-
-
-
-
-
-
 
     private function hidden_updates_warning( bool $skip_check ): string {
         if ( ! wp_is_file_mod_allowed( 'capability_update_core' ) ) {

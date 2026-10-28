@@ -61,12 +61,6 @@ class Delete_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
     public function describe( array $arguments ) {
         $id   = isset( $arguments['user_id'] ) ? (int) $arguments['user_id'] : 0;
         $user = $id > 0 ? $this->peek( '/wp/v2/users/' . $id, 'id,name,slug,username', array( 'context' => 'edit' ) ) : null;
@@ -76,26 +70,10 @@ class Delete_User extends Base_Tool {
         return self::deletion_preview( $arguments, self::rest_title( $user, 'name' ), self::preview_login( $user ), $id );
     }
 
-    
-
-
-
-
-
     private static function preview_login( array $user ): string {
         $login = isset( $user['username'] ) ? $user['username'] : ( isset( $user['slug'] ) ? $user['slug'] : '' );
         return '' !== $login ? $login : '?';
     }
-
-    
-
-
-
-
-
-
-
-
 
     private static function deletion_preview( array $arguments, string $name, string $login, int $id ): string {
         if ( self::flag( $arguments, 'network' ) ) {
@@ -145,27 +123,9 @@ class Delete_User extends Base_Tool {
         return $this->delete_account( $user_id, $reassign );
     }
 
-    
-
-
-
-
-
-
-
     private static function flag( array $arguments, string $name ): bool {
         return ! empty( $arguments[ $name ] ) && rest_sanitize_boolean( $arguments[ $name ] );
     }
-
-    
-
-
-
-
-
-
-
-
 
     private function reassign_argument( array $arguments, bool $network ): ?int {
         $has_reassign = isset( $arguments['reassign'] ) && '' !== $arguments['reassign'];
@@ -173,19 +133,8 @@ class Delete_User extends Base_Tool {
         return $has_reassign ? $this->parse_required_id( $arguments['reassign'], 'reassign' ) : null;
     }
 
-    
-
-
-
-
-
-
-
-
-
     private static function refuse_unclear_content_choice( bool $network, bool $purge, bool $has_reassign ): void {
         if ( $network && $has_reassign ) {
-            
             throw new \InvalidArgumentException( 'network deletes the user from every site and cannot reassign their content; drop reassign and pass delete_content: true.' );
         }
         if ( $purge && $has_reassign ) {
@@ -198,19 +147,9 @@ class Delete_User extends Base_Tool {
         }
     }
 
-    
-
-
-
-
-
-
-
     private function delete_account( int $user_id, ?int $reassign ): array {
         $data = $this->rest_request( 'DELETE', '/wp/v2/users/' . $user_id, array(
             'force'    => true,
-            
-            
             'reassign' => null === $reassign ? false : $reassign,
         ) );
 
@@ -226,20 +165,6 @@ class Delete_User extends Base_Tool {
             'reassigned_to' => $reassign,
         );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private function remove_from_this_site( int $user_id, $target, ?int $reassign ): array {
         self::refuse_site_removal( $user_id, $target, $reassign );
@@ -259,18 +184,6 @@ class Delete_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
     private static function refuse_site_removal( int $user_id, $target, ?int $reassign ): void {
         if ( ! $target ) {
             throw new \InvalidArgumentException( sprintf( 'User %d does not exist.', $user_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -282,24 +195,12 @@ class Delete_User extends Base_Tool {
             throw new \RuntimeException( sprintf( 'You are not allowed to delete user %d from this site.', $user_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( null !== $reassign && ( $reassign === $user_id || ! get_userdata( $reassign ) ) ) {
-            
             throw new \InvalidArgumentException( sprintf( 'Invalid user ID for reassignment: %d is the user being deleted or does not exist.', $reassign ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 
-    
-
-
-
-
-
-
-
-
-
     private function delete_from_network( int $user_id ): array {
         $target = self::network_deletion_target( $user_id );
-        
         self::refuse_last_administrator( $target );
         $previous = self::previous_of( $target, $user_id );
         if ( ! function_exists( 'wpmu_delete_user' ) ) {
@@ -320,15 +221,6 @@ class Delete_User extends Base_Tool {
         );
     }
 
-    
-
-
-
-
-
-
-
-
     private static function network_deletion_target( int $user_id ): object {
         if ( ! is_multisite() ) {
             throw new \InvalidArgumentException( 'network applies only to a multisite network; this site is not one.' );
@@ -346,27 +238,12 @@ class Delete_User extends Base_Tool {
         return $target;
     }
 
-    
-
-
-
-
-
-
-
     private static function is_listed_super_admin( object $target, int $user_id ): bool {
         if ( function_exists( 'get_super_admins' ) ) {
             return in_array( isset( $target->user_login ) ? $target->user_login : '', (array) get_super_admins(), true );
         }
         return is_super_admin( $user_id );
     }
-
-    
-
-
-
-
-
 
     private static function refuse_last_administrator( $target ): void {
         if ( ! $target || ! in_array( 'administrator', (array) ( isset( $target->roles ) ? $target->roles : array() ), true ) ) {
@@ -383,13 +260,6 @@ class Delete_User extends Base_Tool {
             throw new \RuntimeException( 'Cannot delete the last administrator. Promote another user to administrator first.' );
         }
     }
-
-    
-
-
-
-
-
 
     private static function previous_of( object $user, int $user_id ): array {
         return array(

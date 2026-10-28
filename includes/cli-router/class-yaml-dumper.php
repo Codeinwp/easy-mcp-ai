@@ -5,53 +5,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Yaml_Dumper {
 
-    
     const REMPTY = "\0\0\0\0\0";
 
-    
     const INDENT = 2;
-
-    
-
-
 
     const LITERAL_BLOCK_NEEDLES = array( "\n", ': ', '- ', '*', '#', '<', '>', '%', '  ', '[', ']', '{', '}', '&', "'" );
 
-    
-
-
-
-
     public static function dump( $data ): string {
-        
         $string = "---\n";
 
-        
         if ( $data ) {
             $array       = (array) $data;
             $is_sequence = self::is_sequence( $array );
@@ -62,23 +26,9 @@ final class Yaml_Dumper {
         return $string;
     }
 
-    
-
-
-
-
-
-
-
     public static function sequence_entry( $value ): string {
         return self::yamlize( 0, $value, 0, true );
     }
-
-    
-
-
-
-
 
     private static function yamlize( $key, $value, int $indent, bool $in_sequence ): string {
         if ( is_object( $value ) ) {
@@ -88,21 +38,13 @@ final class Yaml_Dumper {
             if ( empty( $value ) ) {
                 return self::dump_node( $key, array(), $indent, $in_sequence );
             }
-            
             $string = self::dump_node( $key, self::REMPTY, $indent, $in_sequence );
-            
             $indent += self::INDENT;
             $string .= self::yamlize_array( $value, $indent );
             return $string;
         }
-        
         return self::dump_node( $key, $value, $indent, $in_sequence );
     }
-
-    
-
-
-
 
     private static function yamlize_array( array $array, int $indent ): string {
         $string      = '';
@@ -113,48 +55,25 @@ final class Yaml_Dumper {
         return $string;
     }
 
-    
-
-
-
-
     private static function is_sequence( array $array ): bool {
         return array() !== $array && array_keys( $array ) === range( 0, count( $array ) - 1 );
     }
-
-    
-
-
-
-
 
     private static function dump_node( $key, $value, int $indent, bool $in_sequence ): string {
         $value  = self::node_value( $value, $indent );
         $spaces = str_repeat( ' ', $indent );
 
         if ( $in_sequence ) {
-            
             return $spaces . '- ' . $value . "\n";
         }
 
-        
         if ( false !== strpos( (string) $key, ':' ) || false !== strpos( (string) $key, '#' ) ) {
             $key = '"' . $key . '"';
         }
         return rtrim( $spaces . $key . ': ' . $value ) . "\n";
     }
 
-    
-
-
-
-
-
-
-
-
     private static function node_value( $value, int $indent ) {
-        
         $value = self::needs_literal_block( $value ) ? self::do_literal_block( $value, $indent ) : self::do_folding( $value );
 
         if ( array() === $value ) {
@@ -172,12 +91,6 @@ final class Yaml_Dumper {
         return self::plain_value( $value );
     }
 
-    
-
-
-
-
-
     private static function needs_literal_block( $value ): bool {
         if ( ! is_string( $value ) ) {
             return false;
@@ -189,13 +102,6 @@ final class Yaml_Dumper {
         }
         return 0 === strpos( $value, '!' ) || ':' === substr( $value, -1, 1 );
     }
-
-    
-
-
-
-
-
 
     private static function plain_value( $value ) {
         if ( is_bool( $value ) ) {
@@ -211,13 +117,6 @@ final class Yaml_Dumper {
         return $value;
     }
 
-    
-
-
-
-
-
-
     private static function do_literal_block( $value, int $indent ): string {
         if ( "\n" === $value ) {
             return '\n';
@@ -231,12 +130,6 @@ final class Yaml_Dumper {
         }
         return self::literal_block( $text, $indent );
     }
-
-    
-
-
-
-
 
     private static function literal_block( string $text, int $indent ): string {
         $exploded  = explode( "\n", $text );
@@ -252,7 +145,6 @@ final class Yaml_Dumper {
         return $new_value;
     }
 
-    
     private static function unquote_line( string $line ): string {
         if ( 0 === strpos( $line, '"' ) && strrpos( $line, '"' ) === ( strlen( $line ) - 1 ) || 0 === strpos( $line, "'" ) && strrpos( $line, "'" ) === ( strlen( $line ) - 1 ) ) {
             $line = (string) substr( $line, 1, -1 );
@@ -260,26 +152,12 @@ final class Yaml_Dumper {
         return $line;
     }
 
-    
-
-
-
-
-
-
-
     private static function do_folding( $value ) {
         if ( is_numeric( $value ) && is_string( $value ) ) {
             $value = '"' . $value . '"';
         }
         return $value;
     }
-
-    
-
-
-
-
 
     private static function is_translation_word( $value ): bool {
         static $words = null;

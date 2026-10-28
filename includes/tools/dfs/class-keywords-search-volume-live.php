@@ -92,7 +92,6 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 	}
 
 	public function execute( array $arguments ) {
-		
 		if ( ! isset( $arguments['keywords'] ) || ! is_array( $arguments['keywords'] ) ) {
 			throw new \RuntimeException( 'keywords must be a non-empty array.' );
 		}
@@ -107,7 +106,6 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 			throw new \RuntimeException( 'keywords array must not exceed 1000 entries.' );
 		}
 
-		
 		foreach ( $keywords as $keyword ) {
 			if ( ! is_string( $keyword ) ) {
 				throw new \RuntimeException( 'Each keyword must be a string of at most 80 characters.' );
@@ -117,14 +115,12 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 				throw new \RuntimeException( 'Each keyword must be a string of at most 80 characters.' );
 			}
 
-			
 			$token_count = count( array_filter( explode( ' ', trim( $keyword ) ) ) );
 			if ( $token_count > 10 ) {
 				throw new \RuntimeException( 'Each keyword must contain at most 10 words.' );
 			}
 		}
 
-		
 		if ( isset( $arguments['date_from'] ) && ! empty( $arguments['date_from'] ) ) {
 			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $arguments['date_from'] ) ) {
 				throw new \RuntimeException( 'date_from and date_to must be in YYYY-MM-DD format.' );
@@ -137,7 +133,6 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 			}
 		}
 
-		
 		if ( isset( $arguments['sort_by'] ) && ! empty( $arguments['sort_by'] ) ) {
 			$valid_sort_values = array( 'relevance', 'search_volume', 'competition_index', 'low_top_of_page_bid', 'high_top_of_page_bid' );
 			if ( ! in_array( $arguments['sort_by'], $valid_sort_values, true ) ) {
@@ -147,10 +142,8 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 			}
 		}
 
-		
 		$body = array( 'keywords' => $keywords );
 
-		
 		$optional_params = array(
 			'location_code',
 			'location_name',
@@ -169,7 +162,6 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 			}
 		}
 
-		
 		$client = new DataforSEO_Client();
 		$result = $client->post(
 			DataforSEO_Client::BASE_URL . '/v3/keywords_data/google_ads/search_volume/live',

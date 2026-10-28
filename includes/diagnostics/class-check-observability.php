@@ -1,37 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,14 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Observability {
 
-    
     const FAILURE_WINDOW_HOURS = 24;
 
-    
     const MAX_TOKENS_LISTED = 20;
-
-    
-
 
     public static function run() {
         $audit_enabled = (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_enabled', true );
@@ -56,8 +19,6 @@ class Check_Observability {
             self::evaluate_auth_failures( self::count_auth_failures(), $audit_enabled ),
             self::evaluate_last_used( self::token_last_used() ),
             self::evaluate_audit_log( $audit_enabled ),
-            
-            
             self::evaluate_table_growth(
                 self::table_counts(),
                 (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_retention', 30 ),
@@ -66,12 +27,6 @@ class Check_Observability {
         );
     }
 
-    
-
-
-
-
-
     public static function evaluate_auth_failures( $count, $log_enabled = true ) {
         $label = __( 'Recent sign-in failures', 'easy-mcp-ai' );
 
@@ -79,11 +34,6 @@ class Check_Observability {
             return Diagnostic_Result::unknown( 'h1', Diagnostic_Result::TIER_INFO, $label, __( 'Could not read the activity log.', 'easy-mcp-ai' ) );
         }
 
-        
-        
-        
-        
-        
         if ( ! $log_enabled ) {
             return Diagnostic_Result::unknown(
                 'h1',
@@ -120,11 +70,6 @@ class Check_Observability {
             array( 'auth_failures_24h' => (int) $count )
         );
     }
-
-    
-
-
-
 
     public static function evaluate_last_used( $tokens ) {
         $label = __( 'When each API token last worked', 'easy-mcp-ai' );
@@ -175,7 +120,6 @@ class Check_Observability {
         );
     }
 
-    
     public static function evaluate_audit_log( $enabled ) {
         $label = __( 'Activity logging', 'easy-mcp-ai' );
 
@@ -191,18 +135,6 @@ class Check_Observability {
 
         return Diagnostic_Result::pass( 'h3', Diagnostic_Result::TIER_INFO, $label, __( 'On.', 'easy-mcp-ai' ), array( 'audit_log_enabled' => true ) );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
 
     public static function evaluate_table_growth( $counts, $audit_retention_days, $change_retention_days = null ) {
         $label = __( 'Stored history size', 'easy-mcp-ai' );
@@ -249,8 +181,6 @@ class Check_Observability {
         );
     }
 
-    
-
     private static function wpdb( $method = 'get_var' ) {
         global $wpdb;
         if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, $method ) ) {
@@ -259,7 +189,6 @@ class Check_Observability {
         return $wpdb;
     }
 
-    
     private static function count_auth_failures() {
         $wpdb = self::wpdb();
         if ( null === $wpdb ) {
@@ -282,11 +211,10 @@ class Check_Observability {
         return null === $count ? null : (int) $count;
     }
 
-    
     private static function token_last_used() {
         $wpdb = self::wpdb( 'get_results' );
         if ( null === $wpdb ) {
-            return null; 
+            return null;
         }
 
         $table = $wpdb->prefix . 'easy_mcp_ai_tokens';
@@ -318,20 +246,6 @@ class Check_Observability {
 
         return $out;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     private static function table_counts() {
         $wpdb = self::wpdb();

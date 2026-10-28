@@ -1,45 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -48,47 +8,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Htaccess_Auth_Rule {
 
-    
     const MARKER = 'Easy MCP AI';
 
-    
     const WORDPRESS_MARKER = 'WordPress';
-
-    
-
-
-
 
     const PLAIN_ROUTES_MARKER = 'Easy MCP AI Plain Permalinks';
 
-    
-
-
-
-
     const RULE_MARKER = 'HTTP_AUTHORIZATION';
 
-    
     const OFFER_BUTTON = 'button';
 
-    
     const OFFER_PASTE = 'paste';
 
-    
     const OFFER_ALREADY_PRESENT = 'already_present';
 
-    
     const OFFER_NOT_APPLICABLE = 'not_applicable';
 
-    
     const OFFER_NONE = 'none';
-
-    
-
-
-
-
-
 
     public static function rule_lines() {
         return array(
@@ -99,12 +35,6 @@ class Htaccess_Auth_Rule {
             '</IfModule>',
         );
     }
-
-    
-
-
-
-
 
     public static function block_text() {
         return implode(
@@ -117,32 +47,10 @@ class Htaccess_Auth_Rule {
         );
     }
 
-    
-
-    
-
-
-
-
-
-
     public static function server_applies( $server_software ) {
         $s = strtolower( (string) $server_software );
         return false !== strpos( $s, 'apache' ) || false !== strpos( $s, 'litespeed' );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     public static function has_active_rule( $contents ) {
         if ( null === $contents || '' === (string) $contents ) {
@@ -150,28 +58,6 @@ class Htaccess_Auth_Rule {
         }
         return 1 === preg_match( self::active_rule_pattern(), (string) $contents );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function has_effective_rule( $contents ) {
         if ( null === $contents || '' === (string) $contents ) {
@@ -185,18 +71,7 @@ class Htaccess_Auth_Rule {
         return null === $stop || $rule[0][1] < $stop;
     }
 
-    
-
-
-
-
-
-
-
-
     public static function first_last_flag_offset( $contents ) {
-        
-        
         $pattern = '/^[ \t]*RewriteRule\b[^\r\n]*\[(?:[^\]\r\n]*,)?[ \t]*L[ \t]*(?:,[^\]\r\n]*)?\][ \t]*\r?$/mi';
         if ( preg_match( $pattern, (string) $contents, $m, PREG_OFFSET_CAPTURE ) ) {
             return (int) $m[0][1];
@@ -204,7 +79,6 @@ class Htaccess_Auth_Rule {
         return null;
     }
 
-    
     private static function active_rule_pattern() {
         return '/^[ \t]*(?:'
             . 'RewriteRule\b[^\r\n]*\bE=HTTP_AUTHORIZATION\b'
@@ -213,34 +87,13 @@ class Htaccess_Auth_Rule {
             . ')/mi';
     }
 
-    
-
-
-
     public static function has_block( $contents ) {
         return self::has_marker_block( $contents, self::MARKER );
     }
 
-    
-
-
-
-
-
-
-
-
     public static function has_marker_block( ?string $contents, string $marker ): bool {
         return 1 === preg_match( '/^[ \t]*# BEGIN ' . preg_quote( $marker, '/' ) . '[ \t]*\r?$/m', (string) $contents );
     }
-
-    
-
-
-
-
-
-
 
     public static function strip_marker_block( ?string $contents, string $marker ): string {
         $contents = (string) $contents;
@@ -252,28 +105,13 @@ class Htaccess_Auth_Rule {
         return null === $updated ? $contents : $updated;
     }
 
-    
-
-
-
-
-
-
-
-
-
     public static function offer( $a1_status, $server_software, $file_exists, $file_writable, $contents ) {
-        
-        
-        
         if ( Diagnostic_Result::STATUS_WARN !== $a1_status ) {
             return self::OFFER_NONE;
         }
         if ( ! self::server_applies( $server_software ) ) {
             return self::OFFER_NOT_APPLICABLE;
         }
-        
-        
         if ( self::has_effective_rule( $contents ) ) {
             return self::OFFER_ALREADY_PRESENT;
         }
@@ -282,20 +120,6 @@ class Htaccess_Auth_Rule {
         }
         return self::OFFER_PASTE;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function may_write( $has_manage_options, $is_multisite, $is_super_admin, $has_network_cap ) {
         if ( ! $has_manage_options ) {
@@ -306,24 +130,6 @@ class Htaccess_Auth_Rule {
         }
         return true;
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function place( $contents ) {
         $contents = self::strip( (string) $contents );
@@ -339,14 +145,6 @@ class Htaccess_Auth_Rule {
 
         return $block . $contents;
     }
-
-    
-
-    
-
-
-
-
 
     public static function offer_now( $a1 ) {
         $status = ( $a1 instanceof Diagnostic_Result ) ? $a1->status() : Diagnostic_Result::STATUS_UNKNOWN;
@@ -365,13 +163,6 @@ class Htaccess_Auth_Rule {
             'path'  => $path,
         );
     }
-
-    
-
-
-
-
-
 
     public static function htaccess_path() {
         if ( ! function_exists( 'get_home_path' ) ) {
@@ -392,10 +183,6 @@ class Htaccess_Auth_Rule {
         return rtrim( (string) $home, '/\\' ) . '/.htaccess';
     }
 
-    
-
-
-
     public static function read( $path ) {
         if ( ! is_readable( $path ) ) {
             return null;
@@ -404,34 +191,12 @@ class Htaccess_Auth_Rule {
         return false === $contents ? null : $contents;
     }
 
-    
-
-    
-
-
-
-
-
-
-
-
-
-
     public static function write( $path ) {
         if ( ! file_exists( $path ) || ! is_writable( $path ) ) {
             return false;
         }
         return self::mutate( $path, array( __CLASS__, 'place' ) );
     }
-
-    
-
-
-
-
-
-
-
 
     public static function remove( $path ) {
         if ( ! file_exists( $path ) ) {
@@ -444,36 +209,9 @@ class Htaccess_Auth_Rule {
         return self::mutate( $path, array( __CLASS__, 'strip' ) );
     }
 
-    
-
-
-
-
-
     public static function strip( $contents ) {
         return self::strip_marker_block( $contents, self::MARKER );
     }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public static function mutate( $path, $transform, $create = false ) {
         $fp = @fopen( $path, $create ? 'c+' : 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Our own block in .htaccess under flock(); WP_Filesystem is not initialised on uninstall.

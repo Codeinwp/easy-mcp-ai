@@ -1,39 +1,5 @@
 <?php
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 namespace Easy_MCP_AI\Diagnostics;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -42,30 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Check_Edge_Block {
 
-    
     const TIMEOUT = 5;
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const LEG_MCP       = 'mcp';
     const LEG_HANDSHAKE = 'handshake';
@@ -77,9 +20,6 @@ class Check_Edge_Block {
         'python-httpx/0.28.1' => self::LEG_HANDSHAKE,
     );
 
-    
-
-
     public static function run() {
         try {
             $control = self::probe( self::control_agent() );
@@ -89,19 +29,12 @@ class Check_Edge_Block {
                 $clients[ $agent ] = self::probe( $agent );
             }
         } catch ( \Throwable $e ) {
-            
-            
-            
-            
-            
             return array(
                 self::unknown( __( 'The connection test could not run on this site.', 'easy-mcp-ai' ) ),
                 self::unknown_post( __( 'The connection test could not run on this site.', 'easy-mcp-ai' ) ),
             );
         }
 
-        
-        
         try {
             $posted = self::probe_post();
         } catch ( \Throwable $e ) {
@@ -114,50 +47,27 @@ class Check_Edge_Block {
         );
     }
 
-    
-
-
     public static function control_agent() {
         $version = defined( 'EASY_MCP_AI_VERSION' ) ? EASY_MCP_AI_VERSION : '0';
 
         return 'EasyMCPAI/' . $version;
     }
 
-    
-
-
-
-
-
-
     public static function expected_challenge_marker() {
         return 'resource_metadata="' . \home_url( '/.well-known/oauth-protected-resource' ) . '"';
     }
-
-    
-
-
-
-
 
     public static function is_our_challenge( $result ) {
         if ( ! is_array( $result ) || 401 !== (int) $result['status'] ) {
             return false;
         }
 
-        
-        
         return false !== strpos( (string) $result['challenge'], self::expected_challenge_marker() );
     }
-
-    
-
-
 
     public static function evaluate( $control, array $clients ) {
         $label = self::label();
 
-        
         if ( ! is_array( $control ) ) {
             return self::unknown(
                 __( 'The test request could not leave this site, so there is nothing to compare. Some hosts stop a site from calling its own address; on its own that is not a fault.', 'easy-mcp-ai' )
@@ -178,10 +88,6 @@ class Check_Edge_Block {
 
         foreach ( $clients as $agent => $result ) {
             if ( ! is_array( $result ) ) {
-                
-                
-                
-                
                 $inconclusive[]                     = $agent;
                 $evidence[ 'agent_' . $agent ]      = 'no response';
                 continue;
@@ -241,19 +147,6 @@ class Check_Edge_Block {
         );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
     public static function blocked_detail( array $blocked ) {
         $legs = array();
         foreach ( $blocked as $agent ) {
@@ -278,27 +171,6 @@ class Check_Edge_Block {
         return $intro . ' ' . __( 'The sign-in stage still works, which is what makes this confusing: connecting appears to succeed, access is approved, and only then does the assistant report that it could not connect.', 'easy-mcp-ai' );
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function blocked_fix( array $blocked ) {
         $legs = array();
         foreach ( $blocked as $agent ) {
@@ -311,8 +183,6 @@ class Check_Edge_Block {
 
         $mcp_advice = __( 'If you use Cloudflare, look for the AI bot or AI Scrapers and Crawlers blocking option and allow this site\'s AI endpoint through; on other providers look for a bot-filtering rule that blocks AI assistants. A robots.txt on this site that disallows ClaudeBot is a sign the same rule set is switched on.', 'easy-mcp-ai' );
 
-        
-        
         $handshake_advice = __( 'The agent being refused is an ordinary HTTP client library, not an AI name, so an "AI bot" setting is usually not the cause. Look instead for a rule that blocks user agents beginning "python-" — these are common in generic scraper and vulnerability-scanner rule sets, and appear in nginx and Apache configuration, ModSecurity rule sets and security plugins as often as in a CDN. Allow that agent through for this site\'s AI endpoint.', 'easy-mcp-ai' );
 
         $handshake = isset( $legs[ self::LEG_HANDSHAKE ] );
@@ -330,34 +200,9 @@ class Check_Edge_Block {
         return $where . ' ' . $mcp_advice;
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public static function evaluate_post( $control, $posted ) {
         $label = __( 'This site accepts posted AI requests', 'easy-mcp-ai' );
 
-        
         if ( ! self::is_our_challenge( $control ) ) {
             return Diagnostic_Result::unknown(
                 'a12',
@@ -386,17 +231,6 @@ class Check_Edge_Block {
             array( 'post_status' => is_array( $posted ) ? (int) $posted['status'] : 'no response' )
         );
     }
-
-    
-
-    
-
-
-
-
-
-
-
 
     private static function probe_post() {
         if ( ! function_exists( 'wp_remote_post' ) || ! function_exists( 'rest_url' ) ) {
@@ -444,9 +278,6 @@ class Check_Edge_Block {
                 'timeout'     => self::TIMEOUT,
                 'redirection' => 0,
                 'user-agent'  => $agent,
-                
-                
-                
                 'sslverify'   => false,
             )
         );
@@ -469,10 +300,6 @@ class Check_Edge_Block {
     private static function unknown( $reason, array $evidence = array() ) {
         return Diagnostic_Result::unknown( 'a9', Diagnostic_Result::TIER_BLOCKER, self::label(), $reason, $evidence );
     }
-
-    
-
-
 
     private static function unknown_post( $reason, array $evidence = array() ) {
         return Diagnostic_Result::unknown(

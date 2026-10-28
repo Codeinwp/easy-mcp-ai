@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 namespace Easy_MCP_AI\Cache\Adapters;
 
 use Easy_MCP_AI\Cache\Cache_Adapter;
@@ -16,32 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 final class Object_Cache extends Cache_Adapter {
 
-    
     const HEADER_NAMES = array(
         'Redis Object Cache Drop-In'               => 'redis-cache',
         'Hummingbird Redis Object Cache'           => 'hummingbird',
@@ -53,7 +24,6 @@ final class Object_Cache extends Cache_Adapter {
         'Object Cache 4 everyone - Disk'           => 'oc4e',
     );
 
-    
     const LABELS = array(
         'redis-cache'         => 'Redis Object Cache',
         'object-cache-pro'    => 'Object Cache Pro',
@@ -71,17 +41,9 @@ final class Object_Cache extends Cache_Adapter {
         'unknown'             => 'Persistent object cache',
     );
 
-    
     private $backend = null;
 
-    
     private $headers = null;
-
-    
-
-
-
-
 
     public function with_calls( Vendor_Calls $calls ): Cache_Adapter {
         $this->backend = null;
@@ -92,11 +54,6 @@ final class Object_Cache extends Cache_Adapter {
     public function id(): string {
         return 'object-cache';
     }
-
-    
-
-
-
 
     public function label(): string {
         return self::LABELS[ $this->backend() ];
@@ -127,14 +84,6 @@ final class Object_Cache extends Cache_Adapter {
         return array( self::ALSO_OBJECT_CACHE );
     }
 
-    
-
-
-
-
-
-
-
     public function reaches_network( Purge_Request $request ): bool {
         return $this->calls()->is_multisite();
     }
@@ -150,11 +99,6 @@ final class Object_Cache extends Cache_Adapter {
         return $this->layer( Layer_Result::FAILED, array( 'detail' => $this->failure_detail() ) );
     }
 
-    
-
-
-
-
     private function failure_detail(): string {
         $detail    = sprintf( '%s reported that the flush failed (wp_cache_flush() returned false).', $this->label() );
         $backend   = $this->backend();
@@ -162,41 +106,19 @@ final class Object_Cache extends Cache_Adapter {
         return $selective ? $detail . ' Its selective flush also returns false when it found no key to delete.' : $detail;
     }
 
-    
-
-
-
-
-
-
-
     private function redis_selective(): bool {
         $prefix = $this->calls()->constant( 'WP_REDIS_PREFIX' );
         return is_scalar( $prefix ) && (bool) trim( (string) $prefix ) && $this->truthy_constant( 'WP_REDIS_SELECTIVE_FLUSH' );
     }
 
-    
-
-
-
     private function truthy_constant( string $name ): bool {
         return ! empty( $this->calls()->constant( $name ) );
     }
-
-    
-
-
-
 
     private function cache_object(): ?object {
         $cache = $this->calls()->global_value( 'wp_object_cache' );
         return is_object( $cache ) ? $cache : null;
     }
-
-    
-
-
-
 
     private function backend(): string {
         if ( null === $this->backend ) {
@@ -205,11 +127,6 @@ final class Object_Cache extends Cache_Adapter {
         }
         return $this->backend;
     }
-
-    
-
-
-
 
     private function backend_by_header(): string {
         $headers = $this->headers();
@@ -224,14 +141,6 @@ final class Object_Cache extends Cache_Adapter {
         }
         return isset( self::HEADER_NAMES[ $headers['name'] ] ) ? self::HEADER_NAMES[ $headers['name'] ] : '';
     }
-
-    
-
-
-
-
-
-
 
     private function backend_by_symbol(): string {
         $calls   = $this->calls();
@@ -256,20 +165,12 @@ final class Object_Cache extends Cache_Adapter {
         return null !== $cache && $calls->method_exists( $cache, 'register_cache' ) ? 'w3tc' : 'unknown';
     }
 
-    
-
-
-
-
     private function headers(): array {
         if ( null === $this->headers ) {
             $this->headers = $this->read_headers();
         }
         return $this->headers;
     }
-
-    
-
 
     private function read_headers(): array {
         $headers = array(
@@ -289,11 +190,6 @@ final class Object_Cache extends Cache_Adapter {
         }
         return $headers;
     }
-
-    
-
-
-
 
     private function drop_in_path(): string {
         $dir = $this->calls()->constant( 'WP_CONTENT_DIR' );

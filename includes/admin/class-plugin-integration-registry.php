@@ -5,13 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
-
-
-
-
-
 class Plugin_Integration_Registry {
 
     public static function get_groups(): array {
@@ -286,9 +279,6 @@ class Plugin_Integration_Registry {
                     array( 'name' => 'wp_tsf_update_post_seo', 'description' => 'Update The SEO Framework meta on a post: title, description, robots, OG/Twitter fields.', 'type' => 'write', 'api' => 'php' ),
                 ),
             ),
-            
-            
-            
             array(
                 'slug'        => 'learnpress',
                 'name'        => 'LearnPress',
@@ -299,10 +289,6 @@ class Plugin_Integration_Registry {
                 'tools'       => array(),
                 'abilities'   => 'learnpress',
             ),
-            
-            
-            
-            
             array(
                 'slug'        => 'elementor',
                 'name'        => 'Elementor',
@@ -315,12 +301,6 @@ class Plugin_Integration_Registry {
             ),
         );
     }
-
-    
-
-
-
-
 
     public static function is_installed( array $group ): bool {
         if ( empty( $group['detector'] ) ) {
