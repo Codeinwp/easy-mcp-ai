@@ -48,7 +48,7 @@ class Delete_Post_Meta extends Base_Tool {
                 ),
                 'value'   => array(
                     'type'        => 'string',
-                    'description' => 'Optional. If provided, deletes only meta rows matching this value. For booleans use "1" / "0" (WordPress meta storage semantics); numbers are also accepted as strings. Caution: a value another plugin wrote as a native false is stored as an empty string, so "0" will not match it — and passing an empty string here deletes EVERY row for the key, not just the empty-valued one.',
+                    'description' => 'Optional. If provided, deletes only meta rows matching this value. For booleans use "1" / "0" (WordPress meta storage semantics); numbers are also accepted as strings. WordPress removes backslashes before it matches (`C:\\dir` matches a stored `C:dir`), so a value of one backslash is refused: it would read as empty. Caution: a value another plugin wrote as a native false is stored as an empty string, so "0" will not match it — and passing an empty string here deletes EVERY row for the key, not just the empty-valued one.',
                 ),
                 'exact_key' => array(
                     'type'        => 'boolean',
@@ -72,10 +72,12 @@ class Delete_Post_Meta extends Base_Tool {
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
             throw new \RuntimeException( 'You do not have permission to edit this post.' );
         }
-        $this->authorize_key( $key, $post_id );
-        $this->refuse_restricted_integration_field( $key, $post_id );
+        $deleted_key = $exact_key ? $key : wp_unslash( $key );
+        $this->authorize_key( $deleted_key, $post_id );
+        $this->refuse_restricted_integration_field( $deleted_key, $post_id );
         $parent = wp_is_post_revision( $post_id );
-        $this->refuse_builder_owned_write( $parent ? (int) $parent : $post_id, false, array( $exact_key ? $key : wp_unslash( $key ) => null ) );
+        $this->refuse_builder_owned_write( $parent ? (int) $parent : $post_id, false, array( $deleted_key => null ) );
+        $this->refuse_delete_value_read_as_empty( $arguments );
         $target         = $exact_key ? wp_slash( $key ) : $key;
         $value_provided = array_key_exists( 'value', $arguments );
         if ( $value_provided ) {

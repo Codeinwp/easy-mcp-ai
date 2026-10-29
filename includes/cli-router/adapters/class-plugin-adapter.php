@@ -10,6 +10,7 @@ use Easy_MCP_AI\Cli_Router\Formatter;
 use Easy_MCP_AI\Cli_Router\Handlers\Plugin_Handler;
 use Easy_MCP_AI\Cli_Router\Invocation;
 use Easy_MCP_AI\Cli_Router\Output;
+use Easy_MCP_AI\Cli_Router\Package_Arg;
 use Easy_MCP_AI\Cli_Router\Read_Value;
 use Easy_MCP_AI\Cli_Router\Self_Protection;
 use Easy_MCP_AI\Cli_Router\Values;
@@ -34,6 +35,8 @@ final class Plugin_Adapter extends Command_Handler {
 
     const INSTALL_PLACEHOLDER = '%s/<main plugin file, known once installed>';
 
+    const INSTALL_URL_FOLDER = '<the folder the ZIP names>';
+
     const NOT_CAPTURED_FILES = 'Plugin files are outside change history: a plugin installed, updated, deleted or uninstalled here cannot be restored from it.';
 
     const UPDATE_CAP = 5;
@@ -43,7 +46,8 @@ final class Plugin_Adapter extends Command_Handler {
     const NOT_CAPTURED_HOOKS = "Activation, deactivation and uninstall routines run the plugin's own code: database tables they create or drop are recorded only while database capture is on, and files they write never.";
 
     const MSG_NETWORK_SINGLE = '--%s applies only to a multisite network, and this is a single site, where WP-CLI reports a network-wide change it does not make. Run the command without --%s.';
-    const MSG_INSTALL_SHAPE  = "wp_cli_run installs plugins only from a wordpress.org slug, and '%s' is %s: installing from a URL, a zip file or a server path is not available, because reading server files belongs to the privileged file tools. Pass the slug from the plugin's wordpress.org address.";
+    const MSG_INSTALL_SHAPE  = "wp_cli_run installs a plugin from its wordpress.org slug or an https:// URL of its ZIP file, and '%s' is %s on the server, which wp_cli_run never reads: reading server files belongs to the privileged file tools. Pass the slug or a URL, or give wp_install_plugin the ZIP as content_base64.";
+    const MSG_INSTALL_HTTP   = "wp_cli_run downloads plugins over HTTPS only, and '%s' is not an https:// URL: plain HTTP can be changed on the way. Pass the https:// link to the ZIP file.";
     const MSG_OVER_CAP       = "wp_cli_run runs at most %d items in one 'wp %s' command, and this one names %d. Run it in smaller groups.";
     const MSG_DELETE_ACTIVE  = "The '%s' plugin is active, and WordPress never deletes an active plugin, so wp_cli_run does not either. Deactivate it first with `plugin deactivate`.";
     const MSG_LIST_FIELD     = "wp_cli_run cannot print the '%s' field of `plugin list`: %s.";
@@ -84,15 +88,11 @@ final class Plugin_Adapter extends Command_Handler {
     public function preflight_install( Invocation $inv, Context $ctx ): void {
         $slugs = self::positional( $inv );
         foreach ( $slugs as $slug ) {
-            if ( false !== strpos( $slug, '://' ) ) {
-                $ctx->out->error( sprintf( self::MSG_INSTALL_SHAPE, $slug, 'a URL' ) );
+            $problem = Package_Arg::problem( $slug );
+            if ( null === $problem ) {
+                continue;
             }
-            if ( '.zip' === strtolower( substr( $slug, -4 ) ) ) {
-                $ctx->out->error( sprintf( self::MSG_INSTALL_SHAPE, $slug, 'a zip file' ) );
-            }
-            if ( false !== strpos( $slug, '/' ) || false !== strpos( $slug, '\\' ) ) {
-                $ctx->out->error( sprintf( self::MSG_INSTALL_SHAPE, $slug, 'a path' ) );
-            }
+            $ctx->out->error( Package_Arg::is_url( $slug ) ? sprintf( self::MSG_INSTALL_HTTP, Package_Arg::shown( $slug ) ) : sprintf( self::MSG_INSTALL_SHAPE, $slug, $problem ) );
         }
         if ( count( $slugs ) > self::INSTALL_CAP ) {
             $ctx->out->error( sprintf( self::MSG_OVER_CAP, self::INSTALL_CAP, $inv->command, count( $slugs ) ) );
@@ -171,11 +171,16 @@ final class Plugin_Adapter extends Command_Handler {
                     'network_wide' => ! empty( $arguments['network_wide'] ),
                 );
             case self::INSTALL:
-                $slug = isset( $arguments['slug'] ) ? (string) $arguments['slug'] : '';
+                $slug   = isset( $arguments['slug'] ) ? (string) $arguments['slug'] : null;
+                $folder = null !== $slug ? $slug : self::INSTALL_URL_FOLDER;
+                if ( isset( $arguments['url'] ) ) {
+                    $slug   = Package_Arg::wporg_slug( (string) $arguments['url'], 'plugin' );
+                    $folder = null !== $slug ? $slug : self::INSTALL_URL_FOLDER;
+                }
                 return array(
                     'slug'     => $slug,
-                    'plugin'   => sprintf( self::INSTALL_PLACEHOLDER, $slug ),
-                    'name'     => $slug,
+                    'plugin'   => sprintf( self::INSTALL_PLACEHOLDER, $folder ),
+                    'name'     => $folder,
                     'version'  => isset( $arguments['version'] ) ? (string) $arguments['version'] : '',
                     'changed'  => true,
                     'messages' => array(),
@@ -475,7 +480,7 @@ final class Plugin_Adapter extends Command_Handler {
             $ctx->not_captured( self::NOT_CAPTURED_HOOKS );
         }
         $ctx->not_captured( self::NOT_CAPTURED_FILES );
-        if ( null === $options['version'] ) {
+        if ( null === $options['version'] && self::names_a_slug( $slugs ) ) {
             $ctx->note( self::NOTE_REQUIREMENTS );
         }
 
@@ -492,18 +497,22 @@ final class Plugin_Adapter extends Command_Handler {
                 return $outcome;
             },
             'plugin',
-            'install'
+            'install',
+            static function ( $slug ): string {
+                return 'plugin ' . Package_Arg::shown( (string) $slug );
+            }
         );
 
         Values::report_batch( $ctx->out, 'plugin', 'install', count( $slugs ), $successes, $errors );
     }
 
-    private function install_one( Invocation $inv, Context $ctx, string $slug, ?Batch $batch, array $options ): string {
-        if ( '' === $slug ) {
+    private function install_one( Invocation $inv, Context $ctx, string $arg, ?Batch $batch, array $options ): string {
+        if ( '' === $arg ) {
             $ctx->out->warning( 'Ignoring ambiguous empty slug value.' );
             return Batch::SKIP;
         }
-        $arguments = array( 'slug' => $slug );
+        $slug      = Package_Arg::is_url( $arg ) ? Package_Arg::wporg_slug( $arg, 'plugin' ) : $arg;
+        $arguments = Package_Arg::source( $arg );
         if ( null !== $options['version'] ) {
             $arguments['version'] = $options['version'];
         }
@@ -511,18 +520,41 @@ final class Plugin_Adapter extends Command_Handler {
             $arguments['force'] = true;
         }
         $result  = $this->call( $ctx, $batch, self::INSTALL, $arguments );
-        $outcome = $result['ok'] ? self::report_installed( $ctx, $slug, $options['version'], $result['payload'] ) : self::report_install_error( $ctx, $slug, (string) $result['error'] );
+        $outcome = $result['ok'] ? self::report_installed( $ctx, (string) $slug, $options['version'], $result['payload'] ) : self::report_install_error( $ctx, $slug, Package_Arg::shown( $arg ), (string) $result['error'] );
 
-        $extension = Fetchers::of( 'plugin' )->get_many( array( $slug ), $ctx->out );
+        $name      = self::installed_name( $arg, $slug, $result );
+        $extension = Fetchers::of( 'plugin' )->get_many( array( $name ), $ctx->out );
         if ( Batch::FAILURE !== $outcome && ( $options['activate'] || $options['activate_network'] ) ) {
-            $this->activate_installed( $inv, $ctx, $slug, $batch, $options, (bool) $extension );
+            $this->activate_installed( $inv, $ctx, $name, $batch, $options, (bool) $extension );
         }
         return $outcome;
     }
 
+    private static function installed_name( string $arg, ?string $slug, array $result ): string {
+        if ( ! Package_Arg::is_url( $arg ) ) {
+            return $arg;
+        }
+        $file = $result['ok'] && isset( $result['payload']['plugin'] ) && is_string( $result['payload']['plugin'] ) ? $result['payload']['plugin'] : '';
+        if ( '' !== $file ) {
+            return false !== strpos( $file, '/' ) ? dirname( $file ) : basename( $file, '.php' );
+        }
+        return null !== $slug ? $slug : Package_Arg::shown( $arg );
+    }
+
+    private static function names_a_slug( array $args ): bool {
+        foreach ( $args as $arg ) {
+            if ( ! Package_Arg::is_url( $arg ) || null !== Package_Arg::wporg_slug( $arg, 'plugin' ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static function report_installed( Context $ctx, string $slug, ?string $version, array $payload ): string {
-        $shown = 'dev' === $version ? 'Development Version' : ( isset( $payload['version'] ) ? (string) $payload['version'] : '' );
-        $ctx->out->log( sprintf( 'Installing %s (%s)', html_entity_decode( isset( $payload['name'] ) ? (string) $payload['name'] : $slug, ENT_QUOTES ), $shown ) );
+        if ( isset( $payload['slug'] ) && is_string( $payload['slug'] ) ) {
+            $shown = 'dev' === $version ? 'Development Version' : ( isset( $payload['version'] ) ? (string) $payload['version'] : '' );
+            $ctx->out->log( sprintf( 'Installing %s (%s)', html_entity_decode( isset( $payload['name'] ) ? (string) $payload['name'] : $slug, ENT_QUOTES ), $shown ) );
+        }
         self::upgrader_lines( $ctx, $payload );
         if ( ! empty( $payload['changed'] ) ) {
             $ctx->mark_changed();
@@ -530,16 +562,16 @@ final class Plugin_Adapter extends Command_Handler {
         return Batch::SUCCESS;
     }
 
-    private static function report_install_error( Context $ctx, string $slug, string $error ): string {
-        if ( 0 === strpos( $error, 'The plugin "' . $slug . '" is already installed as ' ) ) {
-            $ctx->out->warning( "{$slug}: Plugin already installed." );
+    private static function report_install_error( Context $ctx, ?string $slug, string $shown, string $error ): string {
+        if ( null !== $slug && 0 === strpos( $error, 'The plugin "' . $slug . '" is already installed as ' ) ) {
+            $ctx->out->warning( "{$shown}: Plugin already installed." );
             return Batch::SKIP;
         }
-        if ( 0 === strpos( $error, 'The plugin "' . $slug . '" was not found in the wordpress.org plugin directory.' ) ) {
-            $ctx->out->warning( "{$slug}: Plugin not found." );
+        if ( null !== $slug && 0 === strpos( $error, 'The plugin "' . $slug . '" was not found in the wordpress.org plugin directory.' ) ) {
+            $ctx->out->warning( "{$shown}: Plugin not found." );
             return Batch::FAILURE;
         }
-        $ctx->out->warning( "{$slug}: {$error}" );
+        $ctx->out->warning( "{$shown}: {$error}" );
         return Batch::FAILURE;
     }
 

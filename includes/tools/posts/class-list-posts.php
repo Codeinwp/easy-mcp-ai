@@ -33,7 +33,7 @@ class List_Posts extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists WordPress posts. Optional filters: `status` (publish/draft/pending/private/future/trash — default publish; use "any" to get all statuses), `statuses` (array of statuses, instead of status), `search`, `categories` (array of category IDs), `tags` (array of tag IDs), `author` (user ID), `author_exclude` (array of user IDs to exclude), `include` / `exclude` (arrays of post IDs; exclude and sticky false cannot be combined with include, which WordPress lets override them), `slug` (array of slugs), `sticky` (boolean), `has_password` (boolean), `post_mime_type`, `comment_count` (exact number of comments), `year` / `monthnum` / `day`, `after` / `before` (ISO 8601 date-time range on publish date), `date_query`, `tax_query`, `meta_key` / `meta_value` / `meta_compare`, `meta_query` (WP_Query structures from an allowlist; meta filters only on keys this caller could read: a protected key needs the right to edit every post, and a status other than publish needs the right to read other authors\' posts in it), `per_page` (max 100, default 10), `page`, `offset`, `orderby` (date/id/title/slug/modified/author/include/parent/menu_order/comment_count/meta_value/meta_value_num/rand — default date), `order` (asc/desc), `context` (view|edit — edit lists only posts you can edit), `raw_columns` (boolean, edit context only: each post also carries `raw`, every database column as stored — raw post_title, post_content and the rest). Returns { posts: [{ id, title, status, date, modified, slug, excerpt, has_excerpt, author, author_name, sticky, categories (array of IDs), tags (array of IDs), featured_media, link }], total, total_pages, page, per_page }. `excerpt` falls back to the start of the content when no excerpt is stored; `has_excerpt` is true only for a stored one. For CPT items use `wp_list_cpt_items`.';
+        return 'Lists WordPress posts. Optional filters: `status` (publish/draft/pending/private/future/trash — default publish; use "any" to get all statuses), `statuses` (array of statuses, instead of status), `search`, `categories` (array of category IDs), `tags` (array of tag IDs), `author` (user ID), `author_exclude` (array of user IDs to exclude), `include` / `exclude` (arrays of post IDs; exclude and sticky false cannot be combined with include, which WordPress lets override them), `slug` (array of slugs), `sticky` (boolean), `has_password` (boolean), `post_mime_type`, `comment_count` (exact number of comments), `year` / `monthnum` / `day`, `after` / `before` (ISO 8601 date-time range on publish date), `date_query`, `tax_query`, `meta_key` / `meta_value` / `meta_compare`, `meta_query` (WP_Query structures from an allowlist; meta filters only on keys this caller could read: a protected key needs the right to edit every post, a status other than publish needs the right to read other authors\' posts in it, and a caller who cannot edit every post must also leave password-protected posts out: see has_password), `per_page` (max 100, default 10), `page`, `offset`, `orderby` (date/id/title/slug/modified/author/include/parent/menu_order/comment_count/meta_value/meta_value_num/rand — default date), `order` (asc/desc), `context` (view|edit — edit lists only posts you can edit), `raw_columns` (boolean, edit context only: each post also carries `raw`, every database column as stored — raw post_title, post_content and the rest). Returns { posts: [{ id, title, status, date, modified, slug, excerpt, has_excerpt, author, author_name, sticky, categories (array of IDs), tags (array of IDs), featured_media, link }], total, total_pages, page, per_page }. `excerpt` falls back to the start of the content when no excerpt is stored; `has_excerpt` is true only for a stored one. For CPT items use `wp_list_cpt_items`.';
     }
 
     public function get_category() {
@@ -150,7 +150,7 @@ class List_Posts extends Base_Tool {
                 ),
                 'has_password' => array(
                     'type'        => 'boolean',
-                    'description' => 'true: only password-protected posts; false: only posts without a password.',
+                    'description' => 'true: only password-protected posts; false: only posts without a password. A meta filter from a caller who cannot edit every post needs false (or, with edit_posts and edit_published_posts, author set to their own user ID and no author_exclude).',
                 ),
                 'post_mime_type' => array(
                     'type'        => 'string',
@@ -413,7 +413,7 @@ class List_Posts extends Base_Tool {
             throw new \InvalidArgumentException( sprintf( 'orderby %s needs meta_key: the key whose value orders the posts.', $query['orderby'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( ! empty( $meta_keys ) ) {
-            $this->refuse_unreadable_meta_filter( array_values( array_unique( $meta_keys ) ), self::queried_statuses( $params ) );
+            $this->refuse_unreadable_meta_filter( array_values( array_unique( $meta_keys ) ), $params, $query );
         }
     }
 
@@ -550,22 +550,42 @@ class List_Posts extends Base_Tool {
         }
     }
 
-    private function refuse_unreadable_meta_filter( array $keys, array $statuses ): void {
+    private function refuse_unreadable_meta_filter( array $keys, array $params, array &$query ): void {
         $caps = self::post_caps();
         self::refuse_protected_meta_filter( $keys, $caps );
-        foreach ( $statuses as $status ) {
+        foreach ( self::queried_statuses( $params ) as $status ) {
             foreach ( self::caps_to_read_others_in( (string) $status, $caps ) as $needed ) {
                 if ( ! current_user_can( $needed ) ) {
                     throw new \RuntimeException( sprintf( 'Meta filter with status %s refused: it can match other authors\' posts you cannot read, and the total would reveal their meta values (needs %s).', $status, $needed ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
             }
         }
+        self::refuse_password_protected_matches( $params, $query, $caps );
+    }
+
+    private static function refuse_password_protected_matches( array $params, array &$query, array $caps ): void {
+        if ( ( isset( $query['has_password'] ) && false === $query['has_password'] ) || self::can_edit_every_post( $caps ) ) {
+            return;
+        }
+        $user_id = get_current_user_id();
+        $can_own = current_user_can( $caps['edit'] ) && current_user_can( $caps['edit_publish'] );
+        if ( $can_own && isset( $params['author'] ) && $user_id === $params['author'] && ! isset( $params['author_exclude'] ) ) {
+            $query['author__in'] = array( $user_id );
+            return;
+        }
+        $own_posts = $can_own ? sprintf( ', or author: %d (only your own posts)', $user_id ) : '';
+        throw new \RuntimeException( sprintf( 'Meta filter refused: it can match password-protected posts you cannot edit, whose hidden custom fields the total would reveal. Send has_password: false%s.', $own_posts ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
+    private static function can_edit_every_post( array $caps ): bool {
+        return current_user_can( $caps['edit_others'] ) && current_user_can( $caps['edit_publish'] ) && current_user_can( $caps['edit_private'] );
     }
 
     private static function post_caps(): array {
         $type = get_post_type_object( 'post' );
         $cap  = is_object( $type ) && isset( $type->cap ) ? (object) $type->cap : (object) array();
         return array(
+            'edit'         => isset( $cap->edit_posts ) ? $cap->edit_posts : 'edit_posts',
             'edit_others'  => isset( $cap->edit_others_posts ) ? $cap->edit_others_posts : 'edit_others_posts',
             'edit_publish' => isset( $cap->edit_published_posts ) ? $cap->edit_published_posts : 'edit_published_posts',
             'edit_private' => isset( $cap->edit_private_posts ) ? $cap->edit_private_posts : 'edit_private_posts',
@@ -575,7 +595,7 @@ class List_Posts extends Base_Tool {
 
     private static function refuse_protected_meta_filter( array $keys, array $caps ): void {
         foreach ( $keys as $key ) {
-            if ( is_protected_meta( $key, 'post' ) && ! ( current_user_can( $caps['edit_others'] ) && current_user_can( $caps['edit_publish'] ) && current_user_can( $caps['edit_private'] ) ) ) {
+            if ( is_protected_meta( $key, 'post' ) && ! self::can_edit_every_post( $caps ) ) {
                 throw new \RuntimeException( sprintf( 'Meta filter on protected key "%s" refused: protected meta is shown only to users who can edit the post, and this query can match posts you cannot edit (needs %s, %s and %s).', $key, $caps['edit_others'], $caps['edit_publish'], $caps['edit_private'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         }

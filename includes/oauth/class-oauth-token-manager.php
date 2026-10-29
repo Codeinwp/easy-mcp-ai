@@ -216,6 +216,7 @@ class OAuth_Token_Manager {
             return false;
         }
 
+        $new_pair['wp_user_id'] = (int) $row['wp_user_id'];
         return $new_pair;
     }
 

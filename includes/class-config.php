@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Config {
+    const RATE_LIMIT_PER_MINUTE = 120;
+
     const VALIDATE_STORED = array(
         'oauth_enabled',
         'change_log_db_rows_per_call',
@@ -26,6 +28,7 @@ class Config {
         'approval_always',
         'approval_never',
         'oauth_root_fallback',
+        'oauth_discovery_pointer',
         'connect_roles',
         'skills_sync',
         'api_key_header_only',
@@ -36,7 +39,7 @@ class Config {
 
     public static function settings() {
         return array(
-            'rate_limit_per_minute' => array( 60, 'integer', 1, 1000 ),
+            'rate_limit_per_minute' => array( self::RATE_LIMIT_PER_MINUTE, 'integer', 1, 1000 ),
             'force_draft_on_create' => array( false, 'boolean' ),
             'max_title_length' => array( 0, 'integer', 0, 2000 ),
             'audit_log_enabled' => array( true, 'boolean' ),
@@ -62,6 +65,7 @@ class Config {
             'oauth_enabled' => array( true, 'boolean' ),
             'oauth_allow_http' => array( false, 'boolean' ),
             'oauth_root_fallback' => array( 'auto', 'fallback_mode' ),
+            'oauth_discovery_pointer' => array( 'auto', 'pointer_mode' ),
             'change_log_enabled' => array( true, 'boolean' ),
             'change_log_retention' => array( 30, 'integer', 0, PHP_INT_MAX ),
             'change_log_option_mode' => array( 'all_except_denylist', 'mode' ),
@@ -216,6 +220,11 @@ class Config {
                 break;
             case 'fallback_mode':
                 if ( in_array( $raw, array( 'auto', 'on', 'off' ), true ) ) {
+                    return $raw;
+                }
+                break;
+            case 'pointer_mode':
+                if ( in_array( $raw, array( 'auto', 'root' ), true ) ) {
                     return $raw;
                 }
                 break;

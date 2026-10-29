@@ -53,8 +53,12 @@ class Check_Edge_Block {
         return 'EasyMCPAI/' . $version;
     }
 
-    public static function expected_challenge_marker() {
-        return 'resource_metadata="' . \home_url( '/.well-known/oauth-protected-resource' ) . '"';
+    public static function expected_challenge_markers(): array {
+        $markers = array();
+        foreach ( \Easy_MCP_AI\MCP\Transport::resource_metadata_urls() as $url ) {
+            $markers[] = 'resource_metadata="' . $url . '"';
+        }
+        return $markers;
     }
 
     public static function is_our_challenge( $result ) {
@@ -62,7 +66,12 @@ class Check_Edge_Block {
             return false;
         }
 
-        return false !== strpos( (string) $result['challenge'], self::expected_challenge_marker() );
+        foreach ( self::expected_challenge_markers() as $marker ) {
+            if ( false !== strpos( (string) $result['challenge'], $marker ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static function evaluate( $control, array $clients ) {

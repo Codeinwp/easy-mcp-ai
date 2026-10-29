@@ -17,6 +17,7 @@ final class Autoloader {
     const EXCEPTIONS = array(
         'easy_mcp_ai\\tools\\lifecycle_guard'                => 'tools/plugins/trait-lifecycle-guard.php',
         'easy_mcp_ai\\tools\\package_guard'                  => 'tools/plugins/trait-package-guard.php',
+        'easy_mcp_ai\\tools\\package_source'                 => 'tools/plugins/trait-package-source.php',
         'easy_mcp_ai\\tools\\seo\\aioseo_get_breadcrumb'     => 'tools/seo/aioseo/class-aioseo-get-breadcrumb.php',
         'easy_mcp_ai\\tools\\seo\\aioseo_get_post_seo'       => 'tools/seo/aioseo/class-aioseo-get-post-seo.php',
         'easy_mcp_ai\\tools\\seo\\aioseo_update_post_seo'    => 'tools/seo/aioseo/class-aioseo-update-post-seo.php',

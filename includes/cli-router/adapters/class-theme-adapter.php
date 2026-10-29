@@ -10,6 +10,7 @@ use Easy_MCP_AI\Cli_Router\Handlers\Theme_Handler;
 use Easy_MCP_AI\Cli_Router\Handlers\Theme_Mod_Handler;
 use Easy_MCP_AI\Cli_Router\Invocation;
 use Easy_MCP_AI\Cli_Router\Output;
+use Easy_MCP_AI\Cli_Router\Package_Arg;
 use Easy_MCP_AI\Cli_Router\Read_Value;
 use Easy_MCP_AI\Cli_Router\Values;
 
@@ -35,7 +36,10 @@ class Theme_Adapter extends Command_Handler {
 
     const TOOL_ALREADY_INSTALLED = 'The theme "%s" is already installed';
 
-    const REFUSE_ZIP      = "wp_cli_run installs themes only by their wordpress.org slug: '%s' is a zip file, a server path or a URL, and installing from a file or a URL reads a file on the server or from another host (plan §4.1). Pass the slug from the theme's wordpress.org address.";
+    const REFUSE_ZIP      = "wp_cli_run installs a theme from its wordpress.org slug or an https:// URL of its ZIP file, and '%1\$s' is %2\$s on the server, which wp_cli_run never reads (plan §4.1). Pass the slug or a URL, or give wp_install_theme the ZIP as content_base64.";
+    const REFUSE_HTTP     = "wp_cli_run downloads themes over HTTPS only, and '%s' is not an https:// URL: plain HTTP can be changed on the way. Pass the https:// link to the ZIP file.";
+
+    const INSTALL_PLACEHOLDER = '<the folder the ZIP names, known once installed>';
     const REFUSE_TOO_MANY = "wp_cli_run installs at most %d themes in one 'wp theme install' command, and this one names %d. Run it in smaller groups.";
     const REFUSE_FIELD    = "wp_cli_run cannot print the '%s' field of 'wp theme list': %s";
     const REASON_DESC     = 'wp_list_themes, which answers this command, does not return theme descriptions yet. `theme get <theme> --field=description` prints one.';
@@ -130,36 +134,46 @@ class Theme_Adapter extends Command_Handler {
         if ( count( $args ) > self::INSTALL_MAX ) {
             $ctx->out->error( sprintf( self::REFUSE_TOO_MANY, self::INSTALL_MAX, count( $args ) ) );
         }
-        foreach ( $args as $slug ) {
-            if ( false !== strpos( $slug, '://' ) || '.zip' === strtolower( substr( $slug, -4 ) ) || false !== strpos( $slug, '/' ) || false !== strpos( $slug, '\\' ) ) {
-                $ctx->out->error( sprintf( self::REFUSE_ZIP, $slug ) );
+        foreach ( $args as $arg ) {
+            $problem = Package_Arg::problem( $arg );
+            if ( null === $problem ) {
+                continue;
             }
+            $ctx->out->error( Package_Arg::is_url( $arg ) ? sprintf( self::REFUSE_HTTP, Package_Arg::shown( $arg ) ) : sprintf( self::REFUSE_ZIP, $arg, $problem ) );
         }
     }
 
     public function plan_install( Invocation $inv ): array {
-        $plan  = array();
-        $slugs = array();
-        foreach ( $inv->args as $slug ) {
-            $slug = (string) $slug;
-            if ( '' === $slug ) {
+        $plan        = array();
+        $stylesheets = array();
+        foreach ( $inv->args as $arg ) {
+            $arg = (string) $arg;
+            if ( '' === $arg ) {
                 continue;
             }
-            $slugs[] = $slug;
-            $plan[]  = array(
+            $stylesheets[] = self::planned_stylesheet( $arg );
+            $plan[]        = array(
                 'tool'      => self::INSTALL,
-                'arguments' => self::install_arguments( $slug, $inv->assoc ),
+                'arguments' => Package_Arg::arguments( $arg, $inv->assoc ),
             );
         }
         if ( Read_Value::flag( $inv->assoc, 'activate', false ) ) {
-            foreach ( $slugs as $slug ) {
+            foreach ( $stylesheets as $stylesheet ) {
                 $plan[] = array(
                     'tool'      => self::SWITCH,
-                    'arguments' => array( 'stylesheet' => $slug ),
+                    'arguments' => array( 'stylesheet' => $stylesheet ),
                 );
             }
         }
         return $plan;
+    }
+
+    private static function planned_stylesheet( string $arg ): string {
+        if ( ! Package_Arg::is_url( $arg ) ) {
+            return $arg;
+        }
+        $slug = Package_Arg::wporg_slug( $arg, 'theme' );
+        return null !== $slug ? $slug : self::INSTALL_PLACEHOLDER;
     }
 
     public function install( Invocation $inv, Context $ctx ): void {
@@ -170,12 +184,12 @@ class Theme_Adapter extends Command_Handler {
             Fetchers::require_tool( $ctx, $inv, self::SWITCH );
         }
         $ctx->not_captured( self::NOT_CAPTURED_FILES );
-        if ( ! isset( $inv->assoc['version'] ) ) {
+        if ( ! isset( $inv->assoc['version'] ) && self::names_a_slug( $args ) ) {
             $ctx->note( self::NOTE_REQUIREMENTS );
         }
 
         if ( count( $args ) > 1 && $activate ) {
-            $ctx->out->warning( sprintf( 'Only this single theme will be activated: %s', end( $args ) ) );
+            $ctx->out->warning( sprintf( 'Only this single theme will be activated: %s', Package_Arg::shown( (string) end( $args ) ) ) );
         }
 
         $batch = new Batch( $inv, $ctx, 'theme', 'install' );
@@ -183,6 +197,9 @@ class Theme_Adapter extends Command_Handler {
             $args,
             function ( string $slug, Batch $batch ) use ( $inv, $ctx, $activate ): string {
                 return $this->install_slug( $slug, $inv, $ctx, $batch, $activate );
+            },
+            static function ( $arg ): string {
+                return 'theme ' . Package_Arg::shown( (string) $arg );
             }
         );
         $result = $batch->result();
@@ -194,13 +211,14 @@ class Theme_Adapter extends Command_Handler {
             $ctx->out->warning( 'Ignoring ambiguous empty slug value.' );
             return Batch::SKIP;
         }
-        $outcome = $this->install_one( $slug, $inv, $ctx, $batch );
+        list( $outcome, $installed ) = $this->install_one( $slug, $inv, $ctx, $batch );
+        $theme                       = null !== $installed ? $installed : Package_Arg::shown( $slug );
 
-        $extension        = Fetchers::of( 'theme' )->get_many( array( $slug ), $ctx->out );
+        $extension        = Fetchers::of( 'theme' )->get_many( array( $theme ), $ctx->out );
         $allow_activation = in_array( $outcome, array( 'installed', 'already' ), true );
         if ( $allow_activation && count( $extension ) > 0 && $activate ) {
-            $ctx->out->log( "Activating '$slug'..." );
-            $this->do_activate( $slug, $ctx, $batch );
+            $ctx->out->log( "Activating '$theme'..." );
+            $this->do_activate( $theme, $ctx, $batch );
         }
         if ( 'installed' === $outcome ) {
             return Batch::SUCCESS;
@@ -542,26 +560,31 @@ class Theme_Adapter extends Command_Handler {
         $ctx->out->success( "Switched to '$label' theme." );
     }
 
-    private function install_one( string $slug, Invocation $inv, Context $ctx, Batch $batch ): string {
-        $result = $batch->delegate( self::INSTALL, self::install_arguments( $slug, $inv->assoc ) );
+    private function install_one( string $arg, Invocation $inv, Context $ctx, Batch $batch ): array {
+        $slug   = Package_Arg::is_url( $arg ) ? Package_Arg::wporg_slug( $arg, 'theme' ) : $arg;
+        $shown  = Package_Arg::shown( $arg );
+        $result = $batch->delegate( self::INSTALL, Package_Arg::arguments( $arg, $inv->assoc ) );
         if ( ! $result['ok'] ) {
             if ( Batch::is_rate_limited( $result ) ) {
-                return 'failed';
+                return array( 'failed', $slug );
             }
             $error = (string) $result['error'];
-            if ( 0 === strpos( $error, sprintf( self::TOOL_ALREADY_INSTALLED, $slug ) ) ) {
-                $ctx->out->warning( "$slug: Theme already installed." );
-                return 'already';
+            if ( null !== $slug && 0 === strpos( $error, sprintf( self::TOOL_ALREADY_INSTALLED, $slug ) ) ) {
+                $ctx->out->warning( "$shown: Theme already installed." );
+                return array( 'already', $slug );
             }
-            $ctx->out->warning( "$slug: " . $error );
-            return 'failed';
+            $ctx->out->warning( "$shown: " . $error );
+            return array( 'failed', $slug );
         }
 
         $payload = $result['payload'];
         $ctx->mark_changed();
-        $ctx->out->log( sprintf( 'Installing %s (%s)', html_entity_decode( (string) ( $payload['name'] ?? $slug ), ENT_QUOTES ), (string) ( $payload['version'] ?? '' ) ) );
+        if ( isset( $payload['slug'] ) && is_string( $payload['slug'] ) ) {
+            $ctx->out->log( sprintf( 'Installing %s (%s)', html_entity_decode( (string) ( $payload['name'] ?? $slug ), ENT_QUOTES ), (string) ( $payload['version'] ?? '' ) ) );
+        }
         self::print_messages( (array) ( $payload['messages'] ?? array() ), $ctx );
-        return 'installed';
+        $stylesheet = isset( $payload['stylesheet'] ) && is_string( $payload['stylesheet'] ) && '' !== $payload['stylesheet'] ? $payload['stylesheet'] : $slug;
+        return array( 'installed', $stylesheet );
     }
 
     private function install_version( string $stylesheet, string $version, Invocation $inv, Context $ctx ): void {
@@ -881,15 +904,13 @@ class Theme_Adapter extends Command_Handler {
         }
     }
 
-    private static function install_arguments( string $slug, array $assoc ): array {
-        $arguments = array( 'slug' => $slug );
-        if ( isset( $assoc['version'] ) ) {
-            $arguments['version'] = is_string( $assoc['version'] ) ? $assoc['version'] : (string) (int) $assoc['version'];
+    private static function names_a_slug( array $args ): bool {
+        foreach ( $args as $arg ) {
+            if ( ! Package_Arg::is_url( $arg ) || null !== Package_Arg::wporg_slug( $arg, 'theme' ) ) {
+                return true;
+            }
         }
-        if ( Read_Value::flag( $assoc, 'force', false ) ) {
-            $arguments['force'] = true;
-        }
-        return $arguments;
+        return false;
     }
 
     private static function print_messages( array $messages, Context $ctx ): void {

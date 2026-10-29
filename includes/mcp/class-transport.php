@@ -481,11 +481,21 @@ class Transport {
         if ( $challenged ) {
             return $challenged;
         }
-        $status = isset( $body['error']['code'] ) && Error_Codes::METHOD_NOT_FOUND === $body['error']['code'] ? 404 : 200;
-        $response = new \WP_REST_Response( $body, $status );
+        $response = new \WP_REST_Response( $body, self::modern_status( $body ) );
         $response->header( 'Cache-Control', 'no-store, private' );
         $this->add_cors_headers( $response );
         return $response;
+    }
+
+    private static function modern_status( $body ): int {
+        $code = isset( $body['error']['code'] ) ? $body['error']['code'] : null;
+        if ( Error_Codes::METHOD_NOT_FOUND === $code ) {
+            return 404;
+        }
+        if ( Error_Codes::MISSING_CLIENT_CAPABILITY === $code ) {
+            return 400;
+        }
+        return 200;
     }
 
     private $listen_streams = array();
@@ -1024,9 +1034,9 @@ class Transport {
     }
 
     private function refusal_log_budget_allows( string $family, ?string $auth_source, int $token_id ): bool {
-        $limit = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
+        $limit = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE );
         if ( $limit < 1 ) {
-            $limit = 60;
+            $limit = \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE;
         }
         $key = $family . ( 'oauth' === $auth_source ? 'oauth' : 'legacy' ) . '_' . (int) $token_id;
 
@@ -1075,14 +1085,34 @@ class Transport {
         );
     }
 
+    const DISCOVERY_POINTER_FILTER = 'easy_mcp_ai_oauth_discovery_pointer';
+
+    public static function resource_metadata_urls(): array {
+        return array(
+            'root'     => \home_url( '/.well-known/oauth-protected-resource' ),
+            'dot_free' => \rest_url( self::NAMESPACE_V1 . '/discovery/oauth-protected-resource' ),
+            'mcp_url'  => \rest_url( self::NAMESPACE_V1 . '/mcp/.well-known/oauth-protected-resource' ),
+        );
+    }
+
+    public static function discovery_pointer_mode(): string {
+        $mode = \apply_filters( self::DISCOVERY_POINTER_FILTER, \Easy_MCP_AI\Config::get( 'oauth_discovery_pointer' ) );
+        return 'root' === $mode ? 'root' : 'auto';
+    }
+
     public static function resource_metadata_url(): string {
-        if ( \Easy_MCP_AI\OAuth\Root_Fallback::is_armed() ) {
-            if ( \Easy_MCP_AI\OAuth\Root_Fallback::mcp_path_discovery_reachable() ) {
-                return \rest_url( self::NAMESPACE_V1 . '/mcp/.well-known/oauth-protected-resource' );
-            }
-            return \rest_url( self::NAMESPACE_V1 . '/discovery/oauth-protected-resource' );
+        $urls           = self::resource_metadata_urls();
+        $prefer_mcp_url = 'auto' === self::discovery_pointer_mode()
+            && null !== \Easy_MCP_AI\OAuth\Discovery::issuer( \Easy_MCP_AI\OAuth\Discovery::ISSUER_RESOURCE );
+
+        if ( ! \Easy_MCP_AI\OAuth\Root_Fallback::is_armed() ) {
+            return $prefer_mcp_url ? $urls['mcp_url'] : $urls['root'];
         }
-        return \home_url( '/.well-known/oauth-protected-resource' );
+        if ( \Easy_MCP_AI\OAuth\Root_Fallback::mcp_path_discovery_reachable()
+            || ( $prefer_mcp_url && true !== \Easy_MCP_AI\OAuth\Root_Fallback::root_discovery_blocked() ) ) {
+            return $urls['mcp_url'];
+        }
+        return $urls['dot_free'];
     }
 
     private function make_unauthorized_response( $data, $http_status = 401, $error_code = null, $error_description = 'The access token is invalid or expired' ) {

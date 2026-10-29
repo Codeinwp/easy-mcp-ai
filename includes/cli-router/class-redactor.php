@@ -59,6 +59,8 @@ final class Redactor {
         'media import'         => 0,
         'embed fetch'          => 0,
         'embed provider match' => 0,
+        'theme install'        => 0,
+        'plugin install'       => 0,
     );
 
     public static function mask_command( string $command ): array {

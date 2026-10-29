@@ -70,10 +70,18 @@ final class Cache_Purger {
         if ( null !== $refusal ) {
             return $refusal;
         }
-        if ( $request->dry_run ) {
-            return new Layer_Result( $adapter->id(), $adapter->label(), $adapter->kind(), Layer_Result::WOULD_CLEAR );
+        $layer = $request->dry_run
+            ? new Layer_Result( $adapter->id(), $adapter->label(), $adapter->kind(), Layer_Result::WOULD_CLEAR )
+            : $this->call( $adapter, $request );
+        return $this->mark_minified( $adapter, $request, $layer );
+    }
+
+    private function mark_minified( Cache_Adapter $adapter, Purge_Request $request, Layer_Result $layer ): Layer_Result {
+        $ran = in_array( $layer->status(), array( Layer_Result::CLEARED, Layer_Result::WOULD_CLEAR ), true );
+        if ( ! $request->include_minified || Purge_Request::SCOPE_SITE !== $request->scope || ! $ran || ! $adapter->clears_minified() ) {
+            return $layer;
         }
-        return $this->call( $adapter, $request );
+        return $layer->with( array( 'minified' => $layer->status() ) );
     }
 
     private function refusal( Cache_Adapter $adapter, Purge_Request $request ): ?Layer_Result {

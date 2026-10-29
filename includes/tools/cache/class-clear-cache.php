@@ -30,7 +30,7 @@ class Clear_Cache extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Clears this site\'s page, asset and CDN caches through each cache plugin\'s own purge code. Caching plugins already clear a post\'s page when it is saved, and this site\'s SEO, custom-field and post-term tools clear it after they write, so use this when a change is still not visible, or after changes neither covers: `scope: "posts"` with `post_ids` after unpublishing or trashing an item; `scope: "site"` (administrators only) after changing menus, widgets, theme or Customizer settings, CSS, global styles, templates, patterns or site settings, or switching a theme or plugin (at most once every 5 minutes); `scope: "urls"` with this site\'s URLs (no query string), for example a redirect\'s source. `dry_run: true` shows what would be cleared. `include_cdn` and `include_object_cache` (`site` only) also clear the whole CDN zone and the object cache. Each `layers[]` entry has a `status`: `cleared` (the cache plugin\'s own purge ran), `queued`, `skipped` (with a reason) or `failed`; `changed: false` means no cache was cleared, and `not_covered` lists caches only the site owner can clear. To check a page, fetch `verify.urls` after `verify.after_seconds`.';
+        return 'Clears this site\'s page, asset and CDN caches through each cache plugin\'s own purge code. Caching plugins already clear a post\'s page when it is saved, and this site\'s SEO, custom-field and post-term tools clear it after they write, so use this when a change is still not visible, or after changes neither covers: `scope: "posts"` with `post_ids` after unpublishing or trashing an item; `scope: "site"` (administrators only) after changing menus, widgets, theme or Customizer settings, CSS, global styles, templates, patterns or site settings, or switching a theme or plugin (at most once every 5 minutes); `scope: "urls"` with this site\'s URLs (no query string), for example a redirect\'s source. `dry_run: true` shows what would be cleared. `include_cdn` and `include_object_cache` (`site` only) also clear the whole CDN zone and the object cache. `include_minified` (`site` only) also deletes WP Fastest Cache\'s minified CSS and JS files: use it when scripts or styles are still old after a plugin or theme update; a layer that deleted them shows `minified`. Each `layers[]` entry has a `status`: `cleared` (the cache plugin\'s own purge ran), `queued`, `skipped` (with a reason) or `failed`; `changed: false` means no cache was cleared, and `not_covered` lists caches only the site owner can clear. To check a page, fetch `verify.urls` after `verify.after_seconds`.';
     }
 
     public function get_category() {
@@ -95,6 +95,11 @@ class Clear_Cache extends Base_Tool {
                     'default'     => false,
                     'description' => 'Scope `site` only: also flush the persistent object cache (Redis, Memcached). It resets this plugin\'s rate limits and makes the server forget this session\'s settings; on a multisite network it needs a super admin.',
                 ),
+                'include_minified'     => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Scope `site` only: also delete the minified and combined CSS and JS files WP Fastest Cache built, which its plain clear keeps. Pages rebuild them on their next view.',
+                ),
             ),
             'required'   => array( 'scope' ),
         );
@@ -112,6 +117,9 @@ class Clear_Cache extends Base_Tool {
         }
         if ( self::flag( $arguments, 'include_object_cache' ) ) {
             $text .= ' ' . __( 'Also flush the object cache (Redis or Memcached), which resets the rate limits and sign-in lockouts of AI connections.', 'easy-mcp-ai' );
+        }
+        if ( self::flag( $arguments, 'include_minified' ) ) {
+            $text .= ' ' . __( 'Also delete the minified CSS and JS files the cache plugins built; pages rebuild them on their next view.', 'easy-mcp-ai' );
         }
         return $text . ' ' . __( 'Visitors refill the caches from the server afterwards; no content or setting is deleted.', 'easy-mcp-ai' );
     }
@@ -140,6 +148,9 @@ class Clear_Cache extends Base_Tool {
         }
         if ( $request->include_object_cache && ! in_array( 'object-cache', array_column( $reply['layers'], 'id' ), true ) ) {
             $reply['notes'][] = 'No persistent object cache (Redis, Memcached) is in use on this site, so there was no object cache to flush.';
+        }
+        if ( $request->include_minified && array() === array_column( $reply['layers'], 'minified' ) ) {
+            $reply['notes'][] = 'This call deletes no minified CSS or JS files: WP Fastest Cache is the only cache whose minified files this tool can delete, and it is not active on this site or did not run (its row in layers says why).';
         }
         if ( null !== $claim && ! self::attempted( $reply ) ) {
             $this->release_site_slot( $claim );
@@ -187,6 +198,7 @@ class Clear_Cache extends Base_Tool {
         $request->dry_run              = self::flag( $arguments, 'dry_run' );
         $request->include_cdn          = self::flag( $arguments, 'include_cdn' );
         $request->include_object_cache = self::flag( $arguments, 'include_object_cache' );
+        $request->include_minified     = self::flag( $arguments, 'include_minified' );
         $this->refuse_inactive_caches( $caches );
         return array(
             'request' => $request,
@@ -236,7 +248,7 @@ class Clear_Cache extends Base_Tool {
                 throw new \InvalidArgumentException( sprintf( '%s is only used with scope "%s"; this call has scope "%s".', $name, $owner, $scope ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         }
-        foreach ( array( 'include_cdn', 'include_object_cache' ) as $name ) {
+        foreach ( array( 'include_cdn', 'include_object_cache', 'include_minified' ) as $name ) {
             if ( Purge_Request::SCOPE_SITE !== $scope && self::flag( $arguments, $name ) ) {
                 throw new \InvalidArgumentException( sprintf( '%s only works with scope "site".', $name ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }

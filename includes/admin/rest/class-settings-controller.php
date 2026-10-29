@@ -223,8 +223,8 @@ class Settings_Controller extends Admin_Rest_Controller {
     }
 
     private static function rate_limit() {
-        $stored = (int) Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
-        return $stored < 1 ? 60 : $stored;
+        $stored = (int) Config::get( 'easy_mcp_ai_rate_limit_per_minute', Config::RATE_LIMIT_PER_MINUTE );
+        return $stored < 1 ? Config::RATE_LIMIT_PER_MINUTE : $stored;
     }
 
     private static function capability_choices( array $choices ) {

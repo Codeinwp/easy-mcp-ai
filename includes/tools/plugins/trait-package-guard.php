@@ -55,14 +55,18 @@ trait Package_Guard {
 
     private static function refuse_url_zip_or_path( string $raw, string $kind ): void {
         if ( false !== strpos( $raw, '://' ) ) {
-            throw new \InvalidArgumentException( sprintf( 'URLs are not accepted: pass the wordpress.org %s slug, e.g. "akismet". Installing from a URL or a zip file is not available over MCP.', $kind ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \InvalidArgumentException( sprintf( 'A URL is not a slug: pass it as url instead, or pass the wordpress.org %1$s slug, e.g. "%2$s".', $kind, self::example_slug( $kind ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( '.zip' === strtolower( substr( $raw, -4 ) ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Zip files are not accepted: pass the wordpress.org %s slug. Installing from a zip file or a URL is not available over MCP.', $kind ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \InvalidArgumentException( sprintf( 'A zip file is not a slug: pass a link to it as url, or the ZIP as file or content_base64, or pass the wordpress.org %s slug. A ZIP on the server\'s disk cannot be installed.', $kind ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( false !== strpos( $raw, '/' ) || false !== strpos( $raw, '\\' ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Paths are not accepted: pass the wordpress.org %s slug (the last part of its wordpress.org address), e.g. "%s".', $kind, 'plugin' === $kind ? 'akismet' : 'twentytwentyfive' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \InvalidArgumentException( sprintf( 'Paths are not accepted: pass the wordpress.org %s slug (the last part of its wordpress.org address), e.g. "%s".', $kind, self::example_slug( $kind ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
+    }
+
+    private static function example_slug( string $kind ): string {
+        return 'plugin' === $kind ? 'akismet' : 'twentytwentyfive';
     }
 
     protected function parse_package_version( array $arguments, bool $allow_dev ): ?string {

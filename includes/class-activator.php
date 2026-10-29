@@ -309,7 +309,7 @@ class Activator {
 
     private static function set_default_options() {
         $defaults = array(
-            'rate_limit_per_minute'  => 60,
+            'rate_limit_per_minute'  => Config::RATE_LIMIT_PER_MINUTE,
             'audit_log_retention'    => 30,
             'ip_whitelist'           => '',
             'enabled_categories'     => array( 'posts', 'pages', 'media', 'taxonomy', 'comments', 'users', 'site', 'menus', 'plugins', 'themes' ),

@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.3.1
+Stable tag: 2.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -119,7 +119,7 @@ Giving an AI client access to your site is a serious step. This MCP server runs 
 * **WordPress permissions**: every tool call runs as the WordPress user bound to the token or OAuth grant, with that user's capability checks
 * **Least privilege**: choose which tools each API token or OAuth grant can use, including read-only access
 * **Hashed tokens, encrypted credentials**: token records are SHA-256 hashes, and external data credentials use AES-256-GCM encryption
-* **Rate limits and IP allowlist**: 60 requests per minute per token by default, plus an optional IP allowlist for API tokens
+* **Rate limits and IP allowlist**: 120 requests per minute per token by default, plus an optional IP allowlist for API tokens
 * **Force Draft on Create** (off by default): Easy MCP's own create tools save new posts, pages, custom post type items, products and events as drafts. Plugin abilities and later edits are not covered
 * **HTTPS**: OAuth requires HTTPS on live sites (local loopback addresses are exempt), and API tokens should use HTTPS too
 
@@ -170,7 +170,7 @@ Most WordPress AI plugins embed one AI provider inside wp-admin and bill you for
 
 = Are my AI requests private, and do they pass through your servers? =
 
-No. Requests and tool results travel between your AI client and your own site, with no hosted relay or third-party server. If you are comparing with a hosted MCP service such as WPVibe, the difference is where the server runs: a hosted service proxies every request through the vendor's servers, while Easy MCP AI runs inside your own WordPress install. The connection depends only on your site and your AI client, so it keeps working even if our service is down. The plugin is free, all 280+ tools are included, and there is no vendor quota, only rate limits you set yourself, 60 requests per minute per token by default. The plugin sends nothing to us. The optional outside reachability check is a link that opens easymcpai.com in your browser, and it uses only your site address.
+No. Requests and tool results travel between your AI client and your own site, with no hosted relay or third-party server. If you are comparing with a hosted MCP service such as WPVibe, the difference is where the server runs: a hosted service proxies every request through the vendor's servers, while Easy MCP AI runs inside your own WordPress install. The connection depends only on your site and your AI client, so it keeps working even if our service is down. The plugin is free, all 280+ tools are included, and there is no vendor quota, only rate limits you set yourself, 120 requests per minute per token by default. The plugin sends nothing to us. The optional outside reachability check is a link that opens easymcpai.com in your browser, and it uses only your site address.
 
 Once an AI client has connected, the plugin downloads signed skills (step-by-step instructions for common WordPress tasks) once a day from skills.easymcpai.com. The request carries only the plugin version. To turn it off, add `define( 'EASY_MCP_AI_SKILLS_SYNC', false );` to wp-config.php.
 
@@ -227,11 +227,17 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.3.1 =
-- Fixed admin pages staying in English on translated sites.
-- Fixed REST writes with fields failing on object responses.
-- Fixed template tools rejecting dotted and subfolder theme names.
-- Fixed the consent screen disabling write permissions when no scope was requested.
+= 2.3.2 =
+- Fixed per-minute rate limits resetting during steady use without persistent cache.
+- Added theme and plugin install from ZIP file or URL.
+- Fixed missing capability errors returning wrong HTTP status.
+- Fixed denied approvals keeping request data for seven days
+- Added an option to delete minified CSS and JS when clearing cache.
+- Fixed backslash-spelled meta keys and values bypassing protected-key checks.
+- Fixed the default rate limit to 120 requests a minute per credential.
+- Fixed refreshed OAuth tokens ignoring revoked or narrowed grants.
+- Fixed post listing revealing password-protected posts hidden custom values.
+- Fixed Claude.ai sign-in on hosts that block root addresses
 
 [See changelog for all versions](https://easymcpai.com/changelog).
 

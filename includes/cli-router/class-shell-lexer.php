@@ -9,6 +9,8 @@ final class Shell_Lexer {
 
     const EXCERPT_CHARS = 10;
 
+    const HIDDEN = '[redacted]';
+
     const UNQUOTED_REFUSALS = array(
         "\0" => array( 'nul_byte', 'NUL byte' ),
         "\n" => array( 'shell_operator', 'newline' ),
@@ -240,14 +242,31 @@ final class Shell_Lexer {
     }
 
     private static function excerpt( string $line, int $byte ): string {
-        $start = self::excerpt_start( $line, $byte );
-        $end   = self::excerpt_end( $line, $byte );
+        $start  = self::excerpt_start( $line, $byte );
+        $end    = self::excerpt_end( $line, $byte );
+        $ranges = Url_Mask::hidden_ranges( $line, $start, $end );
 
-        $text = '';
+        $text   = '';
+        $hiding = false;
         for ( $k = $start; $k < $end; $k++ ) {
-            $text .= self::printable( $line[ $k ] );
+            if ( $k !== $byte && self::in_ranges( $ranges, $k ) ) {
+                $text  .= $hiding ? '' : self::HIDDEN;
+                $hiding = true;
+                continue;
+            }
+            $hiding = false;
+            $text  .= self::printable( $line[ $k ] );
         }
         return ( $start > 0 ? '...' : '' ) . $text . ( $end < strlen( $line ) ? '...' : '' );
+    }
+
+    private static function in_ranges( array $ranges, int $offset ): bool {
+        foreach ( $ranges as $range ) {
+            if ( $offset >= $range[0] && $offset < $range[1] ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function excerpt_start( string $line, int $byte ): int {

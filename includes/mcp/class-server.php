@@ -16,6 +16,8 @@ class Server {
     const LEGACY_PROTOCOL_VERSION = '2025-11-25';
     const SERVER_NAME      = 'easy-mcp-ai';
 
+    const RATE_WINDOW_SECONDS = 60;
+
     const STEP_UP_MESSAGE = 'Token does not have permission to use this tool. It needs the OAuth scope %s: ask the user to reconnect this app to the site and approve it.';
 
     public static function effective_required_capability( $category, $tool_default_cap ) {
@@ -46,6 +48,7 @@ class Server {
 
     private $task_manager        = null;
     private $skip_rate_limit     = false;
+    private $rate_limit_refusal  = array( 'limit' => 0, 'retry_after' => self::RATE_WINDOW_SECONDS );
     private $approval_mode       = null;
     private $last_approval       = array( 'kind' => 'run', 'approval_id' => null );
     private $last_audit_id       = null;
@@ -334,7 +337,7 @@ class Server {
         $method = $message['method'];
         if ( 'server/discover' === $method ) {
             if ( ! $this->check_rate_limit( $token_id ) ) {
-                return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+                return $this->rate_limited( $id );
             }
             self::arm_skill_sync();
             $response = JSON_RPC::success_response( $id, array(
@@ -419,7 +422,7 @@ class Server {
             return JSON_RPC::error_response( $id, Error_Codes::INVALID_PARAMS, 'notifications must be a JSON object' );
         }
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
         return JSON_RPC::success_response( $id, array(
             '_meta' => array( self::SUBSCRIPTION_ID_META => $id ),
@@ -452,7 +455,7 @@ class Server {
             ) );
         }
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
         $manager = $this->get_task_manager();
         if ( 'tasks/get' === $method ) {
@@ -466,7 +469,7 @@ class Server {
 
     private function handle_initialize( $id, $params, $token_id, ?array $allowed_tools = null ) {
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
 
         $client_version = isset( $params['protocolVersion'] ) ? $params['protocolVersion'] : null;
@@ -578,7 +581,7 @@ class Server {
             return JSON_RPC::error_response( $id, Error_Codes::PAUSED, Error_Codes::PAUSED_MESSAGE );
         }
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
         if ( ! \current_user_can( 'read' ) ) {
             return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, 'Insufficient permissions to read skills' );
@@ -743,7 +746,7 @@ class Server {
             return JSON_RPC::success_response( $id, array( 'tools' => array() ) );
         }
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
 
         $all_tools = $this->tool_registry->get_all_definitions();
@@ -812,7 +815,7 @@ class Server {
         }
 
         if ( ! $this->skip_rate_limit && ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
 
         $tool = $this->tool_registry->get_tool( $tool_name );
@@ -851,7 +854,7 @@ class Server {
                 return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, $refusal );
             }
             if ( ! $this->check_privileged_rate_limit( $token_id ) ) {
-                return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Privileged tool rate limit exceeded. Please try again in a minute.' );
+                return $this->rate_limited( $id, 'Privileged tool rate limit exceeded. Please try again in a minute.' );
             }
         }
 
@@ -1169,17 +1172,7 @@ class Server {
         } else {
             $principal = 'k' . (int) $token_id;
         }
-        $cache_key = 'easy_mcp_ai_priv_rate_' . $principal;
-        if ( \wp_using_ext_object_cache() ) {
-            \wp_cache_add( $cache_key, 0, 'easy_mcp_ai', 60 );
-            return \wp_cache_incr( $cache_key, 1, 'easy_mcp_ai' ) <= $limit;
-        }
-        $current = (int) \get_transient( $cache_key );
-        if ( $current >= $limit ) {
-            return false;
-        }
-        \set_transient( $cache_key, $current + 1, 60 );
-        return true;
+        return $this->within_rate_limit( self::count_rate_hit( 'easy_mcp_ai_priv_rate_' . $principal ), $limit );
     }
 
     private function note_audit_error( ?int $audit_id, ?array $outcome ): void {
@@ -1411,7 +1404,7 @@ class Server {
             return JSON_RPC::success_response( $id, array( 'resources' => array() ) );
         }
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
         if ( ! \current_user_can( 'read' ) ) {
             return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, 'Insufficient permissions to list resources' );
@@ -1432,7 +1425,7 @@ class Server {
             return JSON_RPC::error_response( $id, Error_Codes::PAUSED, Error_Codes::PAUSED_MESSAGE );
         }
         if ( ! $this->check_rate_limit( $token_id ) ) {
-            return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, 'Rate limit exceeded. Please try again later.' );
+            return $this->rate_limited( $id );
         }
 
         if ( ! \current_user_can( 'read' ) ) {
@@ -1491,20 +1484,9 @@ class Server {
             return;
         }
 
-        $limit = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
-        $key   = 'easy_mcp_ai_reflog_' . (int) $token_id;
-
-        if ( \wp_using_ext_object_cache() ) {
-            \wp_cache_add( $key, 0, 'easy_mcp_ai', 60 );
-            if ( (int) \wp_cache_incr( $key, 1, 'easy_mcp_ai' ) > $limit ) {
-                return;
-            }
-        } else {
-            $written = (int) \get_transient( $key );
-            if ( $written >= $limit ) {
-                return;
-            }
-            \set_transient( $key, $written + 1, 60 );
+        $limit = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE );
+        if ( self::count_rate_hit( 'easy_mcp_ai_reflog_' . (int) $token_id )['count'] > $limit ) {
+            return;
         }
 
         $this->log_tool_call( $token_id, $tool_name, $arguments, self::STATUS_REFUSED );
@@ -1514,21 +1496,40 @@ class Server {
         if ( null === $token_id ) {
             return true;
         }
-        $limit     = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
-        $cache_key = 'easy_mcp_ai_rate_' . (int) $token_id;
+        $limit = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE );
+        return $this->within_rate_limit( self::count_rate_hit( 'easy_mcp_ai_rate_' . (int) $token_id ), $limit );
+    }
 
-        if ( \wp_using_ext_object_cache() ) {
-            \wp_cache_add( $cache_key, 0, 'easy_mcp_ai', 60 );
-            $new_count = \wp_cache_incr( $cache_key, 1, 'easy_mcp_ai' );
-            return $new_count <= $limit;
+    private static function count_rate_hit( string $key ): array {
+        if ( ! \wp_using_ext_object_cache() ) {
+            return \Easy_MCP_AI\Fixed_Window_Counter::hit( $key, self::RATE_WINDOW_SECONDS );
         }
+        $ends = time() + self::RATE_WINDOW_SECONDS;
+        if ( \wp_cache_add( $key, 0, 'easy_mcp_ai', self::RATE_WINDOW_SECONDS ) ) {
+            \wp_cache_set( $key . '_ends', $ends, 'easy_mcp_ai', self::RATE_WINDOW_SECONDS );
+        } else {
+            $stored = (int) \wp_cache_get( $key . '_ends', 'easy_mcp_ai' );
+            $ends   = $stored > time() ? $stored : $ends;
+        }
+        return array(
+            'count' => (int) \wp_cache_incr( $key, 1, 'easy_mcp_ai' ),
+            'ends'  => $ends,
+        );
+    }
 
-        $current = (int) \get_transient( $cache_key );
-        if ( $current >= $limit ) {
-            return false;
+    private function within_rate_limit( array $hit, int $limit ): bool {
+        if ( $hit['count'] <= $limit ) {
+            return true;
         }
-        \set_transient( $cache_key, $current + 1, 60 );
-        return true;
+        $this->rate_limit_refusal = array(
+            'limit'       => $limit,
+            'retry_after' => max( 1, $hit['ends'] - time() ),
+        );
+        return false;
+    }
+
+    private function rate_limited( $id, string $message = 'Rate limit exceeded. Please try again later.' ): array {
+        return JSON_RPC::error_response( $id, Error_Codes::RATE_LIMITED, $message, $this->rate_limit_refusal );
     }
 
     public function log_auth_failure( $ip, $reason, array $identity = array() ) {

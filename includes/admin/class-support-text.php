@@ -125,7 +125,7 @@ class Support_Text {
         $ext_count   = count( array_filter( $external ) );
         $ext_total   = count( $external );
 
-        $set_rate_limit       = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 );
+        $set_rate_limit       = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE );
         $set_audit_enabled    = (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_enabled', true );
         $set_audit_retention  = (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_retention', 30 );
         $set_change_enabled   = (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_enabled', true );

@@ -8,6 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait Term_Meta_Auth_Guard {
 
     protected function assert_term_meta_key_allowed( $key, $term, $cap ) {
+        if ( false !== strpos( $key, '\\' ) ) {
+            throw new \RuntimeException( sprintf( 'Meta key "%s" contains a backslash, and such keys are refused: WordPress removes the backslash before it stores or matches the key, so the key would reach another key, possibly a protected one.', $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
         if ( ! is_protected_meta( $key, 'term' ) ) {
             return;
         }

@@ -224,7 +224,12 @@ class OAuth_Controller extends Admin_Rest_Controller {
         if ( '' === $client_id || ! $this->client_exists( $client_id ) ) {
             return $this->fail( 'easy_mcp_ai_client_not_found', \__( 'Client not found.', 'easy-mcp-ai' ), 404 );
         }
-        OAuth_Admin::revoke_client( $client_id );
+        if ( ! OAuth_Admin::revoke_client( $client_id ) ) {
+            if ( 0 === $this->active_client_count( $client_id ) ) {
+                return $this->fail( 'easy_mcp_ai_client_not_found', \__( 'Client not found.', 'easy-mcp-ai' ), 404 );
+            }
+            return $this->fail( 'easy_mcp_ai_client_not_deleted', \__( 'The client was not deleted: a database write failed. Try again.', 'easy-mcp-ai' ), 500 );
+        }
         return $this->ok( array( 'deleted' => true, 'clientId' => $client_id ) );
     }
 
@@ -520,9 +525,14 @@ class OAuth_Controller extends Admin_Rest_Controller {
     }
 
     private function client_exists( $client_id ) {
+        return (int) $this->active_client_count( (string) $client_id ) > 0;
+    }
+
+    private function active_client_count( string $client_id ): ?int {
         $clients = $this->wpdb->prefix . 'easy_mcp_ai_oauth_clients';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned table; name prefixed by $wpdb->prefix.
-        return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$clients} WHERE client_id = %s AND is_active = 1", $client_id ) ) > 0;
+        $count = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$clients} WHERE client_id = %s AND is_active = 1", $client_id ) );
+        return null === $count ? null : (int) $count;
     }
 
     public static function retention_days() {

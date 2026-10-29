@@ -54,8 +54,9 @@ class Wpdb_Approval_Store implements Approval_Store {
 
     public function decide( $approval_id, $status, $decided_by, $decision_via, $now ) {
         global $wpdb;
+        $clear    = Approval_Gate::STATUS_DENIED === $status ? ', arguments = NULL' : '';
         $affected = $wpdb->query( $wpdb->prepare(
-            "UPDATE `{$this->table()}` SET status = %s, decided_by = %d, decided_at = %s, decision_via = %s WHERE approval_id = %s AND status = 'pending' AND expires_at > %s",
+            "UPDATE `{$this->table()}` SET status = %s, decided_by = %d, decided_at = %s, decision_via = %s{$clear} WHERE approval_id = %s AND status = 'pending' AND expires_at > %s",
             (string) $status, (int) $decided_by, (string) $now, (string) $decision_via, (string) $approval_id, (string) $now
         ) );
         return 1 === (int) $affected;

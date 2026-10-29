@@ -64,6 +64,10 @@ abstract class Cache_Adapter {
         return array();
     }
 
+    public function clears_minified(): bool {
+        return false;
+    }
+
     public function reaches_network( Purge_Request $request ): bool {
         return false;
     }

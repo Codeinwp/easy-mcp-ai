@@ -50,7 +50,7 @@ class Delete_User_Meta extends Base_Tool {
                 ),
                 'value'   => array(
                     'type'        => 'string',
-                    'description' => 'Optional. When provided, only meta rows matching this value are deleted. For booleans use "1" / "0" (WordPress meta storage semantics); numbers are also accepted as strings. Caution: a value another plugin wrote as a native false is stored as an empty string, so "0" will not match it — and passing an empty string here deletes EVERY row for the key, not just the empty-valued one.',
+                    'description' => 'Optional. When provided, only meta rows matching this value are deleted. For booleans use "1" / "0" (WordPress meta storage semantics); numbers are also accepted as strings. WordPress removes backslashes before it matches (`C:\\dir` matches a stored `C:dir`), so a value of one backslash is refused: it would read as empty. Caution: a value another plugin wrote as a native false is stored as an empty string, so "0" will not match it — and passing an empty string here deletes EVERY row for the key, not just the empty-valued one.',
                 ),
             ),
             'required'   => array( 'user_id', 'key' ),
@@ -95,6 +95,7 @@ class Delete_User_Meta extends Base_Tool {
                 throw new \RuntimeException( sprintf( 'Protected meta key %s is not in the writable allowlist.', $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         }
+        $this->refuse_delete_value_read_as_empty( $arguments );
         $value_provided = array_key_exists( 'value', $arguments );
         if ( $value_provided ) {
             $deleted = delete_user_meta( $user_id, $key, $arguments['value'] );

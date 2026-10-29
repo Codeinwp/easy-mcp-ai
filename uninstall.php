@@ -122,6 +122,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_diagnostics_last_run',
     'easy_mcp_ai_oauth_root_discovery',
     'easy_mcp_ai_oauth_root_fallback',
+    'easy_mcp_ai_oauth_discovery_pointer',
     'easy_mcp_ai_header_probe_secret',
     'easy_mcp_ai_rest_auth_observed',
     'easy_mcp_ai_review_ask_calls',

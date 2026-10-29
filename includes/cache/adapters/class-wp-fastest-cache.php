@@ -61,16 +61,24 @@ final class Wp_Fastest_Cache extends Cache_Adapter {
         return Purge_Request::SCOPE_SITE === $request->scope && $calls->is_multisite() && ! $calls->constant( 'SUBDOMAIN_INSTALL' );
     }
 
+    public function clears_minified(): bool {
+        return true;
+    }
+
     public function noise_options(): array {
-        return array( 'WpFastestCacheHTML', 'WpFastestCacheHTMLSIZE', 'WpFastestCacheMOBILE', 'WpFastestCacheMOBILESIZE' );
+        return array( 'WpFastestCacheHTML', 'WpFastestCacheHTMLSIZE', 'WpFastestCacheMOBILE', 'WpFastestCacheMOBILESIZE', 'WpFastestCacheCSS', 'WpFastestCacheCSSSIZE', 'WpFastestCacheJS', 'WpFastestCacheJSSIZE' );
     }
 
     protected function purge_site( Purge_Request $request ): Layer_Result {
         if ( ! $this->calls()->function_exists( 'wpfc_clear_all_cache' ) ) {
             return $this->helper_missing( 'wpfc_clear_all_cache()' );
         }
-        $this->calls()->call( 'wpfc_clear_all_cache', array( false ) );
-        return $this->sent( 'WP Fastest Cache cleared its whole cache.' );
+        $returned = $this->calls()->call( 'wpfc_clear_all_cache', array( $request->include_minified ) );
+        if ( is_array( $returned ) && array_key_exists( 'success', $returned ) && true !== $returned['success'] ) {
+            $message = isset( $returned['message'] ) && is_string( $returned['message'] ) ? $returned['message'] : 'no reason given';
+            return $this->layer( Layer_Result::FAILED, array( 'detail' => sprintf( 'WP Fastest Cache refused the purge (%s), so nothing was cleared.', $message ) ) );
+        }
+        return $this->sent( $request->include_minified ? 'WP Fastest Cache cleared its whole cache and deleted its minified CSS and JS files.' : 'WP Fastest Cache cleared its whole cache. Its minified CSS and JS files were kept; include_minified deletes them too.' );
     }
 
     protected function purge_urls( Purge_Request $request ): Layer_Result {

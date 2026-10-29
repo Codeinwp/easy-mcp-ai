@@ -20,7 +20,7 @@ class Check_Config {
             self::evaluate_dcr( self::option_bool( 'easy_mcp_ai_oauth_dcr_enabled', true ) ),
             self::evaluate_client_cap( self::count_active_clients(), (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_oauth_max_clients', 5000 ) ),
             self::evaluate_min_capability( self::resolved_min_capability(), self::connect_roles() ),
-            self::evaluate_rate_limit( (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', 60 ) ),
+            self::evaluate_rate_limit( (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_rate_limit_per_minute', \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE ) ),
             self::evaluate_force_draft( self::option_bool( 'easy_mcp_ai_force_draft_on_create', false ) ),
             self::evaluate_token_expiry( self::collect_token_expiries() ),
             self::evaluate_auth_presence( self::count_active_tokens(), self::count_active_grants(), self::auth_ever_existed() ),
@@ -226,7 +226,11 @@ class Check_Config {
                 Diagnostic_Result::TIER_WARNING,
                 $label,
                 __( 'The rate limit is set to 0 calls per minute, which refuses every call an AI client makes rather than allowing unlimited calls.', 'easy-mcp-ai' ),
-                __( 'Set the rate limit under Easy MCP AI → Settings → Access & safety to a positive number — the default of 60 suits most sites.', 'easy-mcp-ai' ),
+                sprintf(
+                    /* translators: %d: the default calls per minute. */
+                    __( 'Set the rate limit under Easy MCP AI → Settings → Access & safety to a positive number — the default of %d suits most sites.', 'easy-mcp-ai' ),
+                    \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE
+                ),
                 $evidence
             );
         }
@@ -241,7 +245,11 @@ class Check_Config {
                     __( 'Set to %d calls per minute. AI clients send bursts of calls, so a limit this low makes them fail intermittently for no visible reason.', 'easy-mcp-ai' ),
                     (int) $per_minute
                 ),
-                __( 'Raise the rate limit under Easy MCP AI → Settings → Access & safety — the default of 60 suits most sites.', 'easy-mcp-ai' ),
+                sprintf(
+                    /* translators: %d: the default calls per minute. */
+                    __( 'Raise the rate limit under Easy MCP AI → Settings → Access & safety — the default of %d suits most sites.', 'easy-mcp-ai' ),
+                    \Easy_MCP_AI\Config::RATE_LIMIT_PER_MINUTE
+                ),
                 $evidence
             );
         }

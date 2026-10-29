@@ -28,6 +28,8 @@ final class Purge_Request {
 
     public $include_object_cache = false;
 
+    public $include_minified = false;
+
     public $deadline = 0.0;
 
     public function __construct( string $scope, array $urls = array(), array $post_ids = array() ) {

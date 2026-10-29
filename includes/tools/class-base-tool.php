@@ -358,6 +358,13 @@ abstract class Base_Tool {
         $this->refuse_other_type( $post_id, $expected_type, $verb );
     }
 
+    protected function refuse_delete_value_read_as_empty( array $arguments ): void {
+        $value = $arguments['value'] ?? null;
+        if ( is_string( $value ) && '' !== $value && '' === wp_unslash( $value ) ) {
+            throw new \InvalidArgumentException( 'A value of one backslash is refused: WordPress removes the backslash before it matches the value, so it would delete every row of the key. To delete every row, omit value.' );
+        }
+    }
+
     protected function refuse_builder_owned_write( int $post_id, bool $content, array $meta = array() ): void {
         $post = get_post( $post_id );
         if ( ! is_object( $post ) || ! current_user_can( 'edit_post', $post_id ) ) {

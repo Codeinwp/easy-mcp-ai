@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-28T09:15:53+00:00\n"
+"POT-Creation-Date: 2026-10-29T11:47:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: easy-mcp-ai\n"
@@ -654,39 +654,44 @@ msgid "This setting is set in wp-config.php or the environment and cannot be cha
 msgstr ""
 
 #: includes/admin/rest/class-oauth-controller.php:309
-#: includes/admin/rest/class-oauth-controller.php:324
+#: includes/admin/rest/class-oauth-controller.php:315
+#: includes/admin/rest/class-oauth-controller.php:331
 msgid "Client not found."
 msgstr ""
 
-#: includes/admin/rest/class-oauth-controller.php:330
+#: includes/admin/rest/class-oauth-controller.php:317
+msgid "The client was not deleted: a database write failed. Try again."
+msgstr ""
+
+#: includes/admin/rest/class-oauth-controller.php:337
 msgid "The client secret was not rotated: the client is not an active confidential client."
 msgstr ""
 
-#: includes/admin/rest/class-oauth-controller.php:437
+#: includes/admin/rest/class-oauth-controller.php:444
 msgid "scopes must be a list of scope names."
 msgstr ""
 
-#: includes/admin/rest/class-oauth-controller.php:453
+#: includes/admin/rest/class-oauth-controller.php:460
 #: assets/build/page-connections.js:33
 msgid "Pick at least one category, or revoke the grant instead."
 msgstr ""
 
-#: includes/admin/rest/class-oauth-controller.php:461
+#: includes/admin/rest/class-oauth-controller.php:468
 #: assets/build/page-connections.js:33
 msgid "A grant can only be narrowed here. To give this client more access, the user has to approve it again."
 msgstr ""
 
-#: includes/admin/rest/class-oauth-controller.php:632
+#: includes/admin/rest/class-oauth-controller.php:639
 msgid "Grant not found."
 msgstr ""
 
 #. translators: %d: WordPress user id
-#: includes/admin/rest/class-oauth-controller.php:771
+#: includes/admin/rest/class-oauth-controller.php:789
 #, php-format
 msgid "Unknown user #%d"
 msgstr ""
 
-#: includes/admin/rest/class-oauth-controller.php:793
+#: includes/admin/rest/class-oauth-controller.php:811
 msgid "Nothing was acknowledged. Grants issued for the previous address are refused either way; try again to finish removing them."
 msgstr ""
 
@@ -1182,7 +1187,7 @@ msgid "Send this to the %s team?"
 msgstr ""
 
 #: includes/approvals/class-approval-page.php:265
-#: includes/class-plugin.php:952
+#: includes/class-plugin.php:954
 #: includes/oauth/class-authorization-endpoint.php:1047
 #: includes/oauth/views/consent.php:363
 #: includes/oauth/views/device.php:161
@@ -1345,7 +1350,7 @@ msgstr ""
 msgid "Easy MCP AI: Invalid deployment settings use safe fallback values: %s"
 msgstr ""
 
-#: includes/class-plugin.php:933
+#: includes/class-plugin.php:935
 #: includes/oauth/class-authorization-endpoint.php:1022
 msgid "Authorization Error"
 msgstr ""
@@ -1461,7 +1466,7 @@ msgid "Something in front of WordPress rejects the request type AI clients use, 
 msgstr ""
 
 #: includes/diagnostics/class-blocker-copy.php:113
-#: includes/diagnostics/class-check-edge-block.php:385
+#: includes/diagnostics/class-check-edge-block.php:398
 msgid "Ask your host, CDN or security plugin to allow POST requests carrying JSON to /wp-json/easy-mcp-ai/. A rule that only permits GET, or that rejects JSON bodies, is the usual cause."
 msgstr ""
 
@@ -1556,7 +1561,7 @@ msgstr ""
 
 #: includes/diagnostics/class-blocker-copy.php:196
 #: includes/diagnostics/class-blocker-copy.php:210
-#: includes/diagnostics/class-check-config.php:390
+#: includes/diagnostics/class-check-config.php:398
 #: includes/diagnostics/class-check-observability.php:142
 #: includes/diagnostics/class-check-tool-visibility.php:352
 #: includes/diagnostics/class-check-tool-visibility.php:398
@@ -1750,38 +1755,42 @@ msgstr ""
 msgid "The rate limit is set to 0 calls per minute, which refuses every call an AI client makes rather than allowing unlimited calls."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:333
-msgid "Set the rate limit under Easy MCP AI → Settings → Access & safety to a positive number — the default of 60 suits most sites."
+#. translators: %d: the default calls per minute.
+#: includes/diagnostics/class-check-config.php:335
+#, php-format
+msgid "Set the rate limit under Easy MCP AI → Settings → Access & safety to a positive number — the default of %d suits most sites."
 msgstr ""
 
 #. translators: %d: configured calls per minute.
-#: includes/diagnostics/class-check-config.php:345
+#: includes/diagnostics/class-check-config.php:349
 #, php-format
 msgid "Set to %d calls per minute. AI clients send bursts of calls, so a limit this low makes them fail intermittently for no visible reason."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:348
-msgid "Raise the rate limit under Easy MCP AI → Settings → Access & safety — the default of 60 suits most sites."
+#. translators: %d: the default calls per minute.
+#: includes/diagnostics/class-check-config.php:354
+#, php-format
+msgid "Raise the rate limit under Easy MCP AI → Settings → Access & safety — the default of %d suits most sites."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:358
+#: includes/diagnostics/class-check-config.php:366
 #: assets/build/page-settings.js:5
 msgid "Force draft on create"
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:365
+#: includes/diagnostics/class-check-config.php:373
 msgid "On. Every post or page an AI client creates is saved as a draft, whatever status it asked for."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:370
+#: includes/diagnostics/class-check-config.php:378
 msgid "Off."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:379
+#: includes/diagnostics/class-check-config.php:387
 msgid "API token expiry"
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:382
+#: includes/diagnostics/class-check-config.php:390
 #: includes/diagnostics/class-check-observability.php:133
 #: includes/diagnostics/class-check-tool-visibility.php:321
 #: includes/diagnostics/class-check-tool-visibility.php:373
@@ -1789,68 +1798,68 @@ msgid "Could not read the API tokens."
 msgstr ""
 
 #. translators: %s: comma-separated token names.
-#: includes/diagnostics/class-check-config.php:407
+#: includes/diagnostics/class-check-config.php:415
 #, php-format
 msgid "Expired: %s."
 msgstr ""
 
 #. translators: %s: comma-separated token names with days remaining.
-#: includes/diagnostics/class-check-config.php:411
+#: includes/diagnostics/class-check-config.php:419
 #, php-format
 msgid "Expiring soon: %s."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:419
+#: includes/diagnostics/class-check-config.php:427
 msgid "Issue a replacement token under Easy MCP AI → Connections → API tokens and update it in your AI client."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:437
+#: includes/diagnostics/class-check-config.php:445
 msgid "Working authentication present"
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:442
+#: includes/diagnostics/class-check-config.php:450
 msgid "Could not read the API tokens or OAuth grants."
 msgstr ""
 
 #. translators: 1: active token count, 2: active OAuth grant count.
-#: includes/diagnostics/class-check-config.php:458
+#: includes/diagnostics/class-check-config.php:466
 #, php-format
 msgid "%1$d API token(s), %2$d OAuth grant(s)."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:471
+#: includes/diagnostics/class-check-config.php:479
 msgid "No AI client has been connected yet. Follow the Quick Start on the dashboard to connect one."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:480
+#: includes/diagnostics/class-check-config.php:488
 msgid "Every API token and OAuth grant on this site has expired or been revoked, so no AI client can connect."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:481
+#: includes/diagnostics/class-check-config.php:489
 msgid "Create a new API token under Easy MCP AI → Connections → API tokens, or reconnect your AI client to issue a fresh OAuth grant."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:491
+#: includes/diagnostics/class-check-config.php:499
 msgid "OAuth HTTPS requirement"
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:502
+#: includes/diagnostics/class-check-config.php:510
 msgid "EASY_MCP_AI_OAUTH_ALLOW_HTTP is defined on a public host, so OAuth requests are accepted over unencrypted HTTP. Access tokens can be read in transit."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:503
+#: includes/diagnostics/class-check-config.php:511
 msgid "Remove the EASY_MCP_AI_OAUTH_ALLOW_HTTP line from wp-config.php. It is intended for local development only."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:517
+#: includes/diagnostics/class-check-config.php:525
 msgid "OAuth layer active"
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:524
+#: includes/diagnostics/class-check-config.php:532
 msgid "The whole OAuth layer is switched off by code on this site: an easy_mcp_ai_oauth_enabled filter is returning false. Every OAuth endpoint — registration, authorization, discovery — returns 404, which looks identical to the plugin being broken."
 msgstr ""
 
-#: includes/diagnostics/class-check-config.php:525
+#: includes/diagnostics/class-check-config.php:533
 msgid "Find and remove the add_filter( 'easy_mcp_ai_oauth_enabled', ... ) call, usually in the active theme's functions.php or an mu-plugin. API tokens are unaffected and keep working."
 msgstr ""
 
@@ -2126,7 +2135,7 @@ msgid "This site's own address redirects somewhere else, so nothing could be che
 msgstr ""
 
 #: includes/diagnostics/class-check-discovery.php:565
-#: includes/diagnostics/class-check-edge-block.php:169
+#: includes/diagnostics/class-check-edge-block.php:182
 msgid "The test request did not reach this site's own code, so the result would not mean anything. Some hosts stop a site from calling its own address; on its own that is not a fault."
 msgstr ""
 
@@ -2201,80 +2210,80 @@ msgstr ""
 msgid "The connection test could not run on this site."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:163
+#: includes/diagnostics/class-check-edge-block.php:176
 msgid "The test request could not leave this site, so there is nothing to compare. Some hosts stop a site from calling its own address; on its own that is not a fault."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:218
+#: includes/diagnostics/class-check-edge-block.php:231
 msgid "A test request carrying the AI assistant's name got no reply, while the same request from this plugin was answered normally. That may be a passing network problem, or something in front of WordPress dropping the assistant's requests."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:219
+#: includes/diagnostics/class-check-edge-block.php:232
 msgid "Run the checks again. If it keeps happening, check your CDN or firewall for a bot-filtering rule naming Claude."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:229
+#: includes/diagnostics/class-check-edge-block.php:242
 msgid "Something in front of WordPress refuses Anthropic's crawler (ClaudeBot), while the assistant itself gets through. Connecting is not affected: the assistant never uses the crawler's name."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:230
+#: includes/diagnostics/class-check-edge-block.php:243
 msgid "No action is needed to connect. This is usually a \"block AI bots\" setting on a CDN or security plugin. If that rule is widened to the assistant itself, this check will fail."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:239
+#: includes/diagnostics/class-check-edge-block.php:252
 msgid "Requests carrying the AI assistant's name reach WordPress normally."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:265
+#: includes/diagnostics/class-check-edge-block.php:278
 msgid "Something in front of WordPress is refusing the AI assistant. An identical request to this site's AI endpoint is answered normally for this plugin but rejected when it carries the assistant's name, so the request never reaches WordPress and nothing is recorded here to explain it."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:271
+#: includes/diagnostics/class-check-edge-block.php:284
 msgid "Both stages are affected: adding this site as a connector will fail straight away, and even if one were already set up it would stop working."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:275
+#: includes/diagnostics/class-check-edge-block.php:288
 msgid "The sign-in stage is the one being blocked, so adding this site as a connector fails immediately — the assistant cannot register with the site at all. Anyone already connected is unaffected."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:278
+#: includes/diagnostics/class-check-edge-block.php:291
 msgid "The sign-in stage still works, which is what makes this confusing: connecting appears to succeed, access is approved, and only then does the assistant report that it could not connect."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:310
+#: includes/diagnostics/class-check-edge-block.php:323
 msgid "This is a setting on your CDN, firewall or security plugin, not in WordPress."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:312
+#: includes/diagnostics/class-check-edge-block.php:325
 msgid "If you use Cloudflare, look for the AI bot or AI Scrapers and Crawlers blocking option and allow this site's AI endpoint through; on other providers look for a bot-filtering rule that blocks AI assistants. A robots.txt on this site that disallows ClaudeBot is a sign the same rule set is switched on."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:316
+#: includes/diagnostics/class-check-edge-block.php:329
 msgid "The agent being refused is an ordinary HTTP client library, not an AI name, so an \"AI bot\" setting is usually not the cause. Look instead for a rule that blocks user agents beginning \"python-\" — these are common in generic scraper and vulnerability-scanner rule sets, and appear in nginx and Apache configuration, ModSecurity rule sets and security plugins as often as in a CDN. Allow that agent through for this site's AI endpoint."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:322
+#: includes/diagnostics/class-check-edge-block.php:335
 msgid "Two different kinds of rule are involved, so check for both."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:358
-#: includes/diagnostics/class-check-edge-block.php:481
+#: includes/diagnostics/class-check-edge-block.php:371
+#: includes/diagnostics/class-check-edge-block.php:494
 msgid "This site accepts posted AI requests"
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:366
+#: includes/diagnostics/class-check-edge-block.php:379
 msgid "The test request did not reach this site's own code, so there is nothing to compare. Some hosts stop a site from calling its own address; on its own that is not a fault."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:375
+#: includes/diagnostics/class-check-edge-block.php:388
 msgid "Requests sent the way an AI assistant sends them reach WordPress normally."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:384
+#: includes/diagnostics/class-check-edge-block.php:397
 msgid "An ordinary request to this site's AI endpoint is answered correctly, but the same request sent the way an AI assistant actually sends it — as a POST carrying JSON — is not. Something in front of WordPress is refusing it on the request type alone, so no AI client can make a single call, however it signs in."
 msgstr ""
 
-#: includes/diagnostics/class-check-edge-block.php:466
+#: includes/diagnostics/class-check-edge-block.php:479
 msgid "AI assistant can reach this site"
 msgstr ""
 
@@ -3937,8 +3946,8 @@ msgstr[1] ""
 
 #: includes/oauth/class-device-authorization.php:191
 #: includes/oauth/class-token-endpoint.php:144
-#: includes/oauth/class-token-endpoint.php:532
-#: includes/oauth/class-token-endpoint.php:684
+#: includes/oauth/class-token-endpoint.php:541
+#: includes/oauth/class-token-endpoint.php:693
 msgid "Client not found or inactive."
 msgstr ""
 
@@ -4173,11 +4182,11 @@ msgid "WordPress core update (replaces WordPress itself with a newer release fro
 msgstr ""
 
 #: includes/oauth/class-scope-map.php:977
-msgid "Plugin installs and deletions (adds plugins from wordpress.org, or removes plugin code)"
+msgid "Plugin installs and deletions (adds plugins from wordpress.org, or from a ZIP or URL, or removes plugin code)"
 msgstr ""
 
 #: includes/oauth/class-scope-map.php:978
-msgid "Theme installs and deletions (adds themes from wordpress.org, or removes theme code)"
+msgid "Theme installs and deletions (adds themes from wordpress.org, or from a ZIP or URL, or removes theme code)"
 msgstr ""
 
 #: includes/oauth/class-scope-map.php:979
@@ -4216,8 +4225,8 @@ msgid "Only authorization_code, refresh_token and urn:ietf:params:oauth:grant-ty
 msgstr ""
 
 #: includes/oauth/class-token-endpoint.php:137
-#: includes/oauth/class-token-endpoint.php:475
-#: includes/oauth/class-token-endpoint.php:675
+#: includes/oauth/class-token-endpoint.php:484
+#: includes/oauth/class-token-endpoint.php:684
 msgid "Missing required parameter."
 msgstr ""
 
@@ -4243,21 +4252,17 @@ msgid "The authorization request is still pending."
 msgstr ""
 
 #: includes/oauth/class-token-endpoint.php:207
-#: includes/oauth/class-token-endpoint.php:559
+#: includes/oauth/class-token-endpoint.php:568
 msgid "Resource parameter does not match the authorized resource."
 msgstr ""
 
 #: includes/oauth/class-token-endpoint.php:235
-#: includes/oauth/class-token-endpoint.php:618
+#: includes/oauth/class-token-endpoint.php:627
 msgid "Failed to issue access token."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:427
+#: includes/oauth/class-token-endpoint.php:430
 msgid "The grant behind this device code has been revoked."
-msgstr ""
-
-#: includes/oauth/class-token-endpoint.php:428
-msgid "The grant behind this authorization code has been revoked."
 msgstr ""
 
 #: includes/oauth/class-token-endpoint.php:431
@@ -4265,92 +4270,108 @@ msgid "The grant behind this device code could not be narrowed to its current pe
 msgstr ""
 
 #: includes/oauth/class-token-endpoint.php:432
-msgid "The grant behind this authorization code could not be narrowed to its current permissions."
-msgstr ""
-
-#: includes/oauth/class-token-endpoint.php:435
 msgid "The grant behind this device code no longer covers any permission."
 msgstr ""
 
 #: includes/oauth/class-token-endpoint.php:436
+msgid "The grant behind this refresh token has been revoked."
+msgstr ""
+
+#: includes/oauth/class-token-endpoint.php:437
+msgid "The grant behind this refresh token could not be narrowed to its current permissions."
+msgstr ""
+
+#: includes/oauth/class-token-endpoint.php:438
+msgid "The grant behind this refresh token no longer covers any permission."
+msgstr ""
+
+#: includes/oauth/class-token-endpoint.php:442
+msgid "The grant behind this authorization code has been revoked."
+msgstr ""
+
+#: includes/oauth/class-token-endpoint.php:443
+msgid "The grant behind this authorization code could not be narrowed to its current permissions."
+msgstr ""
+
+#: includes/oauth/class-token-endpoint.php:444
 msgid "The grant behind this authorization code no longer covers any permission."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:480
+#: includes/oauth/class-token-endpoint.php:489
 msgid "Invalid code_verifier format."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:497
+#: includes/oauth/class-token-endpoint.php:506
 msgid "Authorization code not found."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:517
+#: includes/oauth/class-token-endpoint.php:526
 msgid "Authorization code has expired."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:524
+#: includes/oauth/class-token-endpoint.php:533
 msgid "Client ID mismatch."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:546
+#: includes/oauth/class-token-endpoint.php:555
 msgid "Redirect URI mismatch."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:565
+#: includes/oauth/class-token-endpoint.php:574
 msgid "PKCE verification failed."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:575
+#: includes/oauth/class-token-endpoint.php:584
 msgid "Authorization code has already been used. Any tokens issued from it have been revoked."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:597
+#: includes/oauth/class-token-endpoint.php:606
 msgid "Authorization code already redeemed or expired. Tokens revoked."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:708
+#: includes/oauth/class-token-endpoint.php:717
 msgid "Resource mismatch."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:715
+#: includes/oauth/class-token-endpoint.php:725
 msgid "Refresh token is invalid, expired, or revoked."
 msgstr ""
 
 #. translators: %s: parameter name
-#: includes/oauth/class-token-endpoint.php:1049
+#: includes/oauth/class-token-endpoint.php:1073
 #, php-format
 msgid "The %s parameter must be sent in the request body, not in the query string."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1154
+#: includes/oauth/class-token-endpoint.php:1178
 msgid "client_id in the request body does not match the Authorization header."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1206
+#: includes/oauth/class-token-endpoint.php:1230
 msgid "Client registration is unusable; an administrator must revoke and re-register it."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1211
+#: includes/oauth/class-token-endpoint.php:1235
 msgid "This client is registered as a public client (token_endpoint_auth_method=none); do not send a client secret."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1217
+#: includes/oauth/class-token-endpoint.php:1241
 msgid "Use exactly one client authentication method per request: client_secret in the body OR an Authorization: Basic header."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1222
+#: includes/oauth/class-token-endpoint.php:1246
 msgid "Client authentication required: this client was registered with a client secret."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1227
+#: includes/oauth/class-token-endpoint.php:1251
 msgid "Client authentication failed."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1369
+#: includes/oauth/class-token-endpoint.php:1393
 msgid "HTTPS is required, and this request arrived over HTTPS at your proxy or CDN — but WordPress does not know that, so is_ssl() returns false. TLS is terminating in front of PHP and the forwarded protocol is not being honoured. Fix it in wp-config.php, above the \"stop editing\" line: if ( isset( $_SERVER[\"HTTP_X_FORWARDED_PROTO\"] ) && $_SERVER[\"HTTP_X_FORWARDED_PROTO\"] === \"https\" ) { $_SERVER[\"HTTPS\"] = \"on\"; } Only add this if a proxy you trust sets that header. This also corrects WordPress core and every other plugin on the site, not just this one."
 msgstr ""
 
-#: includes/oauth/class-token-endpoint.php:1372
+#: includes/oauth/class-token-endpoint.php:1396
 msgid "HTTPS is required. This request reached PHP over plain HTTP. If your site is served over HTTPS through a proxy or CDN, WordPress is not being told — set $_SERVER[\"HTTPS\"] from the forwarded protocol in wp-config.php. For local development over plain HTTP, define EASY_MCP_AI_OAUTH_ALLOW_HTTP as true in wp-config.php instead. Never set that on a production site."
 msgstr ""
 
@@ -4606,19 +4627,23 @@ msgstr ""
 msgid "This chat host did not complete the card handshake. Use the approval link in the message above, then ask the assistant to run the operation again."
 msgstr ""
 
-#: includes/tools/cache/class-clear-cache.php:143
+#: includes/tools/cache/class-clear-cache.php:148
 msgid "Clear every page and asset cache of this site that its cache plugins let you clear."
 msgstr ""
 
-#: includes/tools/cache/class-clear-cache.php:145
+#: includes/tools/cache/class-clear-cache.php:150
 msgid "Also purge the whole CDN zone (for example Cloudflare), which every visitor then refills from the server."
 msgstr ""
 
-#: includes/tools/cache/class-clear-cache.php:148
+#: includes/tools/cache/class-clear-cache.php:153
 msgid "Also flush the object cache (Redis or Memcached), which resets the rate limits and sign-in lockouts of AI connections."
 msgstr ""
 
-#: includes/tools/cache/class-clear-cache.php:150
+#: includes/tools/cache/class-clear-cache.php:156
+msgid "Also delete the minified CSS and JS files the cache plugins built; pages rebuild them on their next view."
+msgstr ""
+
+#: includes/tools/cache/class-clear-cache.php:158
 msgid "Visitors refill the caches from the server afterwards; no content or setting is deleted."
 msgstr ""
 
@@ -4850,29 +4875,40 @@ msgstr ""
 msgid "Delete the files of plugin %1$s (%2$s). Its uninstall routine does not run, so its settings and tables stay. The files cannot be restored."
 msgstr ""
 
+#. translators: 1: where the ZIP comes from, 2: the target folder, 3: optional replacement note
+#: includes/tools/plugins/class-install-plugin.php:147
+#, php-format
+msgid "Install a plugin from %1$s into %2$s%3$s. It is not activated."
+msgstr ""
+
+#: includes/tools/plugins/class-install-plugin.php:149
+msgid "the wp-content/plugins folder the ZIP names"
+msgstr ""
+
+#. translators: %s: version
+#: includes/tools/plugins/class-install-plugin.php:150
+#: includes/tools/plugins/class-install-plugin.php:168
+msgid ", replacing any copy already installed there"
+msgstr ""
+
 #. translators: 1: plugin slug, 2: "the latest version" or "version 1.2", 3: optional replacement note
-#: includes/tools/plugins/class-install-plugin.php:93
+#: includes/tools/plugins/class-install-plugin.php:165
 #, php-format
 msgid "Install the plugin \"%1$s\" from wordpress.org (%2$s) into wp-content/plugins/%1$s%3$s. It is not activated."
 msgstr ""
 
-#: includes/tools/plugins/class-install-plugin.php:95
-#: includes/tools/themes/class-install-theme.php:94
+#: includes/tools/plugins/class-install-plugin.php:167
+#: includes/tools/themes/class-install-theme.php:166
 msgid "the latest version"
 msgstr ""
 
 #. translators: %s: version
 #. translators: %s: WordPress version
-#: includes/tools/plugins/class-install-plugin.php:95
+#: includes/tools/plugins/class-install-plugin.php:167
 #: includes/tools/site-health/class-update-core.php:111
-#: includes/tools/themes/class-install-theme.php:94
+#: includes/tools/themes/class-install-theme.php:166
 #, php-format
 msgid "version %s"
-msgstr ""
-
-#. translators: %s: version
-#: includes/tools/plugins/class-install-plugin.php:96
-msgid ", replacing any copy already installed there"
 msgstr ""
 
 #. translators: 1: quoted plugin name and version, 2: plugin file
@@ -4889,6 +4925,30 @@ msgstr ""
 
 #: includes/tools/plugins/class-uninstall-plugin.php:97
 msgid "It is deactivated first if active."
+msgstr ""
+
+#. translators: 1: size such as "12 KB", 2: first 12 characters of a sha256
+#: includes/tools/plugins/trait-package-source.php:1070
+#, php-format
+msgid "a ZIP sent with the request (%1$s, sha256 %2$s…)"
+msgstr ""
+
+#. translators: 1: owner/repo, 2: size cap such as "50 MB"
+#: includes/tools/plugins/trait-package-source.php:1078
+#, php-format
+msgid "the latest GitHub release of %1$s (a ZIP of at most %2$s)"
+msgstr ""
+
+#. translators: 1: "file handoff" with its file name, 2: size cap such as "50 MB"
+#: includes/tools/plugins/trait-package-source.php:1082
+#, php-format
+msgid "the %1$s the client attached (at most %2$s)"
+msgstr ""
+
+#. translators: 1: host and path, 2: size cap such as "50 MB"
+#: includes/tools/plugins/trait-package-source.php:1085
+#, php-format
+msgid "the ZIP at %1$s (at most %2$s, downloaded over HTTPS)"
 msgstr ""
 
 #. translators: 1: post title, 2: post id, 3: post status, 4: minutes
@@ -5009,15 +5069,26 @@ msgstr ""
 msgid "Delete the theme %1$s (wp-content/themes/%2$s). The files cannot be restored."
 msgstr ""
 
-#. translators: 1: theme slug, 2: "the latest version" or "version 1.2", 3: optional replacement note
-#: includes/tools/themes/class-install-theme.php:92
+#. translators: 1: where the ZIP comes from, 2: the target folder, 3: optional replacement note
+#: includes/tools/themes/class-install-theme.php:146
 #, php-format
-msgid "Install the theme \"%1$s\" from wordpress.org (%2$s) into wp-content/themes/%1$s%3$s. It is not activated."
+msgid "Install a theme from %1$s into %2$s%3$s. It is not activated."
+msgstr ""
+
+#: includes/tools/themes/class-install-theme.php:148
+msgid "the wp-content/themes folder the ZIP names"
 msgstr ""
 
 #. translators: %s: version
-#: includes/tools/themes/class-install-theme.php:95
+#: includes/tools/themes/class-install-theme.php:149
+#: includes/tools/themes/class-install-theme.php:167
 msgid ", replacing any theme already installed there"
+msgstr ""
+
+#. translators: 1: theme slug, 2: "the latest version" or "version 1.2", 3: optional replacement note
+#: includes/tools/themes/class-install-theme.php:164
+#, php-format
+msgid "Install the theme \"%1$s\" from wordpress.org (%2$s) into wp-content/themes/%1$s%3$s. It is not activated."
 msgstr ""
 
 #. translators: 1: display name, 2: login, 3: user id

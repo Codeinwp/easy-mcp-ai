@@ -224,21 +224,26 @@ class Token_Endpoint {
     }
 
     private function consent_refusal( string $grant_type, string $reason ): \WP_REST_Response {
-        $device = Device_Authorization::GRANT_TYPE === $grant_type;
-        if ( 'revoked' === $reason ) {
-            $message = $device
-                ? __( 'The grant behind this device code has been revoked.', 'easy-mcp-ai' )
-                : __( 'The grant behind this authorization code has been revoked.', 'easy-mcp-ai' );
-        } elseif ( 'not_narrowed' === $reason ) {
-            $message = $device
-                ? __( 'The grant behind this device code could not be narrowed to its current permissions.', 'easy-mcp-ai' )
-                : __( 'The grant behind this authorization code could not be narrowed to its current permissions.', 'easy-mcp-ai' );
+        if ( Device_Authorization::GRANT_TYPE === $grant_type ) {
+            $messages = array(
+                'revoked'      => __( 'The grant behind this device code has been revoked.', 'easy-mcp-ai' ),
+                'not_narrowed' => __( 'The grant behind this device code could not be narrowed to its current permissions.', 'easy-mcp-ai' ),
+                'empty'        => __( 'The grant behind this device code no longer covers any permission.', 'easy-mcp-ai' ),
+            );
+        } elseif ( 'refresh_token' === $grant_type ) {
+            $messages = array(
+                'revoked'      => __( 'The grant behind this refresh token has been revoked.', 'easy-mcp-ai' ),
+                'not_narrowed' => __( 'The grant behind this refresh token could not be narrowed to its current permissions.', 'easy-mcp-ai' ),
+                'empty'        => __( 'The grant behind this refresh token no longer covers any permission.', 'easy-mcp-ai' ),
+            );
         } else {
-            $message = $device
-                ? __( 'The grant behind this device code no longer covers any permission.', 'easy-mcp-ai' )
-                : __( 'The grant behind this authorization code no longer covers any permission.', 'easy-mcp-ai' );
+            $messages = array(
+                'revoked'      => __( 'The grant behind this authorization code has been revoked.', 'easy-mcp-ai' ),
+                'not_narrowed' => __( 'The grant behind this authorization code could not be narrowed to its current permissions.', 'easy-mcp-ai' ),
+                'empty'        => __( 'The grant behind this authorization code no longer covers any permission.', 'easy-mcp-ai' ),
+            );
         }
-        return $this->token_error( 'invalid_grant', $message );
+        return $this->token_error( 'invalid_grant', $messages[ $reason ] ?? $messages['empty'] );
     }
 
     private function handle_authorization_code( \WP_REST_Request $request ) {
@@ -418,11 +423,22 @@ class Token_Endpoint {
             return $this->token_error( 'invalid_grant', __( 'Resource mismatch.', 'easy-mcp-ai' ) );
         }
 
-        $token_manager = new OAuth_Token_Manager();
-        $result = $token_manager->refresh( $refresh_token, Client_Metadata::storage_id( $client_id ), $resource );
+        $stored_client_id = Client_Metadata::storage_id( $client_id );
+        $token_manager    = new OAuth_Token_Manager();
+        $result           = $token_manager->refresh( $refresh_token, $stored_client_id, $resource );
 
         if ( false === $result ) {
             return $this->token_error( 'invalid_grant', __( 'Refresh token is invalid, expired, or revoked.', 'easy-mcp-ai' ) );
+        }
+
+        $grant  = (object) array(
+            'wp_user_id' => $result['wp_user_id'],
+            'client_id'  => $stored_client_id,
+            'scope'      => $result['scope'],
+        );
+        $result = $this->settle_against_consent( $token_manager, $result, 'refresh_token', $grant, $result['scope'] );
+        if ( $result instanceof \WP_REST_Response ) {
+            return $result;
         }
 
         $response = new \WP_REST_Response(
@@ -805,23 +821,6 @@ class Token_Endpoint {
     }
 
     public static function rl_transient_increment( string $key ): int {
-        $now    = time();
-        $packed = get_transient( $key );
-        if ( ! is_string( $packed ) || false === strpos( $packed, ':' ) ) {
-            $count    = 1;
-            $deadline = $now + HOUR_IN_SECONDS;
-        } else {
-            list( $c, $d ) = explode( ':', $packed, 2 );
-            $deadline      = (int) $d;
-            if ( $deadline <= $now ) {
-                $count    = 1;
-                $deadline = $now + HOUR_IN_SECONDS;
-            } else {
-                $count = (int) $c + 1;
-            }
-        }
-        $ttl = max( 1, $deadline - $now );
-        set_transient( $key, $count . ':' . $deadline, $ttl );
-        return $count;
+        return \Easy_MCP_AI\Fixed_Window_Counter::hit( $key, HOUR_IN_SECONDS )['count'];
     }
 }

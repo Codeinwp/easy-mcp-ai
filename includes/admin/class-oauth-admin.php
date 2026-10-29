@@ -28,6 +28,10 @@ class OAuth_Admin {
         $consents_table = $wpdb->prefix . 'easy_mcp_ai_oauth_consents';
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        if ( false === $wpdb->update( $consents_table, array( 'scope' => '' ), array( 'client_id' => $client_id ), array( '%s' ), array( '%s' ) ) ) {
+            return false;
+        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->delete( $tokens_table, array( 'client_id' => $client_id ), array( '%s' ) );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->delete( $codes_table, array( 'client_id' => $client_id ), array( '%s' ) );
