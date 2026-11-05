@@ -43,6 +43,7 @@ $files_to_load          = [
 	$themeisle_library_path . '/src/Modules/Featured_plugins.php',
 	$themeisle_library_path . '/src/Modules/Float_widget.php',
 	$themeisle_library_path . '/src/Modules/Ai_connect.php',
+	$themeisle_library_path . '/src/Modules/Support_hub.php',
 	$themeisle_library_path . '/src/Modules/Abstract_Migration.php',
 	$themeisle_library_path . '/src/Modules/Migrator.php',
 ];

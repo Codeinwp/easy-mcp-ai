@@ -163,6 +163,10 @@ final class Flatsome_Adapter extends Shortcode_Adapter {
         return self::TESTED_VERSIONS;
     }
 
+    public function structure_rules(): ?Flatsome_Registry {
+        return new Flatsome_Registry( $this->version() );
+    }
+
     public function field_kinds(): array {
         return self::FIELD_KINDS;
     }

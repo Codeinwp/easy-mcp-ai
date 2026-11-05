@@ -15,6 +15,8 @@ final class Post_Type_Rest_Base {
 
     const OK = 'ok';
 
+    const HIDDEN = 'hidden';
+
     const NOT_REST = 'not_rest';
 
     const FOREIGN_NAMESPACE = 'namespace';
@@ -34,7 +36,7 @@ final class Post_Type_Rest_Base {
         }
         $found = self::inspect( $value, $object );
         if ( self::OK !== $found['reason'] ) {
-            throw new \InvalidArgumentException( self::refusal( $value, $found ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \InvalidArgumentException( self::refusal( $value, $object, $found ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $found['base'];
     }
@@ -46,6 +48,13 @@ final class Post_Type_Rest_Base {
             'namespace' => '',
             'owner'     => '',
         );
+        $open = null !== Hidden_Post_Types::open_type( $post_type );
+        if ( $open || ( empty( $object->show_in_rest ) && Hidden_Post_Types::reaches( $post_type, $object ) ) ) {
+            $found['reason']    = $open ? self::OK : self::HIDDEN;
+            $found['base']      = $post_type;
+            $found['namespace'] = Hidden_Post_Types::POST_TYPE_NAMESPACE;
+            return $found;
+        }
         if ( empty( $object->show_in_rest ) ) {
             $found['reason'] = self::NOT_REST;
             return $found;
@@ -83,11 +92,15 @@ final class Post_Type_Rest_Base {
     }
 
     public static function require_served_type( string $base ): array {
-        $served = self::served_type( $base );
+        $served = self::served_type( $base ) ?? Hidden_Post_Types::open_type( $base );
         if ( null === $served ) {
             throw new \InvalidArgumentException( Post_Type_Tool_Hint::not_a_post_type( $base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $served;
+    }
+
+    public static function route_namespace( string $base ): string {
+        return null === self::served_type( $base ) && null !== Hidden_Post_Types::open_type( $base ) ? Hidden_Post_Types::POST_TYPE_NAMESPACE : 'wp/v2';
     }
 
     public static function require_own_route( string $method, string $base, string $path ): void {
@@ -139,9 +152,15 @@ final class Post_Type_Rest_Base {
         return isset( $object->$property ) && is_string( $object->$property ) && ! empty( $object->$property ) ? $object->$property : $fallback;
     }
 
-    private static function refusal( string $post_type, array $found ): string {
+    private static function refusal( string $post_type, object $object, array $found ): string {
         switch ( $found['reason'] ) {
+            case self::HIDDEN:
+                return sprintf( 'Post type "%s" is not shown in the REST API (show_in_rest is false), and this tool reaches posts only through it. The CPT tools reach this type by its slug.', $post_type );
             case self::NOT_REST:
+                $closed = Hidden_Post_Types::closed_reason( $post_type, $object );
+                if ( '' !== $closed ) {
+                    return sprintf( 'Post type "%1$s" is not shown in the REST API (show_in_rest is false), and the tools do not open it: %2$s.', $post_type, $closed );
+                }
                 return sprintf( 'Post type "%s" is not shown in the REST API (show_in_rest is false), and this tool reaches posts only through it.', $post_type );
             case self::FOREIGN_NAMESPACE:
                 return sprintf( 'Post type "%1$s" is not served under /wp/v2, the only namespace this tool addresses, but under %2$s.', $post_type, $found['namespace'] );

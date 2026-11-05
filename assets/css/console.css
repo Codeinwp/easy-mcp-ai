@@ -517,6 +517,26 @@ body.emcp-page {
 	color: var(--emcp-ink-400);
 }
 
+/* The Read cell of a row whose one scope, under Write, reads too: grey
+   like "—" until that box is ticked (GitHub #710, #715). */
+.emcp-table .emcp-included {
+	color: var(--emcp-ink-400);
+	cursor: help;
+}
+
+.emcp-table tr:has(input:checked) .emcp-included {
+	color: var(--emcp-ink-900);
+}
+
+.emcp-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 /* ── labelled divider ───────────────────────────────────────────────── */
 
 .emcp-divider {
@@ -590,7 +610,7 @@ body.emcp-page {
 	border-top: none;
 }
 
-.emcp-choice:has(input:checked) {
+.emcp-choice:has(input[name="access_level"]:checked) {
 	background: var(--emcp-lime-100);
 	border-inline-start-color: var(--emcp-ink-900);
 }
@@ -614,6 +634,125 @@ body.emcp-page {
 	flex: none;
 	cursor: pointer;
 	accent-color: var(--emcp-ink-900);
+}
+
+/* Match a role (GitHub #196): the level's own label beside its radio, and
+   the role control under it, outside that label. */
+.emcp-choice--role {
+	cursor: default;
+}
+
+.emcp-choice--role > span {
+	gap: 8px;
+}
+
+.emcp-choice__label {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	cursor: pointer;
+}
+
+/* Up to three roles: a segmented control of real radios. */
+.emcp-segmented {
+	display: inline-flex;
+	align-self: flex-start;
+	flex-wrap: wrap;
+	border: 1px solid var(--emcp-border);
+	border-radius: var(--emcp-radius);
+	background: var(--emcp-white);
+	overflow: hidden;
+}
+
+.emcp-segmented__item {
+	position: relative;
+	cursor: pointer;
+}
+
+.emcp-segmented__item + .emcp-segmented__item {
+	border-inline-start: 1px solid var(--emcp-border);
+}
+
+.emcp-segmented__item input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.emcp-segmented__item span {
+	display: block;
+	padding: 5px 12px;
+	font-size: var(--emcp-text-md);
+	font-weight: 500;
+	color: var(--emcp-fg);
+}
+
+.emcp-segmented__item:has(input:checked) span {
+	background: var(--emcp-ink-900);
+	color: var(--emcp-white);
+}
+
+.emcp-segmented__item:has(input:focus-visible) {
+	z-index: 1;
+	box-shadow: var(--emcp-focus-ring);
+}
+
+/* More than three: a dropdown. */
+.emcp-select {
+	align-self: flex-start;
+	width: auto;
+	min-width: 200px;
+	max-width: 100%;
+	padding-inline-end: 28px;
+	cursor: pointer;
+}
+
+/* The tools the site has switched off (GitHub #196): one line, its list
+   behind Show. A native disclosure, so it works without the script. */
+.emcp-switched-off > summary {
+	list-style: none;
+	cursor: pointer;
+}
+
+.emcp-switched-off > summary::-webkit-details-marker {
+	display: none;
+}
+
+.emcp-switched-off__toggle {
+	margin-inline-start: 4px;
+	font-weight: 500;
+	color: var(--emcp-blue-700);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.emcp-switched-off:not([open]) .emcp-switched-off__toggle[data-when="open"],
+.emcp-switched-off[open] .emcp-switched-off__toggle[data-when="closed"] {
+	display: none;
+}
+
+.emcp-switched-off__list {
+	margin: 8px 0;
+	padding: 10px 14px;
+	list-style: none;
+	background: var(--emcp-sunken);
+	border: 1px solid var(--emcp-border-subtle);
+	border-radius: var(--emcp-radius);
+}
+
+.emcp-switched-off__heading {
+	margin: 12px 0 0;
+	font-weight: 500;
+}
+
+.emcp-switched-off__list li {
+	display: inline;
+}
+
+.emcp-switched-off__list li:not(:last-child)::after {
+	content: ", ";
 }
 
 /* ── privileged access (GitHub #94): the Full access notice and the Custom label ── */
@@ -662,6 +801,13 @@ body.emcp-page {
 	left: 50%;
 	margin: 0;
 	transform: translateX(-50%);
+}
+
+/* What a category row's tools need beyond the approver's account
+   (GitHub #196), under its label. */
+.emcp-row-note {
+	display: block;
+	margin-top: 2px;
 }
 
 /* ── disclosure ─────────────────────────────────────────────────────── */

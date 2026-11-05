@@ -50,7 +50,7 @@ class Create_Menu extends Base_Tool {
                 ),
                 'description' => array(
                     'type'        => 'string',
-                    'description' => 'The description for the menu.',
+                    'description' => 'The description for the menu. WordPress keeps the HTML it allows in a term description, such as links and bold text.',
                 ),
             ),
             'required'   => array( 'name' ),
@@ -66,7 +66,7 @@ class Create_Menu extends Base_Tool {
         $request->set_param( 'name', sanitize_text_field( $arguments['name'] ) );
 
         if ( isset( $arguments['description'] ) ) {
-            $request->set_param( 'description', sanitize_text_field( $arguments['description'] ) );
+            $request->set_param( 'description', self::markup_arg( $arguments, 'description' ) );
         }
 
         $response = rest_do_request( $request );

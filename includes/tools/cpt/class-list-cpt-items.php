@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\CPT;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
 use Easy_MCP_AI\Tools\Post_Type_Tool_Hint;
 
@@ -42,7 +43,7 @@ class List_CPT_Items extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists items of any custom post type (CPT) registered with `show_in_rest=true`. Required: `rest_base` (e.g. "product", "events", "movies"), or the post_type slug, which is also accepted. `wp_get_post_types` lists every post type with its slug and rest_base. Optional, each detailed on its property: `per_page` (default 10, max 100), `page` or `offset`, `search`, `status` (default publish), `include` or `exclude` (not both), `slug`, `author` or `author_exclude` (not both), `parent` or `parent_exclude` (not both), `after` / `before`, `has_password`, `date_query` / `tax_query` / `meta_query` (WP_Query clause lists; meta_query needs edit_posts and only keys registered with show_in_rest for the type), `orderby` (default date), `order` (default desc), `context` (edit by default: only items you can edit; view: items you can read, for callers without edit access), `raw_columns` (edit context only: each item also carries `raw`, every database column as stored). Returns { items: [{ id, title, status, date, modified, link, slug, raw (only with raw_columns) }], total, total_pages, page, per_page, rest_base }. The tool is listed for every caller, but WordPress enforces each type\'s own edit capability on the request (edit_posts, or a custom one like WooCommerce\'s edit_products), so a caller may get a permission error on a specific CPT.';
+        return 'Lists items of any custom post type (CPT) shown in the REST API, or hidden from it but public with an admin screen. Required: `rest_base` (e.g. "product", "events", "movies"), or the post_type slug, which is also accepted (a hidden type by its slug). `wp_get_post_types` lists every post type with its slug and rest_base. Optional, each detailed on its property: `per_page` (default 10, max 100), `page` or `offset`, `search`, `status` (default publish), `include` or `exclude` (not both), `slug`, `author` or `author_exclude` (not both), `parent` or `parent_exclude` (not both), `after` / `before`, `has_password`, `date_query` / `tax_query` / `meta_query` (WP_Query clause lists; meta_query needs edit_posts and only keys registered with show_in_rest for the type), `orderby` (default date), `order` (default desc), `context` (edit by default: only items you can edit; view: items you can read, for callers without edit access), `raw_columns` (edit context only: each item also carries `raw`, every database column as stored). Returns { items: [{ id, title, status, date, modified, link, slug, raw (only with raw_columns) }], total, total_pages, page, per_page, rest_base }. The tool is listed for every caller, but WordPress enforces each type\'s own edit capability on the request (edit_posts, or a custom one like WooCommerce\'s edit_products), so a caller may get a permission error on a specific CPT.';
     }
 
     public function get_category() {
@@ -137,9 +138,19 @@ class List_CPT_Items extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->list_items( $arguments );
+            }
+        );
+    }
+
+    private function list_items( array $arguments ): array {
         $this->validate_required( $arguments, array( 'rest_base' ) );
 
         $rest_base = $this->resolve_post_type_rest_base( $arguments['rest_base'], 'rest_base' );
+        Hidden_Post_Types::refuse_unreadable( $rest_base );
 
         $per_page = isset( $arguments['per_page'] ) ? min( 100, max( 1, absint( $arguments['per_page'] ) ) ) : 10;
         $page     = isset( $arguments['page'] ) ? absint( $arguments['page'] ) : 1;

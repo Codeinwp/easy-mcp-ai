@@ -362,4 +362,11 @@ class Config {
         }
         return implode( "\n", $lines ) . "\n";
     }
+
+    public static function read_uncached( string $option ) {
+        \wp_cache_delete( $option, 'options' );
+        \wp_cache_delete( 'notoptions', 'options' );
+        \wp_cache_delete( 'alloptions', 'options' );
+        return \get_option( $option, null );
+    }
 }

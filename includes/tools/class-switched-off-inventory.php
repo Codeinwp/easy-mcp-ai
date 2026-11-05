@@ -154,7 +154,7 @@ final class Switched_Off_Inventory {
                 $status    = Tool_Status::off( $name, (bool) $tool->is_disabled_by_default() );
                 $entries[] = self::tool_entry( $tool, $name, self::OFF, 'off' === $status['status'] ? Tool_Status::in_admin( $status['where'] ) : Tool_Status::CONFIGURATION_PLACE );
             } elseif ( ! Server::matches_tool_patterns( $name, $patterns ) ) {
-                $entries[] = self::tool_entry( $tool, $name, self::PATTERN, Tool_Status::place( Tool_Status::PATTERNS_PATH, Config::is_locked( 'easy_mcp_ai_allowed_tool_patterns' ) ) );
+                $entries[] = self::tool_entry( $tool, $name, self::PATTERN, Tool_Status::CONFIGURATION_PLACE );
             }
         }
         usort( $entries, static function ( array $a, array $b ): int {
@@ -175,7 +175,7 @@ final class Switched_Off_Inventory {
     }
 
     private static function integration_place(): string {
-        return Tool_Status::place( Tool_Status::ABILITIES_PATH, Config::is_locked( 'easy_mcp_ai_disabled_tools' ) );
+        return Tool_Status::place( Tool_Status::TOOLS_PATH, Config::is_locked( 'easy_mcp_ai_disabled_tools' ) );
     }
 
     private static function ability_entry( string $slug, object $ability ): array {
@@ -184,14 +184,14 @@ final class Switched_Off_Inventory {
         $label       = self::read( $ability, 'get_label' );
         $description = self::read( $ability, 'get_description' );
         $annotations = self::ability_annotations( $ability );
-        $path        = 'core' === $namespace ? Tool_Status::CORE_ABILITIES_PATH : Tool_Status::ABILITIES_PATH;
+        $path        = Tool_Status::TOOLS_PATH;
         $entry       = array(
             'kind'        => self::ABILITY,
             'name'        => $name,
             'label'       => '' !== $label ? $label : $slug,
             'summary'     => self::summary( '' !== $description ? $description : $label ),
             'group'       => 'abilities:' . $namespace,
-            'group_label' => 'core' === $namespace ? 'WordPress abilities' : ucfirst( $namespace ) . ' abilities',
+            'group_label' => 'core' === $namespace ? 'WordPress abilities' : ( \Easy_MCP_AI\Compat\Vendor_Abilities::vendor_of( $namespace ) ?? ucfirst( $namespace ) ) . ' abilities',
             'access'      => ! empty( $annotations['readonly'] ) ? 'read' : 'write',
             'state'       => self::NOT_ENABLED,
             'where'       => Tool_Status::place( $path, null !== Tool_State::override_of( $name ) ),
@@ -229,7 +229,7 @@ final class Switched_Off_Inventory {
         return array();
     }
 
-    private static function tool_entry( Base_Tool $tool, string $name, string $state, string $where ): array {
+    public static function tool_entry( Base_Tool $tool, string $name, string $state, string $where ): array {
         $annotations         = (array) $tool->get_annotations();
         list( $key, $label ) = self::tool_group( $tool, $name );
         $read_only           = ! empty( $annotations['readOnlyHint'] );

@@ -72,6 +72,15 @@ class OAuth_Token_Validator {
             );
         }
 
+        $role_limit = Role_Limit::for_grant( (int) $token_data['wp_user_id'], isset( $token_data['client_id'] ) ? (string) $token_data['client_id'] : '' );
+        if ( false === $role_limit ) {
+            return new \WP_Error(
+                'invalid_token',
+                __( 'Token is invalid, expired, or revoked.', 'easy-mcp-ai' ),
+                array( 'status' => 401 )
+            );
+        }
+
         $scope         = isset( $token_data['scope'] ) ? $token_data['scope'] : '';
         $allowed_tools = Scope_Map::resolve_allowed_tools( $scope );
 
@@ -81,6 +90,7 @@ class OAuth_Token_Validator {
             'client_id'     => isset( $token_data['client_id'] ) ? (string) $token_data['client_id'] : null,
             'allowed_tools' => $allowed_tools,
             'scope'         => (string) $scope,
+            'role_limit'    => $role_limit,
         );
     }
 

@@ -15,7 +15,7 @@ class Slimseo_Update_Post_Seo extends Base_Tool {
 	}
 
 	public function get_description() {
-		return 'Updates the Slim SEO metadata for a post or page (title, description, facebook_image, twitter_image, canonical, noindex) via the WordPress core REST API. Slim SEO stores all fields in a single object, so this tool reads the current values and merges your changes over them — fields you omit are preserved.';
+		return 'Updates the Slim SEO metadata for a post or page (title, description, facebook_image, twitter_image, canonical, noindex) via the WordPress core REST API. Slim SEO stores all fields in a single object, so this tool reads the current values and merges your changes over them — fields you omit are preserved. Only the SEO fields are written: the post itself is not saved (its modified date and revisions stay as they are); send `resave: true` to save the whole post too.';
 	}
 
 	public function get_category() {
@@ -67,6 +67,7 @@ class Slimseo_Update_Post_Seo extends Base_Tool {
 					'type'        => 'boolean',
 					'description' => 'Set true to mark this post as noindex.',
 				),
+				'resave'         => self::resave_property( 'SEO fields' ),
 			),
 			'required'   => array( 'post_id' ),
 		);
@@ -78,6 +79,7 @@ class Slimseo_Update_Post_Seo extends Base_Tool {
 		}
 
 		$post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
+		$this->refuse_missing_post( $post_id );
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
@@ -109,7 +111,7 @@ class Slimseo_Update_Post_Seo extends Base_Tool {
 			$merged['noindex'] = (bool) $arguments['noindex'];
 		}
 
-		$this->rest_request( 'POST', '/wp/v2/' . $base . '/' . $post_id, array( 'meta' => array( 'slim_seo' => $merged ) ) );
+		$this->rest_post_update( 'POST', '/wp/v2/' . $base . '/' . $post_id, array( 'meta' => array( 'slim_seo' => $merged ) ), null, $post_id, ! empty( $arguments['resave'] ) );
 
 		return array(
 			'post_id'  => $post_id,

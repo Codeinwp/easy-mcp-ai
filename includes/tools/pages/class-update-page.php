@@ -17,7 +17,7 @@ class Update_Page extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Updates an existing WordPress page (PATCH semantics — only supplied fields change). Required: `page_id`. Optional: `title`, `content` (HTML/Gutenberg blocks), `status` (publish/draft/pending/private/future or a custom status registered on this site — "trash" is NOT accepted here and is rejected by the WordPress REST API as an internal status; to move a page to trash use `wp_delete_page`), `date` (ISO 8601, site time, use with status="future" to reschedule) or `date_gmt` (UTC) — never both, `excerpt`, `parent` (re-parent the page — 0 for top-level), `template`, `menu_order`, `slug`, `author`, `featured_media`, `comment_status`, `ping_status`, `password` (an empty string removes the password), `tax_input` ({ taxonomy slug: [term IDs] }, replacing that taxonomy\'s terms; only taxonomies registered on pages and shown in the REST API). Optional `meta` (object of meta key-value pairs; only REST-registered keys persist, including the SEO keys of enabled plugin integrations, and dropped keys are reported back as `meta_ignored` with a `notice`). Returns { id, title, status, modified, link, updated }, where `updated` maps each sent field among slug, date, date_gmt, author, parent, menu_order, template, featured_media, comment_status, ping_status and excerpt to the value WordPress stored (a taken slug comes back with its suffix). Passing an empty string for a text field (`title`, `content`, `excerpt`) preserves the existing value (it is not cleared) — to blank one, list it in `clear` (e.g. `clear: ["excerpt"]`). For CPT items use `wp_update_cpt_item` instead.';
+        return 'Updates an existing WordPress page (PATCH semantics — only supplied fields change). Required: `page_id`. Optional: `title`, `content` (HTML/Gutenberg blocks), `status` (publish/draft/pending/private/future or a custom status registered on this site — "trash" is NOT accepted here and is rejected by the WordPress REST API as an internal status; to move a page to trash use `wp_delete_page`), `date` (ISO 8601, site time, use with status="future" to reschedule) or `date_gmt` (UTC) — never both, `excerpt`, `parent` (re-parent the page — 0 for top-level), `template`, `menu_order`, `slug`, `author`, `featured_media`, `comment_status`, `ping_status`, `password` (an empty string removes the password), `tax_input` ({ taxonomy slug: [term IDs] }, replacing that taxonomy\'s terms; only taxonomies registered on pages and shown in the REST API). Optional `meta` (object of meta key-value pairs; only REST-registered keys persist, including the SEO keys of enabled plugin integrations, and dropped keys are reported back as `meta_ignored` with a `notice`). Returns { id, title, status, modified, link, updated }, where `updated` maps each sent field among slug, date, date_gmt, author, parent, menu_order, template, featured_media, comment_status, ping_status and excerpt to the value WordPress stored (a taken slug comes back with its suffix). Passing an empty string for a text field (`title`, `content`, `excerpt`) preserves the existing value (it is not cleared) — to blank one, list it in `clear` (e.g. `clear: ["excerpt"]`). For CPT items use `wp_update_cpt_item` instead. A call that changes only meta, the featured image or the template writes just those and does not save the page itself (its modified date and revisions stay as they are); send `resave: true` to save the whole page too.';
     }
 
     public function get_category() {
@@ -128,6 +128,7 @@ class Update_Page extends Base_Tool {
                     'type'        => 'object',
                     'description' => 'Meta key-value pairs to set. Only keys registered for the REST API persist, including the SEO keys of enabled plugin integrations (Rank Math, Yoast, SEOPress, The SEO Framework — see wp_update_post_meta for the list on this site); dropped keys are reported back as meta_ignored.',
                 ),
+                'resave'         => self::resave_property( 'meta, the featured image or the template' ),
             ),
             'required'   => array( 'page_id' ),
         );
@@ -154,13 +155,13 @@ class Update_Page extends Base_Tool {
         $meta_sent = $this->apply_meta_argument( $arguments, $params );
 
         if ( isset( $arguments['tax_input'] ) ) {
-            $params = array_merge( $params, Create_CPT_Item::tax_input_params( $arguments['tax_input'], 'page', $params ) );
+            $params += Create_CPT_Item::tax_input_params( $arguments['tax_input'], 'page', $params );
         }
 
         $this->refuse_builder_owned_write( $page_id, array_key_exists( 'content', $params ), (array) ( $params['meta'] ?? array() ) );
 
         $echoed = Update_Post::echoed_fields( $params, self::ECHOED_FIELDS );
-        $data   = $this->rest_request( 'PUT', '/wp/v2/pages/' . $page_id, $params, implode( ',', array_merge( array( 'id', 'title', 'status', 'modified', 'link' ), $echoed, $meta_sent ? array( 'meta' ) : array() ) ) );
+        $data   = $this->rest_post_update( 'PUT', '/wp/v2/pages/' . $page_id, $params, implode( ',', array_merge( array( 'id', 'title', 'status', 'modified', 'link' ), $echoed, $meta_sent ? array( 'meta' ) : array() ) ), $page_id, ! empty( $arguments['resave'] ) );
 
         $result = array(
             'id'       => $data['id'],

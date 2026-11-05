@@ -29,6 +29,7 @@ class Diagnostics {
     public static function register_core_checks( $tool_registry = null ) {
         self::register( array( Check_Transport::class, 'run' ), 'a' );
         self::register( array( Check_Notices::class, 'run' ), 'a' );
+        self::register( array( Check_Sign_In_Reach::class, 'run' ), 'a14' );
         self::register( array( Check_Session::class, 'run' ), 'b' );
         self::register( array( Check_Schema::class, 'run' ), 'c' );
         self::register( function () use ( $tool_registry ) {

@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\Taxonomy;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -18,7 +19,7 @@ class List_Terms extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists terms of ANY taxonomy exposed in the REST API — media folders such as `mlo-category`, product categories and brands (product_cat, product_brand), ACF or other custom taxonomies, as well as category and post_tag. Use `wp_get_taxonomies` to discover the taxonomy slugs. Required: `taxonomy` (the taxonomy slug). Optional: `search`, `parent` (filter by parent ID; use 0 for top-level only), `per_page` (default 100), `page`, `orderby` (id/term_id/name/slug/count/include/term_group/description/parent/term_taxonomy_id/none/meta_value/meta_value_num — default name), `order` (asc/desc), `hide_empty` (boolean, default false), and the get_terms() filters `include` / `exclude` / `exclude_tree` / `term_taxonomy_id` (arrays of IDs), `slug` / `name` (arrays of exact values), `child_of` (every descendant of a term), `childless` (boolean), `name__like` / `description__like` (substring), `pad_counts` (boolean: add descendants\' counts to each parent\'s count), `meta_key` with optional `meta_value` and `meta_compare` (needs the taxonomy\'s edit_terms capability, the one reading term meta needs; a protected key, starting with an underscore, also needs manage_options), `include_url` (boolean, default false). Returns { taxonomy, terms: [{ id, name, slug, description, parent, count, term_taxonomy_id, term_group, url (only with include_url) }], total, total_pages, page, per_page }. Reads through the taxonomy\'s own REST route — its `rest_namespace` (default wp/v2) and `rest_base` — so a taxonomy registered under a custom namespace is reached too. Capability resolved dynamically per taxonomy via cap->assign_terms.';
+        return 'Lists terms of ANY taxonomy exposed in the REST API, or a public taxonomy hidden from it that belongs to a hidden post type the CPT tools open (`wp_get_taxonomies` marks it `rest_api: false`) — media folders such as `mlo-category`, product categories and brands (product_cat, product_brand), ACF or other custom taxonomies, as well as category and post_tag. Use `wp_get_taxonomies` to discover the taxonomy slugs. Required: `taxonomy` (the taxonomy slug). Optional: `search`, `parent` (filter by parent ID; use 0 for top-level only), `per_page` (default 100), `page`, `orderby` (id/term_id/name/slug/count/include/term_group/description/parent/term_taxonomy_id/none/meta_value/meta_value_num — default name), `order` (asc/desc), `hide_empty` (boolean, default false), and the get_terms() filters `include` / `exclude` / `exclude_tree` / `term_taxonomy_id` (arrays of IDs), `slug` / `name` (arrays of exact values), `child_of` (every descendant of a term), `childless` (boolean), `name__like` / `description__like` (substring), `pad_counts` (boolean: add descendants\' counts to each parent\'s count), `meta_key` with optional `meta_value` and `meta_compare` (needs the taxonomy\'s edit_terms capability, the one reading term meta needs; a protected key, starting with an underscore, also needs manage_options), `include_url` (boolean, default false). Returns { taxonomy, terms: [{ id, name, slug, description, parent, count, term_taxonomy_id, term_group, url (only with include_url) }], total, total_pages, page, per_page }. Reads through the taxonomy\'s own REST route — its `rest_namespace` (default wp/v2) and `rest_base` — so a taxonomy registered under a custom namespace is reached too. Capability resolved dynamically per taxonomy via cap->assign_terms.';
     }
 
     public function get_category() {
@@ -157,6 +158,15 @@ class List_Terms extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for_taxonomy(
+            $arguments['taxonomy'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->list_terms( $arguments );
+            }
+        );
+    }
+
+    private function list_terms( array $arguments ): array {
         $this->validate_required( $arguments, array( 'taxonomy' ) );
         $taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );
         $tax_obj  = $this->listable_taxonomy( $taxonomy );

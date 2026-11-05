@@ -15,6 +15,7 @@ final class Meta_Exposure {
         'yoast-seo'         => 'Easy_MCP_AI\\Meta\\Providers\\Yoast_Meta_Provider',
         'seopress'          => 'Easy_MCP_AI\\Meta\\Providers\\Seopress_Meta_Provider',
         'the-seo-framework' => 'Easy_MCP_AI\\Meta\\Providers\\Tsf_Meta_Provider',
+        'divi'              => 'Easy_MCP_AI\\Meta\\Providers\\Divi_Meta_Provider',
     );
 
     private static $registered = false;
@@ -26,6 +27,8 @@ final class Meta_Exposure {
     private static $exposed = array();
 
     private static $hooked_types = array();
+
+    private static $hooked_meta_writes = false;
 
     public static function all_providers() {
         if ( null === self::$providers ) {
@@ -86,6 +89,20 @@ final class Meta_Exposure {
             );
             add_filter( "rest_prepare_{$post_type}", array( __CLASS__, 'hide_meta_from_readers' ), 10, 2 );
         }
+        if ( ! empty( self::$exposed ) && ! self::$hooked_meta_writes ) {
+            self::$hooked_meta_writes = true;
+            foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $action ) {
+                add_action( $action, array( __CLASS__, 'after_meta_write' ), 10, 3 );
+            }
+        }
+    }
+
+    public static function after_meta_write( $meta_ids, $post_id, $meta_key ) {
+        $post_type = get_post_type( (int) $post_id );
+        if ( ! is_string( $post_type ) || ! isset( self::$exposed[ $post_type ][ (string) $meta_key ] ) ) {
+            return;
+        }
+        self::$exposed[ $post_type ][ (string) $meta_key ]->after_write( (int) $post_id, array( (string) $meta_key ) );
     }
 
     public static function guard_meta_write( $prepared_post, $request, $post_type ) {
@@ -173,6 +190,7 @@ final class Meta_Exposure {
         self::$providers    = null;
         self::$exposed      = array();
         self::$hooked_types = array();
+        self::$hooked_meta_writes = false;
     }
 
     public static function register_provider( Meta_Field_Provider $provider ) {
@@ -318,7 +336,7 @@ final class Meta_Exposure {
             }
             if ( ! self::is_group_enabled( $slug ) ) {
                 $out[ $key ] = sprintf(
-                    '"%s" is a %s meta key. %s is installed but its integration is not enabled under Easy MCP AI → Tools → Plugins; once an administrator enables it, this key can be written here%s.',
+                    '"%s" is a %s meta key. %s is installed but its integration is not enabled under Easy MCP AI → Tools; once an administrator enables it, this key can be written here%s.',
                     $key,
                     $label,
                     $label,

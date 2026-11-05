@@ -54,6 +54,7 @@ class Seopress_Get_Content_Analysis extends Base_Tool {
 		}
 
 		$post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
+		$this->refuse_missing_post( $post_id );
 
 		$body = $this->rest_request( 'GET', '/seopress/v1/posts/' . $post_id . '/content-analysis' );
 

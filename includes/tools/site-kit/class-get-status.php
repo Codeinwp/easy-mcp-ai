@@ -28,7 +28,7 @@ class Get_Status extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Shows whether Site Kit by Google can give this account Google Analytics 4 and Search Console data, and through whose Google connection. Call it first when unsure, or when another Site Kit tool is refused. No arguments. Returns { site_kit_version, modules: [{ module, label, active, connected, access, reason?, property_id?, tools }] }. `access` is "owner" (your own connection), "shared" (the owner\'s connection, shared with your role: Site Kit then allows only its shared-dashboard metrics and dimensions), "own_google_account" (the Google account you connected in Site Kit, which may not have access to the property), or "none" with the `reason`. `property_id` is shown only to users who can manage Site Kit.';
+        return 'Shows whether Site Kit by Google can give this account Google Analytics 4 and Search Console data, and through whose Google connection. Call it first when unsure, or when another Site Kit tool is refused. No arguments. Returns { site_kit_version, modules: [{ module, label, active, connected, access, reason?, property_id?, tools }] }. `access` is "owner" (your own connection), "shared" (the owner\'s connection, shared with your role: Site Kit then allows only its shared-dashboard metrics and dimensions), "own_google_account" (the Google account you connected in Site Kit, which may not have access to the property), or "none" with the `reason`. When Site Kit is not set up (it tells only users who can set it up), every module is `connected: false` with that reason. `property_id` is shown only to users who can manage Site Kit.';
     }
 
     public function get_annotations() {
@@ -50,10 +50,11 @@ class Get_Status extends Base_Tool {
 
     public function execute( array $arguments ) {
         $this->require_site_kit();
+        $set_up  = $this->site_kit_set_up();
         $listed  = $this->listed_modules();
         $modules = array();
         foreach ( self::MODULES as $slug => $module ) {
-            $modules[] = $this->module_status( $slug, $module, $listed[ $slug ] ?? null );
+            $modules[] = $this->module_status( $slug, $module, $listed[ $slug ] ?? null, $set_up );
         }
         return array(
             'site_kit_version' => GOOGLESITEKIT_VERSION,
@@ -76,19 +77,21 @@ class Get_Status extends Base_Tool {
         return $by_slug;
     }
 
-    private function module_status( string $slug, array $module, ?array $listed ): array {
+    private function module_status( string $slug, array $module, ?array $listed, ?bool $set_up ): array {
         $row = array(
             'module'    => $slug,
             'label'     => $module['label'],
             'active'    => null === $listed ? null : ! empty( $listed['active'] ),
-            'connected' => null === $listed ? null : ! empty( $listed['connected'] ),
+            'connected' => false === $set_up ? false : ( null === $listed ? null : ! empty( $listed['connected'] ) ),
         );
         $settings = $this->module_settings( $slug );
         if ( isset( $settings['propertyID'] ) && is_scalar( $settings['propertyID'] ) && '' !== (string) $settings['propertyID'] ) {
             $row['property_id'] = (string) $settings['propertyID'];
         }
 
-        list( $access, $reason ) = $this->access( $slug, $listed, $settings );
+        list( $access, $reason ) = false === $set_up
+            ? array( 'none', 'Site Kit is not set up. An administrator can set it up from its menu in wp-admin.' )
+            : $this->access( $slug, $listed, $settings, null === $set_up );
         $row['access'] = $access;
         if ( '' !== $reason ) {
             $row['reason'] = $reason;
@@ -106,7 +109,7 @@ class Get_Status extends Base_Tool {
         return is_array( $settings ) ? $settings : array();
     }
 
-    private function access( string $slug, ?array $listed, array $settings ): array {
+    private function access( string $slug, ?array $listed, array $settings, bool $setup_hidden ): array {
         if ( null !== $listed && empty( $listed['active'] ) ) {
             return array( 'none', 'The module is not active in Site Kit. An administrator can connect it under Site Kit › Settings › Connect more services.' );
         }
@@ -117,7 +120,7 @@ class Get_Status extends Base_Tool {
         if ( ! current_user_can( 'googlesitekit_setup' ) && ! current_user_can( 'googlesitekit_view_posts_insights' ) ) {
             return $shared
                 ? array( 'none', 'Site Kit shares this module with your role, but shows shared data only to users who have opened Site Kit\'s dashboard in wp-admin once. Open Site Kit › Dashboard, then try again.' )
-                : array( 'none', 'Site Kit does not share this module with your role, and you have not connected your own Google account in Site Kit. An administrator can share it under Site Kit › Settings › Admin Settings › Dashboard sharing.' );
+                : array( 'none', self::not_shared_reason( $listed, $setup_hidden ) );
         }
         if ( self::owner_id( $listed, $settings ) === (int) get_current_user_id() ) {
             return array( 'owner', '' );
@@ -131,7 +134,14 @@ class Get_Status extends Base_Tool {
         if ( $shared ) {
             return array( 'none', 'Site Kit shares this module with your role, but its owner\'s Google connection is no longer usable. An administrator can reconnect the module in Site Kit.' );
         }
-        return array( 'none', 'Site Kit does not share this module with your role, and you have not connected your own Google account in Site Kit. An administrator can share it under Site Kit › Settings › Admin Settings › Dashboard sharing.' );
+        return array( 'none', self::not_shared_reason( $listed, $setup_hidden ) );
+    }
+
+    private static function not_shared_reason( ?array $listed, bool $setup_hidden ): string {
+        if ( null === $listed && $setup_hidden ) {
+            return 'Either Site Kit is not set up yet, or it does not share this module with your role and you have not connected your own Google account in Site Kit. An administrator can set Site Kit up from its menu in wp-admin, or share the module under Site Kit › Settings › Admin Settings › Dashboard sharing.';
+        }
+        return 'Site Kit does not share this module with your role, and you have not connected your own Google account in Site Kit. An administrator can share it under Site Kit › Settings › Admin Settings › Dashboard sharing.';
     }
 
     private static function owner_id( ?array $listed, array $settings ): int {

@@ -67,11 +67,11 @@ class SeRanking_Client {
 		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {
-			throw new \RuntimeException( 'SE Ranking API key not configured. Go to Easy MCP AI → Tools → External data.' );
+			throw new \RuntimeException( 'SE Ranking API key not configured. Go to Easy MCP AI → Tools → Connections.' );
 		}
 		$plain = self::decrypt( $enc );
 		if ( false === $plain || '' === $plain ) {
-			throw new \RuntimeException( 'Failed to decrypt SE Ranking API key. Re-save credentials in Easy MCP AI → Tools → External data.' );
+			throw new \RuntimeException( 'Failed to decrypt SE Ranking API key. Re-save credentials in Easy MCP AI → Tools → Connections.' );
 		}
 		return $plain;
 	}

@@ -30,6 +30,14 @@ final class Client_Metadata_Support {
 
     const WRITE_ATTEMPTS = 5;
 
+    const SIGN_IN_NOT_RUN = array(
+        'outcome' => 'not_run',
+        'status'  => 0,
+        'refuser' => '',
+        'excerpt' => '',
+        'control' => '',
+    );
+
     public static function switched_on(): bool {
         $on = true === Config::get( 'oauth_cimd' );
         return true === apply_filters( 'easy_mcp_ai_oauth_cimd', $on );
@@ -57,6 +65,7 @@ final class Client_Metadata_Support {
             'reason'   => 'advertised',
             'testedAt' => $state['probe_at'],
             'results'  => $state['results'],
+            'signIn'   => $state['sign_in'],
             'failures' => $state['failures'],
         );
         if ( ! self::switched_on() ) {
@@ -71,6 +80,8 @@ final class Client_Metadata_Support {
             $status['reason'] = 'not_tested';
         } elseif ( ! $state['probe_ok'] ) {
             $status['reason'] = 'test_failed';
+        } elseif ( 'reached' !== $state['sign_in']['outcome'] ) {
+            $status['reason'] = 'not_run' === $state['sign_in']['outcome'] ? 'sign_in_untested' : 'sign_in_' . $state['sign_in']['outcome'];
         } elseif ( time() - $state['probe_at'] > self::PROBE_VALID ) {
             $status['reason'] = 'test_stale';
         } elseif ( $state['failures'] >= self::WITHDRAW_AFTER ) {
@@ -83,8 +94,7 @@ final class Client_Metadata_Support {
         if ( ! self::accepts_sign_ins() ) {
             return false;
         }
-        $state = self::state();
-        if ( $state['probe_at'] > 0 && time() - $state['probe_at'] < self::PROBE_INTERVAL ) {
+        if ( ! self::is_due( self::state() ) ) {
             return true;
         }
         if ( false === wp_next_scheduled( self::HOOK ) ) {
@@ -97,8 +107,7 @@ final class Client_Metadata_Support {
         if ( ! self::accepts_sign_ins() ) {
             return 'disabled';
         }
-        $state = self::state( true );
-        if ( $state['probe_at'] > 0 && time() - $state['probe_at'] < self::PROBE_INTERVAL ) {
+        if ( ! self::is_due( self::state( true ) ) ) {
             return 'recent';
         }
 
@@ -109,21 +118,33 @@ final class Client_Metadata_Support {
             $results[ $url ] = '' === $outcome ? 'ok' : $outcome;
             $passed          = $passed && '' === $outcome;
         }
-        $passed = $passed && array() !== $results;
+        $passed  = $passed && array() !== $results;
+        $sign_in = $passed ? Client_Metadata_Reach::check( (string) array_key_first( $results ) ) : self::SIGN_IN_NOT_RUN;
 
         $tested_at = time();
         self::change(
-            static function ( array $now ) use ( $tested_at, $passed, $results ): array {
+            static function ( array $now ) use ( $tested_at, $passed, $results, $sign_in ): array {
                 $now['probe_at'] = $tested_at;
                 $now['probe_ok'] = $passed;
                 $now['results']  = $results;
+                $now['sign_in']  = $sign_in;
                 if ( $passed ) {
                     $now['failures'] = 0;
                 }
                 return $now;
             }
         );
-        return $passed ? 'passed' : 'failed';
+        if ( ! $passed ) {
+            return 'failed';
+        }
+        return 'reached' === $sign_in['outcome'] ? 'passed' : 'refused';
+    }
+
+    private static function is_due( array $state ): bool {
+        if ( 0 === $state['probe_at'] || time() - $state['probe_at'] >= self::PROBE_INTERVAL ) {
+            return true;
+        }
+        return $state['probe_ok'] && 'not_run' === $state['sign_in']['outcome'];
     }
 
     public static function record_fetch( bool $transport_failed ): void {
@@ -170,6 +191,7 @@ final class Client_Metadata_Support {
             'probe_at' => isset( $raw['probe_at'] ) && is_int( $raw['probe_at'] ) && $raw['probe_at'] > 0 ? $raw['probe_at'] : 0,
             'probe_ok' => isset( $raw['probe_ok'] ) && true === $raw['probe_ok'],
             'results'  => array(),
+            'sign_in'  => self::validated_sign_in( $raw['sign_in'] ?? null ),
             'failures' => isset( $raw['failures'] ) && is_int( $raw['failures'] ) && $raw['failures'] > 0 ? $raw['failures'] : 0,
         );
         if ( isset( $raw['results'] ) && is_array( $raw['results'] ) ) {
@@ -180,6 +202,20 @@ final class Client_Metadata_Support {
             }
         }
         return $state;
+    }
+
+    private static function validated_sign_in( $raw ): array {
+        if ( ! is_array( $raw ) || ! in_array( $raw['outcome'] ?? null, Client_Metadata_Reach::OUTCOMES, true ) ) {
+            return self::SIGN_IN_NOT_RUN;
+        }
+        $control = $raw['control'] ?? '';
+        return array(
+            'outcome' => $raw['outcome'],
+            'status'  => isset( $raw['status'] ) && is_int( $raw['status'] ) ? $raw['status'] : 0,
+            'refuser' => isset( $raw['refuser'] ) && is_string( $raw['refuser'] ) ? $raw['refuser'] : '',
+            'excerpt' => isset( $raw['excerpt'] ) && is_string( $raw['excerpt'] ) ? $raw['excerpt'] : '',
+            'control' => in_array( $control, Client_Metadata_Reach::OUTCOMES, true ) ? $control : '',
+        );
     }
 
     private static function stored(): ?string {

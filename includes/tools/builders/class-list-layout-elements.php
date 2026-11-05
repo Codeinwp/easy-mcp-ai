@@ -16,7 +16,7 @@ class List_Layout_Elements extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists the element types of a page builder active on this site (Elementor, WPBakery or Flatsome UX Builder), or the fields of one type: what a layout element can hold before you read or plan an edit. Optional: `builder` (`elementor`, `wpbakery` or `flatsome`; default: the only one active, required when several are), `type` (an element type such as `heading`, `vc_btn` or `ux_banner`; returns its fields), `search` (filters the list by type or label). Returns { builder, builder_version, types: [{ type, label, category, atomic?, code? }] } or { builder, type, fields: [{ name, kind, label, responsive?, options?, default? }] }. Kinds: text, html, link, image, select, number, size, color, boolean, spacing, list, icon, code, other. Elementor and WPBakery read their own registries; Flatsome\'s list is a map shipped with this plugin, because its builder registry loads only inside UX Builder.';
+        return 'Lists the element types of a page builder active on this site (Elementor, Breakdance, WPBakery, Flatsome UX Builder, Divi 4 or Divi 5), or the fields of one type: what a layout element can hold before you read or plan an edit. Optional: `builder` (`elementor`, `breakdance`, `wpbakery`, `flatsome`, `divi4` or `divi5`; default: the only one active, required when several are: a Divi 5 site also reads pages still in the Divi 4 format), `type` (an element type such as `heading`, `EssentialElements\\FText`, `vc_btn`, `ux_banner`, `et_pb_button` or `divi/button`; returns its fields), `search` (filters the list by type or label). Returns { builder, builder_version, types: [{ type, label, category, atomic?, code? }] } or { builder, type, fields: [{ name, kind, label, responsive?, options?, multiple?, default?, condition? }] }; `multiple: true` marks an Elementor select that takes a list of its options. Kinds: text, html, link, image, select, number, size, color, boolean, spacing, list, icon, code, other. An Elementor list of items (a repeater) also has `item_fields` (each item\'s fields, same shape), `min_items` and `max_items` (as many as Elementor\'s editor allows). Elementor, Breakdance, WPBakery and Divi read their own registries (a Breakdance field\'s name is its path in the element, such as `content.content.text`, and `condition` says which other field value Breakdance shows it for); Flatsome\'s list is a map shipped with this plugin, because its builder registry loads only inside UX Builder. A Divi 5 field is named by where Divi stores it, such as `button.innerContent.text`.';
     }
 
     public function get_category() {
@@ -42,11 +42,11 @@ class List_Layout_Elements extends Base_Tool {
             'properties' => array(
                 'builder' => array(
                     'type'        => 'string',
-                    'description' => 'The builder: "elementor", "wpbakery" or "flatsome". Default: the only one active on this site.',
+                    'description' => 'The builder: "elementor", "breakdance", "wpbakery", "flatsome", "divi4" or "divi5". Default: the only one active on this site.',
                 ),
                 'type'    => array(
                     'type'        => 'string',
-                    'description' => 'An element type, e.g. "heading", "vc_btn" or "ux_banner". Returns its fields instead of the list.',
+                    'description' => 'An element type, e.g. "heading", "EssentialElements\\FText", "vc_btn", "ux_banner", "et_pb_button" or "divi/button". Returns its fields instead of the list.',
                 ),
                 'search'  => array(
                     'type'        => 'string',
@@ -106,7 +106,7 @@ class List_Layout_Elements extends Base_Tool {
                 return $present[0];
             }
             if ( array() === $present ) {
-                throw new \RuntimeException( 'No supported page builder (Elementor, WPBakery or Flatsome UX Builder) is active on this site.' );
+                throw new \RuntimeException( 'No supported page builder (Elementor, Breakdance, WPBakery, Flatsome UX Builder or Divi) is active on this site.' );
             }
             throw new \InvalidArgumentException( sprintf( 'Several page builders are active (%s); name one in `builder`.', implode( ', ', $ids ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }

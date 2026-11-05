@@ -56,7 +56,7 @@ class Tokens_Controller extends Admin_Rest_Controller {
             'truncated' => count( $rows ) >= self::TOKENS_LIMIT && $total > self::TOKENS_LIMIT,
             'limit'     => self::TOKENS_LIMIT,
             'siteHost'  => \Easy_MCP_AI\Site_Host::current(),
-            'approvalRequired' => self::approval_required(),
+            'approvalRequired' => $this->approval_required(),
         ) );
     }
 
@@ -341,8 +341,38 @@ class Tokens_Controller extends Admin_Rest_Controller {
         return $result;
     }
 
-    public static function approval_required() {
-        return true === \Easy_MCP_AI\Config::get( 'approval_required' );
+    public function approval_required() {
+        return 'ok' === $this->approval_state()['state'];
+    }
+
+    private function approval_state() {
+        if ( \Easy_MCP_AI\Approvals\Approval_Gate::enabled() ) {
+            return array( 'state' => 'ok' );
+        }
+        if ( \Easy_MCP_AI\Config::is_locked( 'approval_required' ) ) {
+            $lock = \Easy_MCP_AI\Admin\Tool_Catalogue::approval_lock();
+            return array( 'state' => 'deployed', 'setting' => null === $lock ? '' : $lock['setting'] );
+        }
+        foreach ( array( 'approval_always', 'approval_never' ) as $setting ) {
+            if ( \Easy_MCP_AI\Config::is_locked( $setting ) ) {
+                return array( 'state' => 'list_deployed', 'setting' => \Easy_MCP_AI\Config::constant_name( $setting ) );
+            }
+        }
+        $ticked = false;
+        foreach ( (array) ( \Easy_MCP_AI\Tools\Tool_Policy::state()['choices'] ?? array() ) as $name => $choice ) {
+            if ( true !== ( $choice['requireApproval'] ?? null ) ) {
+                continue;
+            }
+            $tool = $this->tool_registry && method_exists( $this->tool_registry, 'get_tool' ) ? $this->tool_registry->get_tool( $name ) : null;
+            if ( ! $tool || ! \Easy_MCP_AI\Tools\Tool_State::is_enabled( $tool ) ) {
+                continue;
+            }
+            $ticked = true;
+            if ( (bool) \apply_filters( 'easy_mcp_ai_requires_approval', true, $name, array(), 'explicit' ) ) {
+                return array( 'state' => 'ok' );
+            }
+        }
+        return array( 'state' => $ticked ? 'filtered' : 'none' );
     }
 
     private function resolve_unattended( $request ) {
@@ -354,17 +384,20 @@ class Tokens_Controller extends Admin_Rest_Controller {
             return $this->fail( 'easy_mcp_ai_invalid_param', \__( 'Unattended must be on or off.', 'easy-mcp-ai' ), 400, array( 'field' => 'unattended' ) );
         }
         $on = \rest_sanitize_boolean( $raw );
-        if ( $on && ! self::approval_required() ) {
-            return $this->fail(
-                'easy_mcp_ai_approvals_off',
-                \sprintf(
-                    /* translators: %s: the "Ask before destructive actions" setting label */
-                    \__( 'Unattended only applies while "%s" is on in Settings.', 'easy-mcp-ai' ),
-                    \__( 'Ask before destructive actions', 'easy-mcp-ai' )
-                ),
-                400,
-                array( 'field' => 'unattended' )
-            );
+        $approval = $on ? $this->approval_state() : array( 'state' => 'ok' );
+        if ( 'ok' !== $approval['state'] ) {
+            if ( 'deployed' === $approval['state'] ) {
+                /* translators: %s: the deployed setting, such as EASY_MCP_AI_APPROVAL_REQUIRED. */
+                $message = sprintf( \__( 'Unattended only applies while approvals can pause calls on this site, and approvals are fixed by %s, which keeps them off.', 'easy-mcp-ai' ), $approval['setting'] );
+            } elseif ( 'list_deployed' === $approval['state'] ) {
+                /* translators: %s: the deployed setting, such as EASY_MCP_AI_APPROVAL_ALWAYS. */
+                $message = sprintf( \__( 'Unattended only applies while approvals can pause calls on this site, and approvals are switched off while %s fixes approval for every tool.', 'easy-mcp-ai' ), $approval['setting'] );
+            } elseif ( 'filtered' === $approval['state'] ) {
+                $message = \__( 'Unattended only applies while approvals can pause calls on this site, and site code (the easy_mcp_ai_requires_approval filter) exempts every tool that requires approval.', 'easy-mcp-ai' );
+            } else {
+                $message = \__( 'Unattended only applies while approvals can pause calls on this site: require approval for a tool that is switched on in the Approval column of the Tools screen first.', 'easy-mcp-ai' );
+            }
+            return $this->fail( 'easy_mcp_ai_approvals_off', $message, 400, array( 'field' => 'unattended' ) );
         }
         return $on ? 1 : 0;
     }

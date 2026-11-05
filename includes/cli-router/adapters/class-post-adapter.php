@@ -10,6 +10,7 @@ use Easy_MCP_AI\Cli_Router\Ids;
 use Easy_MCP_AI\Cli_Router\Invocation;
 use Easy_MCP_AI\Cli_Router\Meta_Command;
 use Easy_MCP_AI\Cli_Router\Read_Value;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,6 +22,8 @@ final class Post_Adapter extends Db_Object_Command {
     protected $obj_type = 'post';
 
     protected $obj_fields = array( 'ID', 'post_title', 'post_name', 'post_date', 'post_status' );
+
+    const UPDATE_FIELDS_BESIDE_POST = array( 'post_category', 'tags_input', 'meta_input', 'page_template' );
 
     const ROW_CAP = 1000;
 
@@ -163,7 +166,9 @@ final class Post_Adapter extends Db_Object_Command {
 
     const MSG_TYPE_BUILTIN = "'wp %s' cannot act on post type '%s' through wp_cli_run: no tool performs it for that built-in type.";
 
-    const MSG_TYPE_NOT_REST = "'wp %s' cannot act on post type '%s': it is not shown in the REST API (show_in_rest is false), and the tools reach posts only through it.";
+    const MSG_TYPE_NOT_REST = "'wp %s' cannot act on post type '%s': it is not shown in the REST API (show_in_rest is false), and the tools do not open it: %s.";
+
+    const MSG_TYPE_HIDDEN = "'wp %s' cannot act on post type '%s': it is not shown in the REST API (show_in_rest is false), and this command goes through a tool that reaches posts only through it. Only the CPT tools open such a type.";
 
     const MSG_TYPE_NAMESPACE = "'wp %s' cannot act on post type '%s': its REST routes live under %s, and the tools address /wp/v2 only.";
 
@@ -559,7 +564,7 @@ final class Post_Adapter extends Db_Object_Command {
         if ( in_array( $post_type, Post_Type_Rest_Base::BUILTIN_TYPES, true ) ) {
             return sprintf( self::MSG_TYPE_BUILTIN, $command, $post_type );
         }
-        $base = self::custom_rest_base( $post_type, $object, $command );
+        $base = self::custom_rest_base( $post_type, $object, $command, true );
         return is_array( $base ) ? array( 'cpt', $base[0] ) : $base;
     }
 
@@ -577,11 +582,13 @@ final class Post_Adapter extends Db_Object_Command {
         return self::custom_rest_base( $post_type, $object, $command );
     }
 
-    public static function custom_rest_base( string $post_type, object $object, string $command ) {
+    public static function custom_rest_base( string $post_type, object $object, string $command, bool $cpt_tools = false ) {
         $found = Post_Type_Rest_Base::inspect( $post_type, $object );
         switch ( $found['reason'] ) {
+            case Post_Type_Rest_Base::HIDDEN:
+                return $cpt_tools ? array( $found['base'] ) : sprintf( self::MSG_TYPE_HIDDEN, $command, $post_type );
             case Post_Type_Rest_Base::NOT_REST:
-                return sprintf( self::MSG_TYPE_NOT_REST, $command, $post_type );
+                return sprintf( self::MSG_TYPE_NOT_REST, $command, $post_type, Hidden_Post_Types::closed_reason( $post_type, $object ) );
             case Post_Type_Rest_Base::FOREIGN_NAMESPACE:
                 return sprintf( self::MSG_TYPE_NAMESPACE, $command, $post_type, $found['namespace'] );
             case Post_Type_Rest_Base::UNSAFE_BASE:
@@ -815,7 +822,13 @@ final class Post_Adapter extends Db_Object_Command {
             return array( 'response' => Db_Object_Command::failure( Fetchers::tool_unavailable( $ctx, $command, $tool ) ) );
         }
         $call = self::write_call( 'update', $type, $target, $fields, (int) $post->ID );
-        return is_array( $call ) ? array( 'call' => $call ) : array( 'response' => Db_Object_Command::failure( $call ) );
+        if ( ! is_array( $call ) ) {
+            return array( 'response' => Db_Object_Command::failure( $call ) );
+        }
+        if ( array() === array_diff( array_keys( $fields ), self::UPDATE_FIELDS_BESIDE_POST ) ) {
+            $call[1]['resave'] = true;
+        }
+        return array( 'call' => $call );
     }
 
     private static function delete_call( string $post_id, bool $force, string $command, ?Context $ctx ): array {

@@ -67,6 +67,7 @@ final class Loader {
 		'float_widget',
 		'migrator',
 		'ai_connect',
+		'support_hub',
 	];
 	/**
 	 * Holds the labels for the modules.
@@ -412,6 +413,105 @@ final class Loader {
 				'upgrade'         => 'Upgrade to Pro',
 				'feature_request' => 'Suggest a Feature',
 				'rate'            => 'Rate Us',
+			],
+		],
+		'support_hub'      => [
+			'launcher'                     => 'Help',
+			'launcher_aria'                => 'Open help',
+			'close'                        => 'Close',
+			'title'                        => 'Got a question, idea or problem?',
+			// translators: %s is the product name.
+			'subtitle'                     => 'Ask us anything about %s. We usually reply within 1 business day.',
+			'message_label'                => 'Your message',
+			'message_placeholder'          => 'What can we help you with?',
+			'email_label'                  => 'Reply to',
+			'site_info_label'              => 'Include my site info so we can help faster',
+			'site_info_toggle'             => 'What\'s included',
+			'site_info_description'        => 'Product name, version and plan, WordPress and PHP versions, your active theme, the list of active plugins, and pending crash reports (messages, file locations and product trace frames). Never license keys, tokens or payment data.',
+			'send'                         => 'Send message',
+			'sending'                      => 'Sending…',
+			'sent_title'                   => 'Message sent',
+			'sent_text'                    => 'Thanks! We usually reply within 1 business day.',
+			'nudge_help'                   => 'Get help',
+			'nudge_dismiss'                => 'Dismiss',
+			'error_attached'               => 'Error attached',
+			'error_link'                   => 'Get help with this',
+			'error_form_title'             => 'Something not working?',
+			'error_form_text'              => 'Tell us what you were doing. The error details are attached. We usually reply within 1 business day.',
+			'error_placeholder'            => 'e.g. I clicked Save on my settings and got this error',
+			// translators: %s is the product name.
+			'setup_title'                  => 'Need a hand setting up %s?',
+			'setup_text'                   => 'Tell us where you got stuck and we\'ll help you finish.',
+			'setup_prefill'                => 'I need help finishing the setup: ',
+			'error_permission'             => 'You are not allowed to do this.',
+			'error_product'                => 'Unknown product.',
+			'error_empty'                  => 'Please write a message first.',
+			'error_email'                  => 'Please enter a valid email address.',
+			'error_throttled'              => 'Please wait a moment before sending another message.',
+			'error_send'                   => 'We could not send your message. Opening your email app instead.',
+			'mailto_subject'               => '[%s] Support request',
+			'deactivation_title'           => 'Quick question before you go',
+			// translators: %s is the product name.
+			'deactivation_subtitle'        => 'Why are you deactivating %s?',
+			'deactivation_email'           => 'Reply to',
+			'deactivation_site_info'       => 'Include site info',
+			'deactivation_keep_active'     => 'Keep the plugin active until you reply',
+			'deactivation_cancel'          => 'Cancel',
+			'deactivation_deactivate'      => 'Deactivate',
+			'deactivation_send_deactivate' => 'Send & deactivate',
+			'deactivation_send'            => 'Send & keep active',
+			// Themes (Add Themes screen): same window, other wording. Keys with `_theme` win over the plugin ones.
+			'deactivation_title_theme'     => 'Looking for a different theme?',
+			// translators: %s is the theme name.
+			'deactivation_subtitle_theme'  => 'What does not work for you in %s?',
+			'deactivation_send_theme'      => 'Send',
+			'reasons'                      => [
+				'not_working'    => [
+					'label'       => 'Couldn\'t get it working',
+					'placeholder' => 'What were you trying to do? Tell us and we\'ll help you get it working, free.',
+				],
+				'missing'        => [
+					'label'       => 'Missing something I need',
+					'placeholder' => 'What do you need? It may already exist, or we can build it.',
+				],
+				'no_longer_need' => [
+					'label'       => 'I no longer need it',
+					'placeholder' => '',
+				],
+				'switching'      => [
+					'label'       => 'Switching to another plugin',
+					'placeholder' => '',
+				],
+				'temporary'      => [
+					'label'       => 'Just temporary',
+					'placeholder' => '',
+				],
+				'other'          => [
+					'label'       => 'Something else',
+					'placeholder' => 'Tell us what happened and we\'ll get back to you.',
+				],
+			],
+			'reasons_theme'                => [
+				'not_like_demo'   => [
+					'label'       => 'Couldn\'t make it look like the demo',
+					'placeholder' => 'Which demo, and what is different? We\'ll help you get there, free.',
+				],
+				'missing'         => [
+					'label'       => 'Missing something I need',
+					'placeholder' => 'What do you need? It may already exist, or we can build it.',
+				],
+				'plugin_conflict' => [
+					'label'       => 'Not working with a plugin I need',
+					'placeholder' => 'Which plugin? We\'ll look into it.',
+				],
+				'new_design'      => [
+					'label'       => 'Trying a different design',
+					'placeholder' => '',
+				],
+				'other'           => [
+					'label'       => 'Something else',
+					'placeholder' => 'Tell us what happened and we\'ll get back to you.',
+				],
 			],
 		],
 	];

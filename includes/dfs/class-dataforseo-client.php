@@ -38,13 +38,13 @@ class DataforSEO_Client {
 	private static function derive_key(): string {
 		if ( ! defined( 'SECURE_AUTH_KEY' ) || ! defined( 'SECURE_AUTH_SALT' ) ) {
 			throw new \RuntimeException(
-				'DataforSEO credentials are unavailable: SECURE_AUTH_KEY and SECURE_AUTH_SALT must be defined in wp-config.php. Generate fresh values at https://api.wordpress.org/secret-key/1.1/salt/, update wp-config.php, then re-save your DataforSEO credentials in Easy MCP AI → Tools → External data.'
+				'DataforSEO credentials are unavailable: SECURE_AUTH_KEY and SECURE_AUTH_SALT must be defined in wp-config.php. Generate fresh values at https://api.wordpress.org/secret-key/1.1/salt/, update wp-config.php, then re-save your DataforSEO credentials in Easy MCP AI → Tools → Connections.'
 			);
 		}
 		$material = SECURE_AUTH_KEY . SECURE_AUTH_SALT;
 		if ( strlen( $material ) < 64 || false !== strpos( $material, 'put your unique phrase here' ) ) {
 			throw new \RuntimeException(
-				'DataforSEO credentials are unavailable: WordPress security salts are still set to placeholder values. Generate fresh values at https://api.wordpress.org/secret-key/1.1/salt/ (or run: wp config shuffle-salts), update wp-config.php, then re-save your DataforSEO credentials in Easy MCP AI → Tools → External data.'
+				'DataforSEO credentials are unavailable: WordPress security salts are still set to placeholder values. Generate fresh values at https://api.wordpress.org/secret-key/1.1/salt/ (or run: wp config shuffle-salts), update wp-config.php, then re-save your DataforSEO credentials in Easy MCP AI → Tools → Connections.'
 			);
 		}
 		return hash_hkdf( 'sha256', $material, 32, self::HKDF_INFO );
@@ -90,21 +90,21 @@ class DataforSEO_Client {
 
 		if ( empty( $login ) || empty( $password ) ) {
 			throw new \RuntimeException(
-				'DataforSEO credentials not configured. Go to Easy MCP AI → Tools → External data.'
+				'DataforSEO credentials not configured. Go to Easy MCP AI → Tools → Connections.'
 			);
 		}
 
 		$decrypted_login = self::decrypt( $login );
 		if ( false === $decrypted_login ) {
 			throw new \RuntimeException(
-				'Failed to decrypt DataforSEO login. The stored value could not be decrypted with the current WordPress security salts (SECURE_AUTH_KEY/SECURE_AUTH_SALT). This usually means the salts changed after the credentials were saved. Re-save your credentials in Easy MCP AI → Tools → External data.'
+				'Failed to decrypt DataforSEO login. The stored value could not be decrypted with the current WordPress security salts (SECURE_AUTH_KEY/SECURE_AUTH_SALT). This usually means the salts changed after the credentials were saved. Re-save your credentials in Easy MCP AI → Tools → Connections.'
 			);
 		}
 
 		$decrypted_password = self::decrypt( $password );
 		if ( false === $decrypted_password ) {
 			throw new \RuntimeException(
-				'Failed to decrypt DataforSEO API password. The stored value could not be decrypted with the current WordPress security salts (SECURE_AUTH_KEY/SECURE_AUTH_SALT). This usually means the salts changed after the credentials were saved. Re-save your credentials in Easy MCP AI → Tools → External data.'
+				'Failed to decrypt DataforSEO API password. The stored value could not be decrypted with the current WordPress security salts (SECURE_AUTH_KEY/SECURE_AUTH_SALT). This usually means the salts changed after the credentials were saved. Re-save your credentials in Easy MCP AI → Tools → Connections.'
 			);
 		}
 
@@ -201,7 +201,7 @@ class DataforSEO_Client {
 			case 20000:
 				return '';
 			case 40100:
-				return 'DataforSEO authentication failed. Verify your login and API password at Easy MCP AI → Tools → External data. The API password is generated at app.dataforseo.com/api-access and is different from your account password.';
+				return 'DataforSEO authentication failed. Verify your login and API password at Easy MCP AI → Tools → Connections. The API password is generated at app.dataforseo.com/api-access and is different from your account password.';
 			case 40200:
 				return 'DataforSEO requires payment to access this endpoint. Activate or upgrade your plan at app.dataforseo.com.';
 			case 40202:

@@ -445,7 +445,7 @@ final class Customizer_Settings {
                 $format = '"%1$s" is not a theme mod this tool can change. %2$s provides its own tools for its settings, but they are not available to this API key or grant.';
                 break;
             case Theme_Ability_Guidance::NOT_ENABLED:
-                $format = '"%1$s" is not a theme mod this tool can change. %2$s provides abilities for its settings; an administrator can enable them in Easy MCP AI → Abilities.';
+                $format = '"%1$s" is not a theme mod this tool can change. %2$s provides abilities for its settings; an administrator can enable them in ' . \Easy_MCP_AI\MCP\Tool_Status::TOOLS_PATH . '.';
                 break;
             default:
                 $format = 0 === $total

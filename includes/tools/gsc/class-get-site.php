@@ -13,7 +13,7 @@ class Get_Site extends Base_Tool {
     public function get_name() { return 'wp_gsc_get_site'; }
 
     public function get_description() {
-        return 'Gets details for a specific Google Search Console property. Required: `site_url` (exact property URL as registered in GSC — use "https://example.com/" with trailing slash for URL-prefix properties, or "sc-domain:example.com" for domain properties; get the exact string from `wp_gsc_list_sites`). Returns { siteUrl, permissionLevel (siteOwner/siteFullUser/siteRestrictedUser/siteUnverifiedUser) }. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Gets details for a specific Google Search Console property. Required: `site_url` (exact property URL as registered in GSC — use "https://example.com/" with trailing slash for URL-prefix properties, or "sc-domain:example.com" for domain properties; get the exact string from `wp_gsc_list_sites`). Returns { siteUrl, permissionLevel (siteOwner/siteFullUser/siteRestrictedUser/siteUnverifiedUser) }. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'gsc'; }

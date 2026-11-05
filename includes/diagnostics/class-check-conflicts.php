@@ -438,7 +438,7 @@ class Check_Conflicts {
             }
             $oauth = strpos( $subject, '/oauth-' );
             if ( false !== $oauth ) {
-                $hints[] = substr( $subject, 0, $oauth + strlen( '/oauth-' ) ) . '*';
+                $hints[] = substr( $subject, 0, $oauth + strlen( '/oauth-' ) );
                 continue;
             }
             $hints[] = $subject;
@@ -500,7 +500,28 @@ class Check_Conflicts {
         return false;
     }
 
-    private static function litespeed_hits( $rule, $subject ) {
+    private static function litespeed_hits( string $rule, string $subject ): bool {
+        if ( is_callable( array( '\LiteSpeed\REST', 'str_hit_uri' ) ) ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- saved and restored below; nothing is acted on.
+            $saved = array_key_exists( 'rest_route', $_GET ) ? array( $_GET['rest_route'] ) : array();
+            $query = array();
+            parse_str( (string) wp_parse_url( $subject, PHP_URL_QUERY ), $query );
+            unset( $_GET['rest_route'] );
+            if ( isset( $query['rest_route'] ) ) {
+                $_GET['rest_route'] = $query['rest_route'];
+            }
+            try {
+                return false !== \LiteSpeed\REST::str_hit_uri( $subject, array( $rule ) );
+            } catch ( \Throwable $e ) {
+                unset( $e );
+            } finally {
+                unset( $_GET['rest_route'] );
+                if ( $saved ) {
+                    $_GET['rest_route'] = $saved[0];
+                }
+            }
+        }
+
         $starts = '^' === substr( $rule, 0, 1 );
         $ends   = '$' === substr( $rule, -1 );
 

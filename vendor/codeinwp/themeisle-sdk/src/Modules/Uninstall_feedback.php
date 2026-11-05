@@ -112,6 +112,12 @@ class Uninstall_Feedback extends Abstract_Module {
 			return;
 		}
 
+		// The Support Hub owns the plugin deactivation / Add Themes feedback window; only the
+		// AJAX handler below stays, so the reason still reaches the feedback endpoint.
+		if ( class_exists( 'ThemeisleSDK\Modules\Support_Hub' ) && Support_Hub::handles_deactivation( $this->product ) ) {
+			return;
+		}
+
 		$this->add_feedback_popup_style();
 
 		if ( $this->product->get_type() === 'theme' ) {
@@ -742,20 +748,22 @@ class Uninstall_Feedback extends Abstract_Module {
 		$this->post_deactivate_or_cancel();
 
 		if ( empty( $_POST['id'] ) ) {
-
-			wp_send_json( [] );
+			wp_send_json_success();
 
 			return;
 		}
-		$this->call_api(
+		$sent = $this->call_api(
 			array(
 				'type'    => 'deactivate',
 				'id'      => sanitize_key( $_POST['id'] ),
 				'comment' => isset( $_POST['msg'] ) ? sanitize_textarea_field( $_POST['msg'] ) : '',
 			)
 		);
-		wp_send_json( [] );
-
+		// The Support Hub window retries a refused post; the legacy drawers ignore the answer.
+		if ( ! $sent ) {
+			wp_send_json_error();
+		}
+		wp_send_json_success();
 	}
 
 	/**
@@ -809,7 +817,12 @@ class Uninstall_Feedback extends Abstract_Module {
 			)
 		);
 
-		return is_wp_error( $response );
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+		$code = (int) wp_remote_retrieve_response_code( $response );
+
+		return $code >= 200 && $code < 300;
 	}
 
 	/**
@@ -823,13 +836,13 @@ class Uninstall_Feedback extends Abstract_Module {
 		if ( $this->is_from_partner( $product ) ) {
 			return false;
 		}
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			return true;
+		}
 		if ( $product->is_theme() && ( false !== get_transient( 'ti_sdk_pause_' . $product->get_key(), false ) ) ) {
 			return false;
 		}
 
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-			return true;
-		}
 		global $pagenow;
 
 		if ( ! isset( $pagenow ) || empty( $pagenow ) ) {

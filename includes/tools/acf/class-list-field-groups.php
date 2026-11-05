@@ -14,7 +14,7 @@ class List_Field_Groups extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Lists all registered ACF field groups with their field keys, labels, and types. Use this to discover which fields are available before calling wp_acf_get_fields or wp_acf_update_fields.';
+        return 'Lists all registered ACF field groups with their field keys, labels, and types, and the ACF options pages you can open (`options_pages`: slug, title and the keys of the field groups on each). Use this to discover which fields are available before calling wp_acf_get_fields or wp_acf_update_fields; pass an options page\'s slug to them as `options_page`.';
     }
 
     public function get_category() {
@@ -66,6 +66,9 @@ class List_Field_Groups extends Base_Tool {
                 'fields'   => $field_list,
             );
         }
-        return array( 'field_groups' => $result );
+        return array(
+            'field_groups'  => $result,
+            'options_pages' => Acf_Options_Page::listing(),
+        );
     }
 }

@@ -23,10 +23,8 @@ class Site_Kind {
             return self::LOCAL_SITE;
         }
 
-        foreach ( self::LOCAL_SUFFIXES as $suffix ) {
-            if ( strlen( $host ) > strlen( $suffix ) && substr( $host, -strlen( $suffix ) ) === $suffix ) {
-                return self::LOCAL_SITE;
-            }
+        if ( self::has_local_suffix( $host ) ) {
+            return self::LOCAL_SITE;
         }
 
         if ( self::is_loopback_or_private_ipv4( $host ) ) {
@@ -34,6 +32,15 @@ class Site_Kind {
         }
 
         return self::PUBLIC_SITE;
+    }
+
+    public static function has_local_suffix( string $host ): bool {
+        foreach ( self::LOCAL_SUFFIXES as $suffix ) {
+            if ( strlen( $host ) > strlen( $suffix ) && substr( $host, -strlen( $suffix ) ) === $suffix ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function host_of( $url ) {

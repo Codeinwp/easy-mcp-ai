@@ -8,8 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Elementor_Abilities extends Vendor_Abilities {
 
-    const GROUP = 'elementor';
-
     const MODULE_CLASS = 'Elementor\\Modules\\Mcp\\Module';
 
     const CATEGORY = 'elementor';
@@ -17,8 +15,6 @@ final class Elementor_Abilities extends Vendor_Abilities {
     const PREFIX = 'elementor/';
 
     const VENDOR = 'Elementor';
-
-    const ENABLE_PENDING_OPTION = 'easy_mcp_ai_elementor_enable_pending';
 
     public static function register_abilities( string $class = self::MODULE_CLASS ): void {
         if ( ! self::active() || ! function_exists( 'wp_has_ability_category' ) || ! function_exists( 'wp_get_abilities' ) ) {
@@ -38,5 +34,9 @@ final class Elementor_Abilities extends Vendor_Abilities {
             },
             $class . '::instance()->register_abilities()'
         );
+    }
+
+    protected static function ran_before_switches_dropped(): bool {
+        return \Easy_MCP_AI\Meta\Meta_Exposure::is_group_enabled( 'elementor' ) || (bool) \get_option( 'elementor_mcp_enabled', false );
     }
 }

@@ -215,9 +215,8 @@ class About_Us extends Abstract_Module {
 		if ( strpos( $current_screen->id, $this->get_about_page_slug() ) === false ) {
 			return;
 		}
-		global $themeisle_sdk_max_path;
 		$handle     = 'ti-sdk-about-' . $this->product->get_key();
-		$asset_file = require $themeisle_sdk_max_path . '/assets/js/build/about/about.asset.php';
+		$asset_file = $this->get_asset_file( 'assets/js/build/about/about.asset.php' );
 		$deps       = array_merge( $asset_file['dependencies'], [ 'updates' ] );
 
 		do_action( 'themeisle_internal_page', $this->product->get_slug(), 'about_us' );

@@ -12,6 +12,8 @@ trait Site_Kit_Rest {
 
     protected static $site_kit_ns = '/google-site-kit/v1';
 
+    private static $site_kit_setup_refusals = array( 'missing_required_scopes', 'module_not_active', 'missing_required_setting' );
+
     public function get_category() {
         return 'sitekit';
     }
@@ -40,15 +42,37 @@ trait Site_Kit_Rest {
     }
 
     protected function site_kit_get( string $path, array $params = array() ) {
+        $response = self::site_kit_dispatch( $path, $params );
+        if ( $response->is_error() ) {
+            $error = $response->as_error();
+            throw in_array( $error->get_error_code(), self::$site_kit_setup_refusals, true ) && false === $this->site_kit_set_up()
+                ? self::site_kit_not_set_up()
+                : self::site_kit_refusal( $error );
+        }
+        return json_decode( (string) wp_json_encode( $response->get_data() ), true );
+    }
+
+    protected function site_kit_set_up(): ?bool {
+        $data = self::site_kit_dispatch( '/core/site/data/connection' )->get_data();
+        if ( ! is_array( $data ) || ! is_bool( $data['connected'] ?? null ) || ! is_bool( $data['hasConnectedAdmins'] ?? null ) ) {
+            return null;
+        }
+        return $data['connected'] || $data['hasConnectedAdmins'];
+    }
+
+    private static function site_kit_dispatch( string $path, array $params = array() ): \WP_REST_Response {
         $request = new \WP_REST_Request( 'GET', self::$site_kit_ns . $path );
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
         }
-        $response = rest_do_request( $request );
-        if ( $response->is_error() ) {
-            throw self::site_kit_refusal( $response->as_error() );
-        }
-        return json_decode( (string) wp_json_encode( $response->get_data() ), true );
+        return rest_do_request( $request );
+    }
+
+    private static function site_kit_not_set_up(): Detailed_Tool_Error {
+        return new Detailed_Tool_Error(
+            'Site Kit is not set up on this site: it holds no Google credentials, and no administrator has connected a Google account.',
+            'An administrator can set up Site Kit from its menu in wp-admin. wp_sitekit_get_status shows each module\'s state.'
+        );
     }
 
     protected static function site_kit_refusal( \WP_Error $error ): Detailed_Tool_Error {
@@ -63,7 +87,7 @@ trait Site_Kit_Rest {
             case 'rest_forbidden':
                 return new Detailed_Tool_Error(
                     'Site Kit does not let your account read this data.',
-                    'Site Kit shows its Google data to users who connected their own Google account in Site Kit, and to users whose role the module\'s owner shared the dashboard with (Site Kit › Settings › Admin Settings › Dashboard sharing); a user it is shared with must also have opened Site Kit\'s dashboard in wp-admin once. wp_sitekit_get_status shows which applies to you.'
+                    'Site Kit shows its Google data only once it is set up, and then to users who connected their own Google account in Site Kit, and to users whose role the module\'s owner shared the dashboard with (Site Kit › Settings › Admin Settings › Dashboard sharing); a user it is shared with must also have opened Site Kit\'s dashboard in wp-admin once. wp_sitekit_get_status shows which applies to you.'
                 );
             case 'module_not_active':
                 return new Detailed_Tool_Error( 'This Site Kit module is not active on this site.', 'An administrator can connect it under Site Kit › Settings › Connect more services.' );

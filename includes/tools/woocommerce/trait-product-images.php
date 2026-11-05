@@ -55,6 +55,12 @@ trait Product_Images {
                 throw new \InvalidArgumentException( sprintf( '%s.id must be a whole number: the ID of an image in the media library.', $label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
             if ( $id > 0 ) {
+                if ( ! get_post( $id ) ) {
+                    throw new \InvalidArgumentException( sprintf( '%1$s: image %2$d not found.', $label, $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
+                if ( ! wp_attachment_is_image( $id ) ) {
+                    throw new \InvalidArgumentException( sprintf( '%1$s: %2$d is not the ID of an image in the media library.', $label, $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
                 $param['id'] = $id;
             }
         }

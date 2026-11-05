@@ -13,7 +13,7 @@ class Get_Metadata extends Base_Tool {
     public function get_name() { return 'wp_ga_get_metadata'; }
 
     public function get_description() {
-        return 'Returns the catalog of all dimensions and metrics available for Analytics reports on a property (including custom ones). Critical discovery tool — call this to validate dimension/metric names before sending a report query. Pass property_id="universal" or omit it to get the cross-property universal catalog. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Returns the catalog of all dimensions and metrics available for Analytics reports on a property (including custom ones). Critical discovery tool — call this to validate dimension/metric names before sending a report query. Pass property_id="universal" or omit it to get the cross-property universal catalog. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

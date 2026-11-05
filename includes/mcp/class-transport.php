@@ -266,6 +266,9 @@ class Transport {
                 $oauth_client_id = isset( $result['client_id'] ) ? $result['client_id'] : null;
                 $this->oauth_scope = isset( $result['scope'] ) ? (string) $result['scope'] : null;
                 $auth_source_for_request = 'oauth';
+                if ( isset( $result['role_limit'] ) && is_array( $result['role_limit'] ) ) {
+                    \Easy_MCP_AI\Auth\Role_Ceiling::apply( (int) $wp_user_id, $result['role_limit'] );
+                }
             }
         }
         $oauth_verdict = $result;

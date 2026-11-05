@@ -60,7 +60,10 @@ class Change_Recorder {
         'action_scheduler_', 'easy_mcp_ai_change_log_', 'easy_mcp_ai_audit_',
         'easy_mcp_ai_sr_', 'easy_mcp_ai_last_tool_call', 'easy_mcp_ai_cache_',
         'easy_mcp_ai_layout_lock_',
-        'easy_mcp_ai_yoast_settings_lock',
+        'easy_mcp_ai_yoast_settings_lock', 'easy_mcp_ai_rank_math_settings_lock',
+        'easy_mcp_ai_divi_options_lock',
+        'easy_mcp_ai_tool_policy_lock',
+        'easy_mcp_ai_media_upload_',
     );
 
     private static $user_meta_blocked_exact  = array( 'session_tokens' );

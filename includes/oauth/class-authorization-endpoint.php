@@ -185,7 +185,8 @@ class Authorization_Endpoint {
         } elseif ( array() !== $held ) {
             $consent_options['held'] = $held;
         }
-        $html = Consent_Screen::render( $client, $user, $requested_scope, $params, $script_nonce, $consent_options );
+        $consent_options['role_limit'] = Role_Limit::for_grant( (int) $user->ID, Client_Metadata::storage_id( $params['client_id'] ) );
+        $html                          = Consent_Screen::render( $client, $user, $requested_scope, $params, $script_nonce, $consent_options );
 
         $response = new \WP_REST_Response( $html, 200 );
         $response->header( 'Content-Type', 'text/html; charset=utf-8' );
@@ -300,15 +301,22 @@ class Authorization_Endpoint {
     }
 
     private function handle_approve_action( \WP_REST_Request $request, array $params, \WP_User $user ) {
-        $scope_string = self::resolve_granted_scope( $params['scope'], self::submitted_scopes( $request->get_param( 'access_level' ), $request->get_param( 'scopes' ) ) );
+        $scope_string = self::resolve_granted_scope( $params['scope'], self::submitted_scopes( $request->get_param( 'access_level' ), $request->get_param( 'scopes' ), (string) $params['scope'] ) );
 
         if ( '' === $scope_string ) {
             Step_Up::clear( $user->ID, Client_Metadata::storage_id( $params['client_id'] ) );
             return $this->handle_approved_without_scopes( $params );
         }
 
+        $role_limit = Role_Limit::for_level( $user, $request->get_param( 'access_level' ), $request->get_param( 'role_limit' ) );
+        if ( \is_wp_error( $role_limit ) ) {
+            return $this->redirect_with_error( $params, 'access_denied', $role_limit->get_error_message(), $role_limit->get_error_code() );
+        }
+
         $stored = array( 'client_id' => Client_Metadata::storage_id( $params['client_id'] ) ) + $params;
-        self::store_consent( $user->ID, $stored['client_id'], $scope_string );
+        if ( self::store_consent( (int) $user->ID, (string) $stored['client_id'], $scope_string, $role_limit ) <= 0 ) {
+            return $this->redirect_with_error( $params, 'server_error', __( 'The approval could not be saved. Please try again.', 'easy-mcp-ai' ), 'consent_write_failed' );
+        }
         $code = $this->mint_authorization_code( $stored, $user->ID, $scope_string );
         if ( null === $code ) {
             return $this->redirect_with_error( $params, 'server_error', __( 'Failed to issue authorization code.', 'easy-mcp-ai' ), 'code_issue_failed' );
@@ -318,12 +326,15 @@ class Authorization_Endpoint {
         return $this->redirect_with_code( $params['redirect_uri'], $code, $params['state'] );
     }
 
-    public static function submitted_scopes( $access_level, $submitted_scopes ) {
+    public static function submitted_scopes( $access_level, $submitted_scopes, string $requested_scope = '' ) {
         switch ( is_string( $access_level ) ? $access_level : '' ) {
             case 'read':
                 return Scope_Map::get_read_scopes();
             case 'full':
                 return array( 'mcp' );
+            case 'role':
+                $requested = array_values( array_filter( array_map( 'trim', explode( ' ', $requested_scope ) ) ) );
+                return array() === $requested || in_array( 'mcp', $requested, true ) ? array( 'mcp' ) : $requested;
         }
         return $submitted_scopes;
     }
@@ -612,13 +623,21 @@ class Authorization_Endpoint {
         return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE wp_user_id = %d AND client_id = %s LIMIT 1", $user_id, $client_id ) );
     }
 
-    public static function store_consent( $user_id, $client_id, $scope ) {
+    public static function store_consent( int $user_id, string $client_id, string $scope, ?array $role_limit = null ): int {
         global $wpdb;
         $table = $wpdb->prefix . 'easy_mcp_ai_oauth_consents';
         $now   = current_time( 'mysql', true );
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom plugin table; name is prefixed by $wpdb->prefix (trusted); upsert cannot use $wpdb->insert().
-        $wpdb->query( $wpdb->prepare( "INSERT INTO {$table} (wp_user_id, client_id, scope, granted_at, updated_at) VALUES (%d, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE scope = VALUES(scope), updated_at = VALUES(updated_at)", $user_id, $client_id, $scope, $now, $now ) );
+        if ( Role_Limit::column_ready() ) {
+            $limit   = null === $role_limit ? '' : (string) \wp_json_encode( array_values( $role_limit ) );
+            $written = $wpdb->query( $wpdb->prepare( "INSERT INTO {$table} (wp_user_id, client_id, scope, role_limit, granted_at, updated_at) VALUES (%d, %s, %s, NULLIF(%s, ''), %s, %s) ON DUPLICATE KEY UPDATE scope = VALUES(scope), role_limit = VALUES(role_limit), updated_at = VALUES(updated_at)", $user_id, $client_id, $scope, $limit, $now, $now ) );
+        } else {
+            $written = $wpdb->query( $wpdb->prepare( "INSERT INTO {$table} (wp_user_id, client_id, scope, granted_at, updated_at) VALUES (%d, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE scope = VALUES(scope), updated_at = VALUES(updated_at)", $user_id, $client_id, $scope, $now, $now ) );
+        }
+        if ( false === $written ) {
+            return 0;
+        }
         $id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE wp_user_id = %d AND client_id = %s LIMIT 1", $user_id, $client_id ) );
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $id;
@@ -684,7 +703,9 @@ class Authorization_Endpoint {
     }
 
     private function build_current_url( \WP_REST_Request $request ) {
-        $base   = rest_url( self::NAMESPACE_V1 . '/oauth/authorize' );
+        $base   = self::ISS_NONE === $this->iss_mode
+            ? rest_url( self::NAMESPACE_V1 . '/oauth/authorize' )
+            : Discovery::authorization_endpoint( self::ISS_RESOURCE === $this->iss_mode ? Discovery::ISSUER_RESOURCE : Discovery::ISSUER_SITE );
         $params = $request->get_query_params();
         if ( ! empty( $params ) ) {
             $allowed = array(
@@ -703,7 +724,7 @@ class Authorization_Endpoint {
                     $filtered[ $key ] = $params[ $key ];
                 }
             }
-            if ( self::ISS_SITE !== $this->iss_mode ) {
+            if ( self::ISS_NONE === $this->iss_mode ) {
                 $filtered[ self::ISS_PARAM ] = $this->iss_mode;
             }
             if ( ! empty( $filtered ) ) {

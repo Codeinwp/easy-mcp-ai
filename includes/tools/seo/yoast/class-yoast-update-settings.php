@@ -93,7 +93,7 @@ class Yoast_Update_Settings extends Base_Tool {
 		$defaults                = (array) $titles->get_defaults();
 		$planned                 = $this->planned_changes( $arguments, $titles, $social, $defaults );
 
-		$lock = self::lock();
+		$lock = Option_Lock::acquire_waiting( self::LOCK, static::LOCK_TTL, static::LOCK_WAIT, 'wp_yoast_update_settings' );
 		try {
 			$before = array(
 				Yoast_Site_Settings::TITLES => self::fresh( Yoast_Site_Settings::TITLES ),
@@ -321,22 +321,6 @@ class Yoast_Update_Settings extends Base_Tool {
 		}
 	}
 
-	private static function lock(): string {
-		global $wpdb;
-		$deadline = microtime( true ) + static::LOCK_WAIT;
-		do {
-			$lock = Option_Lock::acquire( self::LOCK, static::LOCK_TTL );
-			if ( '' !== $lock ) {
-				return $lock;
-			}
-			if ( '' !== (string) ( $wpdb->last_error ?? '' ) ) {
-				throw new \RuntimeException( sprintf( 'The database refused the lock this call takes before saving (%s), so nothing was changed.', $wpdb->last_error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-			}
-			usleep( 100000 );
-		} while ( microtime( true ) < $deadline );
-		throw new \RuntimeException( sprintf( 'Another wp_yoast_update_settings call has been saving for more than %d seconds, so nothing was changed. Call again.', static::LOCK_WAIT ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-	}
-
 	private static function renewed( string $lock, array $planned, array $written ): string {
 		$saved = array();
 		$lost  = array();
@@ -354,11 +338,7 @@ class Yoast_Update_Settings extends Base_Tool {
 		if ( '' !== $renewed ) {
 			return $renewed;
 		}
-		global $wpdb;
-		$error = (string) ( $wpdb->last_error ?? '' );
-		$cause = '' !== $error
-			? sprintf( 'The database refused the renewal of this call\'s lock (%s)', $error )
-			: sprintf( 'Another wp_yoast_update_settings call took this call\'s lock over (possible only after this call held it for %d seconds)', static::LOCK_TTL );
+		$cause = Option_Lock::lost_cause( 'wp_yoast_update_settings', static::LOCK_TTL );
 		throw new \RuntimeException( sprintf( '%s, so these were not saved: %s.%s Read the settings with wp_yoast_get_settings and send them again.', $cause, implode( ', ', $lost ), $saved ? ' Saved before that: ' . implode( ', ', $saved ) . '.' : '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 	}
 

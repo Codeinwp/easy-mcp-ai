@@ -78,7 +78,7 @@ class GSC_Client extends Abstract_Google_Client {
                 );
             }
             throw new \RuntimeException(
-                'Access denied by Google Search Console. The configured service account does not have access to this property. A site administrator can grant access in Easy MCP AI → Tools → External data → Test connection.'
+                'Access denied by Google Search Console. The configured service account does not have access to this property. A site administrator can grant access in Easy MCP AI → Tools → Connections → Test connection.'
             );
         }
         if ( 404 === $code ) {
@@ -116,7 +116,7 @@ class GSC_Client extends Abstract_Google_Client {
         }
         if ( empty( $url ) ) {
             throw new \RuntimeException(
-                'No site_url provided and no default property configured. Set one in Easy MCP AI → Tools → External data, or define EASY_MCP_AI_GSC_DEFAULT_SITE_URL in wp-config.php.'
+                'No site_url provided and no default property configured. Set one in Easy MCP AI → Tools → Connections, or define EASY_MCP_AI_GSC_DEFAULT_SITE_URL in wp-config.php.'
             );
         }
         return self::validate_site_url( $url );

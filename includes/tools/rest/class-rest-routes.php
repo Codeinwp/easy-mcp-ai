@@ -178,7 +178,7 @@ class Rest_Routes extends Rest_Route_Tool {
             count( $named ) > 1 ? 'these' : 'this one',
             count( $named ) > 1 ? 'are' : 'is',
             \Easy_MCP_AI\MCP\Tool_Status::names( $named )
-        ) . ' Tell the user which tool to switch on, by its name, and that ' . \Easy_MCP_AI\MCP\Tool_Status::who_switches_on( $off, $locked, \Easy_MCP_AI\MCP\Tool_Status::switch_path( $named[0], true ) ) . '.';
+        ) . ' Tell the user which tool to switch on, by its name, and that ' . \Easy_MCP_AI\MCP\Tool_Status::who_switches_on( $off, $locked, \Easy_MCP_AI\MCP\Tool_Status::switch_path() ) . '.';
     }
 
     private static function caller_may_use( string $tool ): bool {

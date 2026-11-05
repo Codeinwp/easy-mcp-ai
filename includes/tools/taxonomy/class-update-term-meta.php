@@ -199,7 +199,7 @@ class Update_Term_Meta extends Base_Tool {
         if ( is_array( $enabled ) && in_array( 'yoast-seo', $enabled, true ) ) {
             return $message . ' Use wp_yoast_update_term_seo.';
         }
-        return $message . ' Enable the Yoast SEO integration under Easy MCP AI → Tools → Plugins to get wp_yoast_update_term_seo.';
+        return $message . ' Enable the Yoast SEO integration under Easy MCP AI → Tools to get wp_yoast_update_term_seo.';
     }
 
     private function normalize_value( $value ) {

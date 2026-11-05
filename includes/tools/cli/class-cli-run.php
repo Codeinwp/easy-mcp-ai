@@ -104,6 +104,10 @@ class Cli_Run extends Base_Tool {
         return Router::describe( $classification );
     }
 
+    public function approval_details( array $arguments ): array {
+        return Router::details( self::classify( $arguments ) );
+    }
+
     public function approval_refusal( array $arguments ): ?string {
         $length = \Easy_MCP_AI\Approvals\Approval_Gate::preview_overflow( (string) $this->describe( $arguments ) );
         if ( null === $length ) {

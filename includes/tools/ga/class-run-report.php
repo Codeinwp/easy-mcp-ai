@@ -13,7 +13,7 @@ class Run_Report extends Base_Tool {
     public function get_name() { return 'wp_ga_run_report'; }
 
     public function get_description() {
-        return 'Runs a custom Google Analytics 4 report. Returns sessions, activeUsers, screenPageViews, eventCount, engagementRate, totalRevenue, or any other GA4 metric sliced by any combination of dimensions (country, deviceCategory, pagePath, date, etc.), with optional filtering, ordering, and pagination. Call `wp_ga_get_metadata` first to discover valid dimension/metric apiName values for the property — GA4 metrics are not the same as Universal Analytics metrics (no "clicks" metric in GA4). Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Runs a custom Google Analytics 4 report. Returns sessions, activeUsers, screenPageViews, eventCount, engagementRate, totalRevenue, or any other GA4 metric sliced by any combination of dimensions (country, deviceCategory, pagePath, date, etc.), with optional filtering, ordering, and pagination. Call `wp_ga_get_metadata` first to discover valid dimension/metric apiName values for the property — GA4 metrics are not the same as Universal Analytics metrics (no "clicks" metric in GA4). Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

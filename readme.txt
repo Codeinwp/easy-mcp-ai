@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.3.2
+Stable tag: 2.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,17 +227,64 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.3.2 =
-- Fixed per-minute rate limits resetting during steady use without persistent cache.
-- Added theme and plugin install from ZIP file or URL.
-- Fixed missing capability errors returning wrong HTTP status.
-- Fixed denied approvals keeping request data for seven days
-- Added an option to delete minified CSS and JS when clearing cache.
-- Fixed backslash-spelled meta keys and values bypassing protected-key checks.
-- Fixed the default rate limit to 120 requests a minute per credential.
-- Fixed refreshed OAuth tokens ignoring revoked or narrowed grants.
-- Fixed post listing revealing password-protected posts hidden custom values.
-- Fixed Claude.ai sign-in on hosts that block root addresses
+= 2.4.0 =
+- Added optional file download to media item responses.
+- Added Rank Math tools to manage noindex settings and robots.txt.
+- Added Rank Math tools to read and update site-wide settings and robots.txt.
+- Added read and update support for ACF options page fields.
+- Added insert, remove, move and duplicate actions for Flatsome layouts.
+- Added a Breakdance switch that enables Breakdance builder tools.
+- Added Breakdance page reading and editing to the layout tools.
+- Added Divi layout editing, Theme Builder listing and menu locations
+- Added support for managing post types hidden from the REST API.
+- Added one-time upload links for sending local files without base64
+- Added Elementor repeater-item editing and page layout building tools.
+- Added Rank Math Local SEO settings to site settings tools.
+- Added a tool that puts a reviewed copy live on the original page
+- Added Match a role access level on the connection approval screen.
+- Added a Tools summary above Connect showing enabled tool counts.
+- Improved the Tools screen with Read, Write, Destructive and Unrestricted groups.
+- Added a hold policy for tools from newly installed plugins.
+- Added MCP tools to read and update Divi performance settings.
+- Fixed updating theme page settings stored as hidden post meta.
+- Fixed Elementor HTML widget guidance to point to the correct update operation.
+- Fixed small text edits failing on pages larger than 200 KB
+- Fixed Claude setup steps to use the Customize Connectors screen.
+- Fixed Elementor edits refused over fields every save removes.
+- Fixed write tools silently ignoring arguments they do not support
+- Fixed the Authorization header check warning incorrectly behind LiteSpeed Cache blocks.
+- Fixed missing posts and images reporting no permission instead of not found.
+- Fixed Site Health warning listing switched-off plugin abilities.
+- Fixed diagnostics naming SQLite databases as MySQL.
+- Fixed cache check accepting LiteSpeed wildcard endpoint exclusions.
+- Fixed refused product images changing earlier images before failing.
+- Fixed Yoast post social images keeping the old image after updating.
+- Fixed approval previews cutting off long request details before approval
+- Fixed blocked-tool messages to name the setting that blocks access.
+- Fixed secret keys overwritten when [REDACTED] text was sent back.
+- Fixed Elementor multi-select fields rejecting lists of valid options
+- Fixed Yoast social images staying on the old image after meta updates.
+- Fixed Yoast social images from resized copies showing different images.
+- Fixed quoted search snippets showing the opening instead of the match.
+- Fixed media, category, tag, user and menu text losing HTML formatting.
+- Fixed post text replacement losing simultaneous edits and accepting damaging edits.
+- Fixed cut-off error messages hiding the correct tool for blocked post edits.
+- Fixed the consent screen privileged rows to show what each box grants.
+- Fixed privileged notices repeating actions and naming actions that are off.
+- Fixed disabled-tools replies hiding tools the API key blocks.
+- Fixed the consent screen placing write-access boxes in the Read column.
+- Fixed role-limited connections keeping super admin rights on multisite networks.
+- Fixed the permissions list showing wrong selections under Match a role.
+- Fixed Site Kit status reporting Search Console as connected before setup
+- Fixed Elementor HTML widget text edits corrupting the CSS ID.
+- Fixed Claude sign-in failing on hosts blocking web addresses.
+- Fixed post custom field updates re-saving the whole post
+- Fixed refused custom fields still saving on full post saves
+- Fixed the menu list showing block-theme navigation menus with guidance.
+- Fixed OAuth asking non-admin users for permissions that could never work.
+- Fixed block-theme menus keeping the old title after republishing.
+- Fixed republished menus hiding hooked blocks in headers.
+- Updated dependencies
 
 [See changelog for all versions](https://easymcpai.com/changelog).
 

@@ -7,6 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait Rank_Math_Redirects {
 
+	use Rank_Math_Setup;
+
 	protected static $rm_redirect_cap = 'rank_math_redirections';
 
 	protected static $rm_comparisons = array( 'exact', 'contains', 'start', 'end', 'regex' );
@@ -24,12 +26,7 @@ trait Rank_Math_Redirects {
 	}
 
 	protected function require_rank_math_redirects(): void {
-		if ( ! function_exists( 'rank_math' ) || ! class_exists( '\\RankMath\\Helper' ) ) {
-			throw new \RuntimeException( 'Rank Math SEO is not active on this site. Install and activate Rank Math SEO to manage its redirects.' );
-		}
-		if ( is_callable( array( '\\RankMath\\Helper', 'is_invalid_registration' ) ) && \RankMath\Helper::is_invalid_registration() ) {
-			throw new \RuntimeException( 'Rank Math is installed but its setup is not finished, so it loads none of its modules. Connect or skip the account step of its setup wizard under Rank Math in wp-admin.' );
-		}
+		$this->require_rank_math_ready( 'manage its redirects' );
 		if ( ! \RankMath\Helper::is_module_active( 'redirections' ) || ! class_exists( '\\RankMath\\Redirections\\Redirection' ) || ! class_exists( '\\RankMath\\Redirections\\DB' ) ) {
 			throw new \RuntimeException( 'Rank Math\'s Redirections module is switched off. Switch it on under Rank Math › Dashboard › Modules in wp-admin.' );
 		}

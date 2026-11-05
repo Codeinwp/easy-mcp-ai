@@ -1143,12 +1143,11 @@ class Promotions extends Abstract_Module {
 	 * Enqueue the assets.
 	 */
 	public function enqueue() {
-		global $themeisle_sdk_max_path;
 		$handle            = 'ti-sdk-promo';
 		$saved             = $this->get_upsells_dismiss_time();
 		$themeisle_sdk_src = $this->get_sdk_uri();
 		$user              = wp_get_current_user();
-		$asset_file        = require $themeisle_sdk_max_path . '/assets/js/build/promos/index.asset.php';
+		$asset_file        = $this->get_asset_file( 'assets/js/build/promos/index.asset.php' );
 		$deps              = array_merge( $asset_file['dependencies'], [ 'updates' ] );
 
 		$themes                                = wp_get_themes();

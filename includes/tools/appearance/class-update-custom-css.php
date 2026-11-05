@@ -57,6 +57,24 @@ class Update_Custom_Css extends Base_Tool {
         );
     }
 
+    public function approval_details( array $arguments ): ?array {
+        $css  = $arguments['css'] ?? null;
+        $mode = isset( $arguments['mode'] ) && is_string( $arguments['mode'] ) && '' !== $arguments['mode'] ? strtolower( trim( $arguments['mode'] ) ) : 'replace';
+        $sent = isset( $arguments['stylesheet'] ) && is_string( $arguments['stylesheet'] ) ? trim( $arguments['stylesheet'] ) : '';
+        if ( ! is_string( $css ) || ! in_array( $mode, array( 'replace', 'append' ), true ) || ( '' !== $sent && get_stylesheet() !== $sent ) ) {
+            return null;
+        }
+        $before = (string) wp_get_custom_css( get_stylesheet() );
+        $after  = 'append' === $mode && '' !== $before ? $before . "\n" . $css : $css;
+        return array(
+            array(
+                'label'  => __( 'Additional CSS', 'easy-mcp-ai' ),
+                'after'  => $after,
+                'before' => $before,
+            ),
+        );
+    }
+
     public function execute( array $arguments ) {
         if ( ! array_key_exists( 'css', $arguments ) || ! is_string( $arguments['css'] ) ) {
             throw new \InvalidArgumentException( 'Missing required parameter: css (a string).' );

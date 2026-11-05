@@ -140,7 +140,7 @@ class Create_Page extends Base_Tool {
         $meta_sent = $this->apply_meta_argument( $arguments, $params );
 
         if ( isset( $arguments['tax_input'] ) ) {
-            $params = array_merge( $params, Create_CPT_Item::tax_input_params( $arguments['tax_input'], 'page', $params ) );
+            $params += Create_CPT_Item::tax_input_params( $arguments['tax_input'], 'page', $params );
         }
 
         self::refuse_future_without_date( $params );

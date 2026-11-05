@@ -10,6 +10,16 @@ use Easy_MCP_AI\Tools\Base_Tool;
 
 class Yoast_Update_Post_Seo extends Base_Tool {
 
+	const IMAGE_URLS = array(
+		'og_image'      => '_yoast_wpseo_opengraph-image',
+		'twitter_image' => '_yoast_wpseo_twitter-image',
+	);
+
+	const IMAGE_IDS = array(
+		'og_image'      => '_yoast_wpseo_opengraph-image-id',
+		'twitter_image' => '_yoast_wpseo_twitter-image-id',
+	);
+
 	public function get_name() {
 		return 'wp_yoast_update_post_seo';
 	}
@@ -77,11 +87,11 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 				),
 				'og_image'            => array(
 					'type'        => 'string',
-					'description' => 'The Open Graph image URL (_yoast_wpseo_opengraph-image).',
+					'description' => 'The Open Graph image URL (_yoast_wpseo_opengraph-image). Also sets Yoast\'s image id to the Media Library image the URL is the file or a resized copy of, or removes it; "" clears the image.',
 				),
 				'twitter_image'       => array(
 					'type'        => 'string',
-					'description' => 'The Twitter card image URL (_yoast_wpseo_twitter-image).',
+					'description' => 'The Twitter card image URL (_yoast_wpseo_twitter-image). Also sets Yoast\'s image id to the Media Library image the URL is the file or a resized copy of, or removes it; "" clears the image.',
 				),
 				'noindex'             => array(
 					'type'        => 'string',
@@ -151,11 +161,6 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			'twitter_description' => '_yoast_wpseo_twitter-description',
 		);
 
-		$url_meta_map = array(
-			'og_image'      => '_yoast_wpseo_opengraph-image',
-			'twitter_image' => '_yoast_wpseo_twitter-image',
-		);
-
 		$updated = array();
 
 		foreach ( $meta_map as $arg_key => $meta_key ) {
@@ -166,9 +171,12 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			}
 		}
 
-		foreach ( $url_meta_map as $arg_key => $meta_key ) {
+		foreach ( self::IMAGE_URLS as $arg_key => $meta_key ) {
 			if ( isset( $arguments[ $arg_key ] ) ) {
-				if ( false !== update_post_meta( $post_id, $meta_key, esc_url_raw( $arguments[ $arg_key ] ) ) ) {
+				$url         = esc_url_raw( $arguments[ $arg_key ] );
+				$url_changed = false !== update_post_meta( $post_id, $meta_key, $url );
+				$id_changed  = Yoast_Image_Id::store_for_post( $post_id, self::IMAGE_IDS[ $arg_key ], $url );
+				if ( $url_changed || $id_changed ) {
 					$updated[] = $arg_key;
 				}
 			}
@@ -256,7 +264,7 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 		return array(
 			'post_id'        => $post_id,
 			'updated_fields' => $updated,
-			'fields'         => self::stored_fields( $post_id, $arguments, array_merge( $meta_map, $url_meta_map ) ),
+			'fields'         => self::stored_fields( $post_id, $arguments, array_merge( $meta_map, self::IMAGE_URLS ) ),
 		);
 	}
 

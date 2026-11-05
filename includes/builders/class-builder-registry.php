@@ -12,7 +12,7 @@ final class Builder_Registry {
 
     public static function all(): array {
         if ( null === self::$adapters ) {
-            self::$adapters = array( new Elementor_Adapter(), new WPBakery_Adapter(), new Flatsome_Adapter() );
+            self::$adapters = array( new Elementor_Adapter(), new Breakdance_Adapter(), new Divi5_Adapter(), new Divi4_Adapter(), new WPBakery_Adapter(), new Flatsome_Adapter() );
         }
         return self::$adapters;
     }

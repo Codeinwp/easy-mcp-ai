@@ -53,7 +53,7 @@ class Approval_Card_Resource extends Base_Resource {
         return str_replace( self::I18N_MARKER, self::i18n_script( self::labels() ), $html );
     }
 
-    public static function labels() {
+    public static function labels(): array {
         return array(
             'connecting'      => __( 'Connecting to the chat host…', 'easy-mcp-ai' ),
             'waiting'         => __( 'Waiting for the tool result…', 'easy-mcp-ai' ),
@@ -64,6 +64,7 @@ class Approval_Card_Resource extends Base_Resource {
             'approve'         => __( 'Approve', 'easy-mcp-ai' ),
             'deny'            => __( 'Deny', 'easy-mcp-ai' ),
             'noSecret'        => __( 'This host did not receive a card secret; use the link in the chat to approve.', 'easy-mcp-ai' ),
+            'pageOnly'        => __( 'Only the approval page shows this request in full. Open the approval link in the chat to see all of it and decide.', 'easy-mcp-ai' ),
             'notRun'          => __( 'Not run', 'easy-mcp-ai' ),
             'decisionRefused' => __( 'The decision was refused.', 'easy-mcp-ai' ),
             'denied'          => __( 'Denied', 'easy-mcp-ai' ),

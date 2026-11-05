@@ -55,6 +55,7 @@ class Tool_Groups {
             'events-calendar' => array( 'label' => 'The Events Calendar',         'class' => 'Tribe__Events__Main',     'fn' => '' ),
             'redirection'     => array( 'label' => 'Redirection',                 'class' => 'Red_Item',                'fn' => '' ),
             'sitekit'         => array( 'label' => 'Site Kit by Google',          'class' => 'Google\\Site_Kit\\Plugin', 'fn' => '' ),
+            'divi'            => array( 'label' => 'Divi',                        'class' => '',                        'fn' => 'et_divi_get_content_width' ),
             'contact-form-7'  => array( 'label' => 'Contact Form 7',              'class' => 'WPCF7_ContactForm',       'fn' => '' ),
             'buddypress'      => array( 'label' => 'BuddyPress',                  'class' => 'BuddyPress',              'fn' => 'bp_is_active' ),
             'yoast-seo'       => array( 'label' => 'Yoast SEO',                   'class' => 'WPSEO_Options',           'fn' => '' ),

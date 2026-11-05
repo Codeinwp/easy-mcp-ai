@@ -15,7 +15,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 	}
 
 	public function get_description() {
-		return 'Updates AIOSEO SEO metadata on a post or page via the WP REST API aioseo_meta_data field. AIOSEO 4.9.8+ — REST API is included free in core; on AIOSEO < 4.9.8 free, writes require the legacy REST API addon. Pass fields as an object keyed by AIOSEO friendly field-map keys (NOT column names): title, description, canonical_url, og_title, og_description, og_object_type, og_image_type, og_image_custom_url, og_article_section, og_article_tags, twitter_title, twitter_description, twitter_use_og, twitter_card, twitter_image_type, twitter_image_custom_url, FLAT robots keys noindex/nofollow/noarchive/nosnippet/noimageindex/notranslate (booleans), maxSnippet/maxVideoPreview (int, -1=default), maxImagePreview (string large/standard/none), pillar_content (boolean), primary_term, keyphrases (object), schema (object). Setting any robots flag auto-sets default:false so AIOSEO honours the per-post override (it ignores per-post robots while default is on). canonical_url may not persist on the AIOSEO free plan.';
+		return 'Updates AIOSEO SEO metadata on a post or page via the WP REST API aioseo_meta_data field. AIOSEO 4.9.8+ — REST API is included free in core; on AIOSEO < 4.9.8 free, writes require the legacy REST API addon. Pass fields as an object keyed by AIOSEO friendly field-map keys (NOT column names): title, description, canonical_url, og_title, og_description, og_object_type, og_image_type, og_image_custom_url, og_article_section, og_article_tags, twitter_title, twitter_description, twitter_use_og, twitter_card, twitter_image_type, twitter_image_custom_url, FLAT robots keys noindex/nofollow/noarchive/nosnippet/noimageindex/notranslate (booleans), maxSnippet/maxVideoPreview (int, -1=default), maxImagePreview (string large/standard/none), pillar_content (boolean), primary_term, keyphrases (object), schema (object). Setting any robots flag auto-sets default:false so AIOSEO honours the per-post override (it ignores per-post robots while default is on). canonical_url may not persist on the AIOSEO free plan. Only the SEO fields are written: the post itself is not saved (its modified date and revisions stay as they are); send `resave: true` to save the whole post too.';
 	}
 
 	public function get_category() {
@@ -84,6 +84,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 						'schema'                   => array( 'type' => 'object', 'description' => 'Schema / structured-data options (AIOSEO structure). Not restricted to specific keys.' ),
 					),
 				),
+				'resave'    => self::resave_property( 'SEO fields' ),
 			),
 			'required'   => array( 'post_id', 'fields' ),
 		);
@@ -131,6 +132,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 		$this->validate_required( $arguments, array( 'post_id', 'fields' ) );
 
 		$post_id = $this->parse_required_id( $arguments['post_id'], 'post_id' );
+		$this->refuse_missing_post( $post_id );
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
 		}
@@ -147,7 +149,7 @@ class Aioseo_Update_Post_Seo extends Base_Tool {
 			}
 		}
 
-		$data = $this->rest_request( 'POST', self::post_type_route( $post_type, $post_id, 'POST' ), array( 'aioseo_meta_data' => $fields ) );
+		$data = $this->rest_post_update( 'POST', self::post_type_route( $post_type, $post_id, 'POST' ), array( 'aioseo_meta_data' => $fields ), null, $post_id, ! empty( $arguments['resave'] ) );
 
 		return array(
 			'post_id'          => $post_id,

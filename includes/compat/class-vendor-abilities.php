@@ -8,131 +8,102 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 abstract class Vendor_Abilities {
 
-    const GROUP = '';
-
     const PREFIX = '';
 
     const VENDOR = '';
 
-    const ENABLE_PENDING_OPTION = '';
+    const CLASSES = array( Learnpress_Abilities::class, Elementor_Abilities::class, Breakdance_Abilities::class );
 
-    const ENABLED_ABILITIES_OPTION = 'easy_mcp_ai_enabled_abilities';
+    const TICKS_SETTLED_OPTION = 'easy_mcp_ai_vendor_ability_ticks_settled';
 
-    const TICK_LOCK = 'easy_mcp_ai_abilities_tick_lock';
-
-    const TICK_LOCK_TTL = 30;
+    private static $ours = false;
 
     private static $failed = array();
 
-    public static function group_enabled(): bool {
-        return \Easy_MCP_AI\Meta\Meta_Exposure::is_group_enabled( static::GROUP );
+    public static function serve( bool $ours = true ): void {
+        self::$ours = $ours;
     }
 
-    public static function group_changed( $old, $new ): void {
-        $was = is_array( $old ) && in_array( static::GROUP, $old, true );
-        $is  = is_array( $new ) && in_array( static::GROUP, $new, true );
-        if ( ! $was && $is ) {
-            update_option( static::ENABLE_PENDING_OPTION, 1 );
-        } elseif ( $was && ! $is ) {
-            delete_option( static::ENABLE_PENDING_OPTION );
-        }
+    public static function served(): bool {
+        return self::$ours;
     }
 
-    public static function enable_pending(): void {
-        if ( ! get_option( static::ENABLE_PENDING_OPTION ) || ! static::group_enabled() || ! function_exists( 'wp_get_abilities' ) ) {
+    public static function is_our_rest_route( string $route ): bool {
+        return 1 === preg_match( '#^/?easy-mcp-ai(-admin)?/v1(/|$)#i', $route );
+    }
+
+    public static function vendor_of( string $prefix ): ?string {
+        foreach ( self::CLASSES as $class ) {
+            if ( $class::PREFIX === $prefix . '/' ) {
+                return $class::VENDOR;
+            }
+        }
+        return null;
+    }
+
+    public static function settle_ticks(): void {
+        if ( \get_option( self::TICKS_SETTLED_OPTION ) ) {
             return;
         }
-        $names = static::registered_names();
-        if ( empty( $names ) ) {
-            return;
-        }
-        $lock = self::lock();
-        if ( '' === $lock ) {
-            return;
-        }
-        try {
-            if ( ! delete_option( static::ENABLE_PENDING_OPTION ) ) {
+        $enabled = \get_option( 'easy_mcp_ai_enabled_abilities', array() );
+        if ( is_array( $enabled ) && count( self::untick( $enabled ) ) !== count( $enabled ) ) {
+            $settled = false;
+            \Easy_MCP_AI\Tools\Tool_Policy::locked( static function () use ( &$settled ) {
+                $current = \Easy_MCP_AI\Config::read_uncached( 'easy_mcp_ai_enabled_abilities' );
+                $keep    = is_array( $current ) ? self::untick( $current ) : array();
+                if ( ! is_array( $current ) || count( $keep ) === count( $current ) ) {
+                    $settled = true;
+                    return;
+                }
+                \update_option( 'easy_mcp_ai_enabled_abilities', $keep );
+                $settled = \Easy_MCP_AI\Config::read_uncached( 'easy_mcp_ai_enabled_abilities' ) === $keep;
+            } );
+            if ( ! $settled ) {
                 return;
             }
-            $write = static function () use ( $names ) {
-                $enabled = self::stored_enabled();
-                update_option( self::ENABLED_ABILITIES_OPTION, array_values( array_unique( array_merge( $enabled, $names ) ) ) );
-            };
-            if ( class_exists( '\\Easy_MCP_AI\\MCP\\Option_Guard' ) ) {
-                \Easy_MCP_AI\MCP\Option_Guard::while_suspended( $write );
-                return;
-            }
-            $write();
-        } finally {
-            self::unlock( $lock );
         }
+        \update_option( self::TICKS_SETTLED_OPTION, 1 );
     }
 
-    private static function stored_enabled(): array {
-        \wp_cache_delete( self::ENABLED_ABILITIES_OPTION, 'options' );
-        \wp_cache_delete( 'notoptions', 'options' );
-        \wp_cache_delete( 'alloptions', 'options' );
-        $enabled = get_option( self::ENABLED_ABILITIES_OPTION, array() );
-        return is_array( $enabled ) ? $enabled : array();
+    private static function untick( array $enabled ): array {
+        $keep = array();
+        foreach ( $enabled as $slug ) {
+            $class = is_string( $slug ) ? self::class_of( $slug ) : null;
+            if ( null === $class || $class::ran_before_switches_dropped() ) {
+                $keep[] = $slug;
+            }
+        }
+        return $keep;
     }
 
-    private static function lock(): string {
-        global $wpdb;
-        $now   = time();
-        $token = $now . ':' . bin2hex( random_bytes( 8 ) );
-        if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) ) {
-            return \add_option( self::TICK_LOCK, $token, '', false ) ? $token : '';
-        }
-        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- an atomic lock cannot go through the options cache.
-        $won = (int) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'off')", self::TICK_LOCK, $token ) );
-        if ( 1 !== $won ) {
-            $held = (string) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::TICK_LOCK ) );
-            $time = (int) $held;
-            if ( $time > 0 && $now - $time < self::TICK_LOCK_TTL ) {
-                return '';
-            }
-            $won = (int) $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", $token, self::TICK_LOCK, $held ) );
-        }
-        // phpcs:enable
-        \wp_cache_delete( self::TICK_LOCK, 'options' );
-        return 1 === $won ? $token : '';
-    }
+    abstract protected static function ran_before_switches_dropped(): bool;
 
-    private static function unlock( string $token ): void {
-        global $wpdb;
-        if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) ) {
-            if ( get_option( self::TICK_LOCK ) === $token ) {
-                delete_option( self::TICK_LOCK );
+    private static function class_of( string $slug ): ?string {
+        foreach ( self::CLASSES as $class ) {
+            if ( 0 === strpos( $slug, $class::PREFIX ) ) {
+                return $class;
             }
-            return;
         }
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- releases only the row this request wrote.
-        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", self::TICK_LOCK, $token ) );
-        \wp_cache_delete( self::TICK_LOCK, 'options' );
-        \wp_cache_delete( 'notoptions', 'options' );
+        return null;
     }
 
     public static function reset(): void {
-        unset( self::$failed[ static::class ] );
+        self::$ours = false;
+        self::$failed = array();
     }
 
     protected static function active(): bool {
-        return ! isset( self::$failed[ static::class ] ) && static::group_enabled();
+        return self::$ours && ! isset( self::$failed[ static::class ] );
     }
 
     protected static function any_registered(): bool {
-        return array() !== static::registered_names();
-    }
-
-    protected static function registered_names(): array {
-        $names = array();
         foreach ( (array) wp_get_abilities() as $ability ) {
             $name = is_object( $ability ) && method_exists( $ability, 'get_name' ) ? (string) $ability->get_name() : '';
             if ( 0 === strpos( $name, static::PREFIX ) ) {
-                $names[] = $name;
+                return true;
             }
         }
-        return $names;
+        return false;
     }
 
     protected static function run( callable $registration, string $what ): void {

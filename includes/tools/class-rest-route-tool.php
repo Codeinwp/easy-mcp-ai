@@ -2,6 +2,7 @@
 
 namespace Easy_MCP_AI\Tools;
 
+use Easy_MCP_AI\Approvals\Preview_Values;
 use Easy_MCP_AI\MCP\Detailed_Tool_Error;
 use Easy_MCP_AI\Rest_Routes\Dedicated_Tools;
 use Easy_MCP_AI\Rest_Routes\Namespace_State;
@@ -46,13 +47,76 @@ abstract class Rest_Route_Tool extends Base_Tool {
             return parent::describe( $arguments );
         }
         $text = $method . ' ' . $path;
-        foreach ( array( 'query', 'body' ) as $part ) {
-            if ( ! empty( $arguments[ $part ] ) && is_array( $arguments[ $part ] ) ) {
-                $json  = \wp_json_encode( $arguments[ $part ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-                $text .= ' ' . $part . ' ' . ( is_string( $json ) ? $json : '…' );
+        $note = '';
+        foreach ( self::sent_parts( $arguments ) as $part => $values ) {
+            if ( Preview_Values::is_list( $values ) ) {
+                $text .= ' ' . $part . ' ' . Preview_Values::shown( $values );
+                continue;
+            }
+            list( $short, $long ) = Preview_Values::split( $values );
+            if ( ! empty( $short ) ) {
+                $text .= ' ' . $part . ' ' . Preview_Values::inline( $short );
+            }
+            foreach ( $long as $key => $value ) {
+                $text .= ' ' . $part . '.' . $key . ': ' . Preview_Values::size( $value );
+            }
+            if ( 'body' === $part ) {
+                $note = Preview_Values::risk_note( $values );
             }
         }
-        return strlen( $text ) > 600 ? substr( $text, 0, 597 ) . '…' : $text;
+        return '' === $note ? $text : $note . ' ' . $text;
+    }
+
+    public function approval_details( array $arguments ): ?array {
+        $path = $this->approval_route( $arguments );
+        if ( null === $path ) {
+            return null;
+        }
+        try {
+            $method = $this->method_for( $arguments );
+        } catch ( \InvalidArgumentException $e ) {
+            return null;
+        }
+        $details = array();
+        $current = array();
+        foreach ( self::sent_parts( $arguments ) as $part => $values ) {
+            if ( Preview_Values::is_list( $values ) ) {
+                if ( Preview_Values::is_long( $values ) ) {
+                    $details[] = array( 'label' => $part, 'after' => Preview_Values::full( $values ) );
+                }
+                continue;
+            }
+            $details = array_merge( $details, Preview_Values::long_details( $values, $part . '.' ) );
+            if ( 'body' === $part ) {
+                $current = array_keys( Preview_Values::split( $values )[1] );
+            }
+        }
+        if ( empty( $current ) || 'DELETE' === $method || 0 !== strpos( $path, '/wp/v2/' ) ) {
+            return $details;
+        }
+        $stored = $this->peek( $path, implode( ',', $current ), array( 'context' => 'edit' ) );
+        foreach ( $details as $i => $detail ) {
+            $field = 0 === strpos( $detail['label'], 'body.' ) ? substr( $detail['label'], 5 ) : null;
+            if ( null === $field || ! is_array( $stored ) || ! array_key_exists( $field, $stored ) ) {
+                continue;
+            }
+            $value = $stored[ $field ];
+            if ( is_array( $value ) && array_key_exists( 'raw', $value ) ) {
+                $value = $value['raw'];
+            }
+            $details[ $i ] = array_merge( $detail, Preview_Values::before( $value ) );
+        }
+        return $details;
+    }
+
+    private static function sent_parts( array $arguments ): array {
+        $parts = array();
+        foreach ( array( 'query', 'body' ) as $part ) {
+            if ( ! empty( $arguments[ $part ] ) && is_array( $arguments[ $part ] ) ) {
+                $parts[ $part ] = Preview_Values::mask( $arguments[ $part ] );
+            }
+        }
+        return $parts;
     }
 
     abstract protected function method_for( array $arguments ): string;

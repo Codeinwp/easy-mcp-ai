@@ -17,6 +17,20 @@ trait Acf_Rest_Tool {
         }
     }
 
+    protected function acf_options_page_argument( array $arguments ): ?string {
+        if ( ! isset( $arguments['options_page'] ) || '' === $arguments['options_page'] ) {
+            return null;
+        }
+        $slug = is_string( $arguments['options_page'] ) ? trim( $arguments['options_page'] ) : '';
+        if ( '' === $slug ) {
+            throw new \InvalidArgumentException( 'options_page must be the slug of an ACF options page, a string.' );
+        }
+        if ( isset( $arguments['post_id'] ) ) {
+            throw new \InvalidArgumentException( 'Send options_page or post_id, not both: options_page reaches an ACF options page, post_id a post.' );
+        }
+        return $slug;
+    }
+
     protected function acf_post_base( $value ): string {
         return Post_Type_Rest_Base::resolve( $this->validate_rest_route_segment( $value, 'post_type' ) );
     }
@@ -75,9 +89,12 @@ trait Acf_Rest_Tool {
             + Acf_Rest_Call::read_report( $call['data'], $call['opened'], $type );
     }
 
-    protected function acf_write( $type, $id, $route, array $fields ) {
+    protected function acf_write( $type, $id, $route, array $fields, bool $resave = false ) {
         $call = Acf_Rest_Call::run(
-            function () use ( $route, $fields ) {
+            function () use ( $type, $id, $route, $fields, $resave ) {
+                if ( 'post' === $type ) {
+                    return $this->rest_post_update( 'POST', $route, array( 'acf' => $fields ), null, (int) $id, $resave );
+                }
                 return $this->rest_request( 'POST', $route, array( 'acf' => $fields ) );
             },
             $type,

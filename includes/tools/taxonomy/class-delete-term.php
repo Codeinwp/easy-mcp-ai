@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\Taxonomy;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -14,7 +15,7 @@ class Delete_Term extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Deletes a term from any taxonomy exposed in the REST API (show_in_rest); WooCommerce attribute taxonomies (pa_*) are not. Required: `term_id`, `taxonomy`. Returns { deleted: true, term_id, taxonomy }. Capability resolved dynamically via taxonomy cap->delete_terms. Note: deleting a term removes the term-object relationships but does not delete the related posts. Deletes through the taxonomy\'s own REST route, so a taxonomy registered under a custom `rest_namespace` works too.';
+        return 'Deletes a term from any taxonomy exposed in the REST API (show_in_rest), or a public taxonomy hidden from it that belongs to a hidden post type the CPT tools open (`wp_get_taxonomies` marks it `rest_api: false`); WooCommerce attribute taxonomies (pa_*) are not. Required: `term_id`, `taxonomy`. Returns { deleted: true, term_id, taxonomy }. Capability resolved dynamically via taxonomy cap->delete_terms. Note: deleting a term removes the term-object relationships but does not delete the related posts. Deletes through the taxonomy\'s own REST route, so a taxonomy registered under a custom `rest_namespace` works too.';
     }
 
     public function get_category() {
@@ -52,6 +53,15 @@ class Delete_Term extends Base_Tool {
     }
 
     public function describe( array $arguments ) {
+        return Hidden_Post_Types::run_for_taxonomy(
+            $arguments['taxonomy'] ?? null,
+            function () use ( $arguments ): string {
+                return $this->preview( $arguments );
+            }
+        );
+    }
+
+    private function preview( array $arguments ): string {
         $id       = isset( $arguments['term_id'] ) ? (int) $arguments['term_id'] : 0;
         $taxonomy = isset( $arguments['taxonomy'] ) ? (string) $arguments['taxonomy'] : '';
         $route    = $id > 0 ? $this->preview_collection_route( $taxonomy ) : null;
@@ -87,6 +97,15 @@ class Delete_Term extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for_taxonomy(
+            $arguments['taxonomy'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->delete_term( $arguments );
+            }
+        );
+    }
+
+    private function delete_term( array $arguments ): array {
         $this->validate_required( $arguments, array( 'term_id', 'taxonomy' ) );
         $term_id  = $this->parse_required_id( $arguments['term_id'], 'term_id' );
         $taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );

@@ -344,6 +344,7 @@ class Activator {
         }
         if ( $fresh_abilities ) {
             Ability_Seed::mark_pending();
+            \add_option( Compat\Vendor_Abilities::TICKS_SETTLED_OPTION, 1 );
         }
     }
 }

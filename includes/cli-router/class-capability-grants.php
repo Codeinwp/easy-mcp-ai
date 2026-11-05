@@ -14,13 +14,20 @@ final class Capability_Grants {
     }
 
     public static function holds( string $cap ): bool {
-        if ( \is_multisite() && \is_super_admin() ) {
+        if ( ! \Easy_MCP_AI\Auth\Role_Ceiling::permits( (int) \get_current_user_id(), $cap ) ) {
+            return false;
+        }
+        return self::user_holds( function_exists( 'get_userdata' ) ? \get_userdata( (int) \get_current_user_id() ) : false, $cap );
+    }
+
+    public static function user_holds( $user, string $cap ): bool {
+        $user_id = is_object( $user ) && isset( $user->ID ) ? (int) $user->ID : 0;
+        if ( \is_multisite() && \is_super_admin( $user_id ) ) {
             return true;
         }
-        $user    = function_exists( 'get_userdata' ) ? \get_userdata( (int) \get_current_user_id() ) : false;
         $allcaps = ( is_object( $user ) && isset( $user->allcaps ) && is_array( $user->allcaps ) ) ? $user->allcaps : array();
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's filter, applied as WP_User::has_cap() applies it.
-        $allcaps = \apply_filters( 'user_has_cap', $allcaps, array( $cap ), array( $cap, (int) \get_current_user_id() ), $user );
+        $allcaps = \apply_filters( 'user_has_cap', $allcaps, array( $cap ), array( $cap, $user_id ), $user );
         return is_array( $allcaps ) && ! empty( $allcaps[ $cap ] );
     }
 

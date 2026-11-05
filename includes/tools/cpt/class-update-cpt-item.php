@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\CPT;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Tool_Hint;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +16,7 @@ class Update_CPT_Item extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Updates an existing custom post type (CPT) item. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug) + `item_id`. Only fields you provide are changed (PATCH semantics). Common: `title`, `content`, `status` (publish/draft/pending/private/future or a custom status registered on this site; "trash" is not accepted — use `wp_delete_cpt_item`), `slug`, `excerpt`, `meta` (only keys registered with `show_in_rest=true` persist; dropped keys are reported back as `meta_ignored` with a `notice`; refused when the CPT does not support "custom-fields"). Also: `date` (site time, ISO 8601) or `date_gmt` (UTC) — never both, `author` (user ID), `parent` (hierarchical types only, 0 = top level), `menu_order`, `comment_status` / `ping_status` (open/closed), `password` (an empty string removes it), `featured_media` (attachment ID, 0 removes it), `template`, `tax_input` ({ taxonomy slug: [term IDs] }, replacing that taxonomy\'s terms) and `clear` (list of title/content/excerpt to set to an empty string, the same as sending them empty here). Each of those added fields is refused, naming the missing support, when the CPT does not accept it, and needs `rest_base` to be a post type shown in the REST API. Status transitions follow normal WordPress rules. Note: unlike `wp_update_post`/`wp_update_page`, passing an empty string for `title`, `content`, or `excerpt` here DOES blank the field rather than preserving the existing value. Discover the CPT\'s `rest_base` via `wp_get_post_types`. Returns { id, title, status, link }, plus `meta_ignored` and `notice` when sent meta keys were dropped. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces the CPT\'s own write capability on the underlying REST request (some require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error even though the tool is visible.';
+        return 'Updates an existing custom post type (CPT) item, also of a type hidden from the REST API that these tools open. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug; a hidden type by its slug) + `item_id`. Only fields you provide are changed (PATCH semantics). Common: `title`, `content`, `status` (publish/draft/pending/private/future or a custom status registered on this site; "trash" is not accepted — use `wp_delete_cpt_item`), `slug`, `excerpt`, `meta` (only keys registered with `show_in_rest=true` persist; dropped keys are reported back as `meta_ignored` with a `notice`; refused when the CPT does not support "custom-fields"). Also: `date` (site time, ISO 8601) or `date_gmt` (UTC) — never both, `author` (user ID), `parent` (hierarchical types only, 0 = top level), `menu_order`, `comment_status` / `ping_status` (open/closed), `password` (an empty string removes it), `featured_media` (attachment ID, 0 removes it), `template`, `tax_input` ({ taxonomy slug: [term IDs] }, replacing that taxonomy\'s terms) and `clear` (list of title/content/excerpt to set to an empty string, the same as sending them empty here). Each of those added fields is refused, naming the missing support, when the CPT does not accept it, and needs `rest_base` to name a post type these tools reach. Status transitions follow normal WordPress rules. Note: unlike `wp_update_post`/`wp_update_page`, passing an empty string for `title`, `content`, or `excerpt` here DOES blank the field rather than preserving the existing value. Discover the CPT\'s `rest_base` via `wp_get_post_types`. Returns { id, title, status, link }, plus `meta_ignored` and `notice` when sent meta keys were dropped. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces the CPT\'s own write capability on the underlying REST request (some require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error even though the tool is visible.';
     }
 
     public function get_category() {
@@ -120,7 +121,7 @@ class Update_CPT_Item extends Base_Tool {
                 ),
                 'tax_input' => array(
                     'type'        => 'object',
-                    'description' => 'Terms to set, as { taxonomy slug: [term IDs] }, e.g. {"genre": [12]}. Each listed taxonomy\'s terms are replaced by the list given; an empty list removes them all. Only taxonomies registered for this post type and shown in the REST API are accepted; every term ID must exist in that taxonomy.',
+                    'description' => 'Terms to set, as { taxonomy slug: [term IDs] }, e.g. {"genre": [12]}. Each listed taxonomy\'s terms are replaced by the list given; an empty list removes them all. Only taxonomies registered for this post type and shown in the REST API (or, for a hidden post type, its hidden public taxonomies) are accepted; every term ID must exist in that taxonomy.',
                 ),
                 'clear'     => array(
                     'type'        => 'array',
@@ -130,16 +131,31 @@ class Update_CPT_Item extends Base_Tool {
                     ),
                     'description' => 'Fields to set to an empty string: any of title, content, excerpt (here the same as sending the field as an empty string; kept for the same contract as wp_update_post and wp_update_page). A field listed here must not also be sent with a value.',
                 ),
+                'resave'    => self::resave_property( 'meta, terms, the featured image, sticky, template or format' ),
             ),
             'required'   => array( 'rest_base', 'item_id' ),
         );
     }
 
     public function precheck( array $arguments ): void {
-        $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'POST' );
+        Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): void {
+                $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'POST' );
+            }
+        );
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->update( $arguments );
+            }
+        );
+    }
+
+    private function update( array $arguments ): array {
         $this->validate_required( $arguments, array( 'rest_base', 'item_id' ) );
         $this->validate_title_length( isset( $arguments['title'] ) ? $arguments['title'] : null );
 
@@ -152,7 +168,7 @@ class Update_CPT_Item extends Base_Tool {
         $this->apply_post_type_fields( $arguments, $rest_base, $params );
         $this->refuse_builder_owned_write( $item_id, array_key_exists( 'content', $params ), (array) ( $params['meta'] ?? array() ) );
 
-        $data = self::update_item( $rest_base, $item_id, $params );
+        $data = $this->update_item( $rest_base, $item_id, $params, ! empty( $arguments['resave'] ) );
 
         $result = array(
             'id'     => $data['id'],
@@ -211,17 +227,17 @@ class Update_CPT_Item extends Base_Tool {
         Create_CPT_Item::refuse_unsupported_fields( $sent, $post_type_object, $post_type );
         Create_CPT_Item::refuse_unsupported_fields( $clear, $post_type_object, $post_type, 'clear' );
         if ( $has_tax_input ) {
-            $params = array_merge( $params, Create_CPT_Item::tax_input_params( $arguments['tax_input'], $post_type, $params ) );
+            $params += Create_CPT_Item::tax_input_params( $arguments['tax_input'], $post_type, $params );
         }
     }
 
-    private static function update_item( string $rest_base, int $item_id, array $params ): array {
+    private function update_item( string $rest_base, int $item_id, array $params, bool $resave ): array {
         $request = new \WP_REST_Request( 'POST', self::post_type_route( $rest_base, $item_id, 'POST' ) );
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
         }
 
-        $response = rest_do_request( $request );
+        $response = $this->dispatch_post_update( $request, $item_id, $resave );
 
         if ( $response->is_error() ) {
             $wp_error = $response->as_error();

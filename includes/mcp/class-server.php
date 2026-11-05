@@ -18,7 +18,13 @@ class Server {
 
     const RATE_WINDOW_SECONDS = 60;
 
+    const SENSITIVE_ARG_PATTERN = '/^(password|pass|secret|token|api[_\-]?key|authorization|content_base64|download_url|file_id|private[_\-]?key|access[_\-]?token|client[_\-]?secret|credential)$/i';
+
     const STEP_UP_MESSAGE = 'Token does not have permission to use this tool. It needs the OAuth scope %s: ask the user to reconnect this app to the site and approve it.';
+
+    const KEY_REFUSAL_MESSAGE = 'Token does not have permission to use this tool. This API key does not include it: if the user should have it, an administrator can add it to the key in wp-admin under %s.';
+
+    const INSUFFICIENT_PERMISSIONS = 'Insufficient WordPress permissions for this tool';
 
     public static function effective_required_capability( $category, $tool_default_cap ) {
         if ( in_array( $category, \Easy_MCP_AI\Tools\Base_Tool::EXTERNAL_DATA_CATEGORIES, true ) ) {
@@ -132,6 +138,43 @@ class Server {
         }
         $cap = self::effective_required_capability( $tool->get_category(), $tool->get_required_capability() );
         return ! $cap || \current_user_can( $cap ) ? $scope : null;
+    }
+
+    private static function switched_off_ability( string $tool_name ): ?string {
+        if ( 0 !== strpos( $tool_name, 'wp_ability_' ) ) {
+            return null;
+        }
+        foreach ( \Easy_MCP_AI\Tools\Switched_Off_Inventory::abilities() as $entry ) {
+            if ( $entry['name'] !== $tool_name ) {
+                continue;
+            }
+            if ( ! \current_user_can( \Easy_MCP_AI\Tools\Dynamic_Tool_Registrar::required_capability( (string) $entry['slug'] ) ) ) {
+                return null;
+            }
+            $status = null !== Tool_State::override_of( $tool_name ) ? array( 'status' => 'off_locked' ) : array( 'status' => 'off', 'where' => Tool_Status::switch_path() );
+            return 'This tool ' . Tool_Status::predicate( $status );
+        }
+        return null;
+    }
+
+    private static function ability_refusal( ?\Easy_MCP_AI\Tools\Base_Tool $tool, array $arguments ): ?string {
+        if ( ! $tool instanceof \Easy_MCP_AI\Tools\Dynamic_Tool ) {
+            return null;
+        }
+        $arguments   = Gemini_Safe_Schema::coerce( $arguments, Gemini_Safe_Schema::sanitize( $tool->get_input_schema() )['map'] );
+        $compat_mark = class_exists( '\\Easy_MCP_AI\\Compat\\Compat_Registry' ) ? \Easy_MCP_AI\Compat\Compat_Registry::mark() : null;
+        try {
+            if ( null !== $compat_mark ) {
+                \Easy_MCP_AI\Compat\Compat_Registry::arm_for( $tool, $arguments );
+            }
+            return $tool->refusal( $arguments );
+        } catch ( \Throwable $e ) {
+            return null;
+        } finally {
+            if ( null !== $compat_mark ) {
+                \Easy_MCP_AI\Compat\Compat_Registry::release( $compat_mark );
+            }
+        }
     }
 
     private function scope_challenge_for( $scope ) {
@@ -704,7 +747,7 @@ class Server {
             $cli_tool = $this->tool_registry->get_tool( 'wp_cli_run' );
             $text     = sprintf( 'WP-CLI (wp_cli_run) is switched off; it covers %s.', $cli_tool instanceof \Easy_MCP_AI\Tools\Base_Tool ? $cli_tool->get_covers() : '' );
             $text .= array() === $needed ? '' : sprintf( ' The tools that install or delete plugins and themes and update core are off too (%s).', implode( ', ', $needed ) );
-            return $text . ' Before saying a task cannot be done, tell the user which tool to switch on, by its name, and that ' . Tool_Status::who_switches_on( $off, $locked, Tool_Status::switch_path( 'wp_cli_run', true ) ) . '.';
+            return $text . ' Before saying a task cannot be done, tell the user which tool to switch on, by its name, and that ' . Tool_Status::who_switches_on( $off, $locked, Tool_Status::switch_path() ) . '.';
         } catch ( \Throwable $e ) {
             return '';
         }
@@ -804,6 +847,10 @@ class Server {
                 if ( null === $step_up ) {
                     return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, 'Token does not have permission to use this tool' );
                 }
+                $refused = self::ability_refusal( $this->tool_registry->get_tool( $tool_name ), $arguments );
+                if ( null !== $refused ) {
+                    return JSON_RPC::success_response( $id, self::error_result( new \RuntimeException( $refused ) ) );
+                }
                 if ( null === self::$active_call && 'skip' !== $this->approval_mode ) {
                     $this->scope_challenge = $this->scope_challenge_for( $step_up );
                 }
@@ -811,7 +858,7 @@ class Server {
             }
         } elseif ( ! $this->permission_guard->can_use_tool( $token_id, $tool_name ) ) {
             $this->log_refusal( $token_id, $tool_name, $arguments );
-            return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, 'Token does not have permission to use this tool' );
+            return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, sprintf( self::KEY_REFUSAL_MESSAGE, \Easy_MCP_AI\Config::brand( Tool_Status::API_TOKENS_PATH ) ) );
         }
 
         if ( ! $this->skip_rate_limit && ! $this->check_rate_limit( $token_id ) ) {
@@ -821,14 +868,18 @@ class Server {
         $tool = $this->tool_registry->get_tool( $tool_name );
         if ( null === $tool ) {
             $this->log_refusal( $token_id, $tool_name, $arguments );
+            $off = self::switched_off_ability( $tool_name );
+            if ( null !== $off ) {
+                return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, $off );
+            }
             return JSON_RPC::error_response( $id, Error_Codes::INVALID_PARAMS, 'Unknown tool' );
         }
 
         $required_cap = self::effective_required_capability( $tool->get_category(), $tool->get_required_capability() );
         if ( $required_cap && ! \current_user_can( $required_cap ) ) {
             $this->log_refusal( $token_id, $tool_name, $arguments );
-            $switched_off = self::privileged_switch_off( $tool, $tool_name );
-            return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, null !== $switched_off ? 'This tool ' . Tool_Status::predicate( $switched_off ) : 'Insufficient WordPress permissions for this tool' );
+            $refusal = self::capability_refusal( $tool, $tool_name, (string) $required_cap );
+            return JSON_RPC::error_response( $id, Error_Codes::FORBIDDEN, in_array( $refusal['status'], array( 'capability', 'privileged' ), true ) ? self::INSUFFICIENT_PERMISSIONS : 'This tool ' . Tool_Status::predicate( $refusal ) );
         }
 
         if ( ! Tool_State::is_enabled( $tool ) ) {
@@ -856,6 +907,16 @@ class Server {
             if ( ! $this->check_privileged_rate_limit( $token_id ) ) {
                 return $this->rate_limited( $id, 'Privileged tool rate limit exceeded. Please try again in a minute.' );
             }
+        }
+
+        try {
+            $tool->refuse_undeclared_arguments( $arguments );
+        } catch ( \InvalidArgumentException $e ) {
+            $refused = self::error_result( $e );
+            $this->note_audit_error( $this->log_tool_call( $token_id, $tool_name, $arguments, 'error' ), $refused );
+            return JSON_RPC::success_response( $id, $refused );
+        } catch ( \Throwable $e ) {
+            unset( $e );
         }
 
         $sent_arguments   = $arguments;
@@ -990,6 +1051,11 @@ class Server {
             $exec_started = microtime( true );
             $result       = $tool->execute( $arguments );
             $final_status = 'success';
+            $file_block   = null;
+            if ( $result instanceof File_Result ) {
+                $file_block = $result->content_block();
+                $result     = $result->get_data();
+            }
             if ( is_array( $result ) && isset( $result['error'] ) && is_string( $result['error'] ) ) {
                 $result['error'] = self::sanitize_error_message( $result['error'] );
             }
@@ -1011,6 +1077,9 @@ class Server {
                         : wp_json_encode( $has_structured ? $structured_value : $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
                 ) ),
             );
+            if ( null !== $file_block ) {
+                $response['content'][] = $file_block;
+            }
             if ( $has_structured ) {
                 $response['structuredContent'] = $structured_value;
             }
@@ -1142,6 +1211,31 @@ class Server {
         return class_exists( '\\Easy_MCP_AI\\Privileged\\Privileged_Groups' )
             ? \Easy_MCP_AI\Privileged\Privileged_Groups::group_of_tool( $tool_name )
             : null;
+    }
+
+    private static function capability_refusal( \Easy_MCP_AI\Tools\Base_Tool $tool, string $tool_name, string $capability ): array {
+        $switched_off = self::privileged_switch_off( $tool, $tool_name );
+        if ( null !== $switched_off ) {
+            return $switched_off;
+        }
+        if ( null !== self::privileged_group( $tool_name ) ) {
+            return array(
+                'status'  => 'privileged',
+                'message' => self::INSUFFICIENT_PERMISSIONS,
+            );
+        }
+        $cause = Blocked_Capability::cause( $capability );
+        if ( null !== $cause ) {
+            return array(
+                'status'     => 'blocked',
+                'capability' => $capability,
+                'cause'      => $cause,
+            );
+        }
+        return array(
+            'status'     => 'capability',
+            'capability' => $capability,
+        );
     }
 
     private static function privileged_switch_off( \Easy_MCP_AI\Tools\Base_Tool $tool, string $tool_name ): ?array {
@@ -1309,20 +1403,7 @@ class Server {
         }
         $cap = self::effective_required_capability( $tool->get_category(), $tool->get_required_capability() );
         if ( $cap && ! \current_user_can( $cap ) ) {
-            $switched_off = self::privileged_switch_off( $tool, $tool_name );
-            if ( null !== $switched_off ) {
-                return $switched_off;
-            }
-            if ( null !== self::privileged_group( $tool_name ) ) {
-                return array(
-                    'status'  => 'privileged',
-                    'message' => 'Insufficient WordPress permissions for this tool',
-                );
-            }
-            return array(
-                'status'     => 'capability',
-                'capability' => (string) $cap,
-            );
+            return self::capability_refusal( $tool, $tool_name, (string) $cap );
         }
         if ( ! Tool_State::is_enabled( $tool ) ) {
             return Tool_Status::off( $tool_name, (bool) $tool->is_disabled_by_default() );
@@ -1661,7 +1742,7 @@ class Server {
         if ( ! is_array( $args ) ) {
             return $args;
         }
-        $sensitive_pattern = '/^(password|pass|secret|token|api[_\-]?key|authorization|content_base64|download_url|file_id|private[_\-]?key|access[_\-]?token|client[_\-]?secret|credential)$/i';
+        $sensitive_pattern = self::SENSITIVE_ARG_PATTERN;
         $result = array();
         foreach ( $args as $key => $value ) {
             if ( preg_match( $sensitive_pattern, $key ) ) {

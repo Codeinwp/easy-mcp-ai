@@ -3,6 +3,8 @@
 namespace Easy_MCP_AI\Meta\Providers;
 
 use Easy_MCP_AI\Meta\Meta_Field_Provider;
+use Easy_MCP_AI\Tools\SEO\Yoast_Image_Id;
+use Easy_MCP_AI\Tools\SEO\Yoast_Update_Post_Seo;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -28,6 +30,14 @@ class Yoast_Meta_Provider extends Meta_Field_Provider {
 
     public function get_dedicated_tool() {
         return 'wp_yoast_update_post_seo';
+    }
+
+    public function after_write( $post_id, array $keys ) {
+        foreach ( Yoast_Update_Post_Seo::IMAGE_URLS as $field => $url_key ) {
+            if ( in_array( $url_key, $keys, true ) ) {
+                Yoast_Image_Id::store_for_post( (int) $post_id, Yoast_Update_Post_Seo::IMAGE_IDS[ $field ], (string) get_post_meta( (int) $post_id, $url_key, true ) );
+            }
+        }
     }
 
     public static function can_edit_advanced( $user_id ) {

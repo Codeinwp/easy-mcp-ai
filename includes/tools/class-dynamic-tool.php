@@ -16,6 +16,10 @@ class Dynamic_Tool extends Base_Tool {
     private $executor;
     private $annotations_override;
     private $task_contract;
+    private $accepted_arguments;
+    private $ability;
+
+    private $refusal;
 
     public function __construct( array $config ) {
         $this->validate_required( $config, array( 'name', 'description', 'executor' ) );
@@ -32,6 +36,11 @@ class Dynamic_Tool extends Base_Tool {
         $this->output_schema = isset( $config['output_schema'] ) ? $config['output_schema'] : null;
         $this->annotations_override = isset( $config['annotations'] ) ? $config['annotations'] : null;
         $this->task_contract = isset( $config['task'] ) && is_array( $config['task'] ) ? $config['task'] : null;
+        $this->refusal       = isset( $config['refusal'] ) ? $config['refusal'] : null;
+        $this->accepted_arguments = isset( $config['accepted_arguments'] ) && is_array( $config['accepted_arguments'] )
+            ? array_values( array_map( 'strval', $config['accepted_arguments'] ) )
+            : null;
+        $this->ability = isset( $config['ability'] ) && is_string( $config['ability'] ) ? $config['ability'] : null;
     }
 
     public function get_name()                 { return $this->name; }
@@ -41,6 +50,21 @@ class Dynamic_Tool extends Base_Tool {
     public function get_input_schema()         { return $this->input_schema; }
     public function get_output_schema()        { return $this->output_schema; }
     public function get_task_contract()        { return $this->task_contract; }
+
+    public function accepted_arguments(): ?array {
+        return $this->accepted_arguments;
+    }
+
+    public function refuse_undeclared_arguments( array $arguments ): void {
+        $undeclared = $this->undeclared_arguments( $arguments );
+        if ( array() !== $undeclared && null !== $this->ability ) {
+            $violation = Ability_Input_Policy::callback_violation( $this->ability, array_intersect_key( $arguments, array_flip( $undeclared ) ) );
+            if ( null !== $violation ) {
+                throw new \InvalidArgumentException( $violation ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+        }
+        parent::refuse_undeclared_arguments( $arguments );
+    }
 
     public function get_annotations() {
         if ( null !== $this->annotations_override ) {
@@ -57,5 +81,9 @@ class Dynamic_Tool extends Base_Tool {
 
     public function execute( array $arguments ) {
         return call_user_func( $this->executor, $arguments );
+    }
+
+    public function refusal( array $arguments ): ?string {
+        return null === $this->refusal ? null : call_user_func( $this->refusal, $arguments );
     }
 }

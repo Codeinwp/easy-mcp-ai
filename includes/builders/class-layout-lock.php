@@ -18,8 +18,16 @@ final class Layout_Lock {
         return Option_Lock::acquire( self::PREFIX . $post_id, self::TTL );
     }
 
+    public static function acquire_waiting( int $post_id, int $wait ): string {
+        return Option_Lock::acquire_waiting( self::PREFIX . $post_id, self::TTL, $wait, 'Easy MCP' );
+    }
+
     public static function holds( int $post_id, string $token ): bool {
         return Option_Lock::holds( self::PREFIX . $post_id, $token );
+    }
+
+    public static function renew( int $post_id, string $token ): string {
+        return Option_Lock::renew( self::PREFIX . $post_id, $token );
     }
 
     public static function release( int $post_id, string $token ): void {

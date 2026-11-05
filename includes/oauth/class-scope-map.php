@@ -12,7 +12,7 @@ class Scope_Map {
 
     const SCOPE_MAP = array(
         'mcp:posts:read'         => array( 'wp_get_post', 'wp_list_posts', 'wp_get_page', 'wp_list_pages', 'wp_list_revisions', 'wp_get_revision', 'wp_get_post_meta', 'wp_get_post_types', 'wp_get_post_statuses', 'wp_count_posts', 'wp_get_post_full', 'wp_get_post_blocks', 'wp_create_preview_link', 'wp_get_page_layout', 'wp_list_layout_elements' ),
-        'mcp:posts:write'        => array( 'wp_create_post', 'wp_update_post', 'wp_delete_post', 'wp_create_page', 'wp_update_page', 'wp_delete_page', 'wp_delete_revision', 'wp_restore_revision', 'wp_update_post_meta', 'wp_delete_post_meta', 'wp_get_post_statuses', 'wp_add_post_terms', 'wp_replace_in_post', 'wp_update_post_blocks', 'wp_duplicate_post', 'wp_update_page_layout' ),
+        'mcp:posts:write'        => array( 'wp_create_post', 'wp_update_post', 'wp_delete_post', 'wp_create_page', 'wp_update_page', 'wp_delete_page', 'wp_delete_revision', 'wp_restore_revision', 'wp_update_post_meta', 'wp_delete_post_meta', 'wp_get_post_statuses', 'wp_add_post_terms', 'wp_replace_in_post', 'wp_update_post_blocks', 'wp_duplicate_post', 'wp_republish_post', 'wp_update_page_layout' ),
         'mcp:cpt:read'           => array( 'wp_list_cpt_items', 'wp_get_cpt_item' ),
         'mcp:cpt:write'          => array( 'wp_create_cpt_item', 'wp_update_cpt_item', 'wp_delete_cpt_item' ),
         'mcp:media:read'         => array( 'wp_get_media', 'wp_list_media', 'wp_count_media' ),
@@ -63,14 +63,16 @@ class Scope_Map {
         'mcp:redirection:read'   => array( 'wp_redirection_list_redirects', 'wp_redirection_get_redirect', 'wp_redirection_list_groups', 'wp_redirection_list_404s' ),
         'mcp:redirection:write'  => array( 'wp_redirection_create_redirect', 'wp_redirection_update_redirect', 'wp_redirection_delete_redirects' ),
         'mcp:sitekit:read'       => array( 'wp_sitekit_get_status', 'wp_sitekit_ga_run_report', 'wp_sitekit_ga_list_key_events', 'wp_sitekit_gsc_query_performance' ),
+        'mcp:divi:read'          => array( 'wp_divi_get_theme_options', 'wp_divi_list_theme_builder' ),
+        'mcp:divi:write'         => array( 'wp_divi_update_theme_options' ),
         'mcp:cf7:read'           => array( 'wp_cf7_list_forms', 'wp_cf7_get_form' ),
         'mcp:cf7:write'          => array( 'wp_cf7_create_form', 'wp_cf7_update_form', 'wp_cf7_delete_form' ),
         'mcp:yoast:read'         => array( 'wp_yoast_get_post_seo', 'wp_yoast_get_head', 'wp_yoast_get_term_seo', 'wp_yoast_get_settings' ),
         'mcp:yoast:write'        => array( 'wp_yoast_update_post_seo', 'wp_yoast_update_term_seo', 'wp_yoast_update_settings' ),
         'mcp:aioseo:read'        => array( 'wp_aioseo_get_post_seo', 'wp_aioseo_get_breadcrumb' ),
         'mcp:aioseo:write'       => array( 'wp_aioseo_update_post_seo' ),
-        'mcp:rankmath:read'      => array( 'wp_rm_get_post_seo', 'wp_rm_get_head', 'wp_rm_list_redirects', 'wp_rm_get_redirect' ),
-        'mcp:rankmath:write'     => array( 'wp_rm_update_post_seo', 'wp_rm_create_redirect', 'wp_rm_update_redirect', 'wp_rm_delete_redirects' ),
+        'mcp:rankmath:read'      => array( 'wp_rm_get_post_seo', 'wp_rm_get_head', 'wp_rm_list_redirects', 'wp_rm_get_redirect', 'wp_rm_get_settings' ),
+        'mcp:rankmath:write'     => array( 'wp_rm_update_post_seo', 'wp_rm_create_redirect', 'wp_rm_update_redirect', 'wp_rm_delete_redirects', 'wp_rm_update_settings' ),
         'mcp:seopress:read'      => array( 'wp_seopress_get_post_seo', 'wp_seopress_get_content_analysis', 'wp_seopress_get_term_seo' ),
         'mcp:seopress:write'     => array( 'wp_seopress_update_post_title_desc', 'wp_seopress_update_post_robots', 'wp_seopress_update_post_social', 'wp_seopress_update_post_keywords' ),
         'mcp:slimseo:read'       => array( 'wp_slimseo_get_post_seo' ),
@@ -159,6 +161,7 @@ class Scope_Map {
         'events'      => 'The Events Calendar',
         'redirection' => 'Redirection',
         'sitekit'     => 'Site Kit by Google',
+        'divi'        => 'Divi',
         'cf7'         => 'Contact Form 7',
         'yoast'       => 'Yoast SEO',
         'aioseo'      => 'All in One SEO',
@@ -184,6 +187,7 @@ class Scope_Map {
         'events'      => array( 'Tribe__Events__Main' ),
         'redirection' => array( 'Red_Item' ),
         'sitekit'     => array( 'Google\\Site_Kit\\Plugin' ),
+        'divi'        => array(),
         'cf7'         => array( 'WPCF7_ContactForm' ),
         'yoast'       => array( 'WPSEO_Options' ),
         'aioseo'      => array( 'AIOSEO\\Plugin\\AIOSEO' ),
@@ -212,6 +216,9 @@ class Scope_Map {
         }
         if ( 'tsf' === $slug ) {
             return \function_exists( 'tsf' );
+        }
+        if ( 'divi' === $slug ) {
+            return \function_exists( \Easy_MCP_AI\Meta\Providers\Divi_Meta_Provider::DETECT_FUNCTION );
         }
         if ( ! isset( self::PLUGIN_DETECTION_CLASSES[ $slug ] ) ) {
             return false;
@@ -612,11 +619,12 @@ class Scope_Map {
             'settings'    => __( 'Settings', 'easy-mcp-ai' ),
             'woocommerce' => 'WooCommerce',
             'acf'         => __( 'Advanced Custom Fields', 'easy-mcp-ai' ),
-            'acf_posts'   => __( 'Advanced Custom Fields — Post & Page Fields', 'easy-mcp-ai' ),
+            'acf_posts'   => __( 'Advanced Custom Fields — Post, Page & Options Page Fields', 'easy-mcp-ai' ),
             'buddypress'  => 'BuddyPress',
             'events'      => __( 'The Events Calendar', 'easy-mcp-ai' ),
             'redirection' => 'Redirection',
             'sitekit'     => 'Site Kit by Google',
+            'divi'        => 'Divi',
             'cf7'         => 'Contact Form 7',
             'yoast'       => __( 'Yoast SEO', 'easy-mcp-ai' ),
             'aioseo'      => __( 'All in One SEO', 'easy-mcp-ai' ),

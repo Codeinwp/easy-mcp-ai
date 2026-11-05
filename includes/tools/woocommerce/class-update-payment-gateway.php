@@ -68,6 +68,13 @@ class Update_Payment_Gateway extends Base_Tool {
         );
     }
 
+    public function refuse_undeclared_arguments( array $arguments ): void {
+        if ( array_key_exists( 'settings', $arguments ) ) {
+            throw new \InvalidArgumentException( 'This tool does not change gateway settings (API keys, accounts, modes): only enabled, title, description and order. Set the rest in WooCommerce › Settings › Payments.' );
+        }
+        parent::refuse_undeclared_arguments( $arguments );
+    }
+
     public function execute( array $arguments ) {
         $this->require_woocommerce();
         $id = self::text_arg( $arguments, 'id' );
@@ -78,9 +85,7 @@ class Update_Payment_Gateway extends Base_Tool {
             throw new \InvalidArgumentException( 'Invalid id: a gateway id holds letters, digits, "_" and "-" only, e.g. "cod". Find it with wp_wc_list_payment_gateways.' );
         }
 
-        if ( array_key_exists( 'settings', $arguments ) ) {
-            throw new \InvalidArgumentException( 'This tool does not change gateway settings (API keys, accounts, modes): only enabled, title, description and order. Set the rest in WooCommerce › Settings › Payments.' );
-        }
+        $this->refuse_undeclared_arguments( $arguments );
 
         $params = array();
         if ( array_key_exists( 'enabled', $arguments ) ) {

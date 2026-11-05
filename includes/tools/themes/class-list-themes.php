@@ -25,7 +25,7 @@ class List_Themes extends Base_Tool {
     }
 
     public static function lifecycle_hint(): string {
-        return \Easy_MCP_AI\Config::brand( 'Installing and deleting themes have their own tools, which are off by default: when none is in your tools, tell the user an administrator can switch them on in wp-admin under Easy MCP AI › Settings › Advanced › Disabled tools, or allow them for this connection.' );
+        return \Easy_MCP_AI\Config::brand( 'Installing and deleting themes have their own tools, which are off by default: when none is in your tools, tell the user an administrator can switch them on in wp-admin under Easy MCP AI › Tools, or allow them for this connection.' );
     }
 
     public function get_category() {

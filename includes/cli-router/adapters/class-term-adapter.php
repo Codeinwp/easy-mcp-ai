@@ -9,6 +9,7 @@ use Easy_MCP_AI\Cli_Router\Formatter;
 use Easy_MCP_AI\Cli_Router\Ids;
 use Easy_MCP_AI\Cli_Router\Invocation;
 use Easy_MCP_AI\Cli_Router\Read_Value;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -831,14 +832,18 @@ final class Term_Adapter extends Command_Handler {
         if ( ! \current_user_can( 'delete_term', $term_id ) ) {
             $ctx->out->error( sprintf( self::MIGRATE_DELETE_DENIED, $term_id ) );
         }
-        if ( empty( $from_tax->show_in_rest ) ) {
+        if ( ! self::term_tools_reach( $from, $from_tax ) ) {
             $ctx->out->error( sprintf( self::MIGRATE_NOT_REST, $from, 'out of' ) );
         }
         $to_tax = \get_taxonomy( $to );
-        if ( empty( $to_tax->show_in_rest ) ) {
+        if ( ! self::term_tools_reach( $to, $to_tax ) ) {
             $ctx->out->error( sprintf( self::MIGRATE_NOT_REST, $to, 'into' ) );
         }
         return $to_tax;
+    }
+
+    private static function term_tools_reach( string $taxonomy, object $object ): bool {
+        return ! empty( $object->show_in_rest ) || Hidden_Post_Types::reaches_taxonomy( $taxonomy, $object );
     }
 
     private static function objects_in_term( Context $ctx, int $term_id, string $taxonomy ): array {
@@ -903,20 +908,14 @@ final class Term_Adapter extends Command_Handler {
     }
 
     private static function would_pause( string $tool, array $arguments ): bool {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) || ! \Easy_MCP_AI\Approvals\Approval_Gate::enabled() ) {
+        if ( ! class_exists( '\\Easy_MCP_AI\\Approvals\\Approval_Gate' ) ) {
             return false;
         }
-        $object = self::registered_tool( $tool );
-        return null === $object || \Easy_MCP_AI\Approvals\Approval_Gate::requires_approval( $object, $arguments );
-    }
-
-    private static function registered_tool( string $tool ): ?object {
-        if ( ! class_exists( '\\Easy_MCP_AI\\Plugin', false ) || ! method_exists( '\\Easy_MCP_AI\\Plugin', 'instance' ) ) {
-            return null;
+        $object = \Easy_MCP_AI\Cli_Router\Router::tool( $tool );
+        if ( null === $object ) {
+            return true === \Easy_MCP_AI\Tools\Tool_Policy::approval_choice( $tool ) || \Easy_MCP_AI\Approvals\Approval_Gate::enabled();
         }
-        $registry = \Easy_MCP_AI\Plugin::instance()->get_tool_registry();
-        $object   = is_object( $registry ) && method_exists( $registry, 'get_tool' ) ? $registry->get_tool( $tool ) : null;
-        return is_object( $object ) ? $object : null;
+        return \Easy_MCP_AI\Approvals\Approval_Gate::requires_approval( $object, $arguments );
     }
 
     private function resolve_term( Invocation $inv, Context $ctx, string $tool, string $taxonomy, string $ref, string $tax_cap, ?string $object_cap ): int {

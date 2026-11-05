@@ -8,8 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Learnpress_Abilities extends Vendor_Abilities {
 
-    const GROUP = 'learnpress';
-
     const ABILITIES_CLASS = 'LearnPress\\MCP\\Abilities';
 
     const CATEGORY = 'learnpress';
@@ -17,8 +15,6 @@ final class Learnpress_Abilities extends Vendor_Abilities {
     const PREFIX = 'learnpress/';
 
     const VENDOR = 'LearnPress';
-
-    const ENABLE_PENDING_OPTION = 'easy_mcp_ai_learnpress_enable_pending';
 
     public static function register_category( string $class = self::ABILITIES_CLASS ): void {
         if ( ! self::wanted( $class, 'register_category' ) || ! function_exists( 'wp_has_ability_category' ) ) {
@@ -51,5 +47,9 @@ final class Learnpress_Abilities extends Vendor_Abilities {
             },
             $class . '::' . $method . '()'
         );
+    }
+
+    protected static function ran_before_switches_dropped(): bool {
+        return \Easy_MCP_AI\Meta\Meta_Exposure::is_group_enabled( 'learnpress' );
     }
 }

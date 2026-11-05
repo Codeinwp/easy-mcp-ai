@@ -102,6 +102,19 @@ class Ability_Input_Policy {
             return null;
         }
 
+        $callback = self::callback_violation( $slug, $arguments );
+        if ( null !== $callback ) {
+            return $callback;
+        }
+
+        if ( isset( self::SLUG_GUARDED[ $slug ] ) ) {
+            return self::slug_violation( $slug, self::SLUG_GUARDED[ $slug ], $arguments );
+        }
+
+        return null;
+    }
+
+    public static function callback_violation( $slug, array $arguments ): ?string {
         foreach ( self::refused_paths( $slug ) as $path ) {
             if ( self::path_is_present( $arguments, explode( '.', $path ) ) ) {
                 return sprintf(
@@ -110,11 +123,6 @@ class Ability_Input_Policy {
                 );
             }
         }
-
-        if ( isset( self::SLUG_GUARDED[ $slug ] ) ) {
-            return self::slug_violation( $slug, self::SLUG_GUARDED[ $slug ], $arguments );
-        }
-
         return null;
     }
 

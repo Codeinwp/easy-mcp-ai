@@ -18,6 +18,7 @@ class Approval_Gate {
     const FORM_PROTOCOL = '2026-07-28';
     const META_KEY = 'easy-mcp-ai/approval';
     const PREVIEW_MAX = 2000;
+    const DETAILS_MAX = 200000;
 
     const STATUS_PENDING  = 'pending';
     const STATUS_APPROVED = 'approved';
@@ -144,6 +145,10 @@ class Approval_Gate {
 
     public static function is_destructive_by_annotation( $tool ) {
         $annotations = is_object( $tool ) && method_exists( $tool, 'get_annotations' ) ? $tool->get_annotations() : array();
+        return self::annotations_destructive( $annotations );
+    }
+
+    public static function annotations_destructive( $annotations ): bool {
         if ( ! is_array( $annotations ) ) {
             $annotations = array();
         }
@@ -154,9 +159,25 @@ class Approval_Gate {
         return ! ( isset( $annotations['readOnlyHint'] ) && true === $annotations['readOnlyHint'] );
     }
 
+    public static function settings_deployed(): bool {
+        return \Easy_MCP_AI\Config::is_locked( 'approval_required' )
+            || \Easy_MCP_AI\Config::is_locked( 'approval_always' )
+            || \Easy_MCP_AI\Config::is_locked( 'approval_never' );
+    }
+
     public static function requires_approval( $tool, array $arguments ) {
         $tool_name = $tool->get_name();
         $reason    = '';
+        $choice = \Easy_MCP_AI\Tools\Tool_Policy::approval_choice( $tool_name );
+        if ( null !== $choice && ! self::settings_deployed() ) {
+            $required = $choice;
+            $reason   = 'explicit';
+            if ( $choice && method_exists( $tool, 'get_approval_policy' ) && 'never' === $tool->get_approval_policy( $arguments ) ) {
+                $required = false;
+                $reason   = 'policy';
+            }
+            return (bool) \apply_filters( 'easy_mcp_ai_requires_approval', $required, $tool_name, $arguments, $reason );
+        }
         if ( ! self::enabled() ) {
             return false;
         }
@@ -209,14 +230,20 @@ class Approval_Gate {
         }
         $tool_name = $tool->get_name();
         $hash      = self::args_hash( $tool_name, $arguments );
+        $shown   = $this->present( $tool, $arguments );
+        $refusal = self::size_refusal( $shown );
+        if ( null !== $refusal ) {
+            $replay = $this->consumed_replay( $identity, $tool_name, $hash );
+            return $replay ? $replay : array( 'kind' => 'refused', 'reason' => 'preview', 'message' => $refusal );
+        }
 
         if ( isset( $params['requestState'] ) || isset( $params['inputResponses'] ) ) {
-            return $this->evaluate_retry( $tool, $arguments, $identity, $params, $hash, $client_caps, $client_protocol );
+            return $this->evaluate_retry( $identity, $params, $hash, $shown, $client_caps, $client_protocol );
         }
 
         $approved = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_APPROVED );
         if ( $approved && $this->row_is_valid( $approved, $identity ) ) {
-            return $this->redeem_or_refuse( $tool, $arguments, $approved );
+            return $this->redeem_or_refuse( $approved, $shown );
         }
         $replay = $this->consumed_replay( $identity, $tool_name, $hash );
         if ( $replay ) {
@@ -224,12 +251,12 @@ class Approval_Gate {
         }
         $pending = $this->store->find_latest( $identity, $tool_name, $hash, self::STATUS_PENDING );
         if ( ! $pending || ! $this->row_is_valid( $pending, $identity ) ) {
-            $pending = $this->create_row( $tool, $arguments, $identity, $hash, $client_caps, $client_protocol );
+            $pending = $this->create_row( $tool, $arguments, $identity, $hash, $shown, $client_caps, $client_protocol );
             if ( null === $pending ) {
                 return array( 'kind' => 'refused', 'reason' => 'store_failed', 'message' => 'The approval could not be recorded; the operation was not run.' );
             }
         }
-        return array( 'kind' => $this->offers_form( $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $pending );
+        return array( 'kind' => $this->offers_form_for( $pending, $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $pending );
     }
 
     private function consumed_replay( array $identity, string $tool_name, string $hash ): ?array {
@@ -248,7 +275,7 @@ class Approval_Gate {
         return array( 'kind' => 'replay', 'row' => $row, 'result' => $result );
     }
 
-    private function evaluate_retry( $tool, array $arguments, array $identity, array $params, $hash, $client_caps, $client_protocol = null ) {
+    private function evaluate_retry( array $identity, array $params, string $hash, array $shown, ?array $client_caps, ?string $client_protocol = null ): array {
         $state = $this->verify_state( isset( $params['requestState'] ) ? $params['requestState'] : '' );
         if ( null === $state ) {
             return array( 'kind' => 'refused', 'reason' => 'bad_state', 'message' => 'The approval state on this retry is missing, expired or not ours; call the tool again without it to start over.' );
@@ -267,7 +294,7 @@ class Approval_Gate {
         $answer    = isset( $responses[ self::REQUEST_KEY ] ) && is_array( $responses[ self::REQUEST_KEY ] ) ? $responses[ self::REQUEST_KEY ] : null;
         if ( null === $answer ) {
             if ( self::STATUS_PENDING === $row['status'] ) {
-                return array( 'kind' => $this->offers_form( $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $row );
+                return array( 'kind' => $this->offers_form_for( $row, $client_caps, $client_protocol ) ? 'ask_form' : 'ask', 'row' => $row );
             }
         } else {
             $action   = isset( $answer['action'] ) ? (string) $answer['action'] : '';
@@ -285,7 +312,7 @@ class Approval_Gate {
             }
         }
         if ( self::STATUS_APPROVED === $row['status'] ) {
-            return $this->redeem_or_refuse( $tool, $arguments, $row );
+            return $this->redeem_or_refuse( $row, $shown );
         }
         if ( self::STATUS_DENIED === $row['status'] ) {
             return array( 'kind' => 'refused', 'reason' => 'denied', 'message' => 'The user denied this operation; nothing was run.' );
@@ -300,17 +327,30 @@ class Approval_Gate {
         return array( 'kind' => 'ask', 'row' => $row );
     }
 
-    private function redeem_or_refuse( $tool, array $arguments, array $row ) {
-        $preview = $this->preview( $tool, $arguments );
-        if ( ! hash_equals( (string) $row['preview_hash'], hash( 'sha256', $preview ) ) ) {
-            $this->store->update( $row['approval_id'], array( 'status' => self::STATUS_EXPIRED, 'arguments' => null ) );
+    private function redeem_or_refuse( array $row, array $shown ): array {
+        if ( ! hash_equals( (string) $row['preview_hash'], self::preview_hash( self::cut( $shown['summary'] ), $shown['details'] ) ) ) {
+            $this->store->update( $row['approval_id'], self::cleared( $row, array( 'status' => self::STATUS_EXPIRED, 'arguments' => null ) ) );
             return array( 'kind' => 'refused', 'reason' => 'drift', 'message' => 'The target changed after the user approved it (the approved description no longer matches); nothing was run. Call the tool again to request a fresh approval.' );
         }
         return array( 'kind' => 'redeem', 'row' => $row );
     }
 
-    public function claim( array $row ) {
-        return $this->store->claim( $row['approval_id'], $this->now_mysql() );
+    public function claim( array $row ): bool {
+        if ( ! $this->store->claim( $row['approval_id'], $this->now_mysql() ) ) {
+            return false;
+        }
+        $cleared = self::cleared( $row, array() );
+        if ( ! empty( $cleared ) ) {
+            $this->store->update( $row['approval_id'], $cleared );
+        }
+        return true;
+    }
+
+    private static function cleared( array $row, array $fields ): array {
+        if ( ! empty( $row['details'] ) ) {
+            $fields['details'] = null;
+        }
+        return $fields;
     }
 
     public function finish( array $row, $result, $status, $executed_audit_id = null ) {
@@ -364,17 +404,18 @@ class Approval_Gate {
         ) );
     }
 
-    public function build_approval_result( array $row, $issue_card_secret = false ) {
-        $url  = self::approve_url( $row['approval_id'] );
+    public function build_approval_result( array $row, bool $issue_card_secret = false ): array {
+        $url       = self::approve_url( $row['approval_id'] );
+        $page_only = ! empty( $row['details'] );
         $card_secret = null;
-        if ( $issue_card_secret && self::STATUS_PENDING === $row['status'] ) {
+        if ( $issue_card_secret && ! $page_only && self::STATUS_PENDING === $row['status'] ) {
             $card_secret = bin2hex( random_bytes( 16 ) );
             $this->store->update( $row['approval_id'], array( 'card_secret_hash' => hash( 'sha256', $card_secret ) ) );
         }
         $text = sprintf(
             'APPROVAL REQUIRED (id %s). %s Ask the user to open %s and approve, then call this tool again with exactly the same arguments to run it. Do not report the operation as done. The request expires at %s UTC.',
             $row['approval_id'],
-            $row['preview'],
+            $page_only ? $row['preview'] . ' Only the approval page shows this call in full.' : $row['preview'],
             $url,
             $row['expires_at']
         );
@@ -390,6 +431,7 @@ class Approval_Gate {
                     'expires_at'  => $row['expires_at'],
                     'approve_url' => $url,
                     'card_secret' => $card_secret,
+                    'page_only'   => $page_only,
                 ),
             ),
         );
@@ -425,8 +467,8 @@ class Approval_Gate {
         return $base . ( false === strpos( $base, '?' ) ? '?' : '&' ) . 'easy_mcp_ai_approve=' . rawurlencode( (string) $approval_id );
     }
 
-    private function create_row( $tool, array $arguments, array $identity, $hash, $client_caps = null, $client_protocol = null ) {
-        $preview = $this->preview( $tool, $arguments );
+    private function create_row( object $tool, array $arguments, array $identity, string $hash, array $shown, ?array $client_caps = null, ?string $client_protocol = null ): ?array {
+        $preview = self::cut( $shown['summary'] );
         $now     = $this->time();
         $caps    = is_array( $client_caps ) ? \wp_json_encode( $client_caps, JSON_UNESCAPED_SLASHES ) : null;
         $row     = array(
@@ -441,7 +483,8 @@ class Approval_Gate {
             'arguments'       => \wp_json_encode( $arguments, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
             'args_hash'       => $hash,
             'preview'         => $preview,
-            'preview_hash'    => hash( 'sha256', $preview ),
+            'details'         => empty( $shown['details'] ) ? null : \wp_json_encode( $shown['details'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
+            'preview_hash'    => self::preview_hash( $preview, $shown['details'] ),
             'status'          => self::STATUS_PENDING,
             'created_at'      => gmdate( 'Y-m-d H:i:s', $now ),
             'expires_at'      => gmdate( 'Y-m-d H:i:s', $now + self::TTL_SECONDS ),
@@ -544,7 +587,15 @@ class Approval_Gate {
         return $value;
     }
 
-    public function preview( $tool, array $arguments ) {
+    public function preview( object $tool, array $arguments ): string {
+        return self::cut( $this->present( $tool, $arguments )['summary'] );
+    }
+
+    public function details( object $tool, array $arguments ): array {
+        return $this->present( $tool, $arguments )['details'];
+    }
+
+    private function present( object $tool, array $arguments ): array {
         $arguments = self::sort_keys( $arguments );
         $text      = '';
         try {
@@ -554,14 +605,48 @@ class Approval_Gate {
         } catch ( \Throwable $e ) {
             $text = '';
         }
-        if ( '' === trim( $text ) ) {
-            $text = Base_Tool::generic_description( $tool, $arguments );
+        $generic = Base_Tool::generic_description( $tool, $arguments );
+        $summary = self::flatten( '' === trim( $text ) ? $generic : $text );
+        return array(
+            'summary' => $summary,
+            'details' => Base_Tool::approval_details_for(
+                $tool,
+                $arguments,
+                static function () use ( $generic, $summary ): bool {
+                    return self::flatten( $generic ) === $summary;
+                }
+            ),
+        );
+    }
+
+    private static function size_refusal( array $shown ): ?string {
+        $length = self::preview_overflow( $shown['summary'] );
+        if ( null !== $length ) {
+            return sprintf( 'This call takes %1$d characters to summarise and the approval page shows %2$d, so it was not sent for approval: a person must see every argument they approve. Send fewer or shorter arguments, or split the call.', $length, self::PREVIEW_MAX );
         }
-        $text = self::flatten( $text );
-        if ( function_exists( 'mb_substr' ) ) {
-            return mb_substr( $text, 0, self::PREVIEW_MAX );
+        $total = 0;
+        foreach ( $shown['details'] as $detail ) {
+            $total += self::length( $detail['after'] ) + ( isset( $detail['before'] ) ? self::length( $detail['before'] ) : 0 );
         }
-        return substr( $text, 0, self::PREVIEW_MAX );
+        if ( $total > self::DETAILS_MAX ) {
+            return sprintf( 'This call\'s values take %1$d characters and the approval page shows at most %2$d, so it was not sent for approval: a person must see every value they approve. Split the call into smaller ones.', $total, self::DETAILS_MAX );
+        }
+        return null;
+    }
+
+    public static function preview_hash( string $preview, array $details ): string {
+        if ( empty( $details ) ) {
+            return hash( 'sha256', $preview );
+        }
+        return hash( 'sha256', $preview . "\n" . (string) \wp_json_encode( $details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
+    }
+
+    private static function cut( string $text ): string {
+        return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, self::PREVIEW_MAX ) : substr( $text, 0, self::PREVIEW_MAX );
+    }
+
+    private static function length( string $text ): int {
+        return function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
     }
 
     public static function flatten( $text ) {
@@ -569,8 +654,7 @@ class Approval_Gate {
     }
 
     public static function preview_overflow( string $description ): ?int {
-        $text   = self::flatten( $description );
-        $length = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
+        $length = self::length( self::flatten( $description ) );
         return $length > self::PREVIEW_MAX ? $length : null;
     }
 
@@ -614,6 +698,10 @@ class Approval_Gate {
 
     private function offers_form( $client_caps, $client_protocol ) {
         return self::FORM_PROTOCOL === $client_protocol && $this->client_supports_form( $client_caps );
+    }
+
+    private function offers_form_for( array $row, ?array $client_caps, ?string $client_protocol ): bool {
+        return empty( $row['details'] ) && $this->offers_form( $client_caps, $client_protocol );
     }
 
     private function client_supports_form( $client_caps ) {

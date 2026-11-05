@@ -50,6 +50,10 @@ class Ability_Seed {
         return $seed;
     }
 
+    public static function seeds( $ability ): bool {
+        return array() !== self::select( self::annotations_by_name( array( $ability ) ) );
+    }
+
     public static function is_seedable( string $name, $annotations ): bool {
         if ( '' === $name ) {
             return false;
@@ -58,6 +62,10 @@ class Ability_Seed {
             if ( 0 === strpos( $name, $prefix ) ) {
                 return false;
             }
+        }
+        $slash = strpos( $name, '/' );
+        if ( false !== $slash && null !== \Easy_MCP_AI\Compat\Vendor_Abilities::vendor_of( substr( $name, 0, $slash ) ) ) {
+            return false;
         }
         if ( Tools\Ability_Input_Policy::applies_to( $name ) ) {
             return false;

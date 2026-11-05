@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\Taxonomy;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -14,7 +15,7 @@ class Create_Term extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Creates a new term in any taxonomy exposed in the REST API (show_in_rest); WooCommerce attribute taxonomies (pa_*) are not. Required: `name`, `taxonomy` (e.g. category, post_tag, product_cat). Optional: `slug` (auto-derived from name if omitted), `description`, `parent` (for hierarchical taxonomies; 0 = top-level). Returns { id, name, slug, description, parent, count, taxonomy }. Capability resolved dynamically via the taxonomy\'s cap->edit_terms (e.g. manage_categories for category, manage_product_terms for product_cat). Writes through the taxonomy\'s own REST route, so a taxonomy registered under a custom `rest_namespace` works too.';
+        return 'Creates a new term in any taxonomy exposed in the REST API (show_in_rest), or a public taxonomy hidden from it that belongs to a hidden post type the CPT tools open (`wp_get_taxonomies` marks it `rest_api: false`); WooCommerce attribute taxonomies (pa_*) are not. Required: `name`, `taxonomy` (e.g. category, post_tag, product_cat). Optional: `slug` (auto-derived from name if omitted), `description`, `parent` (for hierarchical taxonomies; 0 = top-level). Returns { id, name, slug, description, parent, count, taxonomy }. Capability resolved dynamically via the taxonomy\'s cap->edit_terms (e.g. manage_categories for category, manage_product_terms for product_cat). Writes through the taxonomy\'s own REST route, so a taxonomy registered under a custom `rest_namespace` works too.';
     }
 
     public function get_category() {
@@ -64,6 +65,15 @@ class Create_Term extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for_taxonomy(
+            $arguments['taxonomy'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->create_term( $arguments );
+            }
+        );
+    }
+
+    private function create_term( array $arguments ): array {
         $this->validate_required( $arguments, array( 'name', 'taxonomy' ) );
         $taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );
 

@@ -13,7 +13,7 @@ class Run_Realtime_Report extends Base_Tool {
     public function get_name() { return 'wp_ga_run_realtime_report'; }
 
     public function get_description() {
-        return 'Runs a realtime GA4 report — active users in the last 30 minutes (60 minutes for GA 360 properties). Useful for "what is happening right now" questions. Realtime dimensions/metrics are a strict subset of the core catalog (e.g. activeUsers, screenPageViews, eventCount, country, deviceCategory, eventName, minutesAgo). Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Runs a realtime GA4 report — active users in the last 30 minutes (60 minutes for GA 360 properties). Useful for "what is happening right now" questions. Realtime dimensions/metrics are a strict subset of the core catalog (e.g. activeUsers, screenPageViews, eventCount, country, deviceCategory, eventName, minutesAgo). Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

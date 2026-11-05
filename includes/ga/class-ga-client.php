@@ -71,7 +71,7 @@ class GA_Client extends Abstract_Google_Client {
                 );
             }
             throw new \RuntimeException(
-                'Access denied by Google Analytics. The configured service account does not have access to this property. A site administrator can grant access in Easy MCP AI → Tools → External data → Test connection.'
+                'Access denied by Google Analytics. The configured service account does not have access to this property. A site administrator can grant access in Easy MCP AI → Tools → Connections → Test connection.'
             );
         }
         if ( 404 === $code ) {
@@ -157,7 +157,7 @@ class GA_Client extends Abstract_Google_Client {
         }
         if ( empty( $id ) ) {
             throw new \RuntimeException(
-                'No property_id provided and no default property configured. Set one in Easy MCP AI → Tools → External data, or define EASY_MCP_AI_GA_DEFAULT_PROPERTY_ID in wp-config.php.'
+                'No property_id provided and no default property configured. Set one in Easy MCP AI → Tools → Connections, or define EASY_MCP_AI_GA_DEFAULT_PROPERTY_ID in wp-config.php.'
             );
         }
         return self::normalize_property( (string) $id );
@@ -167,7 +167,7 @@ class GA_Client extends Abstract_Google_Client {
         if ( ! array_key_exists( 'property_id', $arguments ) || null === $arguments['property_id'] ) {
             $default = self::default_property_id();
             if ( 1 === preg_match( '#^properties/0+\z#', $default ) ) {
-                throw new \RuntimeException( 'The default Google Analytics property is not a GA4 property; set a numeric property ID in Easy MCP AI → Tools → External data, or pass property_id. Nothing was changed.' );
+                throw new \RuntimeException( 'The default Google Analytics property is not a GA4 property; set a numeric property ID in Easy MCP AI → Tools → Connections, or pass property_id. Nothing was changed.' );
             }
             return $default;
         }

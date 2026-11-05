@@ -61,6 +61,7 @@
     approve: 'Approve',
     deny: 'Deny',
     noSecret: 'This host did not receive a card secret; use the link in the chat to approve.',
+    pageOnly: 'Only the approval page shows this request in full. Open the approval link in the chat to see all of it and decide.',
     notRun: 'Not run',
     decisionRefused: 'The decision was refused.',
     denied: 'Denied',
@@ -202,6 +203,13 @@
       root.appendChild(el('h1', null, t('title')));
       root.appendChild(el('p', 'preview', a.preview || ''));
       root.appendChild(el('p', 'meta', fmt(t('meta'), [a.tool || (state.tool && state.tool.name) || '?', a.expires_at || ''])));
+      // Long values are shown on the approval page only (GitHub #621): no
+      // button here, so nothing is decided from a card that cannot show them.
+      if (a.page_only) {
+        root.appendChild(el('p', 'meta', t('pageOnly')));
+        sized();
+        return;
+      }
       var row = el('div', 'row');
       var approve = el('button', 'approve', state.busy ? t('working') : t('approve'));
       var deny = el('button', 'deny', t('deny'));

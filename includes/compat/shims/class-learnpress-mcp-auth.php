@@ -3,7 +3,6 @@
 namespace Easy_MCP_AI\Compat\Shims;
 
 use Easy_MCP_AI\Compat\Compat_Shim;
-use Easy_MCP_AI\Compat\Learnpress_Abilities;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -34,7 +33,7 @@ final class Learnpress_Mcp_Auth extends Compat_Shim {
     }
 
     public function is_needed(): bool {
-        if ( ! Learnpress_Abilities::group_enabled() || ! $this->context_available() ) {
+        if ( ! $this->context_available() ) {
             return false;
         }
         if ( (int) get_current_user_id() <= 0 ) {

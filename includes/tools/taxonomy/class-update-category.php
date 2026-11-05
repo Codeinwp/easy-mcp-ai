@@ -52,7 +52,7 @@ class Update_Category extends Base_Tool {
                 ),
                 'description' => array(
                     'type'        => 'string',
-                    'description' => 'The new description for the category.',
+                    'description' => 'The new description for the category. WordPress keeps the HTML it allows in a term description, such as links and bold text.',
                 ),
                 'parent'      => array(
                     'type'        => 'integer',
@@ -78,7 +78,7 @@ class Update_Category extends Base_Tool {
         }
 
         if ( isset( $arguments['description'] ) && '' !== $arguments['description'] ) {
-            $params['description'] = sanitize_text_field( $arguments['description'] );
+            $params['description'] = self::markup_arg( $arguments, 'description' );
         }
 
         if ( isset( $arguments['parent'] ) ) {

@@ -374,6 +374,13 @@ class Task_Manager {
         if ( null === $grant ) {
             return;
         }
+        $role_limit = 'oauth' === $row['auth_source'] ? \Easy_MCP_AI\OAuth\Role_Limit::for_grant( (int) $row['wp_user_id'], (string) $row['oauth_client_id'] ) : null;
+        if ( false === $role_limit ) {
+            return;
+        }
+        if ( null !== $role_limit ) {
+            \Easy_MCP_AI\Auth\Role_Ceiling::apply( (int) $row['wp_user_id'], $role_limit );
+        }
         $previous_user = \get_current_user_id();
         \wp_set_current_user( (int) $row['wp_user_id'] );
         $this->server->set_request_identity( $row['auth_source'], (int) $row['wp_user_id'], $row['oauth_client_id'] );
@@ -382,6 +389,7 @@ class Task_Manager {
         } finally {
             $this->server->clear_request_identity();
             \wp_set_current_user( $previous_user );
+            \Easy_MCP_AI\Auth\Role_Ceiling::lift( (int) $row['wp_user_id'] );
         }
         $after = $this->store->find( $row['task_id'] );
         if ( is_array( $after ) && 'working' === $after['status'] ) {

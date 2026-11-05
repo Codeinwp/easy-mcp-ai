@@ -31,6 +31,8 @@ final class Elementor_Adapter extends Layout_Adapter {
         'e-image'        => array( 'image' => 'image', 'link' => 'link' ),
     );
 
+    const ALL_FIELDS = '*';
+
     const FALLBACK_TEXT = array( 'title', 'text', 'editor', 'title_text', 'description_text', 'description', 'content', 'caption' );
 
     const UI_CONTROLS = array( 'section', 'tab', 'tabs', 'heading', 'notice', 'raw_html', 'deprecated_notice', 'alert', 'divider', 'button', 'hidden' );
@@ -52,7 +54,6 @@ final class Elementor_Adapter extends Layout_Adapter {
         'color'    => 'color',
         'icons'    => 'icon',
         'icon'     => 'icon',
-        'repeater' => 'list',
     );
 
     private $widgets_manager;
@@ -146,6 +147,7 @@ final class Elementor_Adapter extends Layout_Adapter {
                     'link'     => isset( $roles['link'] ) ? self::link( self::plain( $settings[ $roles['link'] ] ?? null ) ) : null,
                     'settings' => $settings,
                     'flags'    => $flags,
+                    'lists'    => 'widget' === $el_type && ! $atomic ? $this->lists( $type, $settings ) : array(),
                     'children' => isset( $element['elements'] ) && is_array( $element['elements'] ) ? $this->build( $element['elements'] ) : array(),
                 )
             );
@@ -235,39 +237,173 @@ final class Elementor_Adapter extends Layout_Adapter {
     }
 
     public function element_fields( string $type ): ?array {
-        $widgets = $this->widgets();
-        if ( ! isset( $widgets[ $type ] ) || ! is_object( $widgets[ $type ] ) || ! method_exists( $widgets[ $type ], 'get_controls' ) ) {
+        $widget = $this->widget( $type );
+        if ( null === $widget ) {
             return null;
         }
+        self::refuse_front_end_controls();
+        return self::content_fields( (array) $widget->get_controls(), true );
+    }
+
+    private static function refuse_front_end_controls(): void {
+        $performance = 'Elementor\\Core\\Frontend\\Performance';
+        if ( ! is_callable( array( $performance, 'should_optimize_controls' ) ) ) {
+            return;
+        }
+        if ( true === $performance::should_optimize_controls() ) {
+            throw new \RuntimeException( 'Elementor is treating this request as a front-end page view, where it labels every widget control (the CSS ID too) as Content, so the fields cannot be told apart. Nothing was changed.' );
+        }
+    }
+
+    private static function content_fields( array $controls, bool $lists ): array {
         $fields = array();
-        foreach ( (array) $widgets[ $type ]->get_controls() as $control ) {
-            if ( ! is_array( $control ) || empty( $control['name'] ) || empty( $control['type'] ) ) {
-                continue;
+        foreach ( $controls as $control ) {
+            $field = self::content_field( $control, $lists );
+            if ( null !== $field ) {
+                $fields[] = $field;
             }
-            if ( in_array( $control['type'], self::UI_CONTROLS, true ) || 'content' !== ( $control['tab'] ?? 'content' ) ) {
-                continue;
-            }
-            $field = array(
-                'name'    => (string) $control['name'],
-                'kind'    => self::CONTROL_KINDS[ $control['type'] ] ?? 'other',
-                'label'   => isset( $control['label'] ) && is_string( $control['label'] ) ? $control['label'] : '',
-                'control' => (string) $control['type'],
-            );
-            if ( ! empty( $control['responsive'] ) ) {
-                $field['responsive'] = true;
-            }
-            if ( ! empty( $control['options'] ) && is_array( $control['options'] ) ) {
-                $field['options'] = array_values( array_map( 'strval', array_keys( $control['options'] ) ) );
-            }
-            if ( 'switcher' === $control['type'] && isset( $control['return_value'] ) && is_scalar( $control['return_value'] ) && 'yes' !== (string) $control['return_value'] ) {
-                $field['on_value'] = (string) $control['return_value'];
-            }
-            if ( isset( $control['default'] ) && is_scalar( $control['default'] ) && '' !== $control['default'] ) {
-                $field['default'] = $control['default'];
-            }
-            $fields[] = $field;
         }
         return $fields;
+    }
+
+    private static function content_field( $control, bool $lists ): ?array {
+        if ( ! is_array( $control ) || empty( $control['name'] ) || empty( $control['type'] ) ) {
+            return null;
+        }
+        if ( in_array( $control['type'], self::UI_CONTROLS, true ) || 'content' !== ( $control['tab'] ?? 'content' ) ) {
+            return null;
+        }
+        $repeater = self::is_repeater( (string) $control['type'] );
+        $field    = array(
+            'name'    => (string) $control['name'],
+            'kind'    => $repeater ? 'list' : ( self::CONTROL_KINDS[ $control['type'] ] ?? 'other' ),
+            'label'   => isset( $control['label'] ) && is_string( $control['label'] ) ? $control['label'] : '',
+            'control' => (string) $control['type'],
+        );
+        if ( ! empty( $control['responsive'] ) ) {
+            $field['responsive'] = true;
+        }
+        if ( ! empty( $control['options'] ) && is_array( $control['options'] ) ) {
+            $field['options'] = array_values( array_map( 'strval', array_keys( $control['options'] ) ) );
+        }
+        if ( 'select2' === $control['type'] && ! empty( $control['multiple'] ) ) {
+            $field['multiple'] = true;
+        }
+        if ( 'switcher' === $control['type'] && isset( $control['return_value'] ) && is_scalar( $control['return_value'] ) && 'yes' !== (string) $control['return_value'] ) {
+            $field['on_value'] = (string) $control['return_value'];
+        }
+        if ( isset( $control['default'] ) && is_scalar( $control['default'] ) && '' !== $control['default'] ) {
+            $field['default'] = $control['default'];
+        }
+        if ( $lists && $repeater && isset( $control['fields'] ) && is_array( $control['fields'] ) ) {
+            $field['item_fields'] = self::content_fields( $control['fields'], false );
+            $min                  = isset( $control['min_items'] ) && is_int( $control['min_items'] ) && $control['min_items'] > 0 ? $control['min_items'] : 0;
+            $field['min_items']   = $min > 0 ? $min : ( false === ( $control['prevent_empty'] ?? true ) ? 0 : 1 );
+            if ( isset( $control['max_items'] ) && is_int( $control['max_items'] ) && $control['max_items'] > 0 ) {
+                $field['max_items'] = $control['max_items'];
+            }
+        }
+        return $field;
+    }
+
+    private static function is_repeater( string $type ): bool {
+        if ( in_array( $type, array( 'repeater', 'nested-elements-repeater' ), true ) ) {
+            return true;
+        }
+        $controls = class_exists( '\\Elementor\\Plugin' ) && isset( \Elementor\Plugin::$instance->controls_manager ) ? \Elementor\Plugin::$instance->controls_manager : null;
+        return is_object( $controls ) && method_exists( $controls, 'get_control' ) && is_a( $controls->get_control( $type ), 'Elementor\\Control_Repeater' );
+    }
+
+    public function is_nested_widget( string $type ): bool {
+        $widget = $this->widget( $type );
+        return null !== $widget && is_a( $widget, 'Elementor\\Modules\\NestedElements\\Base\\Widget_Nested_Base' );
+    }
+
+    private function widget( string $type ): ?object {
+        $widgets = $this->widgets();
+        return isset( $widgets[ $type ] ) && is_object( $widgets[ $type ] ) && method_exists( $widgets[ $type ], 'get_controls' ) ? $widgets[ $type ] : null;
+    }
+
+    private function lists( string $type, array $settings ): array {
+        $widget = $this->widget( $type );
+        if ( null === $widget ) {
+            return array();
+        }
+        $controls = (array) $widget->get_controls();
+        $lists    = array();
+        foreach ( $controls as $control ) {
+            $field = self::content_field( $control, true );
+            if ( null === $field || ! isset( $field['item_fields'] ) ) {
+                continue;
+            }
+            $entry = array(
+                'list'  => $field['name'],
+                'label' => $field['label'],
+                'items' => array(),
+            );
+            $flags  = array();
+            $stored = $settings[ $field['name'] ] ?? null;
+            if ( ! is_array( $stored ) ) {
+                $flags[] = 'not_stored';
+            } else {
+                $ids = array();
+                foreach ( $stored as $row ) {
+                    $row = is_array( $row ) ? $row : array();
+                    $id  = isset( $row[ Elementor_Editor::ITEM_ID ] ) && is_scalar( $row[ Elementor_Editor::ITEM_ID ] ) ? (string) $row[ Elementor_Editor::ITEM_ID ] : '';
+                    if ( '' === $id || isset( $ids[ $id ] ) ) {
+                        $flags[] = 'no_ids';
+                    }
+                    $ids[ $id ]       = true;
+                    $entry['items'][] = array(
+                        'item'  => $id,
+                        'label' => self::row_label( $row, isset( $control['title_field'] ) && is_string( $control['title_field'] ) ? $control['title_field'] : '', $field['item_fields'] ),
+                    );
+                }
+            }
+            if ( ! self::list_visible( $widget, $control, $controls, $settings ) ) {
+                $flags[] = 'hidden';
+            }
+            if ( array() !== $flags ) {
+                $entry['flags'] = array_values( array_unique( $flags ) );
+            }
+            $lists[] = $entry;
+        }
+        return $lists;
+    }
+
+    private static function row_label( array $row, string $template, array $item_fields ): string {
+        $text = array();
+        foreach ( $item_fields as $spec ) {
+            if ( in_array( $spec['kind'], Elementor_Editor::TEXT_KINDS, true ) && isset( $row[ $spec['name'] ] ) && is_string( $row[ $spec['name'] ] ) && '' !== trim( $row[ $spec['name'] ] ) ) {
+                $text[ $spec['name'] ] = $row[ $spec['name'] ];
+            }
+        }
+        $named = array();
+        preg_match_all( '/\{\{\{?\s*([A-Za-z0-9_]+)\s*\}?\}\}/', $template, $matches );
+        foreach ( $matches[1] as $name ) {
+            if ( isset( $text[ $name ] ) ) {
+                $named[] = $text[ $name ];
+            }
+        }
+        $label = self::excerpt( array() !== $named ? implode( ' ', $named ) : reset( $text ) );
+        return null === $label ? '' : $label;
+    }
+
+    private static function list_visible( object $widget, array $control, array $controls, array $settings ): bool {
+        if ( ! method_exists( $widget, 'is_control_visible' ) ) {
+            return true;
+        }
+        $values = $settings;
+        foreach ( $controls as $other ) {
+            if ( is_array( $other ) && isset( $other['name'] ) && ! array_key_exists( $other['name'], $values ) && array_key_exists( 'default', $other ) ) {
+                $values[ $other['name'] ] = $other['default'];
+            }
+        }
+        try {
+            return (bool) $widget->is_control_visible( $control, $values, $controls );
+        } catch ( \Throwable $e ) {
+            return true;
+        }
     }
 
     public function edit_refusal( object $post ): ?string {
@@ -296,7 +432,7 @@ final class Elementor_Adapter extends Layout_Adapter {
             throw self::refusal( array( sprintf( 'Elementor cannot open post %d as an Elementor document.', $post_id ) ) );
         }
         $original = array_values( self::tree( $post_id ) );
-        $editor   = new Elementor_Editor( array( $this, 'element_fields' ), array( __CLASS__, 'library_image' ), current_user_can( 'unfiltered_html' ) );
+        $editor   = new Elementor_Editor( array( $this, 'element_fields' ), array( __CLASS__, 'library_image' ), array( $this, 'is_nested_widget' ), current_user_can( 'unfiltered_html' ), self::containers_active() );
         $plan     = $editor->plan( $original, $ops );
         if ( array() !== $plan['errors'] ) {
             throw self::refusal( $plan['errors'] );
@@ -305,12 +441,13 @@ final class Elementor_Adapter extends Layout_Adapter {
         if ( false === $encoded ) {
             throw self::refusal( array( 'The edited layout cannot be stored as JSON (a value is not a finite number or not valid UTF-8), so nothing was saved.' ) );
         }
-        $problems = self::save_problems( $document, $plan['data'], $plan['results'], current_user_can( 'unfiltered_html' ) );
+        $warnings = array();
+        $problems = self::save_problems( $document, $original, $plan['data'], $plan['results'], current_user_can( 'unfiltered_html' ), $warnings );
         if ( array() !== $problems ) {
             throw self::refusal( $problems );
         }
 
-        $warnings = array();
+        $warnings = array_merge( $warnings, $this->hidden_list_warnings( $plan['data'], $plan['results'] ) );
         $editing  = self::editing_user( $post_id );
         if ( null !== $editing ) {
             $open = sprintf( '%s has post %d open in the editor; their next save there replaces the whole layout, this change included.', $editing, $post_id );
@@ -344,7 +481,7 @@ final class Elementor_Adapter extends Layout_Adapter {
         if ( wp_json_encode( $stored ) === wp_json_encode( $original ) ) {
             throw new \RuntimeException( sprintf( 'Elementor reported post %d saved, but its stored layout did not change: something stopped the write of %s (a plugin filter or a database error).', $post_id, self::DATA_KEY ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
-        $results = self::read_back( $plan['results'], $stored, $warnings );
+        $results = self::read_back( $plan['results'], $stored, $plan['data'], $warnings );
         return array(
             'changed'  => true,
             'saved'    => true,
@@ -353,30 +490,128 @@ final class Elementor_Adapter extends Layout_Adapter {
         );
     }
 
-    private static function read_back( array $results, array $stored, array &$warnings ): array {
-        $settings = array();
-        foreach ( self::flatten( $stored ) as $element ) {
-            if ( isset( $element['id'] ) && is_scalar( $element['id'] ) ) {
-                $settings[ (string) $element['id'] ] = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+    public function replace_problems( object $original, object $copy, array &$warnings ): array {
+        if ( ! $this->is_present() ) {
+            return array( sprintf( 'Post %1$d is built with Elementor, which is not active, so its layout cannot be saved onto post %2$d.', (int) $copy->ID, (int) $original->ID ) );
+        }
+        $document = $this->document( (int) $original->ID );
+        if ( null === $document ) {
+            return array( sprintf( 'Elementor cannot open post %d as an Elementor document, so the copy\'s layout cannot be saved onto it.', (int) $original->ID ) );
+        }
+        if ( ! $document->is_editable_by_current_user() ) {
+            return array( sprintf( 'Elementor does not let this account edit post %d. Elementor refuses a trashed item, the Posts page, the WooCommerce Shop page, a post type not enabled under Elementor › Settings, and a role excluded under Elementor › Role Manager.', (int) $original->ID ) );
+        }
+        try {
+            $layout = array_values( self::tree( (int) $copy->ID ) );
+        } catch ( \RuntimeException $e ) {
+            return array( $e->getMessage() );
+        }
+        $repeated = Elementor_Editor::repeated_ids( $layout );
+        if ( array() !== $repeated ) {
+            return array( Elementor_Editor::repeated_message( $repeated ) );
+        }
+        return self::save_problems( $document, $layout, $layout, array(), current_user_can( 'unfiltered_html' ), $warnings );
+    }
+
+    public function replace_layout( object $original, object $copy ): void {
+        $original_id = (int) $original->ID;
+        $document    = $this->document( $original_id );
+        if ( null === $document ) {
+            throw new \RuntimeException( sprintf( 'Elementor cannot open post %d as an Elementor document, so the copy\'s layout was not saved onto it.', $original_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        $layout   = array_values( self::tree( (int) $copy->ID ) );
+        $expected = self::predicted_save( $document, $layout, current_user_can( 'unfiltered_html' ) );
+        $before   = wp_json_encode( array_values( self::tree( $original_id ) ) );
+        if ( true !== $document->save( array( 'elements' => $layout ) ) ) {
+            throw new \RuntimeException( sprintf( 'Elementor did not save the copy\'s layout onto post %d: Document::save() refused it.', $original_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        wp_cache_delete( $original_id, 'post_meta' );
+        $after = wp_json_encode( array_values( self::tree( $original_id ) ) );
+        $emptied = array() !== $layout && '[]' === $after;
+        if ( $emptied || ( $after === $before && ( ! is_array( $expected ) || wp_json_encode( array_values( $expected ) ) !== $before ) ) ) {
+            throw new \RuntimeException( sprintf( 'Elementor reported post %1$d saved, but its stored layout %2$s: something stopped the write of %3$s (a plugin filter or a database error).', $original_id, $emptied ? 'is empty' : 'did not change', self::DATA_KEY ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+    }
+
+    public function release( object $post ): void {
+        $post_id  = (int) $post->ID;
+        $document = $this->is_present() ? $this->document( $post_id ) : null;
+        if ( null === $document || ! method_exists( $document, 'set_is_built_with_elementor' ) ) {
+            delete_post_meta( $post_id, self::EDIT_MODE_KEY );
+        } else {
+            $document->set_is_built_with_elementor( false );
+            if ( class_exists( '\\Elementor\\Core\\Files\\CSS\\Post' ) ) {
+                \Elementor\Core\Files\CSS\Post::create( $post_id )->delete();
             }
         }
+        wp_cache_delete( $post_id, 'post_meta' );
+        if ( 'builder' === get_post_meta( $post_id, self::EDIT_MODE_KEY, true ) ) {
+            throw new \RuntimeException( sprintf( 'Post %1$d is still marked as built with Elementor: something stopped the delete of %2$s (a plugin filter or a database error).', $post_id, self::EDIT_MODE_KEY ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+    }
+
+    private static function containers_active(): bool {
+        $experiments = class_exists( '\\Elementor\\Plugin' ) && isset( \Elementor\Plugin::$instance->experiments ) ? \Elementor\Plugin::$instance->experiments : null;
+        return is_object( $experiments ) && method_exists( $experiments, 'is_feature_active' ) && (bool) $experiments->is_feature_active( 'container' );
+    }
+
+    private function hidden_list_warnings( array $data, array $results ): array {
+        $warnings = array();
+        foreach ( $results as $result ) {
+            if ( ! isset( $result['list'] ) ) {
+                continue;
+            }
+            $path = Elementor_Tree::path( $data, (string) $result['element'] );
+            if ( null === $path ) {
+                continue;
+            }
+            $element = Elementor_Tree::at( $data, $path );
+            foreach ( $this->lists( (string) $result['type'], $element['settings'] ) as $entry ) {
+                if ( $entry['list'] === $result['list'] && in_array( 'hidden', $entry['flags'] ?? array(), true ) ) {
+                    $warnings[] = sprintf( 'Elementor does not show list "%s" of "%s" while the widget\'s own settings hide it, so the page will not show this change until they do.', $result['list'], $result['element'] );
+                }
+            }
+        }
+        return array_values( array_unique( $warnings ) );
+    }
+
+    private static function read_back( array $results, array $stored, array $planned, array &$warnings ): array {
+        $settings = self::settings_by_id( $stored );
+        $intended = self::settings_by_id( $planned );
         $last = array();
         foreach ( $results as $index => $result ) {
-            foreach ( array_keys( self::asked( $result ) ) as $field ) {
-                $last[ $result['element'] . '|' . $field ] = $index;
+            foreach ( self::read_keys( $result ) as $key ) {
+                $last[ $key ] = $index;
             }
         }
         foreach ( $results as $index => $result ) {
+            if ( 'add_item' !== $result['op'] && ! in_array( $result['op'], Elementor_Editor::SET_OPS, true ) ) {
+                continue;
+            }
             $address = (string) $result['element'];
-            $values  = self::asked( $result );
-            foreach ( $values as $field => $value ) {
-                if ( $last[ $address . '|' . $field ] !== $index ) {
+            $source  = self::target( $settings, $result );
+            if ( null === $source ) {
+                if ( null === self::target( $intended, $result ) ) {
                     continue;
                 }
-                $values[ $field ] = $settings[ $address ][ $field ] ?? null;
-                if ( json_decode( (string) wp_json_encode( $value ), true ) !== $values[ $field ] ) {
-                    $warnings[] = sprintf( 'Elementor stored a different value for field "%s" of "%s" than was sent; `after` shows what it stored.', $field, $address );
+                $source = array();
+            }
+            if ( 'add_item' === $result['op'] ) {
+                if ( $last[ self::item_key( $result ) ] === $index ) {
+                    $row = array() === $source ? null : $source;
+                    self::compare( $result['after'], $row, sprintf( 'item "%s" of list "%s" in "%s"', $result['item'], $result['list'], $address ), $warnings );
+                    $results[ $index ]['after']   = $row;
+                    $results[ $index ]['changed'] = null !== $row;
                 }
+                continue;
+            }
+            $values = self::asked( $result );
+            foreach ( $values as $field => $value ) {
+                if ( $last[ self::field_key( $result, (string) $field ) ] !== $index ) {
+                    continue;
+                }
+                $values[ $field ] = $source[ $field ] ?? null;
+                self::compare( $value, $values[ $field ], sprintf( 'field "%s" of %s', $field, isset( $result['item'] ) ? sprintf( 'item "%s" in "%s"', $result['item'], $address ) : '"' . $address . '"' ), $warnings );
             }
             $results[ $index ]['after']   = 'set_fields' === $result['op'] ? $values : reset( $values );
             $results[ $index ]['changed'] = wp_json_encode( $result['before'] ) !== wp_json_encode( $results[ $index ]['after'] );
@@ -384,11 +619,62 @@ final class Elementor_Adapter extends Layout_Adapter {
         return $results;
     }
 
+    private static function compare( $sent, $stored, string $what, array &$warnings ): void {
+        if ( json_decode( (string) wp_json_encode( $sent ), true ) !== $stored ) {
+            $warnings[] = sprintf( 'Elementor stored a different value for %s than was sent; `after` shows what it stored.', $what );
+        }
+    }
+
+    private static function settings_by_id( array $elements ): array {
+        $settings = array();
+        foreach ( self::flatten( $elements ) as $element ) {
+            if ( isset( $element['id'] ) && is_scalar( $element['id'] ) ) {
+                $settings[ (string) $element['id'] ] = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+            }
+        }
+        return $settings;
+    }
+
+    private static function target( array $settings, array $result ): ?array {
+        $source = $settings[ (string) $result['element'] ] ?? null;
+        if ( null !== $source && isset( $result['item'] ) ) {
+            return self::stored_row( $source, (string) $result['list'], (string) $result['item'] );
+        }
+        return $source;
+    }
+
+    private static function stored_row( array $settings, string $list, string $item ): ?array {
+        foreach ( is_array( $settings[ $list ] ?? null ) ? $settings[ $list ] : array() as $row ) {
+            if ( is_array( $row ) && isset( $row[ Elementor_Editor::ITEM_ID ] ) && is_scalar( $row[ Elementor_Editor::ITEM_ID ] ) && (string) $row[ Elementor_Editor::ITEM_ID ] === $item ) {
+                return $row;
+            }
+        }
+        return null;
+    }
+
+    private static function read_keys( array $result ): array {
+        $keys = isset( $result['item'] ) ? array( self::item_key( $result ) ) : array();
+        if ( in_array( $result['op'], Elementor_Editor::SET_OPS, true ) ) {
+            foreach ( array_keys( self::asked( $result ) ) as $field ) {
+                $keys[] = self::field_key( $result, (string) $field );
+            }
+        }
+        return $keys;
+    }
+
+    private static function item_key( array $result ): string {
+        return $result['element'] . '|' . ( $result['list'] ?? '' ) . '|' . ( $result['item'] ?? '' );
+    }
+
+    private static function field_key( array $result, string $field ): string {
+        return ( isset( $result['item'] ) ? self::item_key( $result ) : $result['element'] ) . '|' . $field;
+    }
+
     private static function asked( array $result ): array {
         return 'set_fields' === $result['op'] ? (array) $result['after'] : array( (string) $result['field'] => $result['after'] );
     }
 
-    private static function save_problems( object $document, array $data, array $results, bool $unfiltered ): array {
+    private static function save_problems( object $document, array $original, array $data, array $results, bool $unfiltered, array &$warnings ): array {
         $predicted = self::predicted_save( $document, $data, $unfiltered );
         if ( is_string( $predicted ) ) {
             return array( $predicted );
@@ -414,11 +700,11 @@ final class Elementor_Adapter extends Layout_Adapter {
                 $problems[] = sprintf( 'Element "%s" uses a dynamic tag from a plugin that is not active (on %s); Elementor\'s save would remove it.', $id, implode( ', ', $differences['tags'] ) );
             }
             foreach ( $differences['fields'] as $field => $path ) {
-                if ( in_array( (string) $field, $written[ $id ] ?? array(), true ) ) {
+                if ( array() !== array_intersect( array( (string) $field, self::ALL_FIELDS ), $written[ $id ] ?? array() ) ) {
                     $stored     = $kept[ $id ]['leaves'][ $path ] ?? null;
                     $problems[] = sprintf( 'Elementor would not store field "%s" of "%s" as sent; it would store %s.', $field, $id, is_string( $stored ) ? '"' . $stored . '"' : (string) wp_json_encode( $stored ) );
                 } else {
-                    $untouched[] = sprintf( '%s (%s)', $id, $field );
+                    $untouched[ $id ][] = (string) $field;
                 }
             }
         }
@@ -429,9 +715,80 @@ final class Elementor_Adapter extends Layout_Adapter {
             $problems[] = '' === $parent ? 'Elementor\'s save would reorder the top-level elements.' : sprintf( 'Elementor\'s save would reorder the elements inside "%s".', $parent );
         }
         if ( array() !== $untouched ) {
-            $problems[] = sprintf( 'Elementor\'s save would also change elements this call does not touch: %s. Elementor filters the HTML of the whole layout when an account that may not post unfiltered HTML saves, and every heading title when an account that is not an administrator saves. Ask an administrator to make this change.', implode( ', ', $untouched ) );
+            $untouched = self::resave_removals( $document, $original, $unfiltered, $untouched, $kept, $warnings );
+        }
+        if ( array() !== $untouched ) {
+            $problems[] = self::untouched_problem( $untouched, $kept, $unfiltered );
         }
         return $problems;
+    }
+
+    private static function resave_removals( object $document, array $original, bool $unfiltered, array $untouched, array $kept, array &$warnings ): array {
+        $resaved = self::predicted_save( $document, $original, $unfiltered );
+        if ( is_string( $resaved ) ) {
+            return $untouched;
+        }
+        $resaved = self::inventory( $resaved );
+        $removed = array();
+        foreach ( $untouched as $id => $fields ) {
+            $left = array();
+            foreach ( $fields as $field ) {
+                if ( self::holds( $kept[ $id ]['leaves'], $field ) || ! isset( $resaved[ $id ] ) || self::holds( $resaved[ $id ]['leaves'], $field ) ) {
+                    $left[] = $field;
+                    continue;
+                }
+                $removed[ $field ] = ( $removed[ $field ] ?? 0 ) + 1;
+            }
+            if ( array() === $left ) {
+                unset( $untouched[ $id ] );
+            } else {
+                $untouched[ $id ] = $left;
+            }
+        }
+        if ( array() !== $removed ) {
+            $counts = array();
+            foreach ( $removed as $field => $count ) {
+                $counts[] = sprintf( '%s (%d %s)', $field, $count, 1 === $count ? 'element' : 'elements' );
+            }
+            $warnings[] = sprintf( 'Elementor\'s save also removes fields this call does not write, as every save of this page does (Elementor\'s editor included): %s.', implode( ', ', $counts ) );
+        }
+        return $untouched;
+    }
+
+    private static function holds( array $leaves, string $field ): bool {
+        foreach ( array_keys( $leaves ) as $path ) {
+            if ( (string) $path === $field || 0 === strpos( (string) $path, $field . '.' ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function untouched_problem( array $untouched, array $kept, bool $unfiltered ): string {
+        $named   = array();
+        $heading = false;
+        foreach ( $untouched as $id => $fields ) {
+            foreach ( $fields as $field ) {
+                $named[] = sprintf( '%s (%s)', $id, $field );
+                $heading = $heading || ( 'title' === $field && 'heading' === $kept[ $id ]['type'] );
+            }
+        }
+        $problem   = sprintf( 'Elementor\'s save would also change fields this call does not write: %s.', implode( ', ', $named ) );
+        $admin     = current_user_can( 'manage_options' );
+        $sanitized = $heading && ! $admin;
+        if ( $unfiltered && ! $sanitized ) {
+            $problem .= ' Elementor\'s own filters do not run on these fields for this account, so a plugin hooked into Elementor\'s save, or the element\'s own save step, makes this change.';
+            return $admin ? $problem : $problem . ' Some plugins filter what an account that is not an administrator saves, so an administrator may be able to make this change.';
+        }
+        $filters = array_merge(
+            $unfiltered ? array() : array( 'its HTML filter over the whole layout' ),
+            $sanitized ? array( 'its sanitizer over heading titles' ) : array()
+        );
+        $problem .= sprintf( ' For this account Elementor\'s save runs %s, and a plugin hooked into the save can change fields too.', implode( ' and ', $filters ) );
+        if ( defined( 'DISALLOW_UNFILTERED_HTML' ) && DISALLOW_UNFILTERED_HTML ) {
+            return $problem . ' No account on this site may post unfiltered HTML (DISALLOW_UNFILTERED_HTML), so if the HTML filter makes the change, every save of this page makes it, Elementor\'s editor included.';
+        }
+        return $problem . sprintf( ' Elementor\'s save runs neither of its filters on these fields for %s.', $heading ? 'an administrator who may post unfiltered HTML' : 'an account that may post unfiltered HTML' );
     }
 
     private static function differences( array $planned, array $stored ): array {
@@ -536,8 +893,17 @@ final class Elementor_Adapter extends Layout_Adapter {
     private static function written_fields( array $results ): array {
         $written = array();
         foreach ( $results as $result ) {
-            $fields = 'set_fields' === $result['op'] && is_array( $result['after'] ) ? array_map( 'strval', array_keys( $result['after'] ) ) : array( (string) $result['field'] );
-            $id     = (string) $result['element'];
+            foreach ( $result['created'] ?? array() as $id ) {
+                $written[ $id ] = array( self::ALL_FIELDS );
+            }
+            if ( isset( $result['list'] ) ) {
+                $fields = array( (string) $result['list'] );
+            } elseif ( in_array( $result['op'], Elementor_Editor::SET_OPS, true ) ) {
+                $fields = 'set_fields' === $result['op'] && is_array( $result['after'] ) ? array_map( 'strval', array_keys( $result['after'] ) ) : array( (string) $result['field'] );
+            } else {
+                continue;
+            }
+            $id             = (string) $result['element'];
             $written[ $id ] = array_merge( $written[ $id ] ?? array(), $fields );
         }
         return $written;
@@ -615,13 +981,11 @@ final class Elementor_Adapter extends Layout_Adapter {
         }
         $off = array();
         if ( ! self::ability_registered( self::V4_ABILITY ) ) {
-            $off[] = \Easy_MCP_AI\Compat\Elementor_Abilities::group_enabled()
-                ? 'Elementor’s abilities are not registered although Elementor is switched on in Easy MCP AI › Tools › Abilities: they need Elementor 4.3 or later on WordPress 6.9 or later, and a change in Elementor’s code or an error while registering them also stops them (an error is written to the PHP error log)'
-                : 'Elementor’s abilities are not registered: switch on Elementor in Easy MCP AI › Tools › Abilities, which registers them without Elementor’s own MCP setting';
+            $off[] = 'Elementor’s abilities are not registered: they need Elementor 4.3 or later on WordPress 6.9 or later, and a change in Elementor’s code or an error while registering them also stops them (an error is written to the PHP error log)';
         }
         $enabled = array_map( 'strval', array_filter( (array) get_option( 'easy_mcp_ai_enabled_abilities', array() ), 'is_scalar' ) );
         if ( ! in_array( self::V4_ABILITY, $enabled, true ) ) {
-            $off[] = 'Elementor’s abilities are not switched on in Easy MCP AI › Tools › Abilities';
+            $off[] = 'Elementor’s abilities are not switched on in Easy MCP AI › Tools';
         }
         return array(
             'elements'  => 'atomic',

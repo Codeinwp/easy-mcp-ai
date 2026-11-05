@@ -11,6 +11,7 @@
 
 namespace ThemeisleSDK\Common;
 
+use ThemeisleSDK\Loader;
 use ThemeisleSDK\Product;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -130,6 +131,28 @@ abstract class Abstract_Module {
 		};
 
 		return get_template_directory_uri() . '/vendor/codeinwp/themeisle-sdk/';
+	}
+
+	/**
+	 * Read a compiled script's `.asset.php` file.
+	 *
+	 * The build folder is not tracked in git, so the file can be missing
+	 * (tests, a checkout without `npm run build`). Fall back to no
+	 * dependencies and the SDK version instead of a fatal.
+	 *
+	 * @param string $relative_path Path relative to the SDK root, e.g. 'assets/js/build/about/about.asset.php'.
+	 *
+	 * @return array{dependencies: string[], version: string}
+	 */
+	public function get_asset_file( $relative_path ) {
+		global $themeisle_sdk_max_path;
+
+		$asset_path = $themeisle_sdk_max_path . '/' . ltrim( $relative_path, '/' );
+
+		return is_readable( $asset_path ) ? require $asset_path : array(
+			'dependencies' => array(),
+			'version'      => Loader::get_version(),
+		);
 	}
 
 	/**

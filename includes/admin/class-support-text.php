@@ -114,12 +114,8 @@ class Support_Text {
     public static function system_info( array $facts, array $diagnostics = array() ) {
         global $wpdb;
 
-        $db_server_info = ( isset( $wpdb ) && is_object( $wpdb ) && method_exists( $wpdb, 'db_server_info' ) ) ? (string) $wpdb->db_server_info() : '';
-        $db_version_num = ( isset( $wpdb ) && is_object( $wpdb ) && method_exists( $wpdb, 'db_version' ) ) ? (string) $wpdb->db_version() : '';
-        $db_engine      = ( '' !== $db_server_info && false !== stripos( $db_server_info, 'mariadb' ) ) ? 'MariaDB' : 'MySQL';
-        $db_display     = ( '' !== $db_version_num )
-            ? $db_engine . ' ' . $db_version_num
-            : ( '' !== $db_server_info ? $db_server_info : \__( 'Unknown', 'easy-mcp-ai' ) );
+        $db_described = ( isset( $wpdb ) && is_object( $wpdb ) ) ? \Easy_MCP_AI\Database_Engine::describe( $wpdb ) : '';
+        $db_display   = '' !== $db_described ? $db_described : \__( 'Unknown', 'easy-mcp-ai' );
 
         $external    = isset( $facts['external'] ) && is_array( $facts['external'] ) ? $facts['external'] : array();
         $ext_count   = count( array_filter( $external ) );

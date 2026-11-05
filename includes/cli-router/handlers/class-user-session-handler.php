@@ -143,9 +143,7 @@ final class User_Session_Handler extends Command_Handler {
     }
 
     private static function get_all_sessions( \WP_Session_Tokens $manager ): array {
-        $get_sessions = new \ReflectionMethod( $manager, 'get_sessions' );
-        $get_sessions->setAccessible( true );
-        $sessions = (array) $get_sessions->invoke( $manager );
+        $sessions = (array) self::protected_method( $manager, 'get_sessions' )->invoke( $manager );
 
         array_walk(
             $sessions,
@@ -160,9 +158,15 @@ final class User_Session_Handler extends Command_Handler {
     }
 
     private static function destroy_session( \WP_Session_Tokens $manager, string $token ): void {
-        $update_session = new \ReflectionMethod( $manager, 'update_session' );
-        $update_session->setAccessible( true );
-        $update_session->invoke( $manager, $token, null );
+        self::protected_method( $manager, 'update_session' )->invoke( $manager, $token, null );
+    }
+
+    private static function protected_method( \WP_Session_Tokens $manager, string $name ): \ReflectionMethod {
+        $method = new \ReflectionMethod( $manager, $name );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+        return $method;
     }
 
     private static function stored( int $user_id ) {

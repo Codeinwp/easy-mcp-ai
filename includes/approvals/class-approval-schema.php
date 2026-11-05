@@ -6,9 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Approval_Schema {
-    const DB_VERSION  = '1.1.0';
+    const DB_VERSION  = '1.2.0';
 
-    const REQUIRED_COLUMNS = array( 'client_protocol', 'client_capabilities' );
+    const REQUIRED_COLUMNS = array( 'client_protocol', 'client_capabilities', 'details' );
     const OPTION_NAME = 'easy_mcp_ai_approvals_db_version';
     const TABLE       = 'easy_mcp_ai_approvals';
 
@@ -53,6 +53,7 @@ class Approval_Schema {
             arguments longtext DEFAULT NULL,
             args_hash varchar(64) NOT NULL,
             preview text DEFAULT NULL,
+            details longtext DEFAULT NULL,
             preview_hash varchar(64) DEFAULT NULL,
             status varchar(16) NOT NULL DEFAULT 'pending',
             card_secret_hash varchar(64) DEFAULT NULL,

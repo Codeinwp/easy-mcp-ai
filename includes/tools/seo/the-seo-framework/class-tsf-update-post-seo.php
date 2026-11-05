@@ -105,6 +105,7 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 		}
 
 		$post_id = $this->parse_required_id( $arguments['post_id'] ?? null, 'post_id' );
+		$this->refuse_missing_post( $post_id );
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );

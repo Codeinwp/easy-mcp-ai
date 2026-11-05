@@ -63,14 +63,22 @@ final class Post_Type_Tool_Hint {
     );
 
     public static function other_type( object $post, string $expected_type, string $verb, string $tool ): string {
-        $id   = (int) $post->ID;
-        $type = (string) $post->post_type;
-        foreach ( self::candidates( $post, $verb ) as $candidate ) {
-            if ( self::may_use( $candidate[0] ) ) {
-                return sprintf( 'Use %1$s for that ID, which has post type "%2$s", not "%3$s": %4$s.', $candidate[0], $type, $expected_type, $candidate[1] );
-            }
+        $id        = (int) $post->ID;
+        $type      = (string) $post->post_type;
+        $candidate = self::usable_tool( $post, $verb );
+        if ( null !== $candidate ) {
+            return sprintf( 'Use %1$s for that ID, which has post type "%2$s", not "%3$s": %4$s.', $candidate[0], $type, $expected_type, $candidate[1] );
         }
         return sprintf( 'ID %1$d has post type "%2$s", not "%3$s", so %4$s cannot %5$s it.', $id, $type, $expected_type, $tool, self::VERBS[ $verb ] );
+    }
+
+    public static function usable_tool( object $post, string $verb ): ?array {
+        foreach ( self::candidates( $post, $verb ) as $candidate ) {
+            if ( self::may_use( $candidate[0] ) ) {
+                return $candidate;
+            }
+        }
+        return null;
     }
 
     public static function no_route( string $value ): string {
@@ -106,7 +114,7 @@ final class Post_Type_Tool_Hint {
         $object = Post_Type_Rest_Base::is_builtin( $type ) ? null : \get_post_type_object( $type );
         if ( is_object( $object ) ) {
             $reach = Post_Type_Rest_Base::inspect( $type, $object );
-            if ( Post_Type_Rest_Base::OK === $reach['reason'] ) {
+            if ( Post_Type_Rest_Base::OK === $reach['reason'] || Post_Type_Rest_Base::HIDDEN === $reach['reason'] ) {
                 $found[] = array( self::CPT_TOOLS[ $verb ], sprintf( 'item_id %1$d, rest_base "%2$s"', $id, $reach['base'] ) );
             }
         }

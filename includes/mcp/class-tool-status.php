@@ -11,17 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Tool_Status {
 
-    const SETTINGS_PATH = 'Easy MCP AI › Settings › Advanced › Disabled tools';
-
     const TOOLS_PATH = 'Easy MCP AI › Tools';
 
-    const PATTERNS_PATH = 'Easy MCP AI › Settings › Advanced';
+    const EXTERNAL_PATH = 'Easy MCP AI › Tools › Connections';
 
-    const ABILITIES_PATH = 'Easy MCP AI › Tools › Abilities';
-
-    const CORE_ABILITIES_PATH = 'Easy MCP AI › Tools › Core';
-
-    const EXTERNAL_PATH = 'Easy MCP AI › Tools › External data';
+    const API_TOKENS_PATH = 'Easy MCP AI › Connections › API tokens';
 
     const IN_CONFIGURATION = 'switched off in this site\'s configuration (wp-config.php or the server environment), where only the site owner can switch %s on';
 
@@ -31,9 +25,8 @@ final class Tool_Status {
         return null !== Tool_State::override_of( $tool_name ) || Config::is_locked( 'easy_mcp_ai_disabled_tools' );
     }
 
-    public static function switch_path( string $tool_name, bool $default_off ): string {
-        $in_grid = $default_off || in_array( $tool_name, \Easy_MCP_AI\Admin\Settings_Validator::destructive_tools(), true );
-        return Config::brand( $in_grid ? self::SETTINGS_PATH : self::TOOLS_PATH );
+    public static function switch_path(): string {
+        return Config::brand( self::TOOLS_PATH );
     }
 
     public static function place( string $path, bool $locked = false ): string {
@@ -50,7 +43,7 @@ final class Tool_Status {
         }
         return array(
             'status' => 'off',
-            'where'  => self::switch_path( $tool_name, $default_off ),
+            'where'  => self::switch_path(),
         );
     }
 
@@ -66,6 +59,8 @@ final class Tool_Status {
                 return 'is not available on this site.';
             case 'capability':
                 return sprintf( 'needs the %s capability, which your WordPress account does not have.', $status['capability'] );
+            case 'blocked':
+                return sprintf( 'needs the %s capability, which %s.', $status['capability'], $status['cause'] );
             case 'off':
                 return sprintf( 'is switched off on this site. An administrator can switch it on in wp-admin under %s.', $status['where'] );
             case 'off_locked':
@@ -73,7 +68,7 @@ final class Tool_Status {
             case 'pattern':
                 return Config::is_locked( 'easy_mcp_ai_allowed_tool_patterns' )
                     ? 'is excluded by the allowed tool patterns set in this site\'s configuration (wp-config.php or the server environment), where only the site owner can change them.'
-                    : sprintf( 'is excluded by this site\'s allowed tool patterns. An administrator can change them in wp-admin under %s.', Config::brand( self::PATTERNS_PATH ) );
+                    : 'is excluded by this site\'s allowed tool patterns, which have no wp-admin screen: the site owner changes them with the easy_mcp_ai_allowed_tool_patterns option or EASY_MCP_AI_ALLOWED_TOOL_PATTERNS.';
             case 'app_only':
                 return 'can only be called from an approval card, in a client that supports MCP Apps.';
             case 'privileged':

@@ -11,17 +11,18 @@ class Dynamic_Tool_Registrar {
         $this->register_ability_tools( $registry );
     }
 
-    private function register_ability_tools( Tool_Registry $registry ) {
+    private function register_ability_tools( Tool_Registry $registry ): void {
         if ( ! \function_exists( 'wp_get_abilities' ) ) {
             return;
         }
+
+        $all_abilities = \wp_get_abilities();
+        Tool_Policy::observe_abilities( (array) $all_abilities );
 
         $enabled_slugs = (array) \get_option( 'easy_mcp_ai_enabled_abilities', array() );
         if ( empty( $enabled_slugs ) ) {
             return;
         }
-
-        $all_abilities = \wp_get_abilities();
 
         foreach ( $enabled_slugs as $slug ) {
             $slug = (string) $slug;
@@ -56,13 +57,7 @@ class Dynamic_Tool_Registrar {
             $output_needs_wrap = self::schema_needs_value_wrapper( $raw_output_schema );
             $output_schema     = self::finalize_output_schema( $raw_output_schema );
 
-            $annotations_meta = array();
-            if ( method_exists( $ability, 'get_meta_item' ) ) {
-                $annotations_meta = (array) $ability->get_meta_item( 'annotations' );
-            } elseif ( method_exists( $ability, 'get_annotations' ) ) {
-                $annotations_meta = (array) $ability->get_annotations();
-            }
-            $annotations = self::build_annotations( $label, $annotations_meta );
+            $annotations = self::annotations_of( $ability );
 
             $captured_ability = $ability;
             $captured_slug    = $slug;
@@ -71,34 +66,17 @@ class Dynamic_Tool_Registrar {
                 'name'        => $tool_name,
                 'description' => $description,
                 'category'    => 'abilities',
-                'capability'  => 'read',
+                'capability'  => self::required_capability( $slug ),
                 'input_schema' => $input_schema,
                 'annotations' => $annotations,
+                'accepted_arguments' => $input_needs_wrap ? null : self::closed_argument_names( $raw_input_schema ),
+                'ability'            => $slug,
                 'executor' => function ( array $arguments ) use ( $captured_ability, $captured_slug, $input_needs_wrap, $output_needs_wrap ) {
-                    $ability = \function_exists( 'wp_get_ability' ) ? \wp_get_ability( $captured_slug ) : $captured_ability;
-                    if ( ! $ability ) {
-                        throw new \RuntimeException( "Ability '{$captured_slug}' is no longer registered." ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    }
-
-                    $has_input_schema = method_exists( $ability, 'get_input_schema' )
-                        && ! empty( $ability->get_input_schema() );
-                    if ( $input_needs_wrap ) {
-                        $exec_args = array_key_exists( 'value', $arguments ) ? $arguments['value'] : null;
-                    } else {
-                        $exec_args = $has_input_schema ? $arguments : null;
-                    }
-
-                    $violation = Ability_Input_Policy::violation( $captured_slug, $exec_args );
-                    if ( null !== $violation ) {
-                        throw new \RuntimeException( $violation ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    }
-
-                    $perm = $ability->check_permissions( $exec_args );
-                    if ( \is_wp_error( $perm ) ) {
-                        throw new \RuntimeException( 'Permission denied: ' . $perm->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    }
-                    if ( false === $perm ) {
-                        throw new \RuntimeException( "Permission denied for ability: {$captured_slug}" ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                    $ability   = self::current_ability( $captured_slug, $captured_ability );
+                    $exec_args = self::ability_input( $ability, $arguments, $input_needs_wrap );
+                    $refusal   = self::call_refusal( $ability, $captured_slug, $exec_args );
+                    if ( null !== $refusal ) {
+                        throw new \RuntimeException( $refusal ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     }
 
                     $result = $ability->execute( $exec_args );
@@ -107,6 +85,10 @@ class Dynamic_Tool_Registrar {
                     }
 
                     return $output_needs_wrap ? array( 'value' => $result ) : $result;
+                },
+                'refusal'  => function ( array $arguments ) use ( $captured_ability, $captured_slug, $input_needs_wrap ): ?string {
+                    $ability = self::current_ability( $captured_slug, $captured_ability );
+                    return self::call_refusal( $ability, $captured_slug, self::ability_input( $ability, $arguments, $input_needs_wrap ) );
                 },
             );
             if ( null !== $output_schema ) {
@@ -122,6 +104,37 @@ class Dynamic_Tool_Registrar {
 
             $registry->register( new Dynamic_Tool( $tool_config ) );
         }
+    }
+
+    public static function required_capability( string $slug ): string {
+        return 0 === strpos( $slug, \Easy_MCP_AI\Compat\Breakdance_Abilities::PREFIX ) ? \Easy_MCP_AI\Compat\Breakdance_Abilities::CAPABILITY : 'read';
+    }
+
+    private static function current_ability( string $slug, object $captured ): object {
+        $ability = \function_exists( 'wp_get_ability' ) ? \wp_get_ability( $slug ) : $captured;
+        if ( ! $ability ) {
+            throw new \RuntimeException( "Ability '{$slug}' is no longer registered." ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        return $ability;
+    }
+
+    private static function ability_input( object $ability, array $arguments, bool $needs_wrap ) {
+        if ( $needs_wrap ) {
+            return array_key_exists( 'value', $arguments ) ? $arguments['value'] : null;
+        }
+        return method_exists( $ability, 'get_input_schema' ) && ! empty( $ability->get_input_schema() ) ? $arguments : null;
+    }
+
+    private static function call_refusal( object $ability, string $slug, $input ): ?string {
+        $violation = Ability_Input_Policy::violation( $slug, $input );
+        if ( null !== $violation ) {
+            return $violation;
+        }
+        $permission = $ability->check_permissions( $input );
+        if ( \is_wp_error( $permission ) ) {
+            return 'Permission denied: ' . $permission->get_error_message();
+        }
+        return false === $permission ? "Permission denied for ability: {$slug}" : null;
     }
 
     public static function normalize_identifier( $value ) {
@@ -144,6 +157,17 @@ class Dynamic_Tool_Registrar {
         $truncated = rtrim( substr( $normalized, 0, $budget ), '_' );
 
         return $prefix . $truncated . '_' . $hash;
+    }
+
+    public static function annotations_of( $ability ) {
+        $annotations_meta = array();
+        if ( method_exists( $ability, 'get_meta_item' ) ) {
+            $annotations_meta = (array) $ability->get_meta_item( 'annotations' );
+        } elseif ( method_exists( $ability, 'get_annotations' ) ) {
+            $annotations_meta = (array) $ability->get_annotations();
+        }
+        $label = $ability->get_label() ?: $ability->get_name();
+        return self::build_annotations( (string) $label, $annotations_meta );
     }
 
     private static function build_annotations( $label, array $annotations_meta ) {
@@ -175,6 +199,13 @@ class Dynamic_Tool_Registrar {
             return false;
         }
         return true;
+    }
+
+    private static function closed_argument_names( $schema ): ?array {
+        if ( ! is_array( $schema ) || ! array_key_exists( 'additionalProperties', $schema ) || false !== $schema['additionalProperties'] ) {
+            return null;
+        }
+        return array_map( 'strval', array_keys( (array) ( $schema['properties'] ?? array() ) ) );
     }
 
     private static function finalize_input_schema( $input_schema ) {

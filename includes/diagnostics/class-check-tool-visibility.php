@@ -45,8 +45,9 @@ class Check_Tool_Visibility {
             );
         }
 
-        $tokens = self::token_visibility_rows( $defs, $disabled, $patterns );
-        $scan   = self::scan_ability_schemas( $defs );
+        $tokens    = self::token_visibility_rows( $defs, $disabled, $patterns );
+        $reachable = self::listable_definitions( $defs, $disabled, $patterns );
+        $scan      = self::scan_ability_schemas( $reachable );
 
         return array(
             self::evaluate_token_visibility( $tokens ),
@@ -58,15 +59,27 @@ class Check_Tool_Visibility {
                 \get_bloginfo( 'version' ),
                 self::count_abilities( $defs ),
                 self::count_registered_abilities(),
-                self::enabled_abilities_missing_from_registry()
+                self::enabled_abilities_missing_from_registry(),
+                self::enabled_vendor_abilities_not_checked()
             ),
             self::evaluate_sanitizer(
                 null === $scan ? array() : $scan['rewritten'],
                 null === $scan ? array() : $scan['unrepairable'],
                 null !== $scan,
-                null === $scan ? null : $scan['scanned']
+                null === $scan ? null : $scan['scanned'],
+                self::count_abilities( $defs ) - self::count_abilities( $reachable )
             ),
         );
+    }
+
+    private static function listable_definitions( array $defs, array $disabled, array $patterns ): array {
+        return array_values( array_filter( $defs, static function ( $def ) use ( $disabled, $patterns ) {
+            $name = isset( $def['name'] ) ? (string) $def['name'] : '';
+            if ( in_array( $name, $disabled, true ) ) {
+                return false;
+            }
+            return empty( $patterns ) || self::matches_pattern_filter( $name, $patterns );
+        } ) );
     }
 
     public static function scan_ability_schemas( array $defs ) {
@@ -296,7 +309,7 @@ class Check_Tool_Visibility {
                     __( 'These tool filter patterns match no tool at all: %s. A pattern that matches nothing hides tools without any warning.', 'easy-mcp-ai' ),
                     implode( ', ', $dead )
                 ),
-                __( 'Correct or remove the pattern under Easy MCP AI → Settings → Advanced → Whitelist tools.', 'easy-mcp-ai' ),
+                __( 'Correct or remove the pattern in the allowed tool patterns setting (the easy_mcp_ai_allowed_tool_patterns option or EASY_MCP_AI_ALLOWED_TOOL_PATTERNS).', 'easy-mcp-ai' ),
                 array( 'dead_patterns' => $dead )
             );
         }
@@ -440,7 +453,7 @@ class Check_Tool_Visibility {
         return Diagnostic_Result::pass( 'd5', Diagnostic_Result::TIER_WARNING, $label, trim( $scope ), array( 'empty_grants' => array() ) );
     }
 
-    public static function evaluate_abilities( $wp_version, $ability_count, $registered_in_wp = null, $enabled_but_missing = array() ) {
+    public static function evaluate_abilities( $wp_version, $ability_count, $registered_in_wp = null, $enabled_but_missing = array(), $not_checked = array() ) {
         $label    = __( 'WordPress Abilities available', 'easy-mcp-ai' );
         $missing  = array_values( array_filter( array_map( 'strval', (array) $enabled_but_missing ) ) );
         $evidence = array(
@@ -448,6 +461,7 @@ class Check_Tool_Visibility {
             'abilities'           => (int) $ability_count,
             'registered_in_wp'    => $registered_in_wp,
             'enabled_but_missing' => $missing,
+            'not_checked'         => array_values( array_filter( array_map( 'strval', (array) $not_checked ) ) ),
         );
 
         if ( $missing ) {
@@ -466,7 +480,7 @@ class Check_Tool_Visibility {
                     count( $missing ),
                     implode( ', ', $missing )
                 ),
-                __( 'The plugin that published these abilities may have been deactivated, renamed them, or may conflict with another plugin bundling the same abilities library. Untick them under Easy MCP AI → Tools → Abilities, or resolve the conflicting plugin. Every other tool is unaffected.', 'easy-mcp-ai' ),
+                __( 'The plugin that published these abilities may have been deactivated, renamed them, or may conflict with another plugin bundling the same abilities library. Switch them off under Easy MCP AI → Tools, or resolve the conflicting plugin. Every other tool is unaffected.', 'easy-mcp-ai' ),
                 $evidence
             );
         }
@@ -487,6 +501,29 @@ class Check_Tool_Visibility {
             );
         }
 
+        if ( $evidence['not_checked'] ) {
+            $not_checked = $evidence['not_checked'];
+            $n           = count( $not_checked );
+            return Diagnostic_Result::unknown(
+                'd6',
+                Diagnostic_Result::TIER_INFO,
+                $label,
+                sprintf(
+                    /* translators: 1: number of abilities, 2: comma-separated ability slugs, 3: what to do next. */
+                    \_n(
+                        '%1$d LearnPress or Elementor ability is switched on but could not be checked here, because they are registered only on requests this plugin serves: %2$s. %3$s',
+                        '%1$d LearnPress or Elementor abilities are switched on but could not be checked here, because they are registered only on requests this plugin serves: %2$s. %3$s',
+                        $n,
+                        'easy-mcp-ai'
+                    ),
+                    $n,
+                    implode( ', ', $not_checked ),
+                    __( 'Run the diagnostics again from the Easy MCP AI dashboard to check them.', 'easy-mcp-ai' )
+                ),
+                $evidence
+            );
+        }
+
         if ( 0 === (int) $ability_count ) {
             if ( is_int( $registered_in_wp ) && $registered_in_wp > 0 ) {
                 return Diagnostic_Result::pass(
@@ -495,7 +532,7 @@ class Check_Tool_Visibility {
                     $label,
                     sprintf(
                         /* translators: 1: "1 ability" or "N abilities", 2: nothing — the count is already inside %1$s. */
-                        __( '%1$s available on this site. None are switched on, which is the default — abilities are opt-in under Easy MCP AI → Tools → Abilities.', 'easy-mcp-ai' ),
+                        __( '%1$s available on this site. None are switched on, which is the default — abilities are opt-in under Easy MCP AI → Tools.', 'easy-mcp-ai' ),
                         sprintf(
                             /* translators: %d: number of abilities registered in WordPress. */
                             \_n( '%d ability is', '%d abilities are', (int) $registered_in_wp, 'easy-mcp-ai' ),
@@ -528,7 +565,7 @@ class Check_Tool_Visibility {
         );
     }
 
-    public static function evaluate_sanitizer( array $rewritten, array $unrepairable, $sanitizer_available = true, $scanned_count = null ) {
+    public static function evaluate_sanitizer( array $rewritten, array $unrepairable, $sanitizer_available = true, $scanned_count = null, int $switched_off_count = 0 ): Diagnostic_Result {
         $label = __( 'Plugin ability schemas are client-compatible', 'easy-mcp-ai' );
 
         if ( ! $sanitizer_available ) {
@@ -547,10 +584,10 @@ class Check_Tool_Visibility {
                 $label,
                 sprintf(
                     /* translators: %s: comma-separated ability names. */
-                    __( 'These plugin abilities publish a tool description this plugin cannot make safe: %s. Some AI clients reject the entire tool list when one entry is invalid, so this can hide every tool at once.', 'easy-mcp-ai' ),
+                    __( 'These plugin abilities have an input this plugin reformats for AI clients and cannot convert back: %s. A call can reach the ability with the reformatted value and be refused. The rest of the tool list is not affected.', 'easy-mcp-ai' ),
                     implode( ', ', $unrepairable )
                 ),
-                __( 'Report the ability names above to the plugin that provides them. Deactivating that plugin restores the rest of the tool list in the meantime.', 'easy-mcp-ai' ),
+                __( 'Report the ability names above to the plugin that provides them. Until it changes, switch the affected tools off on the Tools screen if their calls fail.', 'easy-mcp-ai' ),
                 array( 'unrepairable' => $unrepairable, 'rewritten' => $rewritten )
             );
         }
@@ -566,6 +603,25 @@ class Check_Tool_Visibility {
                     count( $rewritten )
                 ),
                 array( 'rewritten' => $rewritten )
+            );
+        }
+
+        if ( null !== $scanned_count && 0 === (int) $scanned_count && $switched_off_count > 0 ) {
+            return Diagnostic_Result::pass(
+                'd7',
+                Diagnostic_Result::TIER_WARNING,
+                $label,
+                sprintf(
+                    /* translators: %d: number of plugin abilities. */
+                    _n(
+                        '%d plugin ability is registered but switched off or outside the allowed tool patterns, so no AI client receives its tool description. Nothing to check.',
+                        '%d plugin abilities are registered but switched off or outside the allowed tool patterns, so no AI client receives their tool descriptions. Nothing to check.',
+                        $switched_off_count,
+                        'easy-mcp-ai'
+                    ),
+                    $switched_off_count
+                ),
+                array( 'rewritten' => array(), 'unrepairable' => array(), 'switched_off' => $switched_off_count )
             );
         }
 
@@ -625,9 +681,9 @@ class Check_Tool_Visibility {
             case 'token_allowlist':
                 return __( 'Edit the token under Easy MCP AI → Connections → API tokens and widen the tools it may use.', 'easy-mcp-ai' );
             case 'disabled_tools':
-                return __( 'Re-enable the tools you need under Easy MCP AI → Tools → Core.', 'easy-mcp-ai' );
+                return __( 'Switch on the tools you need under Easy MCP AI → Tools.', 'easy-mcp-ai' );
             case 'allowed_tool_patterns':
-                return __( 'Correct or clear the patterns under Easy MCP AI → Settings → Advanced → Whitelist tools.', 'easy-mcp-ai' );
+                return __( 'Correct or clear the allowed tool patterns setting (the easy_mcp_ai_allowed_tool_patterns option or EASY_MCP_AI_ALLOWED_TOOL_PATTERNS).', 'easy-mcp-ai' );
             case 'capability':
                 return __( 'Assign the token to a WordPress user whose role permits these actions — an Editor or Administrator for most tools.', 'easy-mcp-ai' );
             default:
@@ -917,11 +973,35 @@ class Check_Tool_Visibility {
         $missing = array();
         foreach ( $enabled as $slug ) {
             $slug = (string) $slug;
-            if ( '' !== $slug && ! isset( $registered[ $slug ] ) ) {
+            if ( '' !== $slug && ! isset( $registered[ $slug ] ) && ! self::is_unseen_vendor_ability( $slug ) ) {
                 $missing[] = $slug;
             }
         }
         return $missing;
+    }
+
+    private static function enabled_vendor_abilities_not_checked() {
+        if ( ! function_exists( 'wp_get_abilities' ) ) {
+            return array();
+        }
+        $enabled    = \get_option( 'easy_mcp_ai_enabled_abilities', array() );
+        $registered = \wp_get_abilities();
+        if ( ! is_array( $enabled ) || ! is_array( $registered ) ) {
+            return array();
+        }
+        $skipped = array();
+        foreach ( $enabled as $slug ) {
+            $slug = (string) $slug;
+            if ( '' !== $slug && ! isset( $registered[ $slug ] ) && self::is_unseen_vendor_ability( $slug ) ) {
+                $skipped[] = $slug;
+            }
+        }
+        return $skipped;
+    }
+
+    private static function is_unseen_vendor_ability( $slug ) {
+        return ! \Easy_MCP_AI\Compat\Vendor_Abilities::served()
+            && null !== \Easy_MCP_AI\Compat\Vendor_Abilities::vendor_of( (string) strstr( $slug, '/', true ) );
     }
 
     private static function count_abilities( array $defs ) {

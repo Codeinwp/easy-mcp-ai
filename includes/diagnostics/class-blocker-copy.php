@@ -193,8 +193,8 @@ class Blocker_Copy {
         switch ( $stage ) {
             case 'disabled_tools':
                 /* translators: %s: WordPress username. */
-                $short = sprintf( __( 'Every tool this token (user %s) is allowed to use is switched off in Settings.', 'easy-mcp-ai' ), $user );
-                $fix   = __( 'Re-enable the tools you need under Settings → Disabled tools.', 'easy-mcp-ai' );
+                $short = sprintf( __( 'Every tool this token (user %s) is allowed to use is switched off on the Tools page.', 'easy-mcp-ai' ), $user );
+                $fix   = __( 'Switch on the tools you need under Easy MCP AI → Tools.', 'easy-mcp-ai' );
                 break;
             case 'token_allowlist':
                 /* translators: %s: WordPress username. */

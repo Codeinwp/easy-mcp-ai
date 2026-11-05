@@ -1,6 +1,7 @@
 <?php
 namespace Easy_MCP_AI\Tools\Styles;
 
+use Easy_MCP_AI\Approvals\Preview_Values;
 use Easy_MCP_AI\Tools\Base_Tool;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -63,6 +64,41 @@ class Update_Global_Styles extends Base_Tool {
                 ),
             ),
         );
+    }
+
+    public function approval_details( array $arguments ): ?array {
+        $merge_raw = isset( $arguments['merge'] ) && rest_sanitize_boolean( $arguments['merge'] );
+        $variation = isset( $arguments['variation_slug'] ) && '' !== $arguments['variation_slug'];
+        $stored_id = self::stored_global_styles_id();
+        if ( $variation || null === $stored_id ) {
+            return null;
+        }
+        try {
+            $this->validate_arguments( isset( $arguments['styles'] ), isset( $arguments['settings'] ), $variation, $merge_raw );
+            $built = $this->sent_body( $arguments, $merge_raw, $stored_id );
+        } catch ( \InvalidArgumentException | \RuntimeException $e ) {
+            return null;
+        }
+        $details = array();
+        foreach ( $built['body'] as $section => $value ) {
+            $detail = array(
+                'label' => $section,
+                'after' => Preview_Values::full( is_array( $value ) ? Preview_Values::mask( $value ) : $value ),
+            );
+            if ( is_array( $built['before'] ) ) {
+                $detail = array_merge( $detail, Preview_Values::before( $built['before'][ $section ] ) );
+            }
+            $details[] = $detail;
+        }
+        return $details;
+    }
+
+    private static function stored_global_styles_id(): ?int {
+        if ( ! class_exists( 'WP_Theme_JSON_Resolver' ) || ! method_exists( 'WP_Theme_JSON_Resolver', 'get_user_data_from_wp_global_styles' ) ) {
+            return null;
+        }
+        $post = \WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme(), false );
+        return is_array( $post ) && ! empty( $post['ID'] ) ? (int) $post['ID'] : 0;
     }
 
     public function execute( array $arguments ) {
@@ -149,7 +185,7 @@ class Update_Global_Styles extends Base_Tool {
         );
     }
 
-    private function sent_body( array $arguments, $merge_raw, $global_styles_id ) {
+    private function sent_body( array $arguments, bool $merge_raw, int $global_styles_id ): array {
         $sent = array();
         foreach ( array( 'styles', 'settings' ) as $section ) {
             if ( isset( $arguments[ $section ] ) ) {
@@ -157,12 +193,18 @@ class Update_Global_Styles extends Base_Tool {
             }
         }
 
-        $before = null;
-        try {
-            $before = $this->read_current( $global_styles_id );
-        } catch ( \RuntimeException $e ) {
-            if ( $merge_raw ) {
-                throw $e;
+        $before = array(
+            'settings' => array(),
+            'styles'   => array(),
+        );
+        if ( 0 !== $global_styles_id ) {
+            $before = null;
+            try {
+                $before = $this->read_current( $global_styles_id );
+            } catch ( \RuntimeException $e ) {
+                if ( $merge_raw ) {
+                    throw $e;
+                }
             }
         }
 

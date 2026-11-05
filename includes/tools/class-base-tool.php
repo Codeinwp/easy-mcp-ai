@@ -1,6 +1,8 @@
 <?php
 namespace Easy_MCP_AI\Tools;
 
+use Easy_MCP_AI\Approvals\Preview_Values;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -44,6 +46,7 @@ abstract class Base_Tool {
             'wp_tec_'      => 'Events Calendar',
             'wp_redirection_' => 'Redirection',
             'wp_sitekit_'  => 'Site Kit',
+            'wp_divi_'     => 'Divi',
             'wp_cf7_'      => 'Contact Form 7',
             'wp_yoast_'    => 'Yoast',
             'wp_rm_'       => 'Rank Math',
@@ -115,32 +118,41 @@ abstract class Base_Tool {
         return self::generic_description( $this, $arguments );
     }
 
-    public static function generic_description( $tool, array $arguments ) {
+    public static function generic_description( object $tool, array $arguments ): string {
         $title = method_exists( $tool, 'get_title' ) ? (string) $tool->get_title() : (string) $tool->get_name();
-        $mask  = method_exists( $tool, 'get_redacted_arguments' ) ? (array) $tool->get_redacted_arguments() : array();
-        foreach ( $mask as $name ) {
-            if ( array_key_exists( $name, $arguments ) ) {
-                $arguments[ $name ] = '[redacted]';
-            }
-        }
         if ( empty( $arguments ) ) {
             return $title;
         }
+        list( $short, $long ) = Preview_Values::split( self::preview_arguments( $tool, $arguments ) );
         $pairs = array();
-        foreach ( $arguments as $key => $value ) {
-            if ( is_scalar( $value ) || null === $value ) {
-                $shown = is_bool( $value ) ? ( $value ? 'true' : 'false' ) : ( null === $value ? 'null' : (string) $value );
-            } else {
-                $shown = \wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-                $shown = is_string( $shown ) ? $shown : '…';
-            }
-            if ( strlen( $shown ) > 120 ) {
-                $shown = substr( $shown, 0, 117 ) . '…';
-            }
-            $pairs[] = $key . ': ' . $shown;
+        foreach ( $short + $long as $key => $value ) {
+            $pairs[] = $key . ': ' . Preview_Values::shown( $value );
         }
-        $text = sprintf( '%s (%s)', $title, implode( ', ', $pairs ) );
-        return strlen( $text ) > 600 ? substr( $text, 0, 597 ) . '…' : $text;
+        return sprintf( '%s (%s)', $title, implode( ', ', $pairs ) );
+    }
+
+    public static function generic_details( object $tool, array $arguments ): array {
+        return Preview_Values::long_details( self::preview_arguments( $tool, $arguments ) );
+    }
+
+    public static function approval_details_for( object $tool, array $arguments, callable $summary_is_generic ): array {
+        $own = null;
+        if ( method_exists( $tool, 'approval_details' ) ) {
+            try {
+                $own = $tool->approval_details( $arguments );
+            } catch ( \Throwable $e ) {
+                $own = null;
+            }
+        }
+        if ( is_array( $own ) ) {
+            return array_values( $own );
+        }
+        return $summary_is_generic() ? self::generic_details( $tool, $arguments ) : array();
+    }
+
+    private static function preview_arguments( object $tool, array $arguments ): array {
+        $mask = method_exists( $tool, 'get_redacted_arguments' ) ? (array) $tool->get_redacted_arguments() : array();
+        return Preview_Values::mask( $arguments, $mask );
     }
 
     protected function peek( $route, $fields, array $params = array() ) {
@@ -220,6 +232,59 @@ abstract class Base_Tool {
 
     protected static function text_arg( array $arguments, string $key ): string {
         return isset( $arguments[ $key ] ) && is_string( $arguments[ $key ] ) ? trim( $arguments[ $key ] ) : '';
+    }
+
+    protected static function markup_arg( array $arguments, string $key ): string {
+        if ( ! is_scalar( $arguments[ $key ] ) ) {
+            throw new \InvalidArgumentException( sprintf( '%s must be a string.', $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        return (string) $arguments[ $key ];
+    }
+
+    public function accepted_arguments(): ?array {
+        $annotations = $this->get_annotations();
+        if ( isset( $annotations['readOnlyHint'] ) && true === $annotations['readOnlyHint'] ) {
+            return null;
+        }
+        $schema = $this->get_input_schema();
+        if ( array_key_exists( 'additionalProperties', $schema ) && false !== $schema['additionalProperties'] ) {
+            return null;
+        }
+        return array_map( 'strval', array_keys( (array) ( $schema['properties'] ?? array() ) ) );
+    }
+
+    protected function undeclared_arguments( array $arguments ): array {
+        $accepted = $this->accepted_arguments();
+        if ( null === $accepted ) {
+            return array();
+        }
+        return array_values( array_diff( array_map( 'strval', array_keys( $arguments ) ), $accepted ) );
+    }
+
+    public function refuse_undeclared_arguments( array $arguments ): void {
+        $undeclared = $this->undeclared_arguments( $arguments );
+        if ( array() === $undeclared ) {
+            return;
+        }
+        $shown = array();
+        foreach ( array_slice( $undeclared, 0, 3 ) as $name ) {
+            $name    = (string) preg_replace( '/[^A-Za-z0-9_\-]/', '', $name );
+            $shown[] = '' === $name ? '?' : ( strlen( $name ) > 20 ? substr( $name, 0, 17 ) . '...' : $name );
+        }
+        $more     = count( $undeclared ) - count( $shown );
+        $accepted = (array) $this->accepted_arguments();
+        throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            sprintf(
+                'Nothing was changed: %1$s has no argument%2$s %3$s%4$s.',
+                $this->get_name(),
+                1 === count( $undeclared ) ? '' : 's',
+                implode( ', ', $shown ),
+                $more > 0 ? sprintf( ' and %d more', $more ) : ''
+            ),
+            array() === $accepted
+                ? 'It takes no arguments. Call it again without them.'
+                : 'Its arguments are: ' . implode( ', ', $accepted ) . '. Call it again with only these.'
+        );
     }
 
     protected function validate_required( array $arguments, array $required_keys ) {
@@ -309,7 +374,7 @@ abstract class Base_Tool {
     }
 
     protected static function post_type_route( string $base, ?int $id, string ...$methods ): string {
-        $route = '/wp/v2/' . $base . ( null === $id ? '' : '/' . $id );
+        $route = '/' . Post_Type_Rest_Base::route_namespace( $base ) . '/' . $base . ( null === $id ? '' : '/' . $id );
         foreach ( $methods as $method ) {
             Post_Type_Rest_Base::require_own_route( $method, $base, $route );
         }
@@ -740,17 +805,12 @@ abstract class Base_Tool {
         if ( '' === $content ) {
             return '';
         }
+        $needles = $this->search_snippet_needles( (string) $query );
         $cap = 20000;
         if ( strlen( $content ) > $cap ) {
             $window = min( $cap, $length + 4000 );
-            $raw_needle = trim( (string) $query );
-            $use_mb  = function_exists( 'mb_stripos' ) && function_exists( 'mb_substr' );
-            $raw_pos = false;
-            if ( '' !== $raw_needle ) {
-                $raw_pos = $use_mb
-                    ? mb_stripos( $content, $raw_needle, 0, 'UTF-8' )
-                    : stripos( $content, $raw_needle );
-            }
+            $use_mb    = function_exists( 'mb_stripos' ) && function_exists( 'mb_substr' );
+            $raw_pos   = $this->locate_search_match( $content, $needles, $use_mb );
             $raw_start = ( false !== $raw_pos ) ? (int) max( 0, $raw_pos - 2000 ) : 0;
             $content   = $use_mb
                 ? mb_substr( $content, $raw_start, $window, 'UTF-8' )
@@ -772,17 +832,7 @@ abstract class Base_Tool {
 
         $have_mb = function_exists( 'mb_stripos' ) && function_exists( 'mb_substr' ) && function_exists( 'mb_strlen' );
 
-        $pos    = false;
-        $needle = trim( (string) $query );
-        if ( '' !== $needle ) {
-            $pos = $have_mb ? mb_stripos( $text, $needle, 0, 'UTF-8' ) : stripos( $text, $needle );
-            if ( false === $pos && false !== strpos( $needle, ' ' ) ) {
-                $first_word = strtok( $needle, ' ' );
-                if ( '' !== (string) $first_word ) {
-                    $pos = $have_mb ? mb_stripos( $text, $first_word, 0, 'UTF-8' ) : stripos( $text, $first_word );
-                }
-            }
-        }
+        $pos = $this->locate_search_match( $text, $needles, $have_mb );
         if ( false === $pos ) {
             $pos = 0;
         }
@@ -802,6 +852,46 @@ abstract class Base_Tool {
         $prefix = $start > 0 ? "\xE2\x80\xA6" : '';
         $suffix = ( $start + $length ) < $total ? "\xE2\x80\xA6" : '';
         return $prefix . $snippet . $suffix;
+    }
+
+    private function search_snippet_needles( string $query ): array {
+        $search = trim( stripslashes( $query ) );
+        if ( '' === $search ) {
+            return array();
+        }
+        preg_match_all( '/".*?("|$)|((?<=[\t ",+])|^)[^\t ",+]+/', $search, $matches );
+        $parser = new class() extends \WP_Query {
+            public function search_terms( array $terms ): array {
+                return $this->parse_search_terms( $terms );
+            }
+        };
+
+        $terms = $parser->search_terms( $matches[0] );
+        if ( empty( $terms ) || count( $terms ) > 9 ) {
+            $terms = array( $search );
+        }
+
+        $exclusion_prefix = apply_filters( 'wp_query_search_exclusion_prefix', '-' );
+        $needles          = array();
+        foreach ( $terms as $term ) {
+            if ( ! $exclusion_prefix || 0 !== strpos( $term, (string) $exclusion_prefix ) ) {
+                $needles[] = $term;
+            }
+        }
+        if ( count( $needles ) === count( $terms ) ) {
+            array_unshift( $needles, $search );
+        }
+        return array_values( array_unique( $needles ) );
+    }
+
+    private function locate_search_match( string $haystack, array $needles, bool $use_mb ) {
+        foreach ( $needles as $needle ) {
+            $pos = $use_mb ? mb_stripos( $haystack, $needle, 0, 'UTF-8' ) : stripos( $haystack, $needle );
+            if ( false !== $pos ) {
+                return (int) $pos;
+            }
+        }
+        return false;
     }
 
     protected function apply_meta_argument( array $arguments, array &$params ) {
@@ -1033,9 +1123,36 @@ abstract class Base_Tool {
     }
 
     private function dispatch_rest_response( \WP_REST_Request $request ) {
-        $method   = $request->get_method();
-        $route    = $request->get_route();
-        $response = rest_do_request( $request );
+        return self::refuse_rest_error( $request, rest_do_request( $request ) );
+    }
+
+    protected function dispatch_post_update( \WP_REST_Request $request, int $post_id, bool $resave ) {
+        $narrow = Narrow_Post_Write::dispatch( $request, $post_id, $resave );
+        if ( null === $narrow ) {
+            return rest_do_request( $request );
+        }
+        if ( $narrow['wrote'] ) {
+            $this->clear_page_cache( array( $post_id ) );
+        }
+        return $narrow['response'];
+    }
+
+    protected function rest_post_update( string $method, string $route, array $params, ?string $fields, int $post_id, bool $resave ) {
+        $request = self::build_rest_request( $method, $route, $params, $fields );
+        return self::refuse_rest_error( $request, $this->dispatch_post_update( $request, $post_id, $resave ) )->get_data();
+    }
+
+    protected static function resave_property( string $what ): array {
+        return array(
+            'type'        => 'boolean',
+            'default'     => false,
+            'description' => sprintf( 'Also save the whole post, as an edit in WordPress does: its save hooks run, a revision may be added and its modified date moves. By default a call that changes only %s writes just that and leaves the post itself untouched.', $what ),
+        );
+    }
+
+    private static function refuse_rest_error( \WP_REST_Request $request, $response ) {
+        $method = $request->get_method();
+        $route  = $request->get_route();
         if ( $response->is_error() ) {
             $message = self::rest_error_message_or_empty( $response );
             if ( '' === $message ) {

@@ -236,7 +236,7 @@ class Check_Environment {
                 __( 'Saved credentials for %s can no longer be read. This happens when the WordPress security keys in wp-config.php are changed after the credentials were saved — the keys they were encrypted with no longer exist, so the tools for those services fail on every call.', 'easy-mcp-ai' ),
                 implode( ', ', $undecryptable )
             ),
-            __( 'Open Easy MCP AI → Tools → External data and re-enter the credentials for the services listed above.', 'easy-mcp-ai' ),
+            __( 'Open Easy MCP AI → Tools → Connections and re-enter the credentials for the services listed above.', 'easy-mcp-ai' ),
             array( 'undecryptable_credentials' => $undecryptable )
         );
     }

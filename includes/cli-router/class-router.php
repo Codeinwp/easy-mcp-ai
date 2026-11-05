@@ -99,6 +99,32 @@ final class Router {
         return implode( "\n", $lines );
     }
 
+    public static function details( Classification $c ): array {
+        if ( 'delegate' !== $c->kind || null === $c->plan ) {
+            return array();
+        }
+        $details = array();
+        foreach ( $c->plan as $call ) {
+            $tool      = self::tool( (string) $call['tool'] );
+            $arguments = (array) $call['arguments'];
+            if ( ! is_object( $tool ) ) {
+                continue;
+            }
+            $own = \Easy_MCP_AI\Tools\Base_Tool::approval_details_for(
+                $tool,
+                $arguments,
+                static function () use ( $call, $tool, $arguments ): bool {
+                    return self::tool_describe( $call ) === \Easy_MCP_AI\Tools\Base_Tool::generic_description( $tool, $arguments );
+                }
+            );
+            foreach ( $own as $detail ) {
+                $detail['label'] = (string) $call['tool'] . ': ' . $detail['label'];
+                $details[]       = $detail;
+            }
+        }
+        return $details;
+    }
+
     private static function own_describe_lines( Invocation $inv ): array {
         $lines = array();
         try {
@@ -240,6 +266,10 @@ final class Router {
 
         if ( 'catalog' !== $route_of ) {
             self::enforce_params( $c, $leaf, $route, $args, $parsed['assoc'] );
+            $mask = Mask_Guard::refusal( $name, $args, $parsed['assoc'] );
+            if ( null !== $mask ) {
+                self::stop( $c, 'refuse', 'redacted_value', $mask );
+            }
         }
 
         self::route_call( $c, new Invocation( $name, $valid['args'], $valid['assoc'], $runtime, $leaf, $route, $command ), self::classify_context( $out ) );
@@ -1201,7 +1231,7 @@ final class Router {
         return new $class();
     }
 
-    private static function tool( string $name ): ?object {
+    public static function tool( string $name ): ?object {
         if ( null !== self::$tool_resolver ) {
             return call_user_func( self::$tool_resolver, $name );
         }

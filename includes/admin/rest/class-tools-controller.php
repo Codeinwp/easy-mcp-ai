@@ -30,26 +30,23 @@ class Tools_Controller extends Admin_Rest_Controller {
 
     public function register_routes() {
         $this->register_route( '/tools', \WP_REST_Server::READABLE, array( $this, 'get_tools' ) );
-        $this->register_route( '/tools/enabled', self::UPDATABLE, array( $this, 'patch_enabled' ) );
+        $this->register_route( '/tools/policy', self::UPDATABLE, array( $this, 'patch_policy' ) );
     }
 
     public function get_tools( $request ) {
         return $this->ok( $this->payload() );
     }
 
-    public function patch_enabled( $request ) {
+    public function patch_policy( $request ) {
         if ( ! $this->catalogue ) {
             return $this->fail( 'easy_mcp_ai_unavailable', \__( 'The tool registry is not available on this request.', 'easy-mcp-ai' ), 503 );
         }
         $body = $request->get_json_params();
         if ( ! is_array( $body ) ) {
-            return $this->fail( 'easy_mcp_ai_invalid_param', \__( 'Expected a JSON object.', 'easy-mcp-ai' ), 400, array( 'field' => '' ) );
+            return $this->fail( 'easy_mcp_ai_invalid_param', \__( 'Expected a JSON object.', 'easy-mcp-ai' ), 400 );
         }
-        $applied = $this->catalogue->apply( $body );
-        if ( \is_wp_error( $applied ) ) {
-            return $applied;
-        }
-        return $this->ok( $this->payload() );
+        $result = $this->catalogue->apply_policy( $body );
+        return \is_wp_error( $result ) ? $result : $this->ok( $this->payload() );
     }
 
     private function payload() {

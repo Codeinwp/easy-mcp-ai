@@ -12,7 +12,7 @@ class Wpdb_Approval_Store implements Approval_Store {
     const FORMATS = array(
         'approval_id' => '%s', 'auth_source' => '%s', 'token_id' => '%d', 'oauth_client_id' => '%s',
         'wp_user_id' => '%d', 'tool_name' => '%s', 'client_protocol' => '%s', 'client_capabilities' => '%s', 'arguments' => '%s', 'args_hash' => '%s',
-        'preview' => '%s', 'preview_hash' => '%s', 'status' => '%s', 'card_secret_hash' => '%s',
+        'preview' => '%s', 'details' => '%s', 'preview_hash' => '%s', 'status' => '%s', 'card_secret_hash' => '%s',
         'decided_by' => '%d', 'decided_at' => '%s', 'decision_via' => '%s', 'audit_id' => '%d',
         'executed_audit_id' => '%d', 'result' => '%s', 'signature' => '%s', 'created_at' => '%s',
         'expires_at' => '%s', 'consumed_at' => '%s',
@@ -30,9 +30,11 @@ class Wpdb_Approval_Store implements Approval_Store {
         return $formats;
     }
 
-    public function create( array $row ) {
+    public function create( array $row ): bool {
         global $wpdb;
-        $row = array_intersect_key( $row, self::FORMATS );
+        $row = array_filter( array_intersect_key( $row, self::FORMATS ), static function ( $value ) {
+            return null !== $value;
+        } );
         return false !== $wpdb->insert( $this->table(), $row, $this->formats( $row ) );
     }
 

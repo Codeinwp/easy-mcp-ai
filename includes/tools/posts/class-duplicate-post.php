@@ -11,6 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Duplicate_Post extends Base_Tool {
 
+    use Post_Copy_Fields;
+
+    const COPY_OF_KEY = '_easy_mcp_ai_copy_of';
+
     const REFUSED_TYPES = array(
         'attachment'          => 'a media item',
         'revision'            => 'a revision',
@@ -39,6 +43,7 @@ class Duplicate_Post extends Base_Tool {
         '_elementor_css',
         '_elementor_element_cache',
         '_elementor_page_assets',
+        self::COPY_OF_KEY,
     );
 
     const SKIPPED_META_PREFIXES = array(
@@ -53,7 +58,7 @@ class Duplicate_Post extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Duplicates a post, page or custom post type item into a new one of the same type. Required: `post_id`. Optional: `title` (default: the original\'s title), `status` (draft/pending/private/publish, default draft; Force draft on create applies). Copies the content, excerpt, terms of every taxonomy shown in the REST API, featured image, page template, post format, parent, menu order, comment and ping settings, password and post meta, page-builder layouts such as Elementor\'s included. Not copied: the date, slug (WordPress makes a new one), author (you become the author), sticky flag, comments, child pages and the original\'s editing history. Requires permission to edit the original and, for a custom post type item, the access wp_create_cpt_item needs. Refuses media, revisions, menu items, site editor entities and WooCommerce products. Returns { id, source_id, post_type, title, status, link, copied_meta_keys }, plus `skipped_meta_keys`, `skipped_taxonomies`, `skipped_template` or `skipped_fields` (menu_order, parent) when something was left out, `content_filtered: true` when WordPress filtered HTML from the content because you cannot post unfiltered HTML, and `status_error` when the copy was created but stayed a draft. An error after the copy was created (a meta key WordPress refused) names the draft.';
+        return 'Duplicates a post, page or custom post type item into a new one of the same type. Required: `post_id`. Optional: `title` (default: the original\'s title), `status` (draft/pending/private/publish, default draft; Force draft on create applies). Copies the content, excerpt, terms of every taxonomy shown in the REST API, featured image, page template, post format, parent, menu order, comment and ping settings, password and post meta, page-builder layouts such as Elementor\'s included. Not copied: the date, slug (WordPress makes a new one), author (you become the author), sticky flag, comments, child pages and the original\'s editing history. Requires permission to edit the original and, for a custom post type item, the access wp_create_cpt_item needs. Refuses media, revisions, menu items, site editor entities and WooCommerce products. Returns { id, source_id, post_type, title, status, link, copied_meta_keys }, plus `skipped_meta_keys`, `skipped_taxonomies`, `skipped_template` or `skipped_fields` (menu_order, parent) when something was left out, `content_filtered: true` when WordPress filtered HTML from the content because you cannot post unfiltered HTML, and `status_error` when the copy was created but stayed a draft. An error after the copy was created (a meta key WordPress refused) names the draft. To put a reviewed copy live in place of a published original, keeping its URL, use wp_republish_post, never a publish of the copy (`next` says so when it applies).';
     }
 
     public function get_category() {
@@ -124,6 +129,7 @@ class Duplicate_Post extends Base_Tool {
         if ( array() !== $meta['failed'] ) {
             throw new Detailed_Tool_Error( sprintf( 'Post %1$d was created as a draft copy, but WordPress refused %2$d of its meta keys: delete it, or finish it by hand.', $new_id, count( $meta['failed'] ) ), self::refused_meta_details( $meta['failed'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
+        update_post_meta( $new_id, self::COPY_OF_KEY, (int) $source->ID );
 
         $reply = array(
             'id'               => $new_id,
@@ -135,6 +141,9 @@ class Duplicate_Post extends Base_Tool {
             'copied_meta_keys' => $meta['copied'],
         );
         $reply = array_merge( $reply, $this->apply_status( $route . '/' . $new_id, $status ) );
+        if ( 'publish' !== $reply['status'] && 'publish' === $source->post_status ) {
+            $reply['next'] = sprintf( 'Once the copy is reviewed, put it live in place of post %1$d with wp_republish_post { "copy_id": %2$d }. Publishing the copy instead makes it a second page at another URL.', (int) $source->ID, $new_id );
+        }
 
         $copy = get_post( $new_id );
         if ( is_object( $copy ) && $copy->post_content !== $source->post_content ) {
@@ -254,13 +263,11 @@ class Duplicate_Post extends Base_Tool {
         if ( is_string( $format ) && '' !== $format ) {
             $params['format'] = $format;
         }
-        $template = (string) get_page_template_slug( (int) $source->ID );
-        if ( '' !== $template ) {
-            if ( array_key_exists( $template, wp_get_theme()->get_page_templates( null, $source->post_type ) ) ) {
-                $params['template'] = $template;
-            } else {
-                $skipped['skipped_template'] = $template;
-            }
+        $template = self::copied_template( $source );
+        if ( isset( $template['template'] ) ) {
+            $params['template'] = $template['template'];
+        } elseif ( isset( $template['skipped_template'] ) ) {
+            $skipped['skipped_template'] = $template['skipped_template'];
         }
 
         $item_fields = self::rest_item_fields( get_post_type_object( $source->post_type ) );
@@ -280,7 +287,7 @@ class Duplicate_Post extends Base_Tool {
         }
         return array(
             'title'   => isset( $params['title'] ) ? (string) $title : '',
-            'params'  => array_merge( $params, $terms['params'] ),
+            'params'  => array_replace( $params, $terms['params'] ),
             'columns' => $columns,
             'skipped' => $skipped,
         );
@@ -321,41 +328,15 @@ class Duplicate_Post extends Base_Tool {
         return $unset;
     }
 
-    private function copied_terms( object $source ): array {
-        $rest_bases = $this->rest_taxonomies_for( $source->post_type );
-        $params     = array();
-        $skipped    = array();
-        foreach ( get_object_taxonomies( $source->post_type ) as $taxonomy ) {
-            if ( 'post_format' === $taxonomy ) {
-                continue;
-            }
-            $args = array( 'fields' => 'ids' );
-            $tax  = get_taxonomy( $taxonomy );
-            if ( is_object( $tax ) && ! empty( $tax->sort ) ) {
-                $args['orderby'] = 'term_order';
-            }
-            $ids = wp_get_object_terms( (int) $source->ID, $taxonomy, $args );
-            if ( ! is_array( $ids ) ) {
-                continue;
-            }
-            if ( isset( $rest_bases[ $taxonomy ] ) ) {
-                $params[ $rest_bases[ $taxonomy ] ] = array_map( 'intval', $ids );
-            } elseif ( array() !== $ids ) {
-                $skipped[] = $taxonomy;
-            }
-        }
-        return array(
-            'params'  => $params,
-            'skipped' => $skipped,
-        );
-    }
-
-    public static function copy_meta( int $source_id, int $copy_id ): array {
+    public static function copy_meta( int $source_id, int $copy_id, array $leave = array() ): array {
         $all     = get_post_meta( $source_id );
         $copied  = array();
         $skipped = array();
         foreach ( array_keys( is_array( $all ) ? $all : array() ) as $key ) {
-            $key    = (string) $key;
+            $key = (string) $key;
+            if ( in_array( $key, $leave, true ) ) {
+                continue;
+            }
             $values = (array) get_post_meta( $source_id, $key );
             if ( self::is_skipped_meta( $key ) || self::holds_unloadable_object( $values ) ) {
                 $skipped[] = $key;
@@ -365,7 +346,16 @@ class Duplicate_Post extends Base_Tool {
         }
         $failed = array();
         foreach ( $copied as $key => $values ) {
-            self::delete_exact_meta( $copy_id, (string) $key );
+            $rows = self::exact_meta_ids( $copy_id, (string) $key );
+            if ( 1 === count( $values ) && 1 === count( $rows ) ) {
+                if ( ! self::replace_meta_row( $rows[0], $values[0] ) ) {
+                    $failed[] = (string) $key;
+                }
+                continue;
+            }
+            foreach ( $rows as $meta_id ) {
+                delete_metadata_by_mid( 'post', $meta_id );
+            }
             $refused = 0;
             foreach ( $values as $value ) {
                 if ( ! add_post_meta( $copy_id, wp_slash( (string) $key ), self::slash_strings( $value ) ) ) {
@@ -383,15 +373,29 @@ class Duplicate_Post extends Base_Tool {
         );
     }
 
-    private static function delete_exact_meta( int $post_id, string $key ): void {
+    private static function exact_meta_ids( int $post_id, string $key ): array {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- meta IDs of one post, read once for this delete.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- meta IDs of one post, read once for this write.
         $rows = $wpdb->get_results( $wpdb->prepare( "SELECT meta_id, meta_key FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = %s", $post_id, $key ) );
+        $ids  = array();
         foreach ( (array) $rows as $row ) {
             if ( $key === $row->meta_key ) {
-                delete_metadata_by_mid( 'post', (int) $row->meta_id );
+                $ids[] = (int) $row->meta_id;
             }
         }
+        return $ids;
+    }
+
+    private static function replace_meta_row( int $meta_id, $value ): bool {
+        $row = get_metadata_by_mid( 'post', $meta_id );
+        if ( ! is_object( $row ) ) {
+            return false;
+        }
+        $value = sanitize_meta( (string) $row->meta_key, $value, 'post', (string) get_post_type( (int) $row->post_id ) );
+        if ( maybe_serialize( $row->meta_value ) === maybe_serialize( $value ) ) {
+            return true;
+        }
+        return (bool) update_metadata_by_mid( 'post', $meta_id, $value );
     }
 
     private static function holds_unloadable_object( $value ): bool {

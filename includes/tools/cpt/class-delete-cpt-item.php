@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\CPT;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Tool_Hint;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +16,7 @@ class Delete_CPT_Item extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Deletes a custom post type (CPT) item. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug) + `item_id`. Optional: `force` — false (default) moves to trash if the CPT supports trashing (most do); true permanently deletes (irreversible). Trashed items can be restored via `wp_update_cpt_item` setting status="draft" or "publish". CPTs registered without trash support (rare) are always permanently deleted regardless of `force`. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces the CPT\'s own write capability on the underlying REST request (some require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error even though the tool is visible.';
+        return 'Deletes a custom post type (CPT) item, also of a type hidden from the REST API but public with an admin screen. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug; a hidden type by its slug) + `item_id`. Optional: `force` — false (default) moves to trash if the CPT supports trashing (most do); true permanently deletes (irreversible). Trashed items can be restored via `wp_update_cpt_item` setting status="draft" or "publish". CPTs registered without trash support (rare) are always permanently deleted regardless of `force`. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces the CPT\'s own write capability on the underlying REST request (some require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error even though the tool is visible.';
     }
 
     public function get_category() {
@@ -58,10 +59,24 @@ class Delete_CPT_Item extends Base_Tool {
     }
 
     public function precheck( array $arguments ): void {
-        $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'DELETE' );
+        Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): void {
+                $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'DELETE' );
+            }
+        );
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->delete( $arguments );
+            }
+        );
+    }
+
+    private function delete( array $arguments ): array {
         $this->validate_required( $arguments, array( 'rest_base', 'item_id' ) );
 
         $rest_base = $this->resolve_post_type_rest_base( $arguments['rest_base'], 'rest_base' );

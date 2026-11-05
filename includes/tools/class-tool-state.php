@@ -122,6 +122,13 @@ final class Tool_State {
         if ( in_array( $name, self::disabled_list(), true ) ) {
             return array( false, 'disabled' );
         }
+        $choice = Tool_Policy::enabled_choice( $name );
+        if ( null !== $choice && ( ! $choice || ! \Easy_MCP_AI\Config::is_locked( 'disabled_tools' ) ) ) {
+            return array( $choice, 'policy' );
+        }
+        if ( Tool_Policy::is_held( $name ) && ! \Easy_MCP_AI\Config::is_locked( 'disabled_tools' ) ) {
+            return array( false, 'held' );
+        }
         if ( ! $default_off ) {
             return array( true, 'default' );
         }
@@ -136,6 +143,7 @@ final class Tool_State {
     }
 
     public static function is_enabled( Base_Tool $tool ) {
+        Tool_Policy::observe( $tool );
         return self::resolve_tool( $tool )[0];
     }
 

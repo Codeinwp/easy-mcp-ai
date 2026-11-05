@@ -131,18 +131,18 @@ class Device_Verification {
             );
         }
 
-        $scope_string = Authorization_Endpoint::resolve_granted_scope( (string) $row->scope, Authorization_Endpoint::submitted_scopes( $request->get_param( 'access_level' ), $request->get_param( 'scopes' ) ) );
+        $scope_string = Authorization_Endpoint::resolve_granted_scope( (string) $row->scope, Authorization_Endpoint::submitted_scopes( $request->get_param( 'access_level' ), $request->get_param( 'scopes' ), (string) $row->scope ) );
 
         if ( '' === $scope_string ) {
-            $this->log_event( 'auth_failure', 'approved_without_scopes', $row );
-            $client = ( new Client_Registry() )->get_client( (string) $row->client_id );
-            if ( null === $client ) {
-                return $this->render_code_form( __( 'The application that requested this code is no longer registered.', 'easy-mcp-ai' ) );
-            }
-            return $this->render_consent( $client, $row, $normalized, __( 'No permissions were selected, so nothing was granted. Choose at least one permission and approve again.', 'easy-mcp-ai' ) );
+            return $this->refuse_approval( $row, $normalized, 'approved_without_scopes', __( 'No permissions were selected, so nothing was granted. Choose at least one permission and approve again.', 'easy-mcp-ai' ) );
         }
 
-        $consent_id = Authorization_Endpoint::store_consent( (int) $user->ID, (string) $row->client_id, $scope_string );
+        $role_limit = Role_Limit::for_level( $user, $request->get_param( 'access_level' ), $request->get_param( 'role_limit' ) );
+        if ( \is_wp_error( $role_limit ) ) {
+            return $this->refuse_approval( $row, $normalized, $role_limit->get_error_code(), $role_limit->get_error_message() );
+        }
+
+        $consent_id = Authorization_Endpoint::store_consent( (int) $user->ID, (string) $row->client_id, $scope_string, $role_limit );
         if ( $consent_id <= 0 ) {
             $this->log_event( 'auth_failure', 'consent_write_failed', $row );
             return $this->render_code_form( __( 'The approval could not be saved. Please try again.', 'easy-mcp-ai' ) );
@@ -172,6 +172,15 @@ class Device_Verification {
             return null;
         }
         return $row;
+    }
+
+    private function refuse_approval( $row, string $normalized, string $reason, string $message ) {
+        $this->log_event( 'auth_failure', $reason, $row );
+        $client = ( new Client_Registry() )->get_client( (string) $row->client_id );
+        if ( null === $client ) {
+            return $this->render_code_form( __( 'The application that requested this code is no longer registered.', 'easy-mcp-ai' ) );
+        }
+        return $this->render_consent( $client, $row, $normalized, $message );
     }
 
     private function render_code_form( $error = '', $status = 200 ) {
@@ -211,6 +220,7 @@ class Device_Verification {
                 'context_label' => __( 'Device code:', 'easy-mcp-ai' ),
                 'context_value' => Device_Authorization::format_user_code( $normalized ),
                 'notice'        => $notice,
+                'role_limit'    => Role_Limit::for_grant( (int) $user->ID, (string) $row->client_id ),
             )
         );
 

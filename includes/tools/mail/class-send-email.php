@@ -231,18 +231,25 @@ class Send_Email extends Base_Tool {
     }
 
     private function unapproved_refusal( array $outside, array $arguments ): Detailed_Tool_Error {
-        if ( ! Approval_Gate::enabled() ) {
-            $why = 'approvals are off on this site ("Ask before destructive actions" in Settings)';
-        } elseif ( ! Approval_Gate::requires_approval( $this, $arguments ) ) {
-            $never = Approval_Gate::matches_any( self::NAME, (array) \Easy_MCP_AI\Config::get( 'approval_never' ) )
-                && ! Approval_Gate::matches_any( self::NAME, (array) \Easy_MCP_AI\Config::get( 'approval_always' ) );
-            $why   = $never
-                ? 'the approval settings list this tool under "Never ask for"'
-                : 'site code (the easy_mcp_ai_requires_approval filter) exempts this call from approval';
-        } elseif ( $this->is_unattended_key() ) {
-            $why = 'this API key is set to never pause for approval';
+        if ( Approval_Gate::requires_approval( $this, $arguments ) ) {
+            $why = $this->is_unattended_key()
+                ? 'this API key is set to never pause for approval'
+                : 'this call was not approved by a person';
         } else {
-            $why = 'this call was not approved by a person';
+            $choice = Approval_Gate::settings_deployed() ? null : \Easy_MCP_AI\Tools\Tool_Policy::approval_choice( self::NAME );
+            if ( false === $choice ) {
+                $why = 'approval is switched off for this tool (Approval column on the Tools page)';
+            } elseif ( true === $choice ) {
+                $why = 'site code (the easy_mcp_ai_requires_approval filter) exempts this call from approval';
+            } elseif ( ! Approval_Gate::enabled() ) {
+                $why = 'approvals are off on this site';
+            } else {
+                $never = Approval_Gate::matches_any( self::NAME, (array) \Easy_MCP_AI\Config::get( 'approval_never' ) )
+                    && ! Approval_Gate::matches_any( self::NAME, (array) \Easy_MCP_AI\Config::get( 'approval_always' ) );
+                $why   = $never
+                    ? sprintf( 'the %s exempts this tool from asking', self::approval_never_source() )
+                    : 'site code (the easy_mcp_ai_requires_approval filter) exempts this call from approval';
+            }
         }
         return new Detailed_Tool_Error(
             sprintf( 'Nothing was sent: %s, so this tool emails only this site\'s users and its admin address.', $why ), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -251,6 +258,18 @@ class Send_Email extends Base_Tool {
                 implode( ', ', $outside )
             )
         );
+    }
+
+    private static function approval_never_source(): string {
+        $source = \Easy_MCP_AI\Config::source( 'approval_never' );
+        $name   = \Easy_MCP_AI\Config::constant_name( 'approval_never' );
+        if ( 'constant' === $source ) {
+            return sprintf( '%s constant set in wp-config.php', $name );
+        }
+        if ( 'environment' === $source ) {
+            return sprintf( '%s environment variable', $name );
+        }
+        return 'easy_mcp_ai_approval_never setting';
     }
 
     private function is_unattended_key(): bool {

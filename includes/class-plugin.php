@@ -44,21 +44,20 @@ class Plugin {
         \add_action( 'easy_mcp_ai_cleanup_change_log', array( __CLASS__, 'cleanup_change_log' ) );
         \add_action( 'easy_mcp_ai_cleanup_tasks', array( $this, 'cleanup_tasks' ) );
         \add_action( 'easy_mcp_ai_cleanup_approvals', array( __CLASS__, 'cleanup_approvals' ) );
+        \add_action( 'easy_mcp_ai_cleanup_approvals', array( Media_Upload\Upload_Sessions::class, 'daily_sweep' ) );
         \add_action( 'easy_mcp_ai_skills_sync', array( __CLASS__, 'run_skills_sync' ) );
         \add_action( OAuth\Client_Metadata_Support::HOOK, array( __CLASS__, 'run_oauth_cimd_probe' ) );
         \add_action( 'easy_mcp_ai_task_tick', array( $this, 'run_task_tick' ), 10, 1 );
         \add_action( 'easy_mcp_ai_search_replace_tick', array( __CLASS__, 'run_search_replace_tick' ), 10, 1 );
         \add_action( 'plugins_loaded', array( 'Easy_MCP_AI\Activator', 'maybe_upgrade' ) );
         \add_action( 'plugins_loaded', array( $this, 'maybe_upgrade_oauth' ) );
+        \add_action( 'plugins_loaded', array( __CLASS__, 'settle_vendor_ability_ticks' ) );
         \add_filter( 'application_password_is_api_request', array( __CLASS__, 'exempt_oauth_client_credentials_from_application_passwords' ) );
         \add_filter( 'map_meta_cap', array( __CLASS__, 'map_privileged_meta_cap' ), 10, 3 );
         \add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_learnpress_category' ), 1000 );
         \add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_learnpress_abilities' ), 1000 );
-        \add_action( 'update_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'learnpress_group_updated' ), 10, 2 );
-        \add_action( 'add_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'learnpress_group_added' ), 10, 2 );
         \add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_elementor_abilities' ), 1000 );
-        \add_action( 'update_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'elementor_group_updated' ), 10, 2 );
-        \add_action( 'add_option_easy_mcp_ai_enabled_plugin_groups', array( __CLASS__, 'elementor_group_added' ), 10, 2 );
+        \add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_breakdance_abilities' ), PHP_INT_MIN );
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
             Privileged\Privileged_Admin::register_cli();
         }
@@ -73,10 +72,9 @@ class Plugin {
 
     public function init_admin() {
         $this->token_manager = new Auth\Token_Manager();
-        $this->tool_registry = new Tools\Tool_Registry();
-        $this->tool_registry->set_lazy_loader( function () { $this->register_tools(); } );
+        $this->tool_registry = $this->lazy_tool_registry();
         if ( $this->is_plugin_admin_screen() ) {
-            $this->register_tools();
+            $this->register_tools( $this->tool_registry );
         }
         new Admin\App_Page();
 
@@ -379,6 +377,7 @@ class Plugin {
             return;
         }
         Activator::maybe_upgrade_core_tables();
+        Compat\Vendor_Abilities::serve();
         $this->handle_oauth_authorize( $oauth_param, $iss_mode );
     }
 
@@ -531,6 +530,10 @@ class Plugin {
     }
 
     public function register_rest_routes() {
+        $route = isset( $GLOBALS['wp'] ) && is_object( $GLOBALS['wp'] ) && isset( $GLOBALS['wp']->query_vars['rest_route'] ) ? (string) $GLOBALS['wp']->query_vars['rest_route'] : '';
+        if ( Compat\Vendor_Abilities::is_our_rest_route( $route ) ) {
+            Compat\Vendor_Abilities::serve();
+        }
         \Easy_MCP_AI\History\Change_Log_Schema::maybe_upgrade();
         Activator::maybe_upgrade_core_tables();
         \Easy_MCP_AI\Tasks\Task_Schema::maybe_upgrade();
@@ -541,7 +544,7 @@ class Plugin {
         $this->resource_registry = new Resources\Resource_Registry();
         $this->server            = new MCP\Server( $this->tool_registry, $this->resource_registry, $this->token_manager );
 
-        $this->register_tools();
+        $this->register_tools( $this->tool_registry );
         $this->register_resources();
 
         if ( \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_enabled', true ) ) {
@@ -564,6 +567,8 @@ class Plugin {
         $transport = new MCP\Transport( $this->server, $this->token_manager );
         $transport->register_routes();
 
+        Media_Upload\Upload_Route::register();
+
         MCP\Rest_Auth_Override::register();
 
         if ( \apply_filters( 'easy_mcp_ai_oauth_enabled', \Easy_MCP_AI\Config::get( 'oauth_enabled' ) ) ) {
@@ -573,16 +578,20 @@ class Plugin {
             $oauth_routes->register_routes();
         }
 
-        ( new Admin\Rest\Admin_Routes( $this->tool_registry ) )->register();
+        ( new Admin\Rest\Admin_Routes(
+            $this->tool_registry,
+            function (): Tools\Tool_Registry {
+                return $this->lazy_tool_registry();
+            }
+        ) )->register();
     }
 
-    private function register_tools(): void {
-        $this->tool_registry->auto_discover();
-        $this->register_ability_tools();
+    private function register_tools( Tools\Tool_Registry $registry ): void {
+        $registry->auto_discover();
+        $this->register_ability_tools( $registry );
     }
 
-    private function register_ability_tools(): void {
-        $registry          = $this->tool_registry;
+    private function register_ability_tools( Tools\Tool_Registry $registry ): void {
         $dynamic_registrar = new Tools\Dynamic_Tool_Registrar();
         if ( \doing_action( 'init' ) ) {
             \add_action(
@@ -891,34 +900,27 @@ class Plugin {
         return $tables;
     }
 
+    public static function settle_vendor_ability_ticks(): void {
+        if ( \get_option( 'easy_mcp_ai_vendor_ability_ticks_settled' ) ) {
+            return;
+        }
+        Compat\Vendor_Abilities::settle_ticks();
+    }
+
     public static function register_learnpress_category(): void {
         Compat\Learnpress_Abilities::register_category();
     }
 
     public static function register_learnpress_abilities(): void {
         Compat\Learnpress_Abilities::register_abilities();
-        Compat\Learnpress_Abilities::enable_pending();
-    }
-
-    public static function learnpress_group_updated( $old_value, $value ): void {
-        Compat\Learnpress_Abilities::group_changed( $old_value, $value );
-    }
-
-    public static function learnpress_group_added( $option, $value ): void {
-        Compat\Learnpress_Abilities::group_changed( array(), $value );
     }
 
     public static function register_elementor_abilities(): void {
         Compat\Elementor_Abilities::register_abilities();
-        Compat\Elementor_Abilities::enable_pending();
     }
 
-    public static function elementor_group_updated( $old_value, $value ): void {
-        Compat\Elementor_Abilities::group_changed( $old_value, $value );
-    }
-
-    public static function elementor_group_added( $option, $value ): void {
-        Compat\Elementor_Abilities::group_changed( array(), $value );
+    public static function register_breakdance_abilities(): void {
+        Compat\Breakdance_Abilities::register_abilities();
     }
 
     public static function map_privileged_meta_cap( $caps, $cap, $user_id ) {
@@ -1111,4 +1113,19 @@ class Plugin {
     public function get_server() { return $this->server; }
     public function get_token_manager() { return $this->token_manager; }
     public function get_tool_registry() { return $this->tool_registry; }
+
+    public function tool_registry_on_demand(): Tools\Tool_Registry {
+        return $this->tool_registry ?? $this->lazy_tool_registry();
+    }
+
+    private function lazy_tool_registry(): Tools\Tool_Registry {
+        $registry = new Tools\Tool_Registry();
+        $registry->set_lazy_loader(
+            static function () use ( $registry ) {
+                $registry->auto_discover();
+                ( new Tools\Dynamic_Tool_Registrar() )->register_to( $registry );
+            }
+        );
+        return $registry;
+    }
 }

@@ -13,7 +13,7 @@ class List_Custom_Metrics extends Base_Tool {
     public function get_name() { return 'wp_ga_list_custom_metrics'; }
 
     public function get_description() {
-        return 'Lists custom metrics configured on a GA4 property. Call this before running a report that uses a custom metric so you know the exact parameterName, measurementUnit, and scope. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Lists custom metrics configured on a GA4 property. Call this before running a report that uses a custom metric so you know the exact parameterName, measurementUnit, and scope. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

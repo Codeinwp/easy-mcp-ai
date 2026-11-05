@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\CPT;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Rest_Base;
 use Easy_MCP_AI\Tools\Post_Type_Tool_Hint;
 
@@ -39,7 +40,7 @@ class Create_CPT_Item extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Creates a new item in any custom post type (CPT) registered with `show_in_rest=true`. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug — `wp_get_post_types` lists both) and `title` (unless `allow_empty_title` is true and `content` or `excerpt` is given). Optional: `status` (default draft; publish/draft/pending/private/future or a custom status registered on this site; "future" needs `date` or `date_gmt`), `slug`, `date` (site time, ISO 8601) or `date_gmt` (UTC) — never both, `author` (user ID), `parent` (parent item ID, hierarchical types only), `menu_order`, `comment_status` / `ping_status` (open/closed), `password` (protects the content and excerpt), `featured_media` (attachment ID), `template`, `meta` (only REST-registered keys persist; dropped keys are reported back as `meta_ignored` with a `notice`) `tax_input` ({ taxonomy slug: [term IDs] } for taxonomies registered on the type and shown in the REST API; every term must exist in that taxonomy) and `allow_empty_title` (boolean, default false). `title`, `content` and `excerpt` are forwarded as before and silently ignored when the CPT lacks the matching `supports` entry; every field added since is refused, naming the missing support, when the CPT does not accept it. If **Easy MCP AI → Settings → Force draft on create** is enabled, `status` is silently overridden to `draft` regardless of the value supplied. For built-in post/page use `wp_create_post` / `wp_create_page` for richer schemas. Returns { id, title, status, link }, plus `meta_ignored` and `notice` when sent meta keys were dropped. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces the CPT\'s own write capability on the underlying REST request (some require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error even though the tool is visible.';
+        return 'Creates a new item in any custom post type (CPT) shown in the REST API, or hidden from it (`show_in_rest` false) but public with an admin screen. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug — `wp_get_post_types` lists both; a hidden type by its slug) and `title` (unless `allow_empty_title` is true and `content` or `excerpt` is given). Optional: `status` (default draft; publish/draft/pending/private/future or a custom status registered on this site; "future" needs `date` or `date_gmt`), `slug`, `date` (site time, ISO 8601) or `date_gmt` (UTC) — never both, `author` (user ID), `parent` (parent item ID, hierarchical types only), `menu_order`, `comment_status` / `ping_status` (open/closed), `password` (protects the content and excerpt), `featured_media` (attachment ID), `template`, `meta` (only REST-registered keys persist; dropped keys are reported back as `meta_ignored` with a `notice`) `tax_input` ({ taxonomy slug: [term IDs] } for taxonomies of the type the tools reach, as the property says; every term must exist in that taxonomy) and `allow_empty_title` (boolean, default false). `title`, `content` and `excerpt` are forwarded as before and silently ignored when the CPT lacks the matching `supports` entry; every field added since is refused, naming the missing support, when the CPT does not accept it. If **Easy MCP AI → Settings → Force draft on create** is enabled, `status` is silently overridden to `draft` regardless of the value supplied. For built-in post/page use `wp_create_post` / `wp_create_page` for richer schemas. Returns { id, title, status, link }, plus `meta_ignored` and `notice` when sent meta keys were dropped. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces the CPT\'s own write capability on the underlying REST request (some require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error even though the tool is visible.';
     }
 
     public function get_category() {
@@ -141,7 +142,7 @@ class Create_CPT_Item extends Base_Tool {
                 ),
                 'tax_input' => array(
                     'type'        => 'object',
-                    'description' => 'Terms to assign, as { taxonomy slug: [term IDs] }, e.g. {"genre": [12, 15]}. Only taxonomies registered for this post type and shown in the REST API are accepted; every term ID must exist in that taxonomy. Each listed taxonomy\'s terms are replaced by the list given.',
+                    'description' => 'Terms to assign, as { taxonomy slug: [term IDs] }, e.g. {"genre": [12, 15]}. Only taxonomies registered for this post type and shown in the REST API (or, for a hidden post type, its hidden public taxonomies) are accepted; every term ID must exist in that taxonomy. Each listed taxonomy\'s terms are replaced by the list given.',
                 ),
                 'allow_empty_title' => array(
                     'type'        => 'boolean',
@@ -154,10 +155,24 @@ class Create_CPT_Item extends Base_Tool {
     }
 
     public function precheck( array $arguments ): void {
-        self::post_type_route( $this->checked_custom_type( $arguments )[0], null, 'POST' );
+        Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): void {
+                self::post_type_route( $this->checked_custom_type( $arguments )[0], null, 'POST' );
+            }
+        );
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->create( $arguments );
+            }
+        );
+    }
+
+    private function create( array $arguments ): array {
         list( $rest_base, $post_type, $post_type_object ) = $this->checked_custom_type( $arguments );
 
         $params    = self::content_params( $arguments );
@@ -245,7 +260,7 @@ class Create_CPT_Item extends Base_Tool {
         }
         self::refuse_unsupported_fields( $sent, $post_type_object, $post_type );
         if ( isset( $arguments['tax_input'] ) ) {
-            $params = array_merge( $params, self::tax_input_params( $arguments['tax_input'], $post_type, $params ) );
+            $params += self::tax_input_params( $arguments['tax_input'], $post_type, $params );
         }
         return $meta_sent;
     }
@@ -452,6 +467,10 @@ class Create_CPT_Item extends Base_Tool {
         $out   = array();
         foreach ( $value as $taxonomy => $ids ) {
             $taxonomy = (string) $taxonomy;
+            $left_out = Hidden_Post_Types::left_out( $taxonomy );
+            if ( null !== $left_out ) {
+                throw new \InvalidArgumentException( self::left_out_refusal( $taxonomy, $left_out ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
             if ( ! isset( $map[ $taxonomy ] ) ) {
                 throw new \InvalidArgumentException(
                     sprintf(
@@ -470,6 +489,13 @@ class Create_CPT_Item extends Base_Tool {
             $out[ $base ] = $clean;
         }
         return $out;
+    }
+
+    private static function left_out_refusal( string $taxonomy, array $left_out ): string {
+        if ( '' === $left_out['by'] ) {
+            return sprintf( 'tax_input: taxonomy "%1$s" is hidden from the REST API, and its field name "%2$s" is one WordPress keeps for the post, so its terms cannot be set here. Nothing was written.', $taxonomy, $left_out['field'] );
+        }
+        return sprintf( 'tax_input: taxonomy "%1$s" is hidden from the REST API, and taxonomy "%3$s" already sends its terms under the same field name "%2$s", so its terms cannot be set here. Nothing was written.', $taxonomy, $left_out['field'], $left_out['by'] );
     }
 
     private static function tax_input_object( $value ): array {

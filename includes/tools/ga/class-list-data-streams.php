@@ -13,7 +13,7 @@ class List_Data_Streams extends Base_Tool {
     public function get_name() { return 'wp_ga_list_data_streams'; }
 
     public function get_description() {
-        return 'Lists web, iOS, and Android data streams configured on a GA4 property. Useful for confirming a property is actually receiving traffic from the expected domain or app. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Lists web, iOS, and Android data streams configured on a GA4 property. Useful for confirming a property is actually receiving traffic from the expected domain or app. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

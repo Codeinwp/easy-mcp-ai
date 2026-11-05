@@ -10,6 +10,7 @@ use Easy_MCP_AI\GSC\GSC_Client;
 use Easy_MCP_AI\Provider_Credentials;
 use Easy_MCP_AI\Semrush\Semrush_Client;
 use Easy_MCP_AI\SeRanking\SeRanking_Client;
+use Easy_MCP_AI\Tools\Tool_Policy;
 use Easy_MCP_AI\Tools\Tool_Registry;
 use Easy_MCP_AI\Tools\Tool_State;
 
@@ -197,6 +198,11 @@ class External_Data_Service {
     }
 
     private function items( $key ) {
+        $categories = array();
+        foreach ( $this->definitions_for( $key ) as $definition ) {
+            $categories[ (string) $definition['name'] ] = Tool_Policy::category( (array) ( $definition['annotations'] ?? array() ), (string) $key );
+        }
+        Tool_Policy::observe_tools( $categories );
         $items = array();
         foreach ( $this->definitions_for( $key ) as $definition ) {
             $name    = (string) $definition['name'];

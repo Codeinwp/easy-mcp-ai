@@ -107,7 +107,7 @@ class Update_User extends Base_Tool {
                 ),
                 'description'          => array(
                     'type'        => 'string',
-                    'description' => 'The new biographical description for the user.',
+                    'description' => 'The new biographical description for the user. WordPress filters it with kses, so the HTML it allows in a biography is kept.',
                 ),
                 'url'                  => array(
                     'type'        => 'string',
@@ -385,7 +385,7 @@ class Update_User extends Base_Tool {
         }
 
         if ( isset( $arguments['description'] ) ) {
-            $params['description'] = sanitize_text_field( $arguments['description'] );
+            $params['description'] = self::markup_arg( $arguments, 'description' );
         }
 
         if ( isset( $arguments['url'] ) ) {

@@ -18,7 +18,7 @@ class Approval_Page {
         $this->feedback_queue = $feedback_queue;
     }
 
-    public function handle( $method, array $query, array $post ) {
+    public function handle( string $method, array $query, array $post ): array {
         $approval_id = isset( $query[ self::QUERY_VAR ] ) ? (string) $query[ self::QUERY_VAR ] : '';
         if ( '' === $approval_id && isset( $post[ self::QUERY_VAR ] ) ) {
             $approval_id = (string) $post[ self::QUERY_VAR ];
@@ -43,6 +43,9 @@ class Approval_Page {
         }
         if ( (int) $row['wp_user_id'] !== (int) \get_current_user_id() ) {
             return $this->page( 403, __( 'Not your approval', 'easy-mcp-ai' ), __( 'This approval belongs to a different WordPress account. Log in as the user whose AI assistant made the request.', 'easy-mcp-ai' ) );
+        }
+        if ( Approval_Gate::STATUS_CONSUMED === $row['status'] && ! empty( $row['executed_audit_id'] ) ) {
+            return $this->page( 200, $this->status_title( $row ), '<p>' . \esc_html( $this->status_sentence( $row ) ) . '</p>' . self::changes_html( (int) $row['executed_audit_id'] ), null, true );
         }
         if ( Approval_Gate::STATUS_PENDING !== $row['status'] ) {
             return $this->page( 200, $this->status_title( $row ), $this->status_sentence( $row ) );
@@ -233,7 +236,7 @@ class Approval_Page {
         return htmlspecialchars( $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
     }
 
-    private function render_form( array $row, $notice = '', $status = 200 ) {
+    private function render_form( array $row, string $notice = '', int $status = 200 ): array {
         $id   = $row['approval_id'];
         $body = '';
         if ( '' !== $notice ) {
@@ -241,6 +244,13 @@ class Approval_Page {
         }
         $body .= '<p class="lead">' . \esc_html__( 'Your AI assistant wants to run an operation that cannot be undone.', 'easy-mcp-ai' ) . '</p>';
         $body .= '<blockquote class="preview">' . \esc_html( $row['preview'] ) . '</blockquote>';
+        $details = self::row_details( $row );
+        if ( ! empty( $details ) ) {
+            $body .= '<p class="meta">' . \esc_html__( 'Everything below is part of this request. Check all of it before you approve.', 'easy-mcp-ai' ) . '</p>';
+            foreach ( $details as $detail ) {
+                $body .= '<h2>' . \esc_html( $detail['label'] ) . '</h2>' . self::detail_html( $detail );
+            }
+        }
         $body .= '<dl>';
         $body .= '<dt>' . \esc_html__( 'Tool', 'easy-mcp-ai' ) . '</dt><dd><code>' . \esc_html( $row['tool_name'] ) . '</code></dd>';
         $body .= '<dt>' . \esc_html__( 'Requested by', 'easy-mcp-ai' ) . '</dt><dd>' . \esc_html( $this->credential_label( $row ) ) . '</dd>';
@@ -256,7 +266,67 @@ class Approval_Page {
         $body .= '<button type="submit" name="decision" value="approve" class="approve">' . \esc_html__( 'Approve', 'easy-mcp-ai' ) . '</button> ';
         $body .= '<button type="submit" name="decision" value="deny" class="deny">' . \esc_html__( 'Deny', 'easy-mcp-ai' ) . '</button>';
         $body .= '</form>';
-        return $this->page( $status, __( 'Approve this operation?', 'easy-mcp-ai' ), $body, $row, true );
+        return $this->page( $status, __( 'Approve this operation?', 'easy-mcp-ai' ), $body, $row, true, ! empty( $details ) );
+    }
+
+    private static function row_details( array $row ): array {
+        $decoded = isset( $row['details'] ) && is_string( $row['details'] ) ? json_decode( $row['details'], true ) : null;
+        $details = array();
+        foreach ( is_array( $decoded ) ? $decoded : array() as $detail ) {
+            if ( ! is_array( $detail ) || ! isset( $detail['label'], $detail['after'] ) || ! is_string( $detail['label'] ) || ! is_string( $detail['after'] ) ) {
+                continue;
+            }
+            $entry = array( 'label' => $detail['label'], 'after' => $detail['after'] );
+            if ( isset( $detail['before'] ) && is_string( $detail['before'] ) ) {
+                $entry['before'] = $detail['before'];
+            }
+            $details[] = $entry;
+        }
+        return $details;
+    }
+
+    private static function detail_html( array $detail ): string {
+        $hidden = false !== strpos( $detail['after'] . ( $detail['before'] ?? '' ), Preview_Values::MASK );
+        $html   = self::detail_body( $detail, $hidden );
+        if ( $hidden ) {
+            $html .= '<p class="meta">' . \esc_html__( 'Values shown as [redacted] are secrets and are hidden here. This request may change them.', 'easy-mcp-ai' ) . '</p>';
+        }
+        return $html;
+    }
+
+    private static function detail_body( array $detail, bool $hidden ): string {
+        if ( ! isset( $detail['before'] ) ) {
+            return '<pre class="detail">' . \esc_html( $detail['after'] ) . '</pre>';
+        }
+        if ( $detail['before'] === $detail['after'] ) {
+            return '<p class="meta">' . ( $hidden ? \esc_html__( 'No visible difference.', 'easy-mcp-ai' ) : \esc_html__( 'No change.', 'easy-mcp-ai' ) ) . '</p>';
+        }
+        $diff = \wp_text_diff(
+            $detail['before'],
+            $detail['after'],
+            array(
+                'title_left'  => \esc_html__( 'Now', 'easy-mcp-ai' ),
+                'title_right' => \esc_html__( 'After approval', 'easy-mcp-ai' ),
+            )
+        );
+        $exact = '<pre class="detail">' . \esc_html( $detail['after'] ) . '</pre>';
+        if ( '' === $diff ) {
+            return '<p class="meta">' . ( $hidden ? \esc_html__( 'Only visible spacing changes. Now:', 'easy-mcp-ai' ) : \esc_html__( 'Only spacing changes. Now:', 'easy-mcp-ai' ) ) . '</p><pre class="detail">' . \esc_html( $detail['before'] ) . '</pre>'
+                . '<p class="meta">' . \esc_html__( 'After approval:', 'easy-mcp-ai' ) . '</p>' . $exact;
+        }
+        $html = '<div class="diffwrap">' . $diff . '</div>';
+        if ( \normalize_whitespace( $detail['before'] ) !== $detail['before'] || \normalize_whitespace( $detail['after'] ) !== $detail['after'] ) {
+            $html .= '<p class="meta">' . \esc_html__( 'The comparison above ignores spacing. Exactly what will be saved:', 'easy-mcp-ai' ) . '</p>' . $exact;
+        }
+        return $html;
+    }
+
+    private static function changes_html( int $audit_id ): string {
+        if ( \current_user_can( 'manage_options' ) ) {
+            $url = \admin_url( \Easy_MCP_AI\Admin\App_Page::change_history_slug() . '&audit_id=' . $audit_id );
+            return '<p><a href="' . \esc_url( $url ) . '">' . \esc_html__( 'See what changed', 'easy-mcp-ai' ) . '</a></p>';
+        }
+        return '<p class="meta">' . \esc_html__( 'Your site administrator can see what it changed under Activity › Change history.', 'easy-mcp-ai' ) . '</p>';
     }
 
     private function credential_label( array $row ) {
@@ -314,11 +384,11 @@ class Approval_Page {
         return sprintf( __( 'in %s', 'easy-mcp-ai' ), \human_time_diff( $now, $expires ) );
     }
 
-    private function page( $status, $title, $body, $row = null, $raw = false ) {
+    private function page( int $status, string $title, string $body, ?array $row = null, bool $raw = false, bool $wide = false ): array {
         $brand = \Easy_MCP_AI\Config::brand( 'Easy MCP AI' );
         $html  = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">';
         $html .= '<title>' . \esc_html( $title ) . ' - ' . \esc_html( $brand ) . '</title>';
-        $html .= '<style>body{font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f0f1;color:#1d2327;margin:0;padding:24px}main{max-width:560px;margin:40px auto;background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px}h1{font-size:20px;margin:0 0 12px}.lead{margin:0 0 12px}.preview{margin:0 0 16px;padding:12px 16px;border-left:4px solid #d63638;background:#fcf0f1}dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 16px;margin:0 0 20px}dt{color:#646970}dd{margin:0}button{font:inherit;padding:8px 18px;border-radius:3px;border:1px solid transparent;cursor:pointer}.approve{background:#2271b1;color:#fff}.deny{background:#fff;border-color:#c3c4c7;color:#1d2327}.notice{padding:8px 12px;border-left:4px solid #dba617;background:#fcf9e8;margin:0 0 12px}.brand{font-size:12px;color:#646970;margin-top:20px}</style></head><body><main>';
+        $html .= '<style>body{font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f0f1;color:#1d2327;margin:0;padding:24px}main{max-width:560px;margin:40px auto;background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px}h1{font-size:20px;margin:0 0 12px}.lead{margin:0 0 12px}.preview{margin:0 0 16px;padding:12px 16px;border-left:4px solid #d63638;background:#fcf0f1}dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 16px;margin:0 0 20px}dt{color:#646970}dd{margin:0}button{font:inherit;padding:8px 18px;border-radius:3px;border:1px solid transparent;cursor:pointer}.approve{background:#2271b1;color:#fff}.deny{background:#fff;border-color:#c3c4c7;color:#1d2327}.notice{padding:8px 12px;border-left:4px solid #dba617;background:#fcf9e8;margin:0 0 12px}.brand{font-size:12px;color:#646970;margin-top:20px}main.wide{max-width:960px}h2{font-size:15px;margin:16px 0 6px}.meta{color:#646970}.detail{max-height:24em;overflow:auto;margin:0 0 16px;padding:12px;background:#f6f7f7;border:1px solid #dcdcde;white-space:pre-wrap;word-break:break-word;font-size:13px}.diffwrap{max-height:32em;overflow:auto;margin:0 0 16px;border:1px solid #dcdcde}.diff{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}.diff th{text-align:left;padding:6px 8px;background:#f6f7f7}.diff td{vertical-align:top;padding:2px 8px;font-family:monospace;white-space:pre-wrap;word-break:break-word}.diff .diff-deletedline{background:#fcf0f1}.diff .diff-addedline{background:#edfaef}.diff del{background:#f1aeb5;text-decoration:none}.diff ins{background:#a3e9b1;text-decoration:none}</style></head><body>' . ( $wide ? '<main class="wide">' : '<main>' );
         $html .= '<h1>' . \esc_html( $title ) . '</h1>';
         $html .= $raw ? $body : '<p>' . \esc_html( $body ) . '</p>';
         $html .= '<p class="brand">' . \esc_html( $brand ) . '</p></main></body></html>';

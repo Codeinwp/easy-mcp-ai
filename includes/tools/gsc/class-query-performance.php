@@ -13,7 +13,7 @@ class Query_Performance extends Base_Tool {
     public function get_name() { return 'wp_gsc_query_performance'; }
 
     public function get_description() {
-        return 'Queries Google Search Console performance data. Returns clicks, impressions, CTR, and average position. Supports grouping by one or more dimensions (query, page, country, device, date, hour, searchAppearance). Filtering supports only query, page, country, device, and searchAppearance — date and hour are group-by dimensions only and cannot be used in `filters`. Covers web, news, image, video, discover, and googleNews search types. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Queries Google Search Console performance data. Returns clicks, impressions, CTR, and average position. Supports grouping by one or more dimensions (query, page, country, device, date, hour, searchAppearance). Filtering supports only query, page, country, device, and searchAppearance — date and hour are group-by dimensions only and cannot be used in `filters`. Covers web, news, image, video, discover, and googleNews search types. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'gsc'; }

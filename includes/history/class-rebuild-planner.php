@@ -556,8 +556,23 @@ class Rebuild_Planner {
             $arg      = '_thumbnail_id' === $key ? array( 'featured_media' => (int) $value ) : array( 'template' => $template );
             return self::restore( array( array( 'tool' => $tools['update'], 'arguments' => array( $tools['id_arg'] => $post_id ) + $arg ) ), array(), array( 'value' ) );
         }
+        $image_field = array_search( $key, \Easy_MCP_AI\Tools\SEO\Yoast_Update_Post_Seo::IMAGE_URLS, true );
+        if ( false !== $image_field ) {
+            if ( ! is_string( $value ) ) {
+                return self::refuse( __( 'the previous image URL was not text', 'easy-mcp-ai' ) );
+            }
+            if ( false === \Easy_MCP_AI\MCP\Server::current_call_may_use( 'wp_yoast_update_post_seo' ) ) {
+                return self::refuse( __( 'Yoast\'s image URL goes back through wp_yoast_update_post_seo, which this connection cannot use on this site', 'easy-mcp-ai' ) );
+            }
+            return self::restore( array( array( 'tool' => 'wp_yoast_update_post_seo', 'arguments' => array( 'post_id' => $post_id, $image_field => $value ) ) ), array(), array( 'value' ) );
+        }
         if ( ! $this->rest_writes_meta( $type, $key ) ) {
-            return self::refuse( __( 'the key is not registered for the REST API on this post type, so wp_update_post_meta cannot write it', 'easy-mcp-ai' ) );
+            $direct = \array_key_exists( $key, \Easy_MCP_AI\Meta\Unregistered_Meta::plan( $post_id, array( $key => $value ) )['open'] );
+            return self::refuse(
+                $direct
+                    ? __( 'the key is not registered for the REST API on this post type, so a history restore does not write it; write it with wp_update_post_meta', 'easy-mcp-ai' )
+                    : __( 'the key is not registered for the REST API on this post type, so a history restore does not write it', 'easy-mcp-ai' )
+            );
         }
         return self::restore(
             array( array(
@@ -1003,6 +1018,9 @@ class Rebuild_Planner {
             }
             if ( '_wp_desired_post_slug' === $key || 0 === strpos( $key, '_wp_trash_meta_' ) ) {
                 return __( 'WordPress\'s own record of a trash, not content of the post', 'easy-mcp-ai' );
+            }
+            if ( in_array( $key, \Easy_MCP_AI\Tools\SEO\Yoast_Update_Post_Seo::IMAGE_IDS, true ) ) {
+                return __( 'Yoast\'s attachment id for a social image, which wp_yoast_update_post_seo sets from the image URL each time it writes one; applying the URL\'s entry sets it again, and an id repaired on its own is not put back', 'easy-mcp-ai' );
             }
             return null;
         }

@@ -71,12 +71,70 @@ class Htaccess_Auth_Rule {
         return null === $stop || $rule[0][1] < $stop;
     }
 
+    public static function foreign_blocks_ahead_of_rule( ?string $contents ): array {
+        $contents = (string) $contents;
+        if ( ! preg_match( self::active_rule_pattern(), $contents, $rule, PREG_OFFSET_CAPTURE ) ) {
+            return array();
+        }
+        preg_match_all( self::last_flag_pattern(), $contents, $stops, PREG_OFFSET_CAPTURE );
+        $blocks  = self::marked_blocks( $contents );
+        $markers = array();
+        foreach ( $stops[0] as $stop ) {
+            if ( $stop[1] >= $rule[0][1] ) {
+                break;
+            }
+            $marker = self::exempting_block( $blocks, $stop[1] );
+            if ( null === $marker ) {
+                return array();
+            }
+            if ( ! in_array( $marker, $markers, true ) ) {
+                $markers[] = $marker;
+            }
+        }
+        return $markers;
+    }
+
     public static function first_last_flag_offset( $contents ) {
-        $pattern = '/^[ \t]*RewriteRule\b[^\r\n]*\[(?:[^\]\r\n]*,)?[ \t]*L[ \t]*(?:,[^\]\r\n]*)?\][ \t]*\r?$/mi';
-        if ( preg_match( $pattern, (string) $contents, $m, PREG_OFFSET_CAPTURE ) ) {
+        if ( preg_match( self::last_flag_pattern(), (string) $contents, $m, PREG_OFFSET_CAPTURE ) ) {
             return (int) $m[0][1];
         }
         return null;
+    }
+
+    private static function last_flag_pattern(): string {
+        return '/^[ \t]*RewriteRule\b[^\r\n]*\[(?:[^\]\r\n]*,)?[ \t]*L[ \t]*(?:,[^\]\r\n]*)?\][ \t]*\r?$/mi';
+    }
+
+    private static function marked_blocks( string $contents ): array {
+        preg_match_all( '/^[ \t]*# BEGIN ([^\r\n]*?)[ \t]*\r?$/m', $contents, $begins, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
+        $own    = array( '', self::WORDPRESS_MARKER, 'WordPress Multisite', self::MARKER, self::PLAIN_ROUTES_MARKER );
+        $blocks = array();
+        foreach ( $begins as $begin ) {
+            $marker   = $begin[1][0];
+            $end      = '/^[ \t]*# END ' . preg_quote( $marker, '/' ) . '[ \t]*\r?$/m';
+            $closed   = 1 === preg_match( $end, $contents, $m, PREG_OFFSET_CAPTURE, $begin[0][1] );
+            $blocks[] = array(
+                'marker'  => $marker,
+                'start'   => $begin[0][1],
+                'end'     => $closed ? $m[0][1] : strlen( $contents ),
+                'foreign' => $closed && ! in_array( $marker, $own, true ),
+            );
+        }
+        return $blocks;
+    }
+
+    private static function exempting_block( array $blocks, int $offset ): ?string {
+        $marker = null;
+        foreach ( $blocks as $block ) {
+            if ( $offset <= $block['start'] || $offset >= $block['end'] ) {
+                continue;
+            }
+            if ( ! $block['foreign'] ) {
+                return null;
+            }
+            $marker = $block['marker'];
+        }
+        return $marker;
     }
 
     private static function active_rule_pattern() {

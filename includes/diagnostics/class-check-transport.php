@@ -120,13 +120,18 @@ class Check_Transport {
         }
 
         $rule_present = self::has_active_auth_rule( $htaccess );
+        $blocks_ahead = $rule_present ? array() : Htaccess_Auth_Rule::foreign_blocks_ahead_of_rule( $htaccess );
 
         if ( in_array( strtolower( (string) $sapi ), self::FASTCGI_SAPIS, true ) ) {
-            return self::evaluate_fastcgi_rule( $label, (string) $sapi, $rule_present );
+            return self::evaluate_fastcgi_rule( $label, (string) $sapi, $rule_present || array() !== $blocks_ahead );
         }
 
         if ( $rule_present ) {
             return Diagnostic_Result::pass( 'a3', Diagnostic_Result::TIER_WARNING, $label, '', array( 'rule_present' => true, 'sapi' => (string) $sapi ) );
+        }
+
+        if ( array() !== $blocks_ahead ) {
+            return self::evaluate_rule_behind_blocks( $label, (string) $sapi, $blocks_ahead );
         }
 
         return Diagnostic_Result::warn(
@@ -158,6 +163,22 @@ class Check_Transport {
             $label,
             $detail,
             array( 'rule_present' => $rule_present, 'sapi' => $sapi, 'measured_by' => 'a1' )
+        );
+    }
+
+    private static function evaluate_rule_behind_blocks( string $label, string $sapi, array $blocks ): Diagnostic_Result {
+        $blocks = array_map( 'sanitize_text_field', $blocks );
+
+        return Diagnostic_Result::unknown(
+            'a3',
+            Diagnostic_Result::TIER_WARNING,
+            $label,
+            sprintf(
+                /* translators: %s: comma-separated names of .htaccess blocks written by other plugins, e.g. "LSCACHE". */
+                __( 'The .htaccess rewrite is present, but rules in another block above it (%s) can end rewriting before it is reached. Such rules usually apply only to a few addresses, so the file alone cannot confirm that AI requests reach the rewrite. The "Login credentials reach WordPress" check measures it on a full Re-run.', 'easy-mcp-ai' ),
+                implode( ', ', $blocks )
+            ),
+            array( 'rule_present' => true, 'sapi' => $sapi, 'measured_by' => 'a1', 'blocks_ahead' => $blocks )
         );
     }
 

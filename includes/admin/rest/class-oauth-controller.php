@@ -408,6 +408,7 @@ class OAuth_Controller extends Admin_Rest_Controller {
             'preset'       => empty( $ordinary ) ? Access_Presets::CUSTOM : $this->presets->from_allowed_tools( $tools ),
             'fullAccess'   => $full,
             'toolCount'    => $full ? null : count( $tools ),
+            'roleLimit'    => self::role_limit_payload( $row['role_limit'] ?? null ),
             'grantedAt'    => Dashboard_Controller::iso8601( $row['granted_at'] ?? null ),
             'updatedAt'    => Dashboard_Controller::iso8601( $row['updated_at'] ?? null ),
             'lastUsedAt'   => Dashboard_Controller::iso8601( $row['last_used'] ?? null ),
@@ -416,16 +417,33 @@ class OAuth_Controller extends Admin_Rest_Controller {
         );
     }
 
+    private static function role_limit_payload( $stored ): ?array {
+        $roles = \Easy_MCP_AI\OAuth\Role_Limit::decode( $stored );
+        if ( null === $roles ) {
+            return null;
+        }
+        $labels = array_column( \Easy_MCP_AI\Auth\Connect_Policy::role_choices(), 'label', 'value' );
+        $out    = array();
+        foreach ( $roles as $slug ) {
+            $out[] = array(
+                'slug'  => $slug,
+                'label' => isset( $labels[ $slug ] ) ? (string) $labels[ $slug ] : $slug,
+            );
+        }
+        return $out;
+    }
+
     private function grant_rows() {
         $consents = $this->wpdb->prefix . 'easy_mcp_ai_oauth_consents';
         $clients  = $this->wpdb->prefix . 'easy_mcp_ai_oauth_clients';
         $tokens   = $this->wpdb->prefix . 'easy_mcp_ai_oauth_access_tokens';
         $now      = \current_time( 'mysql', true );
+        $role     = \Easy_MCP_AI\OAuth\Role_Limit::column_ready() ? 'con.role_limit' : 'NULL AS role_limit';
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Plugin-owned tables; names prefixed by $wpdb->prefix.
         $rows = (array) $this->wpdb->get_results(
             $this->wpdb->prepare(
-                "SELECT con.id AS consent_id, con.wp_user_id, con.client_id, con.scope, con.granted_at, con.updated_at,
+                "SELECT con.id AS consent_id, con.wp_user_id, con.client_id, con.scope, {$role}, con.granted_at, con.updated_at,
                         cl.client_name,
                         (SELECT MAX(t.last_used_at) FROM {$tokens} t WHERE t.client_id = con.client_id AND t.wp_user_id = con.wp_user_id) AS last_used,
                         (SELECT COUNT(*) FROM {$tokens} t WHERE t.client_id = con.client_id AND t.wp_user_id = con.wp_user_id AND t.is_active = 1 AND t.expires_at > %s) AS active_tokens

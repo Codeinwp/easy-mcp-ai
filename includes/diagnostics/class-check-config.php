@@ -111,7 +111,7 @@ class Check_Config {
                 implode( ', ', array_merge( $invalid, $credentials['invalid'] ) ),
                 $invalid
                     ? __( 'Correct the invalid deployment settings. Safe fallback values are in use for settings, and External Data tools refuse every call while their credential constant is invalid.', 'easy-mcp-ai' )
-                    : __( 'Correct the External Data credential constants named above. Their tools refuse every call until then; the reason is shown under Tools › External data.', 'easy-mcp-ai' ),
+                    : __( 'Correct the External Data credential constants named above. Their tools refuse every call until then; the reason is shown under Tools › Connections.', 'easy-mcp-ai' ),
                 array( 'controlled' => $controlled, 'invalid' => $invalid, 'credentials' => $credentials['deployed'], 'invalid_credentials' => $credentials['invalid'] )
             );
         }

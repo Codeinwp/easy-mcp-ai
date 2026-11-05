@@ -13,7 +13,7 @@ class List_Conversion_Events extends Base_Tool {
     public function get_name() { return 'wp_ga_list_conversion_events'; }
 
     public function get_description() {
-        return 'Lists conversion events (also known as "key events" in the GA4 UI) configured on a property. Call this so an AI agent can correctly query conversion-related metrics. Returns { keyEvents: [], count } — note the return key is `keyEvents` (Google renamed "conversion events" to "key events" in the GA4 UI in 2024). Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Lists conversion events (also known as "key events" in the GA4 UI) configured on a property. Call this so an AI agent can correctly query conversion-related metrics. Returns { keyEvents: [], count } — note the return key is `keyEvents` (Google renamed "conversion events" to "key events" in the GA4 UI in 2024). Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

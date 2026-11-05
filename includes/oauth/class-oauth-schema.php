@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class OAuth_Schema {
 
-    const DB_VERSION = '1.0.11';
+    const DB_VERSION = '1.0.12';
     const VERSION_OPTION = 'easy_mcp_ai_oauth_db_version';
 
     public static function create_tables() {
@@ -94,6 +94,7 @@ class OAuth_Schema {
             wp_user_id bigint(20) unsigned NOT NULL,
             client_id varchar(64) NOT NULL,
             scope text NOT NULL,
+            role_limit text DEFAULT NULL,
             granted_at datetime NOT NULL,
             updated_at datetime DEFAULT NULL,
             PRIMARY KEY  (id),
@@ -176,6 +177,9 @@ class OAuth_Schema {
             'metadata_url',
             'metadata_fetched_at',
             'metadata_expires_at',
+        ),
+        'consents' => array(
+            'role_limit',
         ),
     );
 

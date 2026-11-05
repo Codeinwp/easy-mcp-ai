@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Shortcode_Editor {
 
-    const OPS = array( 'set_text', 'set_link', 'set_image', 'set_fields' );
+    const OPS = array( 'set_text', 'set_link', 'set_image', 'set_fields', 'insert', 'remove', 'move', 'duplicate' );
 
     const MAX_OPS = 50;
 
@@ -23,6 +23,8 @@ final class Shortcode_Editor {
     private $unfiltered;
 
     private $kses;
+
+    private $warnings = array();
 
     public function __construct( Shortcode_Adapter $adapter, callable $media, bool $unfiltered, ?callable $kses = null ) {
         $this->adapter    = $adapter;
@@ -43,30 +45,185 @@ final class Shortcode_Editor {
             return self::refused( $source, $errors );
         }
 
-        $shape   = self::shape( $this->adapter->layout_items( $source ) );
-        $content = $source;
+        $this->warnings = array();
+        $marks          = Shortcode_Marks::of( $this->adapter->layout_items( $source ) );
+        $content        = $source;
         $results = array();
+        $parents = array();
         foreach ( array_values( $ops ) as $index => $op ) {
-            $applied = is_array( $op ) ? $this->apply( $content, $op ) : 'must be an object.';
+            $kept    = clone $marks;
+            $applied = is_array( $op ) ? $this->apply_op( $content, $op, $marks, $index + 1 ) : 'must be an object.';
             if ( is_string( $applied ) ) {
                 $errors[] = sprintf( 'Operation %d: %s', $index + 1, $applied );
+                $marks    = $kept;
                 continue;
             }
-            if ( self::shape( $this->adapter->layout_items( $applied['content'] ) ) !== $shape ) {
-                $errors[] = sprintf( 'Operation %d: the value would change which elements the layout holds, so it was not applied.', $index + 1 );
-                continue;
-            }
-            $content   = $applied['content'];
-            $results[] = $applied['result'];
+            $content = $applied['content'];
+            $results = array_merge( $results, $applied['results'] );
+            $parents = array_merge( $parents, $applied['parents'] );
         }
         if ( array() !== $errors ) {
             return self::refused( $source, $errors );
         }
+        $items = $this->adapter->layout_items( $content );
+        $plan  = array(
+            'content' => $content,
+            'results' => self::placed( $results, $marks, $items ),
+            'errors'  => array(),
+        );
+        if ( array() !== $parents ) {
+            $plan['parents'] = $this->parents( array_values( array_unique( $parents ) ), $marks, $content, $items );
+        }
+        if ( array() !== $this->warnings ) {
+            $plan['warnings'] = array_values( array_unique( $this->warnings ) );
+        }
+        return $plan;
+    }
+
+    private function apply_op( string $content, array $op, Shortcode_Marks $marks, int $number ) {
+        $name = isset( $op['op'] ) && is_string( $op['op'] ) ? $op['op'] : '';
+        if ( ! in_array( $name, self::OPS, true ) ) {
+            return sprintf( 'unknown `op` "%s"; one of %s.', $name, implode( ', ', self::OPS ) );
+        }
+        if ( isset( $op['list'] ) || isset( $op['item'] ) ) {
+            return sprintf( '`list` and `item` address the items of an Elementor list; %s elements have none, so give the element\'s own `field`.', $this->adapter->label() );
+        }
+        if ( in_array( $name, Shortcode_Structure::OPS, true ) ) {
+            $type    = 'insert' === $name && isset( $op['element_type'] ) && is_string( $op['element_type'] ) ? trim( $op['element_type'] ) : '';
+            $refusal = $this->adapter->op_refusal( $name, $type );
+            if ( null !== $refusal ) {
+                return $refusal;
+            }
+        }
+        if ( ! in_array( $name, Shortcode_Structure::OPS, true ) ) {
+            $set = $this->set_op( $content, $op, $marks );
+            return is_string( $set ) ? $set : array(
+                'content' => $set['content'],
+                'results' => array( $set['result'] ),
+                'parents' => array(),
+            );
+        }
+        $rules = $this->adapter->structure_rules();
+        if ( null === $rules ) {
+            return sprintf( '%s is not available for %s layouts yet; they take set_text, set_link, set_image and set_fields.', $name, $this->adapter->label() );
+        }
+        $moved = ( new Shortcode_Structure( $this->adapter, $rules ) )->apply( $content, $op, $marks, $number );
+        if ( is_string( $moved ) ) {
+            return $moved;
+        }
+        $results = array( $moved['result'] );
+        $content = $moved['content'];
+        foreach ( $moved['follow'] as $edit ) {
+            $set = $this->set_op( $content, $edit, $marks );
+            if ( is_string( $set ) ) {
+                return sprintf( '%s for the new %s: %s', $edit['op'], $moved['result']['type'], $set );
+            }
+            $content   = $set['content'];
+            $results[] = $set['result'];
+        }
         return array(
             'content' => $content,
             'results' => $results,
-            'errors'  => array(),
+            'parents' => $moved['parents'],
         );
+    }
+
+    private function set_op( string $content, array $op, Shortcode_Marks $marks ) {
+        $refusal = $this->adapter->op_refusal( (string) $op['op'], '' );
+        if ( null !== $refusal ) {
+            return $refusal;
+        }
+        $key = isset( $op['element'] ) && is_scalar( $op['element'] ) ? trim( (string) $op['element'] ) : '';
+        if ( '' === $key ) {
+            return '`element` is required: the element\'s address from wp_get_page_layout, such as "0.1.2".';
+        }
+        $items = $this->adapter->layout_items( $content );
+        $found = $marks->find( $key, $items );
+        if ( is_string( $found ) ) {
+            return $found;
+        }
+        $applied = $this->apply( $content, array_merge( $op, array( 'element' => $found['address'] ) ) );
+        if ( is_string( $applied ) ) {
+            return str_replace( '"' . $found['address'] . '"', '"' . $key . '"', $applied );
+        }
+        $next = $this->adapter->layout_items( $applied['content'] );
+        if ( self::shape( $next ) !== self::shape( $items ) ) {
+            return 'the value would change which elements the layout holds, so it was not applied.';
+        }
+        if ( $applied['content'] !== $content ) {
+            list( $at, $length, $with ) = $applied['splice'];
+            $marks->replaced( $at, $length, $with );
+            $item = $found['path'][ count( $found['path'] ) - 1 ];
+            $now  = self::find( $next, $found['address'] );
+            if ( null !== $now && $at >= $item['content_at'] ) {
+                $marks->edited( $key, $now );
+            }
+        }
+        $result = $applied['result'];
+        $item   = $found['path'][ count( $found['path'] ) - 1 ];
+        if ( Shortcode_Tree::TEXT !== $item['tag'] ) {
+            foreach ( $result['written'] ?? array( $result['field'] ) as $field ) {
+                $note = $this->adapter->field_warning( $item, (string) $field );
+                if ( null !== $note ) {
+                    $this->warnings[] = sprintf( 'Element "%s": %s', $key, $note );
+                }
+            }
+        }
+        $result['element'] = $key;
+        $result['address'] = $key;
+        return array(
+            'content' => $applied['content'],
+            'result'  => $result,
+        );
+    }
+
+    private static function placed( array $results, Shortcode_Marks $marks, array $items ): array {
+        foreach ( $results as $index => $result ) {
+            $track = array_key_exists( 'track', $result ) ? $result['track'] : $result['address'];
+            unset( $results[ $index ]['track'] );
+            $found = null === $track ? null : $marks->find( (string) $track, $items );
+            $results[ $index ]['address'] = is_array( $found ) ? $found['address'] : null;
+        }
+        return $results;
+    }
+
+    private function parents( array $keys, Shortcode_Marks $marks, string $content, array $items ): array {
+        $nodes   = $this->adapter->nodes( (object) array( 'post_content' => $content ) );
+        $parents = array();
+        foreach ( $keys as $key ) {
+            $address = '';
+            $type    = 'page';
+            $kids    = $nodes;
+            if ( '' !== $key ) {
+                $found = $marks->find( $key, $items );
+                if ( is_string( $found ) ) {
+                    continue;
+                }
+                $address = $found['address'];
+                $node    = self::node_at( $nodes, $address );
+                $type    = (string) ( $node['type'] ?? '' );
+                $kids    = $node['children'] ?? array();
+            }
+            $parents[] = array(
+                'address'  => $address,
+                'type'     => $type,
+                'children' => array_map( array( __CLASS__, 'outline' ), $kids ),
+            );
+        }
+        return $parents;
+    }
+
+    private static function node_at( array $nodes, string $address ): ?array {
+        $node = null;
+        foreach ( explode( '.', $address ) as $index ) {
+            $node  = $nodes[ (int) $index ] ?? null;
+            $nodes = is_array( $node ) && isset( $node['children'] ) && is_array( $node['children'] ) ? $node['children'] : array();
+        }
+        return $node;
+    }
+
+    private static function outline( array $node ): array {
+        return array_intersect_key( $node, array_flip( array( 'address', 'type', 'label', 'text', 'image', 'link' ) ) );
     }
 
     public static function value( Shortcode_Adapter $adapter, array $item, string $op, string $field ) {
@@ -126,15 +283,9 @@ final class Shortcode_Editor {
     }
 
     private function apply( string $content, array $op ) {
-        $name    = isset( $op['op'] ) && is_string( $op['op'] ) ? $op['op'] : '';
-        $address = isset( $op['element'] ) && is_scalar( $op['element'] ) ? trim( (string) $op['element'] ) : '';
-        if ( ! in_array( $name, self::OPS, true ) ) {
-            return sprintf( 'unknown `op` "%s"; one of %s.', $name, implode( ', ', self::OPS ) );
-        }
-        if ( '' === $address ) {
-            return '`element` is required: the element\'s address from wp_get_page_layout, such as "0.1.2".';
-        }
-        $items = $this->adapter->layout_items( $content );
+        $name    = (string) $op['op'];
+        $address = (string) $op['element'];
+        $items   = $this->adapter->layout_items( $content );
         $path  = self::path( $items, $address );
         if ( null === $path ) {
             return sprintf( 'no element "%s" in this layout. Read it again with wp_get_page_layout.', $address );
@@ -149,7 +300,7 @@ final class Shortcode_Editor {
             if ( Shortcode_Tree::TEXT === $holder['tag'] ) {
                 continue;
             }
-            $refusal = $this->adapter->element_refusal( $holder['tag'] ) ?? $this->adapter->element_access_refusal( $holder['tag'] );
+            $refusal = $this->adapter->element_refusal( $holder['tag'] ) ?? $this->adapter->element_access_refusal( $holder['tag'] ) ?? $this->adapter->layout_refusal( $holder, $holder === $item ? 'edit' : 'inside' );
             if ( null !== $refusal ) {
                 $inside = $holder === $item ? '' : sprintf( ' is inside a %s, which', $holder['tag'] );
                 return sprintf( 'element "%s" (%s)%s: %s', $address, $type, $inside, $refusal );
@@ -170,6 +321,12 @@ final class Shortcode_Editor {
         $changes = $this->attribute_changes( $name, $op, $item, $fields );
         if ( is_string( $changes ) ) {
             return $changes;
+        }
+        foreach ( array_keys( $changes ) as $attribute ) {
+            $refusal = $this->adapter->field_refusal( $item, (string) $attribute );
+            if ( null !== $refusal ) {
+                return sprintf( 'element "%s" (%s): %s', $address, $type, $refusal );
+            }
         }
         foreach ( $changes as $stored ) {
             if ( null !== $stored && false !== strpos( $stored, '\\' ) ) {
@@ -197,6 +354,7 @@ final class Shortcode_Editor {
         return array(
             'content' => $next,
             'result'  => $result,
+            'splice'  => array( $item['atts_at'], strlen( $item['atts_raw'] ), strlen( $written ) ),
         );
     }
 
@@ -221,6 +379,7 @@ final class Shortcode_Editor {
         return array(
             'content' => $next,
             'result'  => self::result( $name, $address, Shortcode_Tree::TEXT, self::CONTENT, $own, $stored, $stored !== $own ),
+            'splice'  => array( $at, $length, strlen( $stored ) ),
         );
     }
 
@@ -236,6 +395,10 @@ final class Shortcode_Editor {
         if ( substr( $content, $item['content_at'], strlen( $item['content'] ) ) !== $item['content'] ) {
             return sprintf( 'the content of "%s" runs into the builder\'s own wrapper, so it is not edited here.', $address );
         }
+        $refusal = $this->adapter->field_refusal( $item, self::CONTENT );
+        if ( null !== $refusal ) {
+            return sprintf( 'element "%s" (%s): %s', $address, $item['tag'], $refusal );
+        }
         $value = $this->html_value( $op );
         if ( is_array( $value ) ) {
             return $value['error'];
@@ -249,6 +412,7 @@ final class Shortcode_Editor {
         return array(
             'content' => $next,
             'result'  => self::result( 'set_text', $address, $item['tag'], self::CONTENT, self::value( $this->adapter, $item, 'set_text', self::CONTENT ), self::value( $this->adapter, $after, 'set_text', self::CONTENT ), $stored !== $item['content'] ),
+            'splice'  => array( $item['content_at'], strlen( $item['content'] ), strlen( $stored ) ),
         );
     }
 
@@ -286,7 +450,11 @@ final class Shortcode_Editor {
 
         if ( 'set_text' === $name ) {
             $value = $this->html_value( $op );
-            return is_array( $value ) ? $value['error'] : array( $field => $this->adapter->encode_attribute( $type, $field, $spec, $value ) );
+            if ( is_array( $value ) ) {
+                return $value['error'];
+            }
+            $refusal = $this->adapter->value_refusal( $type, $field, $value );
+            return null !== $refusal ? sprintf( 'field "%s" %s.', $field, $refusal ) : array( $field => $this->adapter->encode_attribute( $type, $field, $spec, $value ) );
         }
         if ( 'set_link' === $name ) {
             if ( ! isset( $op['url'] ) || ! is_string( $op['url'] ) ) {
@@ -305,10 +473,11 @@ final class Shortcode_Editor {
         if ( $id <= 0 ) {
             return 'set_image needs `attachment_id`, the ID of an image in the media library (wp_list_media, or upload one first).';
         }
-        if ( null === ( $this->media )( $id ) ) {
+        $media = ( $this->media )( $id );
+        if ( null === $media ) {
             return sprintf( 'attachment %d is not an image in the media library that this account can use.', $id );
         }
-        return array( $field => (string) $id );
+        return $this->adapter->image_attributes( $type, $field, $spec, $media );
     }
 
     private function field_changes( array $op, array $fields, string $type ) {
@@ -352,7 +521,13 @@ final class Shortcode_Editor {
                 return array( 'error' => 'must be true or false' );
             }
             $default = $spec['default'] ?? '';
-            return $value ? (string) $spec['on_value'] : ( is_scalar( $default ) && '' !== (string) $default ? '' : null );
+            if ( $value ) {
+                return (string) $spec['on_value'];
+            }
+            if ( isset( $spec['off_value'] ) && is_scalar( $spec['off_value'] ) ) {
+                return (string) $spec['off_value'] === (string) $default ? null : (string) $spec['off_value'];
+            }
+            return is_scalar( $default ) && '' !== (string) $default ? '' : null;
         }
         if ( ! is_scalar( $value ) || is_bool( $value ) ) {
             return array( 'error' => 'must be a string or a number' );
@@ -394,7 +569,8 @@ final class Shortcode_Editor {
             }
             $value = $checked;
         }
-        return $this->adapter->encode_attribute( $type, $field, $spec, $value );
+        $refusal = $this->adapter->value_refusal( $type, $field, $value );
+        return null !== $refusal ? array( 'error' => $refusal ) : $this->adapter->encode_attribute( $type, $field, $spec, $value );
     }
 
     private function html_value( array $op ) {

@@ -24,6 +24,8 @@ require_once __DIR__ . '/includes/diagnostics/class-htaccess-auth-rule.php';
 Easy_MCP_AI\Diagnostics\Htaccess_Auth_Rule::remove( Easy_MCP_AI\Diagnostics\Htaccess_Auth_Rule::htaccess_path() );
 require_once __DIR__ . '/includes/diagnostics/class-htaccess-plain-routes.php';
 Easy_MCP_AI\Diagnostics\Htaccess_Plain_Routes::remove( Easy_MCP_AI\Diagnostics\Htaccess_Auth_Rule::htaccess_path() );
+require_once __DIR__ . '/includes/media-upload/class-upload-sessions.php';
+$easy_mcp_ai_upload_sessions = new Easy_MCP_AI\Media_Upload\Upload_Sessions();
 
 $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
     'easy_mcp_ai_db_version',
@@ -41,6 +43,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_enabled_categories',
     'easy_mcp_ai_ip_whitelist',
     'easy_mcp_ai_disabled_tools',
+    'easy_mcp_ai_tool_policy',
     'easy_mcp_ai_enabled_tools',
     'easy_mcp_ai_rest_disabled_namespaces',
     'easy_mcp_ai_force_draft_on_create',
@@ -56,6 +59,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_learnpress_enable_pending',
     'easy_mcp_ai_elementor_enable_pending',
     'easy_mcp_ai_abilities_tick_lock',
+    'easy_mcp_ai_vendor_ability_ticks_settled',
     'easy_mcp_ai_disabled_plugin_tools',
     'easy_mcp_ai_oauth_db_version',
     'easy_mcp_ai_oauth_access_token_ttl',
@@ -89,6 +93,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_external_data_balances',
     'easy_mcp_ai_cache_site_purge_at',
     'easy_mcp_ai_yoast_settings_lock',
+    'easy_mcp_ai_rank_math_settings_lock',
     'easy_mcp_ai_last_tool_call',
     'easy_mcp_ai_change_log_db_version',
     'easy_mcp_ai_tasks_db_version',
@@ -195,6 +200,8 @@ if ( is_multisite() ) {
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_step_up_%', '_transient_timeout_easy_mcp_ai_step_up_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_sr_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall.
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_layout_lock_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall (wp_update_page_layout's per-post lock).
+        delete_post_meta_by_key( '_easy_mcp_ai_copy_of' );
+        $easy_mcp_ai_upload_sessions->purge();
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_easy_mcp_ai_ga_' ) . '%', $wpdb->esc_like( '_transient_timeout_easy_mcp_ai_ga_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_easy_mcp_ai_gsc_' ) . '%', $wpdb->esc_like( '_transient_timeout_easy_mcp_ai_gsc_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_easy_mcp_ai_dfs_balance' ) . '%', $wpdb->esc_like( '_transient_timeout_easy_mcp_ai_dfs_balance' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -242,6 +249,8 @@ if ( is_multisite() ) {
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_easy_mcp_ai_step_up_%', '_transient_timeout_easy_mcp_ai_step_up_%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for transient cleanup on uninstall.
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_sr_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall.
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'easy_mcp_ai_layout_lock_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional direct DB call for option cleanup on uninstall (wp_update_page_layout's per-post lock).
+    delete_post_meta_by_key( '_easy_mcp_ai_copy_of' );
+    $easy_mcp_ai_upload_sessions->purge();
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_easy_mcp_ai_ga_' ) . '%', $wpdb->esc_like( '_transient_timeout_easy_mcp_ai_ga_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_easy_mcp_ai_gsc_' ) . '%', $wpdb->esc_like( '_transient_timeout_easy_mcp_ai_gsc_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( '_transient_easy_mcp_ai_dfs_balance' ) . '%', $wpdb->esc_like( '_transient_timeout_easy_mcp_ai_dfs_balance' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

@@ -19,7 +19,7 @@ class Get_Page_Layout extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Reads the layout of a post, page, template or UX Block built with a page builder (Elementor, WPBakery or Flatsome UX Builder) from the builder\'s own stored data, which post tools do not show. Detects the builder per item. Required: `post_id`. Optional: `element` (an address from a previous read; returns that element with its settings), `depth` (levels to expand, default 4, max 12), `include_settings` (each element\'s stored settings; default false). Returns { post_id, builder, builder_version, version, editable, element_count, elements: [{ address, type, label, text (excerpt), image, link, flags, children_count, children | has_children }] }; `editable` says whether wp_update_page_layout can change the item (`edit_note` says why not), and `version` is what that edit sends. Addresses are Elementor element ids, or dot-joined zero-based paths for shortcode builders. Flag `atomic` marks Elementor V4 elements, which Elementor\'s own abilities edit (see `vendor_route`); `code` marks elements that run HTML or script. For a Gutenberg or classic post `builder` is null and `use` names the tool to read it. Requires edit access to the item.';
+        return 'Reads the layout of a post, page, template, UX Block or Divi Theme Builder layout built with a page builder (Elementor, Breakdance, WPBakery, Flatsome UX Builder, Divi 4 or Divi 5) from the builder\'s own stored data, which post tools do not show. Detects the builder per item. Required: `post_id`. Optional: `element` (an address from a previous read; returns that element with its settings), `depth` (levels to expand, default 4, max 12), `include_settings` (each element\'s stored settings; default false). Returns { post_id, builder, builder_version, version, editable, element_count, elements: [{ address, type, label, text (excerpt), image, link, flags, lists, children_count, children | has_children }] }; `lists` are an Elementor widget\'s lists of items (repeaters such as accordion tabs or icon-list items): [{ list, label, items: [{ item, label }], flags? }], where `item` is the id wp_update_page_layout takes with `list` (flags: `not_stored`, `no_ids`, `hidden`). `editable` says whether wp_update_page_layout can change the item (`edit_note` says why not), and `version` is what that edit sends. Addresses are Elementor or Breakdance element ids, or dot-joined zero-based paths for the other builders. `references` lists elements that render another post (a Flatsome UX Block, a Divi global module from its Divi Library item): edit that post instead. Flag `atomic` marks Elementor V4 elements, which Elementor\'s own abilities edit (see `vendor_route`, which for Breakdance names its own abilities for inserting, moving and removing elements); `code` marks elements that run HTML or script. For a Gutenberg or classic post `builder` is null and `use` names the tool to read it. Requires edit access to the item.';
     }
 
     public function get_category() {
@@ -157,7 +157,7 @@ class Get_Page_Layout extends Base_Tool {
             'address' => $node['address'],
             'type'    => $node['type'],
         );
-        foreach ( array( 'label', 'text', 'image', 'link', 'flags' ) as $key ) {
+        foreach ( array( 'label', 'text', 'image', 'link', 'flags', 'lists' ) as $key ) {
             if ( null !== $node[ $key ] && '' !== $node[ $key ] && array() !== $node[ $key ] ) {
                 $item[ $key ] = $node[ $key ];
             }

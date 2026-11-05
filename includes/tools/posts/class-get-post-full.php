@@ -176,7 +176,7 @@ class Get_Post_Full extends Base_Tool {
         $context = isset( $arguments['context'] ) && '' !== $arguments['context'] ? $arguments['context'] : 'view';
         $this->refuse_unless_one_of( 'context', $context, array( 'view', 'edit' ), $context, 'view or edit' );
 
-        if ( 'edit' === $context && ! current_user_can( 'edit_post', $post_id ) ) {
+        if ( 'edit' === $context && get_post( $post_id ) && ! current_user_can( 'edit_post', $post_id ) ) {
             throw new \RuntimeException( 'You do not have permission to view this post in edit context.' );
         }
         return $context;

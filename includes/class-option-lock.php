@@ -36,6 +36,29 @@ final class Option_Lock {
         return 1 === $won ? $token : '';
     }
 
+    public static function acquire_waiting( string $name, int $ttl, int $wait, string $holder ): string {
+        global $wpdb;
+        $deadline = microtime( true ) + $wait;
+        do {
+            $lock = self::acquire( $name, $ttl );
+            if ( '' !== $lock ) {
+                return $lock;
+            }
+            if ( self::failed() ) {
+                throw new \RuntimeException( sprintf( 'The database refused the lock this call takes before saving (%s), so nothing was changed.', $wpdb->last_error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            usleep( 100000 );
+        } while ( microtime( true ) < $deadline );
+        throw new \RuntimeException( sprintf( 'Another %s call has been saving for more than %d seconds, so nothing was changed. Call again.', $holder, $wait ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
+    public static function lost_cause( string $holder, int $ttl ): string {
+        global $wpdb;
+        return self::failed()
+            ? sprintf( 'The database refused the renewal of this call\'s lock (%s)', $wpdb->last_error )
+            : sprintf( 'Another %s call took this call\'s lock over (possible only after this call held it for %d seconds)', $holder, $ttl );
+    }
+
     private static function failed(): bool {
         global $wpdb;
         return '' !== (string) ( $wpdb->last_error ?? '' );

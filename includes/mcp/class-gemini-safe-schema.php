@@ -99,6 +99,55 @@ class Gemini_Safe_Schema {
 
     const MAX_TOTAL_NODES = 20000;
 
+    private static function shared_member_type( array $members, $declared ) {
+        $kinds = array();
+        foreach ( $members as $member ) {
+            if ( is_bool( $member ) ) {
+                $kinds['boolean'] = true;
+            } elseif ( is_int( $member ) ) {
+                $kinds['integer'] = true;
+            } elseif ( is_float( $member ) ) {
+                $kinds['number'] = true;
+            } else {
+                return null;
+            }
+        }
+        if ( isset( $kinds['boolean'] ) ) {
+            $type = 1 === count( $kinds ) ? 'boolean' : null;
+        } elseif ( isset( $kinds['number'] ) ) {
+            $type = 'number';
+        } elseif ( isset( $kinds['integer'] ) ) {
+            $type = 'integer';
+        } else {
+            return null;
+        }
+        if ( null === $type || null === $declared || $declared === $type ) {
+            return $type;
+        }
+        return 'number' === $declared && 'integer' === $type ? 'number' : null;
+    }
+
+    private static function with_allowed_values( $description, array $members ): string {
+        $values = array_map(
+            static function ( $member ) {
+                return is_bool( $member ) ? ( $member ? 'true' : 'false' ) : (string) $member;
+            },
+            $members
+        );
+        $note   = 'Allowed values: ' . implode( ', ', $values ) . '.';
+        $prefix = is_string( $description ) ? rtrim( $description ) : '';
+        return '' === $prefix ? $note : $prefix . ' ' . $note;
+    }
+
+    private static function is_under_unchecked_combinator( $path ) {
+        foreach ( explode( '.', (string) $path ) as $segment ) {
+            if ( 'not' === $segment || 0 === strpos( $segment, 'oneOf[' ) || 0 === strpos( $segment, 'allOf[' ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static function is_list_array( $value ) {
         if ( ! is_array( $value ) ) {
             return false;
@@ -111,33 +160,37 @@ class Gemini_Safe_Schema {
 
     const MAX_REF_HOPS = 16;
 
-    const GEMINI_REJECTED_KEYWORDS = array(
-        'patternProperties',
-        'multipleOf',
-        'uniqueItems',
-        'exclusiveMinimum',
-        'exclusiveMaximum',
-        'dependentSchemas',
-        'dependentRequired',
-        'if',
-        'then',
-        'else',
-        'contains',
-        'minContains',
-        'maxContains',
-        'propertyNames',
-        'prefixItems',
-        'additionalItems',
-        'unevaluatedProperties',
-        'unevaluatedItems',
-        'readOnly',
-        'writeOnly',
-        'deprecated',
-        'examples',
-        '$comment',
-        '$schema',
-        '$id',
+    const GEMINI_ACCEPTED_KEYWORDS = array(
+        'type',
+        'format',
+        'title',
+        'description',
+        'nullable',
+        'enum',
+        'default',
+        'example',
+        'properties',
+        'required',
+        'minProperties',
+        'maxProperties',
+        'propertyOrdering',
+        'items',
+        'minItems',
+        'maxItems',
+        'minLength',
+        'maxLength',
+        'pattern',
+        'minimum',
+        'maximum',
+        'anyOf',
+        'oneOf',
+        'allOf',
+        'not',
     );
+
+    private const TEXT_KEYWORDS = array( 'description', 'title', 'pattern', 'format' );
+
+    private const SCHEMA_TYPES = array( 'string', 'number', 'integer', 'boolean', 'array', 'object', 'null' );
 
     const UNCOERCIBLE_PATH = "\0uncoercible";
 
@@ -181,11 +234,11 @@ class Gemini_Safe_Schema {
                 foreach ( $type as $candidate ) {
                     if ( 'null' === $candidate ) {
                         $safe['nullable'] = true;
-                    } elseif ( is_string( $candidate ) && ! isset( $safe['type'] ) ) {
+                    } elseif ( is_string( $candidate ) && ! isset( $safe['type'] ) && in_array( strtolower( $candidate ), self::SCHEMA_TYPES, true ) ) {
                         $safe['type'] = $candidate;
                     }
                 }
-            } elseif ( is_string( $type ) ) {
+            } elseif ( is_string( $type ) && in_array( strtolower( $type ), self::SCHEMA_TYPES, true ) ) {
                 $safe['type'] = $type;
             }
         }
@@ -277,9 +330,17 @@ class Gemini_Safe_Schema {
                 $node['nullable'] = true;
                 $map[ $path ][]   = array( 'kind' => 'nullable_union' );
             } else {
-                $node['type'] = 'string';
-                if ( ! in_array( 'string', $types, true ) ) {
-                    $map[ $path ][] = array( 'kind' => 'string_union', 'original_types' => $types );
+                $distinct = array_values( array_unique( $types ) );
+                if ( 1 === count( $distinct ) && in_array( $distinct[0], self::SCHEMA_TYPES, true ) ) {
+                    $node['type'] = $distinct[0];
+                    if ( 'string' !== $distinct[0] && ! self::is_uncoercible_path( $path ) ) {
+                        $map[ $path ][] = array( 'kind' => 'string_union', 'original_types' => $types );
+                    }
+                } else {
+                    $node['type'] = 'string';
+                    if ( ! in_array( 'string', $types, true ) ) {
+                        $map[ $path ][] = array( 'kind' => 'string_union', 'original_types' => $types );
+                    }
                 }
             }
         }
@@ -299,6 +360,16 @@ class Gemini_Safe_Schema {
             } elseif ( isset( $node['enum'] ) ) {
                 unset( $node['enum'] );
             }
+        }
+
+        $own_type = null;
+        if ( isset( $node['enum'] ) && is_array( $node['enum'] ) && self::is_uncoercible_path( $path ) && ! in_array( 'not', explode( '.', $path ), true ) ) {
+            $own_type = self::shared_member_type( array_values( $node['enum'] ), $node['type'] ?? null );
+        }
+        if ( null !== $own_type ) {
+            $node['description'] = self::with_allowed_values( $node['description'] ?? null, array_values( $node['enum'] ) );
+            $node['type']        = $own_type;
+            unset( $node['enum'] );
         }
 
         if ( isset( $node['enum'] ) && is_array( $node['enum'] ) ) {
@@ -324,6 +395,29 @@ class Gemini_Safe_Schema {
                 if ( isset( $node['type'] ) && in_array( $node['type'], array( 'integer', 'number', 'boolean' ), true ) ) {
                     $node['type'] = 'string';
                 }
+            }
+        }
+
+        if ( isset( $node['type'] ) && ! ( is_string( $node['type'] ) && in_array( strtolower( $node['type'] ), self::SCHEMA_TYPES, true ) ) ) {
+            unset( $node['type'] );
+        }
+
+        if ( ! self::is_under_unchecked_combinator( $path ) ) {
+            if ( ! isset( $node['type'] ) ) {
+                $has_properties = array_key_exists( 'properties', $node );
+                $has_items      = array_key_exists( 'items', $node );
+                if ( $has_properties && ! $has_items ) {
+                    $node['type'] = 'object';
+                } elseif ( $has_items && ! $has_properties ) {
+                    $node['type'] = 'array';
+                }
+            }
+            $final_type = isset( $node['type'] ) ? strtolower( $node['type'] ) : null;
+            if ( 'object' !== $final_type ) {
+                unset( $node['properties'], $node['required'] );
+            }
+            if ( 'array' !== $final_type ) {
+                unset( $node['items'] );
             }
         }
 
@@ -372,6 +466,18 @@ class Gemini_Safe_Schema {
                     unset( $node['required'] );
                 } else {
                     $node['required'] = $names;
+                }
+            }
+        }
+
+        if ( isset( $node['required'] ) && ! self::is_under_unchecked_combinator( $path ) ) {
+            $defined = isset( $node['properties'] ) ? array_map( 'strval', array_keys( (array) $node['properties'] ) ) : array();
+            $kept    = array_values( array_intersect( $node['required'], $defined ) );
+            if ( $kept !== $node['required'] ) {
+                if ( array() === $kept ) {
+                    unset( $node['required'] );
+                } else {
+                    $node['required'] = $kept;
                 }
             }
         }
@@ -431,8 +537,11 @@ class Gemini_Safe_Schema {
             }
         }
 
-        foreach ( self::GEMINI_REJECTED_KEYWORDS as $rejected ) {
-            unset( $node[ $rejected ] );
+        foreach ( array_keys( $node ) as $keyword ) {
+            if ( ! in_array( $keyword, self::GEMINI_ACCEPTED_KEYWORDS, true )
+                || ( in_array( $keyword, self::TEXT_KEYWORDS, true ) && ! is_string( $node[ $keyword ] ) ) ) {
+                unset( $node[ $keyword ] );
+            }
         }
 
         if ( array() === $node ) {

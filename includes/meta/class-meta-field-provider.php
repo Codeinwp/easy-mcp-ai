@@ -40,6 +40,9 @@ abstract class Meta_Field_Provider {
         return '';
     }
 
+    public function after_write( $post_id, array $keys ) {
+    }
+
     public function get_post_types() {
         $types = get_post_types(
             array(

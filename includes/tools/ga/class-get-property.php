@@ -13,7 +13,7 @@ class Get_Property extends Base_Tool {
     public function get_name() { return 'wp_ga_get_property'; }
 
     public function get_description() {
-        return 'Gets full details for a Google Analytics 4 property — display name, timezone, currency code, industry category, service level, create/update time, and parent account. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Gets full details for a Google Analytics 4 property — display name, timezone, currency code, industry category, service level, create/update time, and parent account. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

@@ -90,15 +90,19 @@ class Update_Site_Settings extends Base_Tool {
         );
     }
 
-    public function execute( array $arguments ) {
-        $settable = array_keys( $this->get_input_schema()['properties'] );
-        $unknown  = array_diff( array_keys( $arguments ), $settable );
+    public function refuse_undeclared_arguments( array $arguments ): void {
+        $unknown = $this->undeclared_arguments( $arguments );
         if ( $unknown ) {
             throw new Detailed_Tool_Error(
                 self::unsupported_message( $unknown ), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                'Settable here: ' . implode( ', ', $settable ) . '. Admin email, permalinks and site URL are not; change them in wp-admin > Settings.' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                'Settable here: ' . implode( ', ', array_keys( $this->get_input_schema()['properties'] ) ) . '. Admin email, permalinks and site URL are not; change them in wp-admin > Settings.' // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
+    }
+
+    public function execute( array $arguments ) {
+        $this->refuse_undeclared_arguments( $arguments );
+        $settable = array_keys( $this->get_input_schema()['properties'] );
 
         $params = array_merge( self::settings_params( $arguments ), $this->front_page_params( $arguments ) );
         if ( empty( $params ) ) {

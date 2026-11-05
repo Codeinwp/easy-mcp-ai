@@ -52,7 +52,7 @@ class Update_Tag extends Base_Tool {
                 ),
                 'description' => array(
                     'type'        => 'string',
-                    'description' => 'The new description for the tag.',
+                    'description' => 'The new description for the tag. WordPress keeps the HTML it allows in a term description, such as links and bold text.',
                 ),
             ),
             'required'   => array( 'tag_id' ),
@@ -74,7 +74,7 @@ class Update_Tag extends Base_Tool {
         }
 
         if ( isset( $arguments['description'] ) && '' !== $arguments['description'] ) {
-            $params['description'] = sanitize_text_field( $arguments['description'] );
+            $params['description'] = self::markup_arg( $arguments, 'description' );
         }
 
         $data = $this->rest_request( 'POST', '/wp/v2/tags/' . $tag_id, $params );

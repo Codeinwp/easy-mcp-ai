@@ -16,7 +16,7 @@ class Upload_Media_From_Url extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Downloads a file from a URL and imports it into the WordPress media library. Supply exactly one source: `url` (a public HTTPS URL — HTTPS only by default, local/private IPs blocked via DNS-resolved SSRF check; site owners can allow http via the easy_mcp_ai_allow_http_media_url filter) or `file` (a client file handoff — a generated or user-attached file the client references as an object with download_url and file_id, which the client fills in). Local paths and bare file IDs cannot be fetched. Optional: `filename` (override; for a file handoff the resolved name must carry an allowed extension such as image.png), `title`, `alt_text`, `caption`, `description` (the attachment\'s Description field, stored as post_content), `slug` (the attachment\'s URL slug; WordPress adds a suffix when it is taken), `post_id` (attach to a parent post), `featured_image` (true, with `post_id`: also make the imported image that post\'s featured image; needs edit rights on the post, a post type with featured images, and an image file — otherwise nothing is imported). Size limit: site `wp_max_upload_size()`. Returns { id, source_url, mime_type, title, alt_text, caption, file_size }, the text fields as stored, plus `slug` (as stored) when `slug` was sent and `featured_image` (true when it was set) when that was sent; use id as featured_media or source_url in post content. Avoids the ~33% base64 overhead of wp_upload_media.';
+        return 'Downloads a file from a URL and imports it into the WordPress media library. Supply exactly one source: `url` (a public HTTPS URL — HTTPS only by default, local/private IPs blocked via DNS-resolved SSRF check; site owners can allow http via the easy_mcp_ai_allow_http_media_url filter) or `file` (a client file handoff — a generated or user-attached file the client references as an object with download_url and file_id, which the client fills in). Local paths and bare file IDs cannot be fetched: for a file on your side, use wp_upload_media (base64, or its one-time upload link). Optional: `filename` (override; for a file handoff the resolved name must carry an allowed extension such as image.png), `title`, `alt_text`, `caption`, `description` (the attachment\'s Description field, stored as post_content), `slug` (the attachment\'s URL slug; WordPress adds a suffix when it is taken), `post_id` (attach to a parent post), `featured_image` (true, with `post_id`: also make the imported image that post\'s featured image; needs edit rights on the post, a post type with featured images, and an image file — otherwise nothing is imported). Size limit: site `wp_max_upload_size()`. Returns { id, source_url, mime_type, title, alt_text, caption, file_size }, the text fields as stored, plus `slug` (as stored) when `slug` was sent and `featured_image` (true when it was set) when that was sent; use id as featured_media or source_url in post content. Avoids the ~33% base64 overhead of wp_upload_media.';
     }
 
     public function get_category() {
@@ -69,7 +69,7 @@ class Upload_Media_From_Url extends Base_Tool {
                 ),
                 'caption'  => array(
                     'type'        => 'string',
-                    'description' => 'Optional caption (stored as post_excerpt).',
+                    'description' => 'Optional caption (stored as post_excerpt). HTML is kept as far as WordPress allows it for your account.',
                 ),
                 'post_id'        => array(
                     'type'        => 'integer',
@@ -104,7 +104,7 @@ class Upload_Media_From_Url extends Base_Tool {
     public function execute( array $arguments ) {
         $source = $this->resolve_source( $arguments );
 
-        self::refuse_non_text_description( $arguments );
+        self::refuse_non_text_fields( $arguments );
         $slug     = $this->parse_slug( $arguments );
         $featured = $this->featured_image_target( $arguments );
 
@@ -191,9 +191,11 @@ class Upload_Media_From_Url extends Base_Tool {
         );
     }
 
-    private static function refuse_non_text_description( array $arguments ): void {
-        if ( array_key_exists( 'description', $arguments ) && null !== $arguments['description'] && ! is_scalar( $arguments['description'] ) ) {
-            throw new \InvalidArgumentException( 'description must be text. Nothing was imported.' );
+    private static function refuse_non_text_fields( array $arguments ): void {
+        foreach ( array( 'caption', 'description' ) as $field ) {
+            if ( array_key_exists( $field, $arguments ) && null !== $arguments[ $field ] && ! is_scalar( $arguments[ $field ] ) ) {
+                throw new \InvalidArgumentException( sprintf( '%s must be text. Nothing was imported.', $field ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
         }
     }
 
@@ -334,7 +336,7 @@ class Upload_Media_From_Url extends Base_Tool {
             $post_update['post_title'] = sanitize_text_field( (string) $arguments['title'] );
         }
         if ( array_key_exists( 'caption', $arguments ) ) {
-            $post_update['post_excerpt'] = sanitize_text_field( (string) $arguments['caption'] );
+            $post_update['post_excerpt'] = wp_slash( (string) $arguments['caption'] );
         }
         $post_update = self::add_post_fields( $post_update, $arguments, $slug );
         if ( count( $post_update ) > 1 ) {
@@ -406,11 +408,14 @@ class Upload_Media_From_Url extends Base_Tool {
 
     private function validate_file_reference( $file ) {
         if ( ! is_array( $file ) ) {
-            throw new \InvalidArgumentException( 'file must be a client file object carrying download_url and file_id; local paths and bare file IDs cannot be fetched.' );
+            throw Local_Path::refusal( 'file must be a client file object carrying download_url and file_id; local paths and bare file IDs cannot be fetched.' );
+        }
+        if ( ! isset( $file['download_url'] ) || ( is_string( $file['download_url'] ) && '' === trim( $file['download_url'] ) ) ) {
+            throw Local_Path::refusal( 'Your client did not fill in the file handoff (file.download_url is empty); only clients that support file handoffs do. Nothing was imported.' );
         }
         foreach ( array( 'download_url', 'file_id' ) as $key ) {
             if ( ! isset( $file[ $key ] ) || ! is_string( $file[ $key ] ) || '' === trim( $file[ $key ] ) ) {
-                throw new \InvalidArgumentException( 'file.download_url and file.file_id must be non-empty strings supplied by the client.' );
+                throw Local_Path::refusal( sprintf( 'file.%s must be a non-empty string, so your client did not fill in this file handoff. If you have a public address, send it as url instead. Nothing was imported.', $key ) );
             }
         }
         foreach ( array( 'file_name', 'mime_type' ) as $key ) {
@@ -423,9 +428,15 @@ class Upload_Media_From_Url extends Base_Tool {
     }
 
     private function validate_remote_url( $url ) {
+        if ( Local_Path::looks_like( $url ) ) {
+            throw Local_Path::refusal( 'That is a path on your side (a local file, file:// or sandbox: path), and this site cannot read your files, so nothing was imported.' );
+        }
         $url    = trim( $url );
         $parsed = wp_parse_url( $url );
 
+        if ( is_array( $parsed ) && '' !== $url && ! isset( $parsed['scheme'] ) && ! isset( $parsed['host'] ) ) {
+            throw Local_Path::refusal( 'That has no https://, so it is not a web address. If it names a file on your side, this site cannot read your files. Nothing was imported.' );
+        }
         if ( ! $parsed || empty( $parsed['host'] ) ) {
             throw new \InvalidArgumentException( 'Invalid URL.' );
         }

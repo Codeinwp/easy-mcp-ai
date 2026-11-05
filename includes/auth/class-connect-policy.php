@@ -91,7 +91,7 @@ final class Connect_Policy {
         } ) );
     }
 
-    private static function site_roles(): array {
+    public static function site_roles(): array {
         $registry = \wp_roles();
         $roles    = isset( $registry->roles ) && is_array( $registry->roles ) ? $registry->roles : array();
         $out      = array();

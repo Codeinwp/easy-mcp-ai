@@ -246,7 +246,7 @@ class App_Page {
         echo '<div id="' . \esc_attr( self::ROOT_ID ) . '" data-page="' . \esc_attr( $key ) . '">' . self::skeleton_html( $key ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup, no input.
     }
 
-    const FRAMED_PAGES = array( 'dashboard', 'connections', 'tools', 'settings' );
+    const ASIDE_PAGES = array( 'dashboard', 'connections', 'settings' );
 
     public static function skeleton_html( $key ) {
         if ( 'setup' === $key ) {
@@ -255,7 +255,7 @@ class App_Page {
         $bar  = '<span class="easy-mcp-ai-sk__bone easy-mcp-ai-sk__bone--line"></span>';
         $card = '<div class="easy-mcp-ai-sk__card">' . str_replace( '--line', '--line easy-mcp-ai-sk__bone--short', $bar ) . $bar . str_replace( '--line', '--line easy-mcp-ai-sk__bone--mid', $bar ) . '</div>';
         $main = '<div class="easy-mcp-ai-sk__col">' . $card . $card . '</div>';
-        $body = in_array( $key, self::FRAMED_PAGES, true )
+        $body = in_array( $key, self::ASIDE_PAGES, true )
             ? '<div class="easy-mcp-ai-sk__frame"><span class="easy-mcp-ai-sk__bone easy-mcp-ai-sk__bone--title"></span>' . $main . '<div class="easy-mcp-ai-sk__col easy-mcp-ai-sk__aside">' . $card . $card . '</div></div>'
             : '<div class="easy-mcp-ai-sk__frame easy-mcp-ai-sk__frame--single"><span class="easy-mcp-ai-sk__bone easy-mcp-ai-sk__bone--title"></span>' . $main . '</div>';
         return '<div class="easy-mcp-ai-sk" aria-busy="true" data-testid="app-skeleton">'
@@ -387,6 +387,7 @@ class App_Page {
             'dateFormat'        => self::site_date_format(),
             'brandName'         => \__( 'Easy MCP AI', 'easy-mcp-ai' ),
             'whiteLabel'        => \Easy_MCP_AI\Config::is_white_labelled(),
+            'asidePages'        => self::ASIDE_PAGES,
         );
     }
 

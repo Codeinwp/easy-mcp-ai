@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\CPT;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Tool_Hint;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +16,7 @@ class Get_CPT_Item extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Gets a single custom post type (CPT) item by REST base + item ID. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug — `wp_get_post_types` lists both) and `item_id`. Returns a fixed set of fields: { id, title, content, excerpt, status, date, modified, slug, link }. It does NOT include custom `register_rest_field` extensions (e.g. ACF fields) — those are silently discarded. For built-in post types use `wp_get_post` / `wp_get_page` instead — those have richer schemas. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces edit-level access on the underlying REST request (some CPTs require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error on specific CPTs even though the tool itself is visible.';
+        return 'Gets a single custom post type (CPT) item by REST base + item ID, also of a type hidden from the REST API but public with an admin screen. Required: `rest_base` (the CPT\'s rest_base, or its post_type slug — `wp_get_post_types` lists both; a hidden type by its slug) and `item_id`. Returns a fixed set of fields: { id, title, content, excerpt, status, date, modified, slug, link }. It does NOT include custom `register_rest_field` extensions (e.g. ACF fields) — those are silently discarded. For built-in post types use `wp_get_post` / `wp_get_page` instead — those have richer schemas. This tool is listed as `read` for all callers regardless of the target CPT, but WordPress enforces edit-level access on the underlying REST request (some CPTs require edit_posts, others a custom capability like WooCommerce\'s edit_products) — a low-privilege caller may still see a permission error on specific CPTs even though the tool itself is visible.';
     }
 
     public function get_category() {
@@ -53,6 +54,15 @@ class Get_CPT_Item extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
+        return Hidden_Post_Types::run_for(
+            $arguments['rest_base'] ?? null,
+            function () use ( $arguments ): array {
+                return $this->read( $arguments );
+            }
+        );
+    }
+
+    private function read( array $arguments ): array {
         $this->validate_required( $arguments, array( 'rest_base', 'item_id' ) );
 
         $rest_base = $this->resolve_post_type_rest_base( $arguments['rest_base'], 'rest_base' );

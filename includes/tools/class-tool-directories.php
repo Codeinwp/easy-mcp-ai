@@ -30,6 +30,7 @@ final class Tool_Directories {
         'the-events-calendar' => 'events-calendar',
         'redirection'         => 'redirection',
         'site-kit'            => 'site-kit',
+        'divi'                => 'divi',
         'contact-form-7'      => 'contact-form-7',
         'buddypress'          => 'buddypress',
         'yoast-seo'           => 'seo/yoast',

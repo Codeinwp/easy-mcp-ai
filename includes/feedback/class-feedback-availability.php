@@ -14,12 +14,15 @@ class Feedback_Availability {
 
     const OFF           = 'off';
     const NO_ACCESS     = 'no_access';
+    const BLOCKED       = 'blocked';
     const PATTERN       = 'pattern';
     const INTEGRATION   = 'integration_off';
     const NOT_CONNECTED = 'not_connected';
     const ABILITY       = 'ability_off';
 
     const NOT_QUEUED = 'Not queued: this site already has what the report asks for, but it is not switched on for you, so nothing was stored or sent.';
+
+    const BLOCKED_ADVICE = 'Tell the user why, as said here, instead of reporting it to the plugin\'s authors.';
 
     const LIST_TOOL_POINTER = 'wp_list_disabled_tools lists everything else that is switched off on this site.';
 
@@ -33,6 +36,7 @@ class Feedback_Availability {
         'the-events-calendar' => array( 'events calendar', 'tribe events' ),
         'redirection'         => array( 'redirection plugin', 'redirection by john godley' ),
         'site-kit'            => array( 'site kit', 'sitekit' ),
+        'divi'                => array( 'divi' ),
         'contact-form-7'      => array( 'contact form 7', 'cf7' ),
         'buddypress'          => array( 'buddypress' ),
         'yoast-seo'           => array( 'yoast' ),
@@ -93,13 +97,30 @@ class Feedback_Availability {
                     'where' => 'off' === $status['status'] ? Tool_Status::in_admin( $status['where'] ) : self::IN_CONFIGURATION,
                 )
                 : array(
-                    'case'  => 'pattern' === $status['status'] ? self::PATTERN : self::NO_ACCESS,
+                    'case'  => self::access_case( $status['status'] ),
                     'name'  => $name,
                     'label' => $name,
                     'why'   => rtrim( Tool_Status::predicate( $status ), '.' ),
                 );
         }
         return $found;
+    }
+
+    public static function out_of_reach( string $query, ?object $registry, callable $status_of, string $self ): array {
+        $found = array();
+        foreach ( self::tool_matches( strtolower( $query ), self::words( $query ), $registry, $status_of, $self ) as $match ) {
+            if ( isset( $match['why'] ) && in_array( $match['case'], array( self::NO_ACCESS, self::BLOCKED ), true ) ) {
+                $found[] = array( 'case' => $match['case'], 'name' => $match['name'], 'label' => $match['label'], 'why' => $match['why'] );
+            }
+        }
+        return $found;
+    }
+
+    private static function access_case( string $status ): string {
+        if ( 'pattern' === $status ) {
+            return self::PATTERN;
+        }
+        return 'blocked' === $status ? self::BLOCKED : self::NO_ACCESS;
     }
 
     private static function named_matches( string $case, array $entries, array $phrases, string $text ): array {
@@ -128,13 +149,15 @@ class Feedback_Availability {
     public static function refusal( array $found, bool $list_tool = false ): Detailed_Tool_Error {
         $items        = array();
         $switched_off = false;
+        $blocked = array() !== $found && array( self::BLOCKED ) === array_values( array_unique( array_column( $found, 'case' ) ) );
         foreach ( array_slice( $found, 0, 5 ) as $match ) {
-            $switched_off = $switched_off || self::NO_ACCESS !== $match['case'];
+            $switched_off = $switched_off || ! in_array( $match['case'], array( self::NO_ACCESS, self::BLOCKED ), true );
             switch ( $match['case'] ) {
                 case self::OFF:
                     $items[] = sprintf( '%s exists but is switched off (%s)', $match['label'], isset( $match['where'] ) ? $match['where'] : 'Tools screen' );
                     break;
                 case self::NO_ACCESS:
+                case self::BLOCKED:
                 case self::PATTERN:
                     $items[] = isset( $match['why'] )
                         ? $match['label'] . ' ' . $match['why']
@@ -144,7 +167,7 @@ class Feedback_Availability {
                     $items[] = sprintf( 'the %s integration is available but switched off (%s)', $match['label'], isset( $match['where'] ) ? $match['where'] : 'Tools screen, Abilities' );
                     break;
                 case self::NOT_CONNECTED:
-                    $items[] = sprintf( '%s is available but not connected (%s)', $match['label'], isset( $match['where'] ) ? $match['where'] : 'Tools screen, External data' );
+                    $items[] = sprintf( '%s is available but not connected (%s)', $match['label'], isset( $match['where'] ) ? $match['where'] : 'Tools screen, Connections' );
                     break;
                 default:
                     $items[] = sprintf( 'the ability %s is installed but not enabled (%s)', $match['label'], isset( $match['where'] ) ? $match['where'] : 'Tools screen, Abilities' );
@@ -153,7 +176,7 @@ class Feedback_Availability {
         return new Detailed_Tool_Error(
             self::NOT_QUEUED,
             implode( '; ', $items ) . '. '
-            . 'Tell the user to ask a site administrator to switch it on or grant access, instead of reporting it to the plugin\'s authors.'
+            . ( $blocked ? self::BLOCKED_ADVICE : 'Tell the user to ask a site administrator to switch it on or grant access, instead of reporting it to the plugin\'s authors.' )
             . ( $list_tool && $switched_off ? ' ' . self::LIST_TOOL_POINTER : '' )
         );
     }

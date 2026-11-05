@@ -9,12 +9,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Compat_Registry {
 
     const SHIMS = array(
-        'buddypress-loggedin-user' => 'Easy_MCP_AI\\Compat\\Shims\\Buddypress_Loggedin_User',
-        'tec-event-update-fill'    => 'Easy_MCP_AI\\Compat\\Shims\\Tec_Event_Update_Fill',
-        'tec-no-duplicate-reuse'   => 'Easy_MCP_AI\\Compat\\Shims\\Tec_No_Duplicate_Reuse',
-        'learnpress-mcp-auth'      => 'Easy_MCP_AI\\Compat\\Shims\\Learnpress_Mcp_Auth',
-        'astra-customizer-loader'  => 'Easy_MCP_AI\\Compat\\Shims\\Astra_Customizer_Loader',
-        'sitekit-user-binding'     => 'Easy_MCP_AI\\Compat\\Shims\\Sitekit_User_Binding',
+        'buddypress-loggedin-user'    => 'Easy_MCP_AI\\Compat\\Shims\\Buddypress_Loggedin_User',
+        'tec-event-update-fill'       => 'Easy_MCP_AI\\Compat\\Shims\\Tec_Event_Update_Fill',
+        'tec-no-duplicate-reuse'      => 'Easy_MCP_AI\\Compat\\Shims\\Tec_No_Duplicate_Reuse',
+        'learnpress-mcp-auth'         => 'Easy_MCP_AI\\Compat\\Shims\\Learnpress_Mcp_Auth',
+        'astra-customizer-loader'     => 'Easy_MCP_AI\\Compat\\Shims\\Astra_Customizer_Loader',
+        'sitekit-user-binding'        => 'Easy_MCP_AI\\Compat\\Shims\\Sitekit_User_Binding',
+        'elementor-frontend-controls' => 'Easy_MCP_AI\\Compat\\Shims\\Elementor_Frontend_Controls',
     );
 
     private static $shims = null;

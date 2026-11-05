@@ -110,11 +110,11 @@ class Semrush_Client {
 		}
 		$enc = \get_option( self::OPTION_API_KEY, '' );
 		if ( empty( $enc ) ) {
-			throw new \RuntimeException( 'Semrush API key not configured. Go to Easy MCP AI → Tools → External data.' );
+			throw new \RuntimeException( 'Semrush API key not configured. Go to Easy MCP AI → Tools → Connections.' );
 		}
 		$plain = self::decrypt( $enc );
 		if ( false === $plain || '' === $plain ) {
-			throw new \RuntimeException( 'Failed to decrypt Semrush API key. Re-save credentials in Easy MCP AI → Tools → External data.' );
+			throw new \RuntimeException( 'Failed to decrypt Semrush API key. Re-save credentials in Easy MCP AI → Tools → Connections.' );
 		}
 		return $plain;
 	}

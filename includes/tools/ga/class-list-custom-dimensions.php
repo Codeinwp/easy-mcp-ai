@@ -13,7 +13,7 @@ class List_Custom_Dimensions extends Base_Tool {
     public function get_name() { return 'wp_ga_list_custom_dimensions'; }
 
     public function get_description() {
-        return 'Lists custom dimensions configured on a GA4 property. Call this before running a report that groups by a custom dimension so you know the exact parameterName and scope. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Lists custom dimensions configured on a GA4 property. Call this before running a report that groups by a custom dimension so you know the exact parameterName and scope. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

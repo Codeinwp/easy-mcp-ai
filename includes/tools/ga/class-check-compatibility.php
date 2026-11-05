@@ -13,7 +13,7 @@ class Check_Compatibility extends Base_Tool {
     public function get_name() { return 'wp_ga_check_compatibility'; }
 
     public function get_description() {
-        return 'Lists which dimensions and metrics can be safely combined in a GA4 report request. GA4 has compatibility constraints (e.g. cost-data dimensions can only combine with cost-data metrics) — call this tool to validate a planned query before running it. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Lists which dimensions and metrics can be safely combined in a GA4 report request. GA4 has compatibility constraints (e.g. cost-data dimensions can only combine with cost-data metrics) — call this tool to validate a planned query before running it. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'ga'; }

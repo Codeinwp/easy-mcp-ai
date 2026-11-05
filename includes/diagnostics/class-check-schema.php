@@ -310,9 +310,8 @@ class Check_Schema {
         if ( null === $wpdb ) {
             return __( 'unknown database', 'easy-mcp-ai' );
         }
-        $server = method_exists( $wpdb, 'db_server_info' ) ? (string) $wpdb->db_server_info() : '';
-        $engine = ( '' !== $server && false !== stripos( $server, 'mariadb' ) ) ? 'MariaDB' : 'MySQL';
-        return trim( $engine . ' ' . (string) $wpdb->db_version() );
+        $described = \Easy_MCP_AI\Database_Engine::describe( $wpdb );
+        return '' !== $described ? $described : __( 'unknown database', 'easy-mcp-ai' );
     }
 
     private static function schema_versions() {

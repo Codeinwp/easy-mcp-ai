@@ -36,9 +36,12 @@ class Consent_Screen {
         $open_request = array() === $scope_list;
         $ceiling      = $open_request ? array( 'mcp' ) : $scope_list;
         $ceiling_all  = in_array( 'mcp', $ceiling, true );
+        $role_limit   = isset( $options['role_limit'] ) && is_array( $options['role_limit'] ) ? $options['role_limit'] : array();
+        $role_choices = self::role_choices( $user, $role_limit );
         $level_scopes = array(
             'read' => $ceiling_all ? Scope_Map::get_read_scopes() : array_values( array_intersect( Scope_Map::get_read_scopes(), $ceiling ) ),
             'full' => $ceiling_all ? array( 'mcp' ) : array(),
+            'role' => array() === $role_choices ? array() : ( $ceiling_all ? array( 'mcp' ) : $ceiling ),
         );
         $default_level  = $ceiling_all && ! $open_request ? 'full' : 'custom';
         $checked_scopes = $open_request ? array_values( array_filter( explode( ' ', $default_scope ) ) ) : $ceiling;
@@ -47,8 +50,9 @@ class Consent_Screen {
         $privileged_rows = array();
         foreach ( \Easy_MCP_AI\Privileged\Privileged_Groups::enabled_groups() as $group ) {
             $privileged_rows[] = array(
-                'scope' => \Easy_MCP_AI\Privileged\Privileged_Groups::scope_for_group( $group ),
-                'label' => \Easy_MCP_AI\Privileged\Privileged_Groups::group_label( $group ),
+                'scope'     => \Easy_MCP_AI\Privileged\Privileged_Groups::scope_for_group( $group ),
+                'label'     => \Easy_MCP_AI\Privileged\Privileged_Groups::group_label( $group ),
+                'read_only' => \Easy_MCP_AI\Privileged\Privileged_Groups::is_read_only( $group ),
             );
         }
 
@@ -68,7 +72,20 @@ class Consent_Screen {
         }
         $carried_rows = self::carried_rows( $carried_scopes, $categories );
 
-        $step_up_notice = array() === $new_scopes ? '' : self::step_up_notice( $client_name, $new_scopes, $categories, $privileged_rows );
+        $role_selected = '';
+        if ( array() !== $role_choices ) {
+            $role_selected = (string) $role_choices[0]['value'];
+            if ( array() !== $role_limit ) {
+                $default_level  = 'role';
+                $role_selected  = (string) reset( $role_limit );
+                $tick_all       = $ceiling_all;
+                $checked_scopes = $ceiling_all ? $checked_scopes : $ceiling;
+            }
+        }
+
+        $registry = Scope_Availability::registry();
+
+        $step_up_notice = array() === $new_scopes ? '' : self::step_up_notice( $client_name, $new_scopes, $categories, $privileged_rows, 'role' === $default_level );
 
         $template_vars = array(
             'client_name'       => $client_name,
@@ -100,6 +117,12 @@ class Consent_Screen {
             'new_scopes'        => $new_scopes,
             'step_up_notice'    => $step_up_notice,
             'carried_rows'      => $carried_rows,
+            'availability'      => Scope_Availability::for_current_user( $categories, $registry ),
+            'role_choices'      => $role_choices,
+            'role_selected'     => $role_selected,
+            'role_refused'      => Scope_Availability::refused_for_roles( $categories, array_column( $role_choices, 'value' ), $registry ),
+            'switched_off'      => self::switched_off( $registry ),
+            'higher_role'       => Scope_Availability::refused_titles( $categories, $registry ),
         );
 
         // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
@@ -108,6 +131,57 @@ class Consent_Screen {
         ob_start();
         include __DIR__ . '/views/consent.php';
         return ob_get_clean();
+    }
+
+    private static function role_choices( $user, array $current ): array {
+        if ( ! $user instanceof \WP_User || ! Role_Limit::column_ready() ) {
+            return array();
+        }
+        $offered = Role_Limit::offered( $user );
+        $labels  = array_column( \Easy_MCP_AI\Auth\Connect_Policy::role_choices(), 'label', 'value' );
+        $rows    = array();
+        foreach ( $labels as $value => $label ) {
+            if ( in_array( $value, $offered, true ) && ( in_array( $value, $current, true ) || ! self::is_whole_account( $user, (string) $value ) ) ) {
+                $rows[] = array( 'value' => (string) $value, 'label' => $label );
+            }
+        }
+        foreach ( array_diff( $current, $offered ) as $value ) {
+            $rows[] = array(
+                'value' => (string) $value,
+                /* translators: %s: a role name, or its slug when the role no longer exists. */
+                'label' => sprintf( __( '%s (no longer available to you)', 'easy-mcp-ai' ), isset( $labels[ $value ] ) ? $labels[ $value ] : $value ),
+            );
+        }
+        return $rows;
+    }
+
+    private static function is_whole_account( \WP_User $user, string $role ): bool {
+        if ( array( $role ) !== array_values( (array) $user->roles ) ) {
+            return false;
+        }
+        if ( function_exists( 'is_multisite' ) && \is_multisite() && \is_super_admin( $user->ID ) ) {
+            return false;
+        }
+        foreach ( isset( $user->caps ) && is_array( $user->caps ) ? $user->caps : array() as $cap => $grant ) {
+            if ( $grant && $role !== $cap ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static function switched_off( $registry ): array {
+        try {
+            $entries = array_merge(
+                \Easy_MCP_AI\Tools\Switched_Off_Inventory::integration_tools(),
+                \Easy_MCP_AI\Tools\Switched_Off_Inventory::tools( $registry )
+            );
+        } catch ( \Throwable $e ) {
+            return array();
+        }
+        $titles = array_map( 'strval', array_column( $entries, 'label' ) );
+        sort( $titles, SORT_NATURAL | SORT_FLAG_CASE );
+        return $titles;
     }
 
     private static function carried_scopes( array $held, array $categories, array $privileged_rows, array $ceiling, $ceiling_all ) {
@@ -125,8 +199,9 @@ class Consent_Screen {
             $row = array(
                 'label' => isset( $category['label'] ) ? (string) $category['label'] : '',
                 'flag'  => __( 'Not active now', 'easy-mcp-ai' ),
-                'read'  => '',
-                'write' => '',
+                'read'          => '',
+                'write'         => '',
+                'read_included' => false,
             );
             foreach ( array( 'read', 'write' ) as $kind ) {
                 $scope = isset( $category[ $kind . '_scope' ] ) ? (string) $category[ $kind . '_scope' ] : '';
@@ -140,11 +215,13 @@ class Consent_Screen {
             }
         }
         foreach ( $carried as $scope ) {
-            $rows[] = array(
-                'label' => 'mcp:abilities' === $scope ? __( 'All abilities', 'easy-mcp-ai' ) : $scope,
-                'flag'  => '',
-                'read'  => $scope,
-                'write' => '',
+            $ability = 0 === strpos( $scope, 'mcp:abilities' );
+            $rows[]  = array(
+                'label'         => 'mcp:abilities' === $scope ? __( 'All abilities', 'easy-mcp-ai' ) : $scope,
+                'flag'          => '',
+                'read'          => $ability ? '' : $scope,
+                'write'         => $ability ? $scope : '',
+                'read_included' => $ability,
             );
         }
         return $rows;
@@ -170,7 +247,7 @@ class Consent_Screen {
         return $boxes;
     }
 
-    private static function step_up_notice( $client_name, array $new_scopes, array $categories, array $privileged_rows ) {
+    private static function step_up_notice( $client_name, array $new_scopes, array $categories, array $privileged_rows, bool $role_limited ) {
         $labels = array();
         foreach ( $categories as $category ) {
             $label = isset( $category['label'] ) ? (string) $category['label'] : '';
@@ -194,16 +271,23 @@ class Consent_Screen {
         foreach ( $new_scopes as $scope ) {
             $names[] = isset( $labels[ $scope ] ) ? $labels[ $scope ] : $scope;
         }
-        return sprintf(
+        if ( $role_limited ) {
             /* translators: 1: application name, 2: comma-separated permission names */
-            _n(
+            $notice = _n(
+                '%1$s asked for one more permission to finish a task: %2$s. It is marked New below. The access you already gave this app is kept, limited to the role chosen below.',
+                '%1$s asked for more permissions to finish a task: %2$s. They are marked New below. The access you already gave this app is kept, limited to the role chosen below.',
+                count( $names ),
+                'easy-mcp-ai'
+            );
+        } else {
+            /* translators: 1: application name, 2: comma-separated permission names */
+            $notice = _n(
                 '%1$s asked for one more permission to finish a task: %2$s. It is ticked below and marked New, and the access you already gave this app stays ticked.',
                 '%1$s asked for more permissions to finish a task: %2$s. They are ticked below and marked New, and the access you already gave this app stays ticked.',
                 count( $names ),
                 'easy-mcp-ai'
-            ),
-            $client_name,
-            implode( ', ', $names )
-        );
+            );
+        }
+        return sprintf( $notice, $client_name, implode( ', ', $names ) );
     }
 }

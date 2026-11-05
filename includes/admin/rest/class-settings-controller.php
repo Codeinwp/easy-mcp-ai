@@ -6,8 +6,10 @@ use Easy_MCP_AI\Admin\Admin_Page;
 use Easy_MCP_AI\Admin\History_Settings_Page;
 use Easy_MCP_AI\Admin\Settings_Validator;
 use Easy_MCP_AI\Admin\Tool_Catalogue;
+use Easy_MCP_AI\Approvals\Approval_Gate;
 use Easy_MCP_AI\Auth\Connect_Policy;
 use Easy_MCP_AI\Config;
+use Easy_MCP_AI\Tools\Tool_Policy;
 use Easy_MCP_AI\Tools\Tool_State;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -57,6 +59,10 @@ class Settings_Controller extends Admin_Rest_Controller {
             'dbRetention'    => 'change_log_db_retention',
             'externalIntent' => 'change_log_external_intent',
         ),
+    );
+
+    const POLICY_FIELDS = array(
+        'advanced' => array( 'toolHoldPolicy' ),
     );
 
     private $tool_registry;
@@ -145,10 +151,21 @@ class Settings_Controller extends Admin_Rest_Controller {
                 'externalDataMinCapability' => Admin_Page::sanitize_external_data_min_capability( Config::get( 'easy_mcp_ai_external_data_min_capability', 'manage_options' ) ),
                 'maxTitleLength'            => max( 0, (int) Config::get( 'easy_mcp_ai_max_title_length', 0 ) ),
                 'disabledTools'             => array_values( array_filter( $grid, static function ( $name ) use ( $defaults ) {
-                    return Tool_State::stored_off( $name, $defaults[ $name ] );
+                    if ( in_array( $name, Tool_State::disabled_list(), true ) ) {
+                        return true;
+                    }
+                    $choice = Tool_Policy::enabled_choice( $name );
+                    if ( true === $choice && Config::is_locked( 'disabled_tools' ) ) {
+                        $choice = null;
+                    }
+                    if ( null === $choice && Tool_Policy::is_held( $name ) && null === Tool_State::override_of( $name ) && ! Config::is_locked( 'disabled_tools' ) ) {
+                        return true;
+                    }
+                    return null !== $choice ? ! $choice : Tool_State::stored_off( $name, $defaults[ $name ] );
                 } ) ),
                 'allowedToolPatterns'       => array_values( array_filter( $patterns, 'is_string' ) ),
                 'ipWhitelist'               => (string) Config::get( 'easy_mcp_ai_ip_whitelist', '' ),
+                'toolHoldPolicy'            => Tool_Policy::hold_policy(),
             ),
             'capture'  => array(
                 'optionMode'     => History_Settings_Page::sanitize_mode( Config::get( 'easy_mcp_ai_change_log_option_mode', 'all_except_denylist' ) ),
@@ -277,6 +294,33 @@ class Settings_Controller extends Admin_Rest_Controller {
             $writes[ $suffix ] = $value;
         }
 
+        $policy_writes = array();
+        foreach ( self::POLICY_FIELDS[ $section ] ?? array() as $field ) {
+            if ( array_key_exists( $field, $body ) ) {
+                $value = $this->validate_field( $field, $body[ $field ] );
+                if ( \is_wp_error( $value ) ) {
+                    return $value;
+                }
+                $policy_writes[ $field ] = $value;
+            }
+        }
+
+        if ( $policy_writes || array_intersect_key( $writes, array_flip( array( 'disabled_tools', 'approval_always', 'approval_never' ) ) ) ) {
+            $synced = new \WP_Error( 'easy_mcp_ai_policy_not_saved', \__( 'Another save of the tool policy is still running, so nothing was changed. Try again.', 'easy-mcp-ai' ), array( 'status' => 500 ) );
+            Tool_Policy::locked( function () use ( $policy_writes, $writes, &$synced ) {
+                if ( array_key_exists( 'toolHoldPolicy', $policy_writes ) ) {
+                    $synced = Tool_Policy::set_hold_policy( $policy_writes['toolHoldPolicy'] );
+                    if ( \is_wp_error( $synced ) ) {
+                        return;
+                    }
+                }
+                $synced = $this->sync_tool_choices( $writes );
+            } );
+            if ( \is_wp_error( $synced ) ) {
+                return $synced;
+            }
+        }
+
         foreach ( $writes as $suffix => $value ) {
             if ( 'logger_flag' === $suffix ) {
                 \update_option( self::LOGGER_FLAG_OPTION, $value ? 'yes' : 'no' );
@@ -295,6 +339,52 @@ class Settings_Controller extends Admin_Rest_Controller {
             }
         }
         return $this->ok( $this->payload() );
+    }
+
+    private function sync_tool_choices( array $writes ) {
+        if ( array_key_exists( 'approval_always', $writes ) || array_key_exists( 'approval_never', $writes ) ) {
+            $whole_tool = static function ( $list ) {
+                return array_values( array_filter( array_map( static function ( $entry ) {
+                    return trim( (string) $entry );
+                }, (array) $list ), static function ( $entry ) {
+                    return '' !== $entry && ! preg_match( '/\s/', $entry );
+                } ) );
+            };
+            $always = $whole_tool( array_key_exists( 'approval_always', $writes ) ? $writes['approval_always'] : Config::get( 'approval_always' ) );
+            $never  = $whole_tool( array_key_exists( 'approval_never', $writes ) ? $writes['approval_never'] : Config::get( 'approval_never' ) );
+            $drop   = array();
+            foreach ( Tool_Policy::state()['choices'] ?? array() as $name => $choice ) {
+                if ( ! isset( $choice['requireApproval'] ) ) {
+                    continue;
+                }
+                $in_always = Approval_Gate::matches_any( $name, $always );
+                if ( $choice['requireApproval'] ? ( $in_always ? false : Approval_Gate::matches_any( $name, $never ) ) : $in_always ) {
+                    $drop[] = $name;
+                }
+            }
+            $forgotten = Tool_Policy::forget( $drop, 'requireApproval' );
+            if ( \is_wp_error( $forgotten ) ) {
+                return $forgotten;
+            }
+        }
+        if ( array_key_exists( 'disabled_tools', $writes ) ) {
+            $collected = array();
+            foreach ( $this->grid() as $name ) {
+                $listed = in_array( $name, $writes['disabled_tools'], true );
+                if ( null !== Tool_State::override_of( $name ) ) {
+                    continue;
+                }
+                if ( null !== Tool_Policy::enabled_choice( $name ) ) {
+                    $collected[ $name ] = array( 'enabled' => ! $listed );
+                } elseif ( ! $listed && self::held_unanswered( $name ) ) {
+                    $collected[ $name ] = array( 'enabled' => true );
+                }
+            }
+            if ( $collected ) {
+                return Tool_Policy::save( $collected );
+            }
+        }
+        return true;
     }
 
     private static function is_sdk_field( $suffix ) {
@@ -452,6 +542,12 @@ class Settings_Controller extends Admin_Rest_Controller {
                 }
                 return 'allowedToolPatterns' === $field ? $patterns : array_values( array_unique( $patterns ) );
 
+            case 'toolHoldPolicy':
+                if ( ! is_string( $raw ) || ! in_array( $raw, Tool_Policy::HOLD_POLICIES, true ) ) {
+                    return $this->invalid( $field, \__( 'Pick one of the listed hold policies.', 'easy-mcp-ai' ) );
+                }
+                return $raw;
+
             case 'ipWhitelist':
                 if ( ! is_string( $raw ) ) {
                     return $this->invalid( $field, \__( 'Expected one IP address or CIDR range per line.', 'easy-mcp-ai' ) );
@@ -493,8 +589,14 @@ class Settings_Controller extends Admin_Rest_Controller {
     }
 
     private function write_disabled_tools( array $submitted ) {
-        $grid = $this->grid();
+        $grid = array_values( array_filter( $this->grid(), static function ( $name ) {
+            return ! self::held_unanswered( $name );
+        } ) );
         Tool_Catalogue::store_choices( $grid, $submitted, Tool_Catalogue::defaults_of( $this->tool_registry, $grid ) );
+    }
+
+    private static function held_unanswered( string $name ): bool {
+        return Tool_Policy::is_held( $name ) && null === Tool_Policy::enabled_choice( $name ) && null === Tool_State::override_of( $name );
     }
 
     private function grid(): array {

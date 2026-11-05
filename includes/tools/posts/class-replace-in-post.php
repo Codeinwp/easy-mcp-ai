@@ -2,6 +2,8 @@
 namespace Easy_MCP_AI\Tools\Posts;
 
 use Easy_MCP_AI\Approvals\Approval_Gate;
+use Easy_MCP_AI\Builders\Layout_Lock;
+use Easy_MCP_AI\MCP\Detailed_Tool_Error;
 use Easy_MCP_AI\Tools\Base_Tool;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,9 +12,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Replace_In_Post extends Base_Tool {
 
-    const MAX_SUBJECT_BYTES   = 204800;
+    const MAX_SUBJECT_BYTES = 1048576;
+
+    const MAX_RESULT_BYTES = 2097152;
+
+    const MAX_REGEX_SUBJECT_BYTES = 20480;
+
     const MAX_PATTERN_LENGTH  = 500;
     const PCRE_BACKTRACK_LIMIT = 100000;
+
+    const LOCK_WAIT = 10;
 
     const SITE_CSS_TYPES = array( 'wp_global_styles', 'custom_css' );
 
@@ -21,7 +30,7 @@ class Replace_In_Post extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Performs search-and-replace inside ONE field of a post without re-uploading the full content. Required: `id`, `field` (post_content|post_excerpt|post_title), `search`, `replace`. Optional: `regex` (default false), `max_replacements` (-1 = unlimited). Limits: subject 200KB, pattern 500 chars. Regex mode bounded by pcre.backtrack_limit + nested-quantifier heuristic (heuristic is advisory only — the backtrack limit is the real ReDoS defence). Site owners can disable regex entirely via the `easy_mcp_ai_replace_in_post_allow_regex` filter. Returns { id, field, replacements_count, content_length_before, content_length_after }. Major token-saver for small edits to large posts.';
+        return 'Performs search-and-replace inside ONE field of a post without re-uploading the full content. Required: `id`, `field` (post_content|post_excerpt|post_title), `search`, `replace`. Optional: `regex` (default false), `max_replacements` (-1 = unlimited), `expected_count` (refuse unless `search` matches exactly this many times). Refused with nothing written: no match, `search` equal to `replace` (literal mode), and in post_content an edit that would change which blocks there are or their order or nesting, or change a block\'s settings without its HTML (use wp_update_post_blocks for those). Limits: field 1 MB (20 KB in regex mode), result 2 MB, pattern 500 chars. Regex mode also rejects nested quantifiers and lowers pcre.backtrack_limit. Site owners can disable regex entirely via the `easy_mcp_ai_replace_in_post_allow_regex` filter. Returns { id, field, changed, matches_found, replacements_count, content_length_before, content_length_after, blocks_changed (post_content with blocks, when the edit changed any) }. Major token-saver for small edits to large posts.';
     }
 
     public function get_category() {
@@ -71,6 +80,10 @@ class Replace_In_Post extends Base_Tool {
                     'type'        => 'integer',
                     'description' => 'Cap on number of replacements; -1 = unlimited. Default -1.',
                     'default'     => -1,
+                ),
+                'expected_count'   => array(
+                    'type'        => 'integer',
+                    'description' => 'Optional. How many times `search` must match in the field. Any other number is refused before anything is written, with the number found. Counts every match, also those max_replacements leaves.',
                 ),
             ),
             'required'   => array( 'id', 'field', 'search', 'replace' ),
@@ -156,6 +169,20 @@ class Replace_In_Post extends Base_Tool {
         }
     }
 
+    private static function regex_result_budget( string $subject, string $replace ): \Closure {
+        $refs  = (int) preg_match_all( '/[\\\\$]\{?\d/', $replace );
+        $bound = strlen( $subject );
+        return static function ( array $match ) use ( $replace, $refs, &$bound ): string {
+            $bound += strlen( $replace ) + $refs * max( array_map( 'strlen', $match ) ) - strlen( $match[0] );
+            if ( $bound > self::MAX_RESULT_BYTES ) {
+                throw new \InvalidArgumentException(
+                    sprintf( 'The edit could make the field more than %d bytes, the most an edit may write. Replace fewer matches (max_replacements) or with shorter text.', self::MAX_RESULT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                );
+            }
+            return '';
+        };
+    }
+
     protected function lower_backtrack_limit() {
         return @ini_set( 'pcre.backtrack_limit', (string) self::PCRE_BACKTRACK_LIMIT ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Scoped lowering of PCRE backtrack limit for ReDoS mitigation; the caller restores it.
     }
@@ -215,6 +242,19 @@ class Replace_In_Post extends Base_Tool {
             throw new \InvalidArgumentException( 'max_replacements must be -1 (unlimited) or a positive integer.' );
         }
 
+        $expected = null;
+        if ( isset( $arguments['expected_count'] ) ) {
+            $expected = filter_var( $arguments['expected_count'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
+            if ( false === $expected || is_bool( $arguments['expected_count'] ) ) {
+                throw new \InvalidArgumentException( 'expected_count must be a positive integer: the number of times search must match.' );
+            }
+        }
+
+        $replace = self::as_text( $arguments['replace'] );
+        if ( empty( $arguments['regex'] ) && $search === $replace ) {
+            throw new \InvalidArgumentException( 'search and replace are the same text, so the edit would change nothing. Nothing was changed.' );
+        }
+
         $pattern = null;
         if ( ! empty( $arguments['regex'] ) ) {
             $allow_regex = (bool) apply_filters( 'easy_mcp_ai_replace_in_post_allow_regex', true );
@@ -235,20 +275,19 @@ class Replace_In_Post extends Base_Tool {
         }
 
         return array(
-            'post_id' => $post_id,
-            'field'   => $field,
-            'search'  => $search,
-            'max'     => $max,
-            'pattern' => $pattern,
+            'post_id'  => $post_id,
+            'field'    => $field,
+            'search'   => $search,
+            'replace'  => $replace,
+            'max'      => $max,
+            'expected' => $expected,
+            'pattern'  => $pattern,
         );
     }
 
     public function execute( array $arguments ) {
         $checked = $this->check_arguments( $arguments );
         $post_id = $checked['post_id'];
-        $field   = $checked['field'];
-        $search  = $checked['search'];
-        $max     = $checked['max'];
 
         $post = get_post( $post_id );
         if ( ! $post ) {
@@ -258,17 +297,41 @@ class Replace_In_Post extends Base_Tool {
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
             throw new \RuntimeException( 'You do not have permission to edit this post.' );
         }
-        $this->refuse_builder_owned_write( $post_id, 'post_content' === $field );
+        $this->refuse_builder_owned_write( $post_id, 'post_content' === $checked['field'] );
+
+        $lock = Layout_Lock::acquire_waiting( $post_id, static::LOCK_WAIT );
+        try {
+            return $this->edit( $checked, $lock );
+        } finally {
+            Layout_Lock::release( $post_id, $lock );
+        }
+    }
+
+    private function edit( array $checked, string $lock ): array {
+        $post_id = $checked['post_id'];
+        $field   = $checked['field'];
+        $search  = $checked['search'];
+        $replace = $checked['replace'];
+        $max     = $checked['max'];
+
+        wp_cache_delete( $post_id, 'posts' );
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            throw new \InvalidArgumentException( 'Post not found.' );
+        }
 
         $subject = (string) $post->{$field};
         $before_len = strlen( $subject );
         if ( $before_len > self::MAX_SUBJECT_BYTES ) {
             throw new \InvalidArgumentException(
-                sprintf( 'Field is too large for in-place replacement (%d bytes; max %d). Use wp_update_post instead.', $before_len, self::MAX_SUBJECT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                sprintf( 'Field is too large for in-place replacement (%d bytes; max %d).', $before_len, self::MAX_SUBJECT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
-
-        $replace = self::as_text( $arguments['replace'] );
+        if ( null !== $checked['pattern'] && $before_len > self::MAX_REGEX_SUBJECT_BYTES ) {
+            throw new \InvalidArgumentException(
+                sprintf( 'Field is too large for a regular expression (%d bytes; max %d). Send the exact text with regex: false, which edits fields up to %d bytes.', $before_len, self::MAX_REGEX_SUBJECT_BYTES, self::MAX_SUBJECT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
 
         if ( null !== $checked['pattern'] ) {
             $pattern = $checked['pattern'];
@@ -279,8 +342,17 @@ class Replace_In_Post extends Base_Tool {
 
             $limit  = $max > 0 ? $max : -1;
             $count  = 0;
+            $found  = 0;
             try {
-                $result = preg_replace( $pattern, $replace, $subject, $limit, $count );
+                $result  = null;
+                $matches = preg_match_all( $pattern, $subject );
+                if ( false !== $matches ) {
+                    $found = $matches;
+                    self::check_found( $found, $checked, $subject, $post_id );
+                    if ( null !== preg_replace_callback( $pattern, self::regex_result_budget( $subject, $replace ), $subject, $limit ) ) {
+                        $result = preg_replace( $pattern, $replace, $subject, $limit, $count );
+                    }
+                }
             } finally {
                 if ( false !== $previous_backtrack ) {
                     @ini_set( 'pcre.backtrack_limit', (string) $previous_backtrack ); // phpcs:ignore WordPress.PHP.IniSet.Risky, Squiz.PHP.DiscouragedFunctions.Discouraged -- Restoring previous PCRE backtrack limit.
@@ -300,6 +372,15 @@ class Replace_In_Post extends Base_Tool {
             $new_value = $result;
             $replacements_count = $count;
         } else {
+            $found = '' === $search ? 0 : substr_count( $subject, $search );
+            self::check_found( $found, $checked, $subject, $post_id );
+            $replaced = $max > 0 ? min( $found, $max ) : $found;
+            $new_len  = $before_len + $replaced * ( strlen( $replace ) - strlen( $search ) );
+            if ( $new_len > self::MAX_RESULT_BYTES ) {
+                throw new \InvalidArgumentException(
+                    sprintf( 'The edit would make the field %d bytes; the most an edit may write is %d. Replace fewer matches (max_replacements) or with shorter text.', $new_len, self::MAX_RESULT_BYTES ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                );
+            }
             if ( $max > 0 ) {
                 $new_value = $this->str_replace_limited( $search, $replace, $subject, $max, $replacements_count );
             } else {
@@ -309,14 +390,30 @@ class Replace_In_Post extends Base_Tool {
             }
         }
 
-        if ( 0 === $replacements_count ) {
-            return array(
-                'id'                    => $post_id,
-                'field'                 => $field,
-                'replacements_count'    => 0,
-                'content_length_before' => $before_len,
-                'content_length_after'  => $before_len,
-            );
+        $reply = array(
+            'id'                    => $post_id,
+            'field'                 => $field,
+            'changed'               => false,
+            'matches_found'         => $found,
+            'replacements_count'    => $replacements_count,
+            'content_length_before' => $before_len,
+            'content_length_after'  => $before_len,
+        );
+        if ( $new_value === $subject ) {
+            return $reply;
+        }
+
+        $blocks = array();
+        if ( 'post_content' === $field ) {
+            $inspection = Block_Structure_Guard::inspect( $subject, $new_value );
+            if ( null !== $inspection['refusal'] ) {
+                throw $inspection['refusal'];
+            }
+            $blocks = $inspection['changed'];
+        }
+
+        if ( ! Layout_Lock::holds( $post_id, $lock ) ) {
+            throw new \RuntimeException( sprintf( 'This edit of post %d ran longer than %d seconds and another edit took over, so nothing was saved. Call again.', $post_id, Layout_Lock::TTL ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
         $update = array(
@@ -331,15 +428,30 @@ class Replace_In_Post extends Base_Tool {
         $this->invalidate_post_cache( $post_id );
 
         $after_post = get_post( $post_id );
-        $after_len  = $after_post ? strlen( (string) $after_post->{$field} ) : strlen( $new_value );
+        $stored     = $after_post ? (string) $after_post->{$field} : $new_value;
 
-        return array(
-            'id'                    => $post_id,
-            'field'                 => $field,
-            'replacements_count'    => $replacements_count,
-            'content_length_before' => $before_len,
-            'content_length_after'  => $after_len,
-        );
+        $reply['changed']              = $stored !== $subject;
+        $reply['content_length_after'] = strlen( $stored );
+        if ( $reply['changed'] && $stored !== $new_value && 'post_content' === $field ) {
+            $blocks = Block_Structure_Guard::inspect( $subject, $stored )['changed'];
+        }
+        if ( $reply['changed'] && array() !== $blocks ) {
+            $reply['blocks_changed'] = $blocks;
+        }
+        return $reply;
+    }
+
+    private static function check_found( int $found, array $checked, string $subject, int $post_id ): void {
+        if ( 0 === $found ) {
+            $encoded = null === $checked['pattern'] ? htmlspecialchars( $checked['search'], ENT_NOQUOTES | ENT_HTML5, 'UTF-8', false ) : $checked['search'];
+            if ( $encoded !== $checked['search'] && false !== strpos( $subject, $encoded ) ) {
+                throw new \RuntimeException( sprintf( 'search matched nothing in %s, so nothing was changed. The text is stored with HTML entities: in search, write < as &lt;, > as &gt;, and & as &amp; unless it starts an entity.', $checked['field'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            throw new \RuntimeException( sprintf( 'search matched nothing in %s of post %d, so nothing was changed.', $checked['field'], $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        if ( null !== $checked['expected'] && $checked['expected'] !== $found ) {
+            throw new \RuntimeException( sprintf( 'expected_count is %d but search matched %d %s in %s of post %d, so nothing was changed.', $checked['expected'], $found, 1 === $found ? 'time' : 'times', $checked['field'], $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
     }
 
     private function str_replace_limited( $needle, $replacement, $haystack, $max, &$count ) {

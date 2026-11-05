@@ -44,6 +44,40 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         return null;
     }
 
+    public function layout_refusal( array $item, string $role ): ?string {
+        unset( $item, $role );
+        return null;
+    }
+
+    public function op_refusal( string $op, string $type ): ?string {
+        unset( $op, $type );
+        return null;
+    }
+
+    public function value_refusal( string $tag, string $name, string $value ): ?string {
+        unset( $tag, $name, $value );
+        return null;
+    }
+
+    public function field_warning( array $item, string $field ): ?string {
+        unset( $item, $field );
+        return null;
+    }
+
+    public function field_refusal( array $item, string $field ): ?string {
+        unset( $item, $field );
+        return null;
+    }
+
+    public function image_attributes( string $tag, string $field, array $spec, array $media ): array {
+        unset( $tag, $spec );
+        return array( $field => (string) $media['id'] );
+    }
+
+    public function structure_rules(): ?Structure_Rules {
+        return null;
+    }
+
     public function masked( string $source ): string {
         return $this->mask( $source );
     }
@@ -110,7 +144,7 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
             throw self::refusal( $problems );
         }
 
-        $warnings = array();
+        $warnings = $plan['warnings'] ?? array();
         $editing  = self::editing_user( $post_id );
         if ( null !== $editing ) {
             $open = sprintf( '%s has post %d open in the editor; their next save there replaces the whole layout, this change included.', $editing, $post_id );
@@ -121,13 +155,14 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         }
 
         $changed = $plan['content'] !== $original;
+        $parents = isset( $plan['parents'] ) ? array( 'parents' => $plan['parents'] ) : array();
         if ( $dry_run || ! $changed ) {
             return array(
                 'changed'  => $changed,
                 'saved'    => false,
                 'results'  => self::public_results( $plan['results'] ),
                 'warnings' => $warnings,
-            );
+            ) + $parents;
         }
 
         if ( null !== $fence ) {
@@ -148,6 +183,7 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         if ( is_wp_error( $saved ) || ! $saved ) {
             throw new \RuntimeException( sprintf( 'WordPress did not save post %d: %s', $post_id, is_wp_error( $saved ) ? $saved->get_error_message() : 'wp_update_post() returned 0.' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
+        $this->after_save( $post_id );
         $stored = self::stored_content( $post_id );
         if ( $stored === $original ) {
             throw new \RuntimeException( sprintf( 'WordPress reported post %d saved, but its content did not change: something stopped the write (a plugin filter or a database error).', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -157,7 +193,11 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
             'saved'    => true,
             'results'  => self::public_results( $this->read_back( $plan['results'], $plan['content'], $stored, $warnings ) ),
             'warnings' => $warnings,
-        );
+        ) + $parents;
+    }
+
+    protected function after_save( int $post_id ): void {
+        unset( $post_id );
     }
 
     private static function fields_of( array $result ): array {
@@ -172,8 +212,15 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
     private static function public_results( array $results ): array {
         foreach ( $results as $index => $result ) {
             unset( $results[ $index ]['written'] );
+            if ( ! self::is_structural( $result ) && ( $result['address'] ?? null ) === $result['element'] ) {
+                unset( $results[ $index ]['address'] );
+            }
         }
         return $results;
+    }
+
+    private static function is_structural( array $result ): bool {
+        return in_array( $result['op'], Shortcode_Structure::OPS, true );
     }
 
     private static function stored_content( int $post_id ): string {
@@ -193,7 +240,7 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         if ( $more > 0 ) {
             $where .= sprintf( ' and %d more %s', $more, 1 === $more ? 'element' : 'elements' );
         }
-        return array( sprintf( 'When this account saves, WordPress\'s save filters also change the rest of the page: this save would change %s too (HTML the account may not post is removed, by WordPress or by the page builder\'s Role Manager). Ask someone whose account may post that HTML to make this edit, or change those elements in the builder first.', $where ) );
+        return array( sprintf( 'When this account saves, WordPress\'s save filters also change the rest of the page: this save would change %s too (HTML the account may not post is removed or switched off, by WordPress or by the page builder). Ask someone whose account may post that HTML to make this edit, or change those elements in the builder first.', $where ) );
     }
 
     private function filter_losses( array $items, string $content, string $prefix, array &$affected ): void {
@@ -215,17 +262,27 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
         if ( $planned === $stored ) {
             return $results;
         }
+        $before        = count( $warnings );
         $planned_items = $this->layout_items( $planned );
         $stored_items  = $this->layout_items( $stored );
+        if ( Shortcode_Structure::skeleton( $planned_items ) !== Shortcode_Structure::skeleton( $stored_items ) ) {
+            $warnings[] = 'WordPress stored a layout holding different elements than planned (a plugin filter changed it on save); read it again with wp_get_page_layout.';
+        }
         $last = array();
         foreach ( $results as $index => $result ) {
+            if ( self::is_structural( $result ) || null === ( $result['address'] ?? null ) ) {
+                continue;
+            }
             foreach ( self::fields_of( $result ) as $field ) {
                 $last[ $result['element'] . '|' . $field ] = $index;
             }
         }
         foreach ( $results as $index => $result ) {
-            $was   = Shortcode_Editor::find( $planned_items, $result['element'] );
-            $now   = Shortcode_Editor::find( $stored_items, $result['element'] );
+            if ( self::is_structural( $result ) || null === ( $result['address'] ?? null ) ) {
+                continue;
+            }
+            $was   = Shortcode_Editor::find( $planned_items, (string) $result['address'] );
+            $now   = Shortcode_Editor::find( $stored_items, (string) $result['address'] );
             $after = 'set_fields' === $result['op'] && is_array( $result['after'] ) ? $result['after'] : array( $result['field'] => $result['after'] );
             foreach ( self::named_fields( $result ) as $field ) {
                 if ( $last[ $result['element'] . '|' . $field ] !== $index ) {
@@ -241,7 +298,7 @@ abstract class Shortcode_Adapter extends Layout_Adapter {
             $results[ $index ]['after']   = 'set_fields' === $result['op'] ? $after : reset( $after );
             $results[ $index ]['changed'] = wp_json_encode( $result['before'] ) !== wp_json_encode( $results[ $index ]['after'] );
         }
-        if ( array() === $warnings ) {
+        if ( count( $warnings ) === $before ) {
             $warnings[] = 'WordPress stored the content differently from the plan outside the fields written (a plugin filter changed it on save).';
         }
         return $results;

@@ -91,17 +91,17 @@ class Plugin_Integration_Registry {
             array(
                 'slug'        => 'acf',
                 'name'        => 'ACF / Secure Custom Fields',
-                'description' => 'Read and write ACF field values on posts, pages, users, and terms via the native WordPress REST API. Fields appear under the "acf" key in REST responses.',
+                'description' => 'Read and write ACF field values on posts, pages, users, and terms via the native WordPress REST API, and on ACF options pages (ACF PRO or Secure Custom Fields) the way their Save button does.',
                 'status'      => 'stable',
                 'requires'    => 'ACF or Secure Custom Fields must be active. Field groups must have "Show in REST API" enabled.',
                 'detector'    => 'class:ACF',
                 'tools'       => array(
-                    array( 'name' => 'wp_acf_get_fields',         'description' => 'Get all ACF field values for a post or page. Returns data under the acf key.',           'type' => 'read',  'api' => 'wp_rest' ),
-                    array( 'name' => 'wp_acf_update_fields',      'description' => 'Update one or more ACF field values on a post or page.',                                  'type' => 'write', 'api' => 'wp_rest' ),
+                    array( 'name' => 'wp_acf_get_fields',         'description' => 'Get all ACF field values for a post, a page or an options page.',                         'type' => 'read',  'api' => 'wp_rest' ),
+                    array( 'name' => 'wp_acf_update_fields',      'description' => 'Update one or more ACF field values on a post, a page or an options page.',               'type' => 'write', 'api' => 'wp_rest' ),
                     array( 'name' => 'wp_acf_get_user_fields',    'description' => 'Get ACF field values attached to a WordPress user.',                                      'type' => 'read',  'api' => 'wp_rest' ),
                     array( 'name' => 'wp_acf_update_user_fields', 'description' => 'Update ACF field values on a WordPress user.',                                            'type' => 'write', 'api' => 'wp_rest' ),
                     array( 'name' => 'wp_acf_get_term_fields',    'description' => 'Get ACF field values attached to a taxonomy term.',                                       'type' => 'read',  'api' => 'wp_rest' ),
-                    array( 'name' => 'wp_acf_list_field_groups',  'description' => 'List all registered ACF field groups with keys, labels, and field definitions.',          'type' => 'read',  'api' => 'php' ),
+                    array( 'name' => 'wp_acf_list_field_groups',  'description' => 'List all registered ACF field groups with keys, labels, and field definitions, and the options pages.', 'type' => 'read',  'api' => 'php' ),
                 ),
             ),
             array(
@@ -153,6 +153,19 @@ class Plugin_Integration_Registry {
                     array( 'name' => 'wp_sitekit_ga_run_report',         'description' => 'Run a Google Analytics 4 report for the property Site Kit is connected to.',         'type' => 'read', 'api' => 'plugin_rest' ),
                     array( 'name' => 'wp_sitekit_ga_list_key_events',    'description' => 'List the GA4 property\'s key events.',                                                 'type' => 'read', 'api' => 'plugin_rest' ),
                     array( 'name' => 'wp_sitekit_gsc_query_performance', 'description' => 'Search Console clicks, impressions, CTR and position for this site.',                  'type' => 'read', 'api' => 'plugin_rest' ),
+                ),
+            ),
+            array(
+                'slug'        => 'divi',
+                'name'        => 'Divi',
+                'description' => 'Divi theme settings an AI can change safely: the performance options of Divi\'s Theme Options, the Theme Builder\'s templates, and each page\'s Divi settings (sidebar layout, title, navigation) through the post meta tools. Divi page and Theme Builder layouts are edited with the page builder tools, which need no switch.',
+                'status'      => 'stable',
+                'requires'    => 'The Divi theme must be active (Divi 4 or Divi 5).',
+                'detector'    => 'function:et_divi_get_content_width',
+                'tools'       => array(
+                    array( 'name' => 'wp_divi_get_theme_options',    'description' => 'Read Divi\'s performance settings (dynamic CSS, critical CSS, fonts, jQuery loading).', 'type' => 'read',  'api' => 'php' ),
+                    array( 'name' => 'wp_divi_update_theme_options', 'description' => 'Change Divi\'s performance settings and clear its cached CSS.',                       'type' => 'write', 'api' => 'php' ),
+                    array( 'name' => 'wp_divi_list_theme_builder',   'description' => 'List Theme Builder templates, where they apply and which layouts they use.',           'type' => 'read',  'api' => 'php' ),
                 ),
             ),
             array(
@@ -210,7 +223,7 @@ class Plugin_Integration_Registry {
             array(
                 'slug'        => 'rank-math',
                 'name'        => 'Rank Math SEO',
-                'description' => 'Read rendered SEO head tags for any URL, read/update SEO meta on posts and pages, and manage redirects via Rank Math.',
+                'description' => 'Read rendered SEO head tags for any URL, read/update SEO meta on posts and pages, manage redirects, and read/update site-wide settings (paginated-page noindex, 404 title, social profiles, Image SEO formats, robots.txt) via Rank Math.',
                 'status'      => 'stable',
                 'requires'    => 'Rank Math SEO (free or pro) must be active. For wp_rm_get_head, enable Headless CMS Support in Rank Math → General Settings → Others. The redirect tools need Rank Math\'s Redirections module on (Rank Math → Dashboard → Modules) and its Redirections permission (administrators by default).',
                 'detector'    => 'function:rank_math',
@@ -223,6 +236,8 @@ class Plugin_Integration_Registry {
                     array( 'name' => 'wp_rm_create_redirect',  'description' => 'Create a Rank Math redirect from source paths, a post or a term (its archive URL), with code 301, 302, 307, 410 or 451.',                 'type' => 'write', 'api' => 'php' ),
                     array( 'name' => 'wp_rm_update_redirect',  'description' => 'Change a Rank Math redirect\'s sources, target, code or status, keeping every field not sent.',                                           'type' => 'write', 'api' => 'php' ),
                     array( 'name' => 'wp_rm_delete_redirects', 'description' => 'Move Rank Math redirects to its trash, or delete them permanently.',                                                                       'type' => 'write', 'api' => 'php' ),
+                    array( 'name' => 'wp_rm_get_settings',    'description' => 'Get Rank Math\'s site-wide settings: paginated, search and password-protected noindex switches, 404 title, social profiles, Image SEO formats and robots.txt, with what /robots.txt serves.', 'type' => 'read',  'api' => 'php' ),
+                    array( 'name' => 'wp_rm_update_settings', 'description' => 'Update those Rank Math site-wide settings as Rank Math\'s settings screen saves them; robots.txt only where Rank Math\'s screen would allow it.',                         'type' => 'write', 'api' => 'plugin_rest' ),
                 ),
             ),
             array(
@@ -278,26 +293,6 @@ class Plugin_Integration_Registry {
                     array( 'name' => 'wp_tsf_get_post_seo',    'description' => 'Get The SEO Framework meta for a post: title, description, robots, OG/Twitter fields.', 'type' => 'read',  'api' => 'php' ),
                     array( 'name' => 'wp_tsf_update_post_seo', 'description' => 'Update The SEO Framework meta on a post: title, description, robots, OG/Twitter fields.', 'type' => 'write', 'api' => 'php' ),
                 ),
-            ),
-            array(
-                'slug'        => 'learnpress',
-                'name'        => 'LearnPress',
-                'description' => 'Lets LearnPress\'s own abilities (courses, lessons, quizzes, enrollments) run with your Easy MCP key or connection, whether or not LearnPress\'s own MCP setting is on. LearnPress allows them to administrators only by default. Without it, LearnPress accepts them only through its own MCP endpoint and key. Open the row to choose which LearnPress abilities are available.',
-                'status'      => 'stable',
-                'requires'    => 'LearnPress must be active.',
-                'detector'    => 'class:LearnPress',
-                'tools'       => array(),
-                'abilities'   => 'learnpress',
-            ),
-            array(
-                'slug'        => 'elementor',
-                'name'        => 'Elementor',
-                'description' => 'Lets Elementor\'s own abilities (page structure, V4 elements, global classes and variables, page creation and publishing) run with your Easy MCP key or connection, whether or not Elementor\'s own MCP setting (Elementor › Elementor MCP) is on. Elementor\'s own MCP server still follows that setting. Most element edits need Elementor\'s V4 editor. Open the row to choose which Elementor abilities are available.',
-                'status'      => 'stable',
-                'requires'    => 'Elementor 4.3 or later must be active, on WordPress 6.9 or later.',
-                'detector'    => 'class:Elementor\\Modules\\Mcp\\Module',
-                'tools'       => array(),
-                'abilities'   => 'elementor',
             ),
         );
     }

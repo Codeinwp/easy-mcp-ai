@@ -12,6 +12,7 @@ final class Option_Guard {
 
     const SWITCHES = array(
         'easy_mcp_ai_enabled_tools',
+        'easy_mcp_ai_tool_policy',
         'easy_mcp_ai_enabled_abilities',
         'easy_mcp_ai_enabled_plugin_groups',
         'easy_mcp_ai_rest_disabled_namespaces',

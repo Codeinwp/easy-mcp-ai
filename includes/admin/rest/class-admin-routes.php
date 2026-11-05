@@ -13,10 +13,13 @@ class Admin_Routes {
 
     private $tool_registry;
 
+    private $next_registry;
+
     private static $checks_registered = false;
 
-    public function __construct( $tool_registry = null ) {
+    public function __construct( $tool_registry = null, ?callable $next_registry = null ) {
         $this->tool_registry = $tool_registry;
+        $this->next_registry = $next_registry;
     }
 
     public function register() {
@@ -46,7 +49,7 @@ class Admin_Routes {
 
         $catalogue = null;
         if ( $this->tool_registry ) {
-            $catalogue = new \Easy_MCP_AI\Admin\Tool_Catalogue( $this->tool_registry );
+            $catalogue = new \Easy_MCP_AI\Admin\Tool_Catalogue( $this->tool_registry, $this->next_registry );
         }
         $tools = new Tools_Controller( array( $this, 'tool_groups' ), $catalogue );
         $tools->register_routes();

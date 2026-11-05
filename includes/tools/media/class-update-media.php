@@ -14,7 +14,7 @@ class Update_Media extends Base_Tool {
     }
 
     public function get_description() {
-        return 'Updates metadata of an existing WordPress media attachment (PATCH semantics — does NOT replace the file). Required: `media_id`. Optional: `title`, `alt_text` (important for accessibility and SEO), `caption`, `description`. Returns { id, title, alt_text, caption, description, source_url }, each as stored. To replace the file itself, delete and re-upload. Passing an empty string for a text field (`title`, `alt_text`, `caption`, `description`) preserves the existing value (it is not cleared) — omit the field, or edit in wp-admin, to blank it.';
+        return 'Updates metadata of an existing WordPress media attachment (PATCH semantics — does NOT replace the file). Required: `media_id`. Optional: `title`, `alt_text` (important for accessibility and SEO), `caption`, `description`. Returns { id, title, alt_text, caption, description, source_url }, each as stored. To replace the file itself, delete and re-upload. Passing an empty string for a text field (`title`, `alt_text`, `caption`, `description`) preserves the existing value (it is not cleared) — omit the field, or edit in wp-admin, to blank it. A call that changes only `alt_text` writes just that and does not save the attachment itself (its modified date, caption and description stay as they are); send `resave: true` to save the whole attachment too.';
     }
 
     public function get_category() {
@@ -52,12 +52,13 @@ class Update_Media extends Base_Tool {
                 ),
                 'caption'     => array(
                     'type'        => 'string',
-                    'description' => 'The new caption for the media item.',
+                    'description' => 'The new caption for the media item. HTML is kept as far as WordPress allows it for your account.',
                 ),
                 'description' => array(
                     'type'        => 'string',
-                    'description' => 'The new description for the media item.',
+                    'description' => 'The new description for the media item. HTML is kept as far as WordPress allows it for your account.',
                 ),
+                'resave'      => self::resave_property( 'the alt text' ),
             ),
             'required'   => array( 'media_id' ),
         );
@@ -78,14 +79,14 @@ class Update_Media extends Base_Tool {
         }
 
         if ( isset( $arguments['caption'] ) && '' !== $arguments['caption'] ) {
-            $params['caption'] = sanitize_text_field( $arguments['caption'] );
+            $params['caption'] = self::markup_arg( $arguments, 'caption' );
         }
 
         if ( isset( $arguments['description'] ) && '' !== $arguments['description'] ) {
-            $params['description'] = sanitize_text_field( $arguments['description'] );
+            $params['description'] = self::markup_arg( $arguments, 'description' );
         }
 
-        $data = $this->rest_request( 'POST', '/wp/v2/media/' . $media_id, $params );
+        $data = $this->rest_post_update( 'POST', '/wp/v2/media/' . $media_id, $params, null, $media_id, ! empty( $arguments['resave'] ) );
 
         return array(
             'id'          => $data['id'],

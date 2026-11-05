@@ -92,7 +92,7 @@ final class Self_Protection {
 
     const OWN_SUBCOMMANDS = array(
         'config export'     => "'easy-mcp-ai config export' prints the settings of the plugin that serves this MCP connection, which wp_cli_run never reads. Run it with the real wp binary on the server, or read the settings on the plugin's Settings screen in wp-admin.",
-        'privileged status' => "'easy-mcp-ai privileged status' reports the privileged-tool switches of the plugin that serves this MCP connection, which wp_cli_run never reads. Run it with the real wp binary on the server, or see Settings › Advanced in wp-admin.",
+        'privileged status' => "'easy-mcp-ai privileged status' reports the privileged-tool switches of the plugin that serves this MCP connection, which wp_cli_run never reads. Run it with the real wp binary on the server, or see Tools in wp-admin.",
     );
 
     const REASON_PLUGIN_OPTION       = "'%s' belongs to the plugin that serves this MCP connection, and wp_cli_run never reads or writes that plugin's settings or state. Change them on the plugin's screens in wp-admin.";
@@ -116,7 +116,7 @@ final class Self_Protection {
     const REASON_CORE_USER_META      = "wp_cli_run does not read or write the user meta key '%s' directly: %s.";
     const REASON_USER_META_BYTES     = 'wp_cli_run refuses a user meta key containing a space, a control character or a non-ASCII byte: the usermeta table compares keys without regard to case, accents or trailing spaces, so such a key can address a different one, this plugin\'s among them. Pass the key in plain ASCII, as `user meta list` prints it.';
     const REASON_HISTORY_CAPABILITY  = "wp_cli_run never grants or removes '%s': the plugin that serves this MCP connection gives it to administrators on activation, and it lets its holder read every user's MCP change history. It follows the administrator role, which `user set-role` assigns.";
-    const REASON_PRIVILEGED_CAP      = "'%s' is a meta capability the plugin that serves this MCP connection maps at run time from its privileged-tool switches; no role or user holds it, and wp_cli_run never grants or removes it. Switch the tool on under Settings › Advanced in wp-admin.";
+    const REASON_PRIVILEGED_CAP      = "'%s' is a meta capability the plugin that serves this MCP connection maps at run time from its privileged-tool switches; no role or user holds it, and wp_cli_run never grants or removes it. Switch the tool on under Tools in wp-admin.";
     const REASON_PLUGIN_CAPABILITY   = "'%s' is in the namespace of the plugin that serves this MCP connection, and wp_cli_run never grants or removes that plugin's capabilities. `cap list` shows what a role holds.";
     const REASON_CAPABILITY_BYTES    = 'wp_cli_run refuses a capability name containing a control character or a non-ASCII byte. Pass the capability in plain ASCII, as `cap list` prints it.';
     const REASON_OWN_COMMAND         = "'easy-mcp-ai' commands belong to the plugin that serves this MCP connection and are not available through wp_cli_run. Run them with the real wp binary on the server.";

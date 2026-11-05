@@ -61,6 +61,16 @@ abstract class Layout_Adapter {
         return sprintf( 'Editing %1$s layouts is not available yet: it has not been checked against a live %1$s site. Read the layout with wp_get_page_layout.', $this->label() );
     }
 
+    public function restore_refusal( object $post, int $revision_id ): ?string {
+        unset( $post, $revision_id );
+        return null;
+    }
+
+    public function restore_layout( object $post, int $revision_id, ?callable $still_held = null ): ?array {
+        unset( $post, $revision_id, $still_held );
+        return null;
+    }
+
     public function edit( object $post, array $ops, bool $dry_run, ?callable $fence = null ): array {
         unset( $ops, $dry_run, $fence );
         throw self::refusal( array( (string) $this->edit_refusal( $post ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -74,7 +84,7 @@ abstract class Layout_Adapter {
         return is_string( $url ) && '' !== $url ? array( 'id' => $attachment_id, 'url' => $url ) : null;
     }
 
-    protected static function editing_user( int $post_id ): ?string {
+    public static function editing_user( int $post_id ): ?string {
         if ( ! function_exists( 'wp_check_post_lock' ) && is_readable( ABSPATH . 'wp-admin/includes/post.php' ) ) {
             require_once ABSPATH . 'wp-admin/includes/post.php';
         }
@@ -123,6 +133,7 @@ abstract class Layout_Adapter {
                 'link'     => null,
                 'settings' => array(),
                 'flags'    => array(),
+                'lists'    => array(),
                 'children' => array(),
             ),
             $node

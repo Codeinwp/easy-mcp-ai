@@ -13,7 +13,7 @@ class Inspect_Url extends Base_Tool {
     public function get_name() { return 'wp_gsc_inspect_url'; }
 
     public function get_description() {
-        return 'Inspects a URL in Google Search Console. Returns index status (verdict, coverage state, crawl info, canonical URLs), mobile usability issues, rich results (structured data) issues, and AMP status. Requires a Google service-account credential configured under Easy MCP AI → Tools → External data.';
+        return 'Inspects a URL in Google Search Console. Returns index status (verdict, coverage state, crawl info, canonical URLs), mobile usability issues, rich results (structured data) issues, and AMP status. Requires a Google service-account credential configured under Easy MCP AI → Tools → Connections.';
     }
 
     public function get_category() { return 'gsc'; }

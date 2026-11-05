@@ -14,7 +14,7 @@ class Update_Post_Meta extends Base_Tool {
     }
 
     public function get_description() {
-        $description = 'Updates REST-API-visible meta fields for a post. Only fields registered with show_in_rest can be updated. Pass a JSON object of key-value pairs. Nested arrays/objects are passed through as-is and are accepted only when the key is registered with an array or object show_in_rest schema; a value of the wrong type is refused with the key, its registered type and what was sent. Optional `post_type` (REST base, default `posts`) lets this tool also operate on pages or any custom post type, not just posts. Returns { post_id, updated_meta } with only the requested keys that were saved. If none was saved the call is refused, naming the keys (its details list the keys this post type accepts); if only some were, `ignored_keys` and `notice` come first. SEO plugin keys (Rank Math, Yoast, SEOPress, The SEO Framework) are writable here when that plugin\'s integration is enabled under Easy MCP AI → Tools → Plugins.';
+        $description = 'Updates meta fields for a post. Pass a JSON object of key-value pairs. A key no plugin or theme registers (a theme\'s page settings, for example) is written too, as text, for any user who can edit the post; one starting with _ needs manage_options. Not written, each with its reason: a key a plugin registered without REST access, WordPress\'s own keys (_wp_*, _thumbnail_id), WooCommerce and Events Calendar items, and a key with several values. Nested arrays/objects are passed through as-is and are accepted only when the key is registered with an array or object show_in_rest schema; a value of the wrong type is refused with the key, its registered type and what was sent. Optional `post_type` (REST base, default `posts`) lets this tool also operate on pages or any custom post type, not just posts. Returns { post_id, updated_meta } with only the requested keys that were saved. If none was saved the call is refused, naming the keys (its details list the keys this post type accepts); if only some were, `ignored_keys` and `notice` come first. SEO plugin keys (Rank Math, Yoast, SEOPress, The SEO Framework) are writable here when that plugin\'s integration is enabled under Easy MCP AI → Tools. Only the meta is written: the post itself is not saved, so its modified date, revisions and content stay as they are, and a refused key or value writes nothing. Send `resave: true` to also save the whole post, as an edit in WordPress does.';
         if ( class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {
             $description .= \Easy_MCP_AI\Meta\Meta_Exposure::describe_writable_keys();
         }
@@ -62,6 +62,7 @@ class Update_Post_Meta extends Base_Tool {
                     'description' => 'The REST base for the post type (e.g. posts, pages). Default: posts. A post_type slug is also accepted.',
                     'default'     => 'posts',
                 ),
+                'resave'    => self::resave_property( 'meta' ),
             ),
             'required'   => array( 'post_id', 'meta' ),
         );
@@ -82,18 +83,17 @@ class Update_Post_Meta extends Base_Tool {
             : 'posts';
         $this->refuse_builder_owned_write( $post_id, false, $meta );
 
-        $route   = self::post_type_route( $post_type, $post_id, 'POST', 'GET' );
-        $request = new \WP_REST_Request( 'POST', $route );
-        $request->set_header( 'content-type', 'application/json' );
-        $request->set_body( wp_json_encode( array( 'meta' => $meta ) ) );
-        $response = rest_do_request( $request );
-        if ( $response->is_error() ) {
-            throw new \RuntimeException( $this->explain_rejected_meta( $response, $meta, $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        }
-
-        $read_data = $this->rest_request( 'GET', $route, array(
-            'context' => 'edit',
-        ) );
+        $unregistered = \Easy_MCP_AI\Meta\Unregistered_Meta::plan( $post_id, $meta );
+        $meta         = array_replace( $meta, $unregistered['open'] );
+        $route        = self::post_type_route( $post_type, $post_id, 'POST', 'GET' );
+        $resave       = ! empty( $arguments['resave'] );
+        $read_data    = \Easy_MCP_AI\Meta\Unregistered_Meta::run(
+            function () use ( $route, $meta, $post_id, $resave ) {
+                return $this->update_and_read( $route, $meta, $post_id, $resave );
+            },
+            $post_id,
+            array_keys( $unregistered['open'] )
+        );
 
         $persisted_meta = isset( $read_data['meta'] ) ? $read_data['meta'] : array();
         $saved          = array();
@@ -113,7 +113,7 @@ class Update_Post_Meta extends Base_Tool {
             );
         }
 
-        $notice = $this->ignored_keys_notice( $ignored_keys );
+        $notice = $this->ignored_keys_notice( $ignored_keys, $unregistered['skipped'] );
 
         if ( empty( $saved ) ) {
             $accepted = array_keys( $persisted_meta );
@@ -131,16 +131,39 @@ class Update_Post_Meta extends Base_Tool {
         );
     }
 
-    private function ignored_keys_notice( array $ignored_keys ) {
-        $notice = sprintf(
-            'The following meta keys were sent but not persisted (they may not be registered with show_in_rest=true): %s. Meta fields must be registered by the theme or a plugin to be writable via the REST API.',
-            implode( ', ', $ignored_keys )
-        );
-        if ( class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {
-            $explained = \Easy_MCP_AI\Meta\Meta_Exposure::explain_ignored_keys( $ignored_keys );
+    private function update_and_read( string $route, array $meta, int $post_id, bool $resave ): array {
+        $request = new \WP_REST_Request( 'POST', $route );
+        $request->set_header( 'content-type', 'application/json' );
+        $request->set_body( wp_json_encode( array( 'meta' => $meta ) ) );
+        $response = $this->dispatch_post_update( $request, $post_id, $resave );
+        if ( $response->is_error() ) {
+            throw new \RuntimeException( $this->explain_rejected_meta( $response, $meta, $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        $read = $this->rest_request( 'GET', $route, array(
+            'context' => 'edit',
+        ) );
+        return is_array( $read ) ? $read : array();
+    }
+
+    private function ignored_keys_notice( array $ignored_keys, array $reasons = array() ) {
+        $notice = sprintf( 'The following meta keys were sent but not saved: %s.', implode( ', ', $ignored_keys ) );
+        $left   = array();
+        foreach ( $ignored_keys as $key ) {
+            if ( isset( $reasons[ $key ] ) ) {
+                $notice .= ' ' . $reasons[ $key ];
+            } else {
+                $left[] = $key;
+            }
+        }
+        if ( array() !== $left && class_exists( '\\Easy_MCP_AI\\Meta\\Meta_Exposure' ) ) {
+            $explained = \Easy_MCP_AI\Meta\Meta_Exposure::explain_ignored_keys( $left );
             if ( ! empty( $explained ) ) {
                 $notice .= ' ' . implode( ' ', array_values( $explained ) );
             }
+            $left = array_values( array_diff( $left, array_keys( $explained ) ) );
+        }
+        if ( array() !== $left ) {
+            $notice .= sprintf( ' WordPress did not keep %s: the REST API saves only keys registered for it, and a plugin can refuse a key it registered.', implode( ', ', $left ) );
         }
         return $notice;
     }
