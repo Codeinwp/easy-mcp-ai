@@ -37,22 +37,18 @@ class Ai_Discover_Brand extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'target', 'source', 'scope' ) );
-			$target = trim( (string) ( $arguments['target'] ?? '' ) );
-			$source = trim( (string) ( $arguments['source'] ?? '' ) );
-			$scope  = trim( (string) ( $arguments['scope'] ?? '' ) );
-			SeRanking_Validators::validate_target( $target );
-			SeRanking_Validators::validate_source( $source );
-			SeRanking_Validators::validate_scope( $scope );
+		$this->validate_required( $arguments, array( 'target', 'source', 'scope' ) );
+		$target = trim( (string) ( $arguments['target'] ?? '' ) );
+		$source = trim( (string) ( $arguments['source'] ?? '' ) );
+		$scope  = trim( (string) ( $arguments['scope'] ?? '' ) );
+		SeRanking_Validators::validate_target( $target );
+		SeRanking_Validators::validate_source( $source );
+		SeRanking_Validators::validate_scope( $scope );
 
-			return ( new SeRanking_Client() )->request( 'GET', '/v1/ai-search/discover-brand', array(
-				'target' => $target,
-				'source' => $source,
-				'scope'  => $scope,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
-		}
+		return ( new SeRanking_Client() )->request( 'GET', '/v1/ai-search/discover-brand', array(
+			'target' => $target,
+			'source' => $source,
+			'scope'  => $scope,
+		) );
 	}
 }

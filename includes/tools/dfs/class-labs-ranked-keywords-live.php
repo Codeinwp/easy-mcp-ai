@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -169,16 +170,16 @@ class Labs_Ranked_Keywords_Live extends Base_Tool {
 			$task['language_name'] = (string) $arguments['language_name'];
 		}
 		if ( isset( $arguments['ignore_synonyms'] ) ) {
-			$task['ignore_synonyms'] = (bool) $arguments['ignore_synonyms'];
+			$task['ignore_synonyms'] = External_Data_Flag::read( 'ignore_synonyms', $arguments['ignore_synonyms'] );
 		}
 		if ( isset( $arguments['include_clickstream_data'] ) ) {
-			$task['include_clickstream_data'] = (bool) $arguments['include_clickstream_data'];
+			$task['include_clickstream_data'] = External_Data_Flag::read( 'include_clickstream_data', $arguments['include_clickstream_data'] );
 		}
 		if ( isset( $arguments['item_types'] ) ) {
 			$task['item_types'] = $arguments['item_types'];
 		}
 		if ( isset( $arguments['load_rank_absolute'] ) ) {
-			$task['load_rank_absolute'] = (bool) $arguments['load_rank_absolute'];
+			$task['load_rank_absolute'] = External_Data_Flag::read( 'load_rank_absolute', $arguments['load_rank_absolute'] );
 		}
 		if ( isset( $arguments['historical_serp_mode'] ) ) {
 			$task['historical_serp_mode'] = (string) $arguments['historical_serp_mode'];

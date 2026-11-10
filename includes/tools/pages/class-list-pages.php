@@ -211,7 +211,7 @@ class List_Pages extends Base_Tool {
                 $this->pagination_meta( null, $params['page'], $params['per_page'], 0 )
             );
         }
-        throw new \RuntimeException( self::rest_error_message( $error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        throw self::rest_error_exception( $error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
     private static function page_row( array $page, bool $raw ): array {

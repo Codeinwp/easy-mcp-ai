@@ -110,8 +110,13 @@ class Create_Comment extends Base_Tool {
             $this->comment_status_to_action( $status, array( 'approve', 'unapprove', 'spam', 'trash' ) );
         }
 
+        $post_id = absint( $arguments['post'] );
+        if ( $post_id > 0 ) {
+            $this->refuse_missing_post( $post_id );
+        }
+
         $params = array(
-            'post'    => absint( $arguments['post'] ),
+            'post'    => $post_id,
             'content' => wp_kses_post( $arguments['content'] ),
         );
 

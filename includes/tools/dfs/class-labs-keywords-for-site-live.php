@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -147,9 +148,10 @@ class Labs_Keywords_For_Site_Live extends Base_Tool {
 			'offset',
 		);
 
+		$flags = array( 'include_subdomains', 'include_serp_info', 'include_clickstream_data' );
 		foreach ( $optional_params as $param ) {
 			if ( isset( $arguments[ $param ] ) && '' !== $arguments[ $param ] && null !== $arguments[ $param ] ) {
-				$body[ $param ] = $arguments[ $param ];
+				$body[ $param ] = in_array( $param, $flags, true ) ? External_Data_Flag::read( $param, $arguments[ $param ] ) : $arguments[ $param ];
 			}
 		}
 

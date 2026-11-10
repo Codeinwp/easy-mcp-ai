@@ -150,11 +150,11 @@ class Update_Site_Settings extends Base_Tool {
         $params = array();
 
         if ( isset( $arguments['title'] ) ) {
-            $params['title'] = sanitize_text_field( $arguments['title'] );
+            $params['title'] = self::markup_arg( $arguments, 'title' );
         }
 
         if ( isset( $arguments['description'] ) ) {
-            $params['description'] = sanitize_text_field( $arguments['description'] );
+            $params['description'] = self::markup_arg( $arguments, 'description' );
         }
 
         if ( isset( $arguments['timezone'] ) ) {

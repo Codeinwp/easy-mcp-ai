@@ -1,6 +1,7 @@
 <?php
 namespace Easy_MCP_AI\Tools\Users;
 
+use Easy_MCP_AI\Approvals\Preview_Values;
 use Easy_MCP_AI\Tools\Base_Tool;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -181,10 +182,11 @@ class Update_User extends Base_Tool {
 
     private static function grants_takeover_role( array $arguments ): bool {
         foreach ( array( 'roles', 'add_roles' ) as $field ) {
-            if ( ! isset( $arguments[ $field ] ) || ! is_array( $arguments[ $field ] ) ) {
+            $roles = 'roles' === $field ? self::parse_roles( $arguments, '' ) : ( $arguments[ $field ] ?? null );
+            if ( ! is_array( $roles ) ) {
                 continue;
             }
-            foreach ( $arguments[ $field ] as $role ) {
+            foreach ( $roles as $role ) {
                 if ( is_string( $role ) && self::role_is_takeover_grant( sanitize_text_field( $role ) ) ) {
                     return true;
                 }
@@ -252,6 +254,28 @@ class Update_User extends Base_Tool {
         }
     }
 
+    public static function parse_roles( array $arguments, string $nothing_done ): ?array {
+        if ( empty( $arguments['roles'] ) ) {
+            return null;
+        }
+        $roles = $arguments['roles'];
+        if ( is_string( $roles ) ) {
+            $roles = preg_split( '/[\s,]+/', $roles, -1, PREG_SPLIT_NO_EMPTY );
+            return is_array( $roles ) && array() !== $roles ? $roles : null;
+        }
+        if ( ! is_array( $roles ) ) {
+            $shown = wp_json_encode( $roles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION );
+            throw new \InvalidArgumentException( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                \Easy_MCP_AI\MCP\Refusal_Text::fit(
+                    'roles must be a list of role slugs, such as ["editor"], or text such as "editor, author", not %1$s.%2$s',
+                    array( is_string( $shown ) ? $shown : gettype( $roles ), '' === $nothing_done ? '' : ' ' . $nothing_done ),
+                    0
+                )
+            );
+        }
+        return $roles;
+    }
+
     public function describe( array $arguments ) {
         try {
             $id   = isset( $arguments['user_id'] ) && is_numeric( $arguments['user_id'] ) ? (int) $arguments['user_id'] : 0;
@@ -267,6 +291,10 @@ class Update_User extends Base_Tool {
         } catch ( \Throwable $e ) {
             return '';
         }
+    }
+
+    public function approval_details( array $arguments ): ?array {
+        return self::generic_details( $this, $arguments );
     }
 
     private static function preview_sentence( array $user, int $id, array $parts ): string {
@@ -297,8 +325,9 @@ class Update_User extends Base_Tool {
 
     private static function describe_role_changes( array $arguments, array $user ): array {
         $parts = array();
-        if ( ! empty( $arguments['roles'] ) && is_array( $arguments['roles'] ) ) {
-            $parts[] = sprintf( 'roles %s → %s', self::role_list( isset( $user['roles'] ) ? $user['roles'] : array() ), self::role_list( $arguments['roles'] ) );
+        $roles = self::parse_roles( $arguments, '' );
+        if ( null !== $roles ) {
+            $parts[] = sprintf( 'roles %s → %s', self::role_list( isset( $user['roles'] ) ? $user['roles'] : array() ), self::role_list( $roles ) );
         }
         foreach ( array( 'add_roles' => 'add roles: ', 'remove_roles' => 'remove roles: ' ) as $field => $label ) {
             if ( ! empty( $arguments[ $field ] ) && is_array( $arguments[ $field ] ) ) {
@@ -312,9 +341,7 @@ class Update_User extends Base_Tool {
         $parts = array();
         foreach ( array( 'name', 'first_name', 'last_name', 'nickname', 'slug', 'url', 'description', 'locale', 'admin_color', 'user_registered' ) as $field ) {
             if ( isset( $arguments[ $field ] ) && is_scalar( $arguments[ $field ] ) ) {
-                $value   = (string) $arguments[ $field ];
-                $value   = strlen( $value ) > 80 ? substr( $value, 0, 77 ) . '…' : $value;
-                $parts[] = sprintf( "%s '%s'", $field, $value );
+                $parts[] = Preview_Values::named( $field, (string) $arguments[ $field ] );
             }
         }
         foreach ( array_merge( self::FLAG_FIELDS, array( 'use_ssl' ) ) as $field ) {
@@ -332,7 +359,14 @@ class Update_User extends Base_Tool {
     }
 
     private static function flag( array $arguments, string $name ): bool {
-        return ! empty( $arguments[ $name ] ) && rest_sanitize_boolean( $arguments[ $name ] );
+        return self::boolean_arg( $arguments, $name, false, 'Nothing was changed.' );
+    }
+
+    public function precheck( array $arguments ): void {
+        self::parse_roles( $arguments, 'Nothing was changed.' );
+        foreach ( array( 'remove_from_site', 'add_to_site', 'skip_email' ) as $name ) {
+            self::flag( $arguments, $name );
+        }
     }
 
     public function execute( array $arguments ) {
@@ -380,8 +414,9 @@ class Update_User extends Base_Tool {
             $params['last_name'] = sanitize_text_field( $arguments['last_name'] );
         }
 
-        if ( ! empty( $arguments['roles'] ) ) {
-            $params['roles'] = $this->validate_assignable_roles( array_map( 'sanitize_text_field', $arguments['roles'] ) );
+        $roles = self::parse_roles( $arguments, 'Nothing was changed.' );
+        if ( null !== $roles ) {
+            $params['roles'] = $this->validate_assignable_roles( array_map( 'sanitize_text_field', $roles ) );
         }
 
         if ( isset( $arguments['description'] ) ) {

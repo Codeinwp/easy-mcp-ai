@@ -9,6 +9,18 @@ class Change_Recorder {
 
     const EXPLANATION_FIELDS = array( 'content_capture' );
 
+    const TERM_SET_EXPLANATION_FIELDS = array( 'whole_set' );
+
+    public static function term_set_unknown( $before, $after ) {
+        if ( ! empty( $after['value_unavailable'] ) || ! empty( $before['value_unavailable'] ) ) {
+            return 'unread';
+        }
+        if ( is_array( $before ) && array() === ( $before['term_ids'] ?? null ) && empty( $before['whole_set'] ) ) {
+            return 'earlier_version';
+        }
+        return null;
+    }
+
     private $repo;
 
     private $post_before = array();
@@ -64,6 +76,7 @@ class Change_Recorder {
         'easy_mcp_ai_divi_options_lock',
         'easy_mcp_ai_tool_policy_lock',
         'easy_mcp_ai_media_upload_',
+        'easy_mcp_ai_call_observations',
     );
 
     private static $user_meta_blocked_exact  = array( 'session_tokens' );
@@ -145,6 +158,8 @@ class Change_Recorder {
         $this->track( 'attachment_updated', 'on_attachment_updated', 10, 3 );
         $this->track( 'delete_attachment', 'on_delete_attachment', 10, 1 );
 
+        $this->track( 'add_term_relationship', 'on_term_relationships_change', PHP_INT_MIN, 3 );
+        $this->track( 'delete_term_relationships', 'on_term_relationships_change', PHP_INT_MIN, 3 );
         $this->track( 'set_object_terms', 'on_set_object_terms', 10, 6 );
 
         $this->track( 'update_post_meta', 'on_update_post_meta', 10, 4 );
@@ -537,29 +552,72 @@ class Change_Recorder {
         return array_merge( $this->snapshot_post( $post ), array( 'post_content' => (string) ( $post->post_content ?? '' ) ) );
     }
 
+    public function on_term_relationships_change( $object_id, $tt_ids, $taxonomy ) {
+        $object_id = (int) $object_id;
+        $taxonomy  = (string) $taxonomy;
+        if ( ! Change_Context::is_active() || null !== Change_Context::term_checkpoint( $object_id, $taxonomy ) || $this->is_new_post_in_this_call( $object_id, $taxonomy, array() ) ) {
+            return;
+        }
+        $set = $this->object_tt_ids( $object_id, $taxonomy );
+        if ( null === Change_Context::term_checkpoint( $object_id, $taxonomy ) ) {
+            Change_Context::set_term_checkpoint( $object_id, $taxonomy, $set );
+        }
+    }
+
     public function on_set_object_terms( $object_id, $terms, $tt_ids, $taxonomy, $append = false, $old_tt_ids = array() ) {
+        static $tokens = 0;
         if ( ! Change_Context::is_active() ) {
             return;
         }
-        $object_id = (int) $object_id;
-        $taxonomy  = (string) $taxonomy;
-        $old       = $this->int_list( $old_tt_ids );
-        $new       = $append ? $this->int_list( array_merge( $old, (array) $tt_ids ) ) : $this->int_list( $tt_ids );
-        if ( $old === $new ) {
+        $object_id  = (int) $object_id;
+        $taxonomy   = (string) $taxonomy;
+        $core_old   = $this->int_list( $old_tt_ids );
+        $checkpoint = Change_Context::term_checkpoint( $object_id, $taxonomy );
+        if ( null === $checkpoint && $append ) {
             return;
         }
-        if ( $this->is_new_post_in_this_call( $object_id, $taxonomy, $old ) ) {
+        if ( $this->is_new_post_in_this_call( $object_id, $taxonomy, $core_old ) ) {
             return;
         }
-        $this->write_row( array(
+        $old = null === $checkpoint ? $core_old : $checkpoint['tt_ids'];
+        $new = null === $checkpoint ? $this->int_list( $tt_ids ) : $this->object_tt_ids( $object_id, $taxonomy );
+        if ( null !== $checkpoint && Change_Context::term_checkpoint( $object_id, $taxonomy ) !== $checkpoint ) {
+            $old = null;
+        }
+        if ( null !== $old && $old === $new ) {
+            return;
+        }
+        $token = ++$tokens;
+        Change_Context::set_term_checkpoint( $object_id, $taxonomy, null, $token );
+        $readable = null !== $old && null !== $new;
+        $before   = $readable ? $this->term_set_payload( $old ) : array( 'value_unavailable' => true );
+        $after    = $readable ? $this->term_set_payload( $new ) : array( 'value_unavailable' => true );
+        $row_id   = $this->write_row( array(
             'action'         => 'update',
             'object_type'    => 'object_terms',
             'object_id'      => $object_id . ':' . $taxonomy,
             'object_subtype' => $taxonomy,
-            'before_value'   => $this->term_set_payload( $old ),
-            'after_value'    => $this->term_set_payload( $new ),
+            'before_value'   => $before,
+            'after_value'    => $after,
             'changed_fields' => array( 'term_ids' ),
         ) );
+        $now = Change_Context::term_checkpoint( $object_id, $taxonomy );
+        $resolved = ! isset( $before['unresolved_term_taxonomy_ids'] ) && ! isset( $after['unresolved_term_taxonomy_ids'] );
+        if ( $readable && $resolved && $row_id > 0 && null !== $now && $token === $now['token'] ) {
+            Change_Context::set_term_checkpoint( $object_id, $taxonomy, $new );
+        }
+    }
+
+    private function object_tt_ids( int $object_id, string $taxonomy ) {
+        global $wpdb;
+        if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) || ! method_exists( $wpdb, 'get_col' ) || ! method_exists( $wpdb, 'prepare' ) ) {
+            return null;
+        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the set as stored, not a cached copy; see term_ids_for_tt_ids() for why not get_terms().
+        if ( false === $wpdb->query( $wpdb->prepare( "SELECT tr.term_taxonomy_id FROM {$wpdb->term_relationships} AS tr INNER JOIN {$wpdb->term_taxonomy} AS tt ON tt.term_taxonomy_id = tr.term_taxonomy_id WHERE tr.object_id = %d AND tt.taxonomy = %s", $object_id, $taxonomy ) ) ) {
+            return null;
+        }
+        return $this->int_list( $wpdb->get_col() );
     }
 
     private function term_set_payload( array $tt_ids ) {
@@ -573,7 +631,7 @@ class Change_Recorder {
                 $unresolved[] = $tt_id;
             }
         }
-        $payload = array( 'term_ids' => $this->int_list( $term_ids ) );
+        $payload = array( 'term_ids' => $this->int_list( $term_ids ), 'whole_set' => true );
         if ( $unresolved ) {
             $payload['unresolved_term_taxonomy_ids'] = $this->int_list( $unresolved );
         }

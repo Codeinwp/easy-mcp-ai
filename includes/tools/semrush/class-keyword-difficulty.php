@@ -36,18 +36,14 @@ class Keyword_Difficulty extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'phrase' ) );
-			$phrase   = (string) ( $arguments['phrase'] ?? '' );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			Semrush_Validators::validate_phrase( $phrase );
-			Semrush_Validators::validate_database( $database );
-			return ( new Semrush_Client() )->report( 'phrase_kdi', array(
-				'phrase'   => $phrase,
-				'database' => $database,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
-		}
+		$this->validate_required( $arguments, array( 'phrase' ) );
+		$phrase   = (string) ( $arguments['phrase'] ?? '' );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		Semrush_Validators::validate_phrase( $phrase );
+		Semrush_Validators::validate_database( $database );
+		return ( new Semrush_Client() )->report( 'phrase_kdi', array(
+			'phrase'   => $phrase,
+			'database' => $database,
+		) );
 	}
 }

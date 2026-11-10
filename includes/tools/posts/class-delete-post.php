@@ -53,12 +53,16 @@ class Delete_Post extends Base_Tool {
     }
 
     public function describe( array $arguments ) {
+        try {
+            $force = self::boolean_arg( $arguments, 'force', false, '' );
+        } catch ( \InvalidArgumentException $e ) {
+            return '';
+        }
         $id = isset( $arguments['post_id'] ) ? (int) $arguments['post_id'] : 0;
         $post = $id > 0 ? $this->peek( '/wp/v2/posts/' . $id, 'id,title,status' ) : null;
         if ( ! $post ) {
             return '';
         }
-        $force = ! empty( $arguments['force'] ) && \rest_sanitize_boolean( $arguments['force'] );
         return sprintf(
             /* translators: 1: post title, 2: post id, 3: post status, 4: what happens */
             __( "Delete post '%1\$s' (ID %2\$d, %3\$s) — %4\$s.", 'easy-mcp-ai' ),
@@ -69,6 +73,7 @@ class Delete_Post extends Base_Tool {
 
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'post_id', 'post', 'delete' );
+        self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
     }
 
     public function execute( array $arguments ) {
@@ -77,7 +82,7 @@ class Delete_Post extends Base_Tool {
         $post_id = $this->parse_required_id( $arguments['post_id'], 'post_id' );
         $this->refuse_other_type( $post_id, 'post', 'delete' );
 
-        $force  = isset( $arguments['force'] ) && (bool) $arguments['force'];
+        $force  = self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
         $params = array();
 
         if ( isset( $arguments['force'] ) ) {

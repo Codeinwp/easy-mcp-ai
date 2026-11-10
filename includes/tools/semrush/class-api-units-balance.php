@@ -31,10 +31,6 @@ class Api_Units_Balance extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			return ( new Semrush_Client() )->get_balance();
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
-		}
+		return ( new Semrush_Client() )->get_balance();
 	}
 }

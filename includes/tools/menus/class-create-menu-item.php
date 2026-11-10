@@ -148,7 +148,7 @@ class Create_Menu_Item extends Base_Tool {
             'status' => 'publish',
         );
         if ( $has_title ) {
-            $params['title'] = sanitize_text_field( $arguments['title'] );
+            $params['title'] = self::markup_arg( $arguments, 'title' );
         }
         if ( isset( $arguments['url'] ) ) {
             $params['url'] = esc_url_raw( $arguments['url'] );
@@ -260,7 +260,7 @@ class Create_Menu_Item extends Base_Tool {
             if ( 'rest_no_route' === $error->get_error_code() ) {
                 throw new \RuntimeException( 'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.' );
             }
-            throw new \RuntimeException( sprintf( 'Menu %d could not be loaded: %s', $menu_id, self::rest_error_message( $error ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw self::rest_error_exception( $error, sprintf( 'Menu %d could not be loaded: ', $menu_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 

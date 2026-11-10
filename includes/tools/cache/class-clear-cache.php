@@ -231,7 +231,8 @@ class Clear_Cache extends Base_Tool {
         $ids = array();
         foreach ( $arguments['caches'] as $id ) {
             if ( ! is_string( $id ) || ! in_array( $id, Cache_Registry::ids(), true ) ) {
-                throw new \InvalidArgumentException( sprintf( 'Invalid caches value %s: it must be one of: %s.', \wp_json_encode( $id ), implode( ', ', Cache_Registry::ids() ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $message = \Easy_MCP_AI\MCP\Refusal_Text::fit( 'Invalid caches value %s: it is not a cache id. Omit caches to clear every cache that applies; the valid ids are listed below.', array( (string) \wp_json_encode( $id ) ) );
+                throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $message, sprintf( 'Valid caches values: %s.', implode( ', ', Cache_Registry::ids() ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
             $ids[] = $id;
         }

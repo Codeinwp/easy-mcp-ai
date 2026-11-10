@@ -36,19 +36,15 @@ class Backlinks_Summary extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'target' ) );
-			$target = trim( (string) ( $arguments['target'] ?? '' ) );
-			SeRanking_Validators::validate_target( $target );
-			$query = array( 'target' => $target );
-			if ( isset( $arguments['mode'] ) && '' !== $arguments['mode'] ) {
-				$mode = trim( (string) $arguments['mode'] );
-				SeRanking_Validators::validate_mode( $mode );
-				$query['mode'] = $mode;
-			}
-			return ( new SeRanking_Client() )->request( 'GET', '/v1/backlinks/summary', $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'target' ) );
+		$target = trim( (string) ( $arguments['target'] ?? '' ) );
+		SeRanking_Validators::validate_target( $target );
+		$query = array( 'target' => $target );
+		if ( isset( $arguments['mode'] ) && '' !== $arguments['mode'] ) {
+			$mode = trim( (string) $arguments['mode'] );
+			SeRanking_Validators::validate_mode( $mode );
+			$query['mode'] = $mode;
 		}
+		return ( new SeRanking_Client() )->request( 'GET', '/v1/backlinks/summary', $query );
 	}
 }

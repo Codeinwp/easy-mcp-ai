@@ -35,7 +35,7 @@ class Tool_Catalogue {
     public function sections( array $groups, bool $persist = true ) {
         $this->off_names = null;
         if ( $persist && function_exists( 'wp_get_abilities' ) ) {
-            $persist = \Easy_MCP_AI\Tools\Tool_Policy::observe_abilities( (array) \wp_get_abilities() );
+            $persist = \Easy_MCP_AI\Tools\Tool_Policy::observe_abilities( \Easy_MCP_AI\Tools\Excluded_Abilities::without( (array) \wp_get_abilities() ) );
         }
         $sections = array(
             'locked'             => \Easy_MCP_AI\Config::is_locked( 'easy_mcp_ai_disabled_tools' ),
@@ -261,7 +261,7 @@ class Tool_Catalogue {
         $patterns = $this->allowed_patterns();
         $enabled  = (array) \get_option( 'easy_mcp_ai_enabled_abilities', array() );
         $grouped  = array();
-        foreach ( (array) \wp_get_abilities() as $ability ) {
+        foreach ( \Easy_MCP_AI\Tools\Excluded_Abilities::without( (array) \wp_get_abilities() ) as $ability ) {
             $slug        = (string) $ability->get_name();
             $parts       = explode( '/', $slug, 2 );
             $prefix      = count( $parts ) > 1 ? $parts[0] : 'core';

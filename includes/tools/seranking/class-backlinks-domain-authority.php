@@ -35,13 +35,9 @@ class Backlinks_Domain_Authority extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'target' ) );
-			$target = trim( (string) ( $arguments['target'] ?? '' ) );
-			SeRanking_Validators::validate_target( $target );
-			return ( new SeRanking_Client() )->request( 'GET', '/v1/backlinks/authority/domain', array( 'target' => $target ) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
-		}
+		$this->validate_required( $arguments, array( 'target' ) );
+		$target = trim( (string) ( $arguments['target'] ?? '' ) );
+		SeRanking_Validators::validate_target( $target );
+		return ( new SeRanking_Client() )->request( 'GET', '/v1/backlinks/authority/domain', array( 'target' => $target ) );
 	}
 }

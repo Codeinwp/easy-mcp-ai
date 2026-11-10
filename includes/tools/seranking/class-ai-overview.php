@@ -39,32 +39,28 @@ class Ai_Overview extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'engine', 'target', 'source' ) );
-			$engine = trim( (string) ( $arguments['engine'] ?? '' ) );
-			SeRanking_Validators::validate_enum( $engine, array( 'ai-overview', 'chatgpt', 'perplexity', 'gemini', 'ai-mode' ) );
-			$target = trim( (string) ( $arguments['target'] ?? '' ) );
-			$source = trim( (string) ( $arguments['source'] ?? '' ) );
-			SeRanking_Validators::validate_target( $target );
-			SeRanking_Validators::validate_source( $source );
+		$this->validate_required( $arguments, array( 'engine', 'target', 'source' ) );
+		$engine = trim( (string) ( $arguments['engine'] ?? '' ) );
+		SeRanking_Validators::validate_enum( $engine, array( 'ai-overview', 'chatgpt', 'perplexity', 'gemini', 'ai-mode' ) );
+		$target = trim( (string) ( $arguments['target'] ?? '' ) );
+		$source = trim( (string) ( $arguments['source'] ?? '' ) );
+		SeRanking_Validators::validate_target( $target );
+		SeRanking_Validators::validate_source( $source );
 
-			$query = array(
-				'engine' => $engine,
-				'target' => $target,
-				'source' => $source,
-			);
-			if ( isset( $arguments['scope'] ) && '' !== $arguments['scope'] ) {
-				$scope = trim( (string) $arguments['scope'] );
-				SeRanking_Validators::validate_scope( $scope );
-				$query['scope'] = $scope;
-			}
-			if ( isset( $arguments['brand'] ) && '' !== $arguments['brand'] ) {
-				$query['brand'] = trim( (string) $arguments['brand'] );
-			}
-
-			return ( new SeRanking_Client() )->request( 'GET', '/v1/ai-search/overview/by-engine/time-series', $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$query = array(
+			'engine' => $engine,
+			'target' => $target,
+			'source' => $source,
+		);
+		if ( isset( $arguments['scope'] ) && '' !== $arguments['scope'] ) {
+			$scope = trim( (string) $arguments['scope'] );
+			SeRanking_Validators::validate_scope( $scope );
+			$query['scope'] = $scope;
 		}
+		if ( isset( $arguments['brand'] ) && '' !== $arguments['brand'] ) {
+			$query['brand'] = trim( (string) $arguments['brand'] );
+		}
+
+		return ( new SeRanking_Client() )->request( 'GET', '/v1/ai-search/overview/by-engine/time-series', $query );
 	}
 }

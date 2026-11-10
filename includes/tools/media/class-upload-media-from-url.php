@@ -105,8 +105,9 @@ class Upload_Media_From_Url extends Base_Tool {
         $source = $this->resolve_source( $arguments );
 
         self::refuse_non_text_fields( $arguments );
-        $slug     = $this->parse_slug( $arguments );
-        $featured = $this->featured_image_target( $arguments );
+        $slug           = $this->parse_slug( $arguments );
+        $featured       = $this->featured_image_target( $arguments );
+        $parent_post_id = self::attachable_parent( $arguments );
 
         $url      = $this->validate_remote_url( $source['url'] );
         $filename = $this->resolve_filename( $arguments, $source['filename_hint'], $source['handoff'], $url, $source['mime_hint'] );
@@ -133,15 +134,13 @@ class Upload_Media_From_Url extends Base_Tool {
             'size'     => $body_len,
         );
 
-        $parent_post_id = self::attachable_parent( $arguments, $tmp_file );
-
-        $attachment_id = media_handle_sideload( $file_array, $parent_post_id );
+        $attachment_id = media_handle_sideload( $file_array, $parent_post_id, null, self::creation_post_data( $slug ) );
         if ( \is_wp_error( $attachment_id ) ) {
             \wp_delete_file( $tmp_file );
             throw new \RuntimeException( $attachment_id->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
-        self::apply_attachment_fields( $attachment_id, $arguments, $slug );
+        self::apply_attachment_fields( $attachment_id, $arguments );
         if ( $featured > 0 ) {
             self::set_featured_image( $featured, (int) $attachment_id );
         }
@@ -316,21 +315,29 @@ class Upload_Media_From_Url extends Base_Tool {
         );
     }
 
-    private static function attachable_parent( array $arguments, string $tmp_file ): int {
+    private static function attachable_parent( array $arguments ): int {
         $parent_post_id = isset( $arguments['post_id'] ) ? (int) $arguments['post_id'] : 0;
         if ( $parent_post_id < 0 ) {
             $parent_post_id = 0;
         }
+        if ( $parent_post_id > 0 && ! get_post( $parent_post_id ) ) {
+            throw new \InvalidArgumentException(
+                sprintf( 'Post %d not found, so nothing can be attached to it. Nothing was imported.', $parent_post_id ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            );
+        }
         if ( $parent_post_id > 0 && ! current_user_can( 'edit_post', $parent_post_id ) ) {
-            \wp_delete_file( $tmp_file );
             throw new \RuntimeException(
-                sprintf( 'You do not have permission to attach media to post %d.', $parent_post_id ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                sprintf( 'You do not have permission to attach media to post %d. Nothing was imported.', $parent_post_id ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             );
         }
         return $parent_post_id;
     }
 
-    private static function apply_attachment_fields( int $attachment_id, array $arguments, ?string $slug ): void {
+    private static function creation_post_data( ?string $slug ): array {
+        return null === $slug ? array() : array( 'post_name' => wp_slash( $slug ) );
+    }
+
+    private static function apply_attachment_fields( int $attachment_id, array $arguments ): void {
         $post_update = array( 'ID' => $attachment_id );
         if ( array_key_exists( 'title', $arguments ) ) {
             $post_update['post_title'] = sanitize_text_field( (string) $arguments['title'] );
@@ -338,7 +345,7 @@ class Upload_Media_From_Url extends Base_Tool {
         if ( array_key_exists( 'caption', $arguments ) ) {
             $post_update['post_excerpt'] = wp_slash( (string) $arguments['caption'] );
         }
-        $post_update = self::add_post_fields( $post_update, $arguments, $slug );
+        $post_update = self::add_post_fields( $post_update, $arguments );
         if ( count( $post_update ) > 1 ) {
             wp_update_post( $post_update );
         }
@@ -387,12 +394,9 @@ class Upload_Media_From_Url extends Base_Tool {
         return sprintf( 'featured_image needs an image, and this file is %s. Nothing was imported.', '' !== $type ? $type : 'of an unknown type' );
     }
 
-    private static function add_post_fields( array $post_update, array $arguments, ?string $slug ): array {
+    private static function add_post_fields( array $post_update, array $arguments ): array {
         if ( array_key_exists( 'description', $arguments ) ) {
             $post_update['post_content'] = wp_slash( (string) $arguments['description'] );
-        }
-        if ( null !== $slug ) {
-            $post_update['post_name'] = wp_slash( $slug );
         }
         return $post_update;
     }

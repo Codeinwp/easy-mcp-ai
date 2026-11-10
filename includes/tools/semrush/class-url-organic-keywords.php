@@ -37,24 +37,20 @@ class Url_Organic_Keywords extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$url      = trim( (string) ( $arguments['url'] ?? '' ) );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			if ( '' === $url || ! \wp_http_validate_url( $url ) || 0 !== stripos( $url, 'https://' ) ) {
-				throw new \InvalidArgumentException( 'url must be a valid full URL with https:// prefix.' );
-			}
-			Semrush_Validators::validate_database( $database );
-			$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
-			if ( $limit < 1 || $limit > 10000 ) {
-				throw new \InvalidArgumentException( 'display_limit must be between 1 and 10000.' );
-			}
-			return ( new Semrush_Client() )->report( 'url_organic', array(
-				'url'           => $url,
-				'database'      => $database,
-				'display_limit' => $limit,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$url      = trim( (string) ( $arguments['url'] ?? '' ) );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		if ( '' === $url || ! \wp_http_validate_url( $url ) || 0 !== stripos( $url, 'https://' ) ) {
+			throw new \InvalidArgumentException( 'url must be a valid full URL with https:// prefix.' );
 		}
+		Semrush_Validators::validate_database( $database );
+		$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
+		if ( $limit < 1 || $limit > 10000 ) {
+			throw new \InvalidArgumentException( 'display_limit must be between 1 and 10000.' );
+		}
+		return ( new Semrush_Client() )->report( 'url_organic', array(
+			'url'           => $url,
+			'database'      => $database,
+			'display_limit' => $limit,
+		) );
 	}
 }

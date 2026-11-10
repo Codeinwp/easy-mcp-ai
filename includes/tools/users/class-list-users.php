@@ -192,8 +192,9 @@ class List_Users extends Base_Tool {
             $params['search'] = sanitize_text_field( $arguments['search'] );
         }
 
-        if ( ! empty( $arguments['roles'] ) ) {
-            $params['roles'] = array_map( 'sanitize_text_field', $arguments['roles'] );
+        $roles = Update_User::parse_roles( $arguments, '' );
+        if ( null !== $roles ) {
+            $params['roles'] = array_map( 'sanitize_text_field', $roles );
         }
         return $params;
     }

@@ -66,6 +66,9 @@ class List_Product_Variations extends Base_Tool {
 
         $this->validate_required( $arguments, array( 'product_id' ) );
         $product_id = $this->parse_required_id( $arguments['product_id'], 'product_id' );
+        if ( ! wc_get_product( $product_id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Product %d not found.', $product_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
 
         $params = array(
             'per_page' => isset( $arguments['per_page'] ) ? min( 100, max( 1, absint( $arguments['per_page'] ) ) ) : 10,

@@ -37,23 +37,19 @@ class Competitors_Organic extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'domain' ) );
-			$domain   = trim( (string) ( $arguments['domain'] ?? '' ) );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			Semrush_Validators::validate_bare_domain( $domain );
-			Semrush_Validators::validate_database( $database );
-			$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 50;
-			if ( $limit < 1 || $limit > 10000 ) {
-				throw new \InvalidArgumentException( 'display_limit must be between 1 and 10000.' );
-			}
-			return ( new Semrush_Client() )->report( 'domain_organic_organic', array(
-				'domain'        => $domain,
-				'database'      => $database,
-				'display_limit' => $limit,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'domain' ) );
+		$domain   = trim( (string) ( $arguments['domain'] ?? '' ) );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		Semrush_Validators::validate_bare_domain( $domain );
+		Semrush_Validators::validate_database( $database );
+		$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 50;
+		if ( $limit < 1 || $limit > 10000 ) {
+			throw new \InvalidArgumentException( 'display_limit must be between 1 and 10000.' );
 		}
+		return ( new Semrush_Client() )->report( 'domain_organic_organic', array(
+			'domain'        => $domain,
+			'database'      => $database,
+			'display_limit' => $limit,
+		) );
 	}
 }

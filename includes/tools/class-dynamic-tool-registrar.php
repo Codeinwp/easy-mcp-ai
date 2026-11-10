@@ -16,8 +16,8 @@ class Dynamic_Tool_Registrar {
             return;
         }
 
-        $all_abilities = \wp_get_abilities();
-        Tool_Policy::observe_abilities( (array) $all_abilities );
+        $all_abilities = Excluded_Abilities::without( (array) \wp_get_abilities() );
+        Tool_Policy::observe_abilities( $all_abilities );
 
         $enabled_slugs = (array) \get_option( 'easy_mcp_ai_enabled_abilities', array() );
         if ( empty( $enabled_slugs ) ) {
@@ -81,6 +81,9 @@ class Dynamic_Tool_Registrar {
 
                     $result = $ability->execute( $exec_args );
                     if ( \is_wp_error( $result ) ) {
+                        if ( 'ability_invalid_input' === $result->get_error_code() ) {
+                            throw \Easy_MCP_AI\MCP\Detailed_Runtime_Error::for_validation( $result->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                        }
                         throw new \RuntimeException( $result->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     }
 

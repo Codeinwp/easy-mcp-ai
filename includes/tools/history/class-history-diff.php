@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class History_Diff extends Base_Tool {
     public function get_name() { return 'wp_history_diff'; }
     public function get_description() {
-        return 'Diff two change-history entries (or one entry against current live state if "id_b" is omitted). Returns per-field before/after for keys that differ. Both entries must refer to the same object_type and object_id, or the call fails with an error. Non-admin callers (without the `easy_mcp_ai_view_all_history` capability) can only diff entries they originated. Sensitive fields (e.g. passwords, emails) are shown as the literal string "[REDACTED]" on both sides rather than their real values. When comparing against live state, the current value cannot always be read — the object type may have no live reader, the plugin that owns it may be inactive, or reading it may need a capability the caller lacks. In that case the response carries "live_state": "unreadable" with an empty "diff" and a "note" explaining why: an empty diff there means no comparison was made, NOT that nothing changed. An "explanations" object may also be present: these are notes the log recorded about the entry itself (e.g. why a post\'s previous body text is not recoverable), not fields of the object, so they are reported separately rather than compared. A "not_compared" object may also be present, on either kind of comparison: it maps each field that appears on only ONE side to the reason why — recorded but not returned by the live reader, present now but never captured, or recorded in only one of the two entries. Those fields were not compared at all, so their absence from "diff" is a limit of the comparison, not evidence that the object did or did not change.';
+        return 'Diff two change-history entries (or one entry against current live state if "id_b" is omitted). Returns per-field before/after for keys that differ. Both entries must refer to the same object_type and object_id, or the call fails with an error. Non-admin callers (without the `easy_mcp_ai_view_all_history` capability) can only diff entries they originated. Sensitive fields (e.g. passwords, emails) are shown as the literal string "[REDACTED]" on both sides rather than their real values. When comparing against live state, the current value cannot always be read — the object type may have no live reader, the plugin that owns it may be inactive, or reading it may need a capability the caller lacks. In that case the response carries "live_state": "unreadable" with an empty "diff" and a "note" explaining why: an empty diff there means no comparison was made, NOT that nothing changed. An "explanations" object may also be present: these are notes the log recorded about the entry itself (e.g. why a post\'s previous body text is not recoverable), not fields of the object, so they are reported separately rather than compared. A "not_compared" object may also be present, on either kind of comparison: it maps each field that could not be compared to the reason why — it appears on only ONE side (recorded but not returned by the live reader, present now but never captured, or recorded in only one of the two entries), or a term-assignment entry holds no comparable set (it could not read the set when it was recorded, or an earlier version recorded only the terms an addition named). Those fields were not compared at all, so their absence from "diff" is a limit of the comparison, not evidence that the object did or did not change.';
     }
     public function get_category() { return 'history'; }
     public function get_required_capability() { return 'read'; }
@@ -49,9 +49,10 @@ class History_Diff extends Base_Tool {
         if ( ! $can_view_all && (int) ( $row_a['wp_user_id'] ?? 0 ) !== $current_uid ) {
             throw new \RuntimeException( 'id_a not found' );
         }
-        $a_after = ! empty( $row_a['after_value'] ) ? json_decode( $row_a['after_value'], true ) : array();
+        $a_after   = ! empty( $row_a['after_value'] ) ? json_decode( $row_a['after_value'], true ) : array();
+        $a_unknown = $this->term_set_unknown( $row_a, 'older' );
 
-        $explanations = $this->take_explanations( $a_after );
+        $explanations = $this->take_explanations( $a_after, (string) $row_a['object_type'] );
 
         if ( isset( $args['id_b'] ) ) {
             $row_b = $repo->find( (int) $args['id_b'] );
@@ -66,10 +67,12 @@ class History_Diff extends Base_Tool {
             ) {
                 throw new \RuntimeException( 'id_a and id_b refer to different objects; diff is only meaningful between history entries of the same object_type and object_id' );
             }
-            $b_after = ! empty( $row_b['after_value'] ) ? json_decode( $row_b['after_value'], true ) : array();
-            $b_label = (int) $row_b['id'];
+            $b_after   = ! empty( $row_b['after_value'] ) ? json_decode( $row_b['after_value'], true ) : array();
+            $b_unknown = $this->term_set_unknown( $row_b, 'newer' );
+            $b_label   = (int) $row_b['id'];
         } else {
-            $b_after = $this->live_state( $row_a['object_type'], $row_a['object_id'], $can_view_all, $row_a['object_subtype'] ?? null );
+            $b_unknown = null;
+            $b_after   = $this->live_state( $row_a['object_type'], $row_a['object_id'], $can_view_all, $row_a['object_subtype'] ?? null );
             if ( null === $b_after ) {
                 $out = array(
                     'a'           => (int) $row_a['id'],
@@ -80,6 +83,10 @@ class History_Diff extends Base_Tool {
                     'live_state'  => 'unreadable',
                     'note'        => __( 'The current value could not be read — either this object type has no live reader, the plugin that owns it is not active, or reading it needs a capability you do not hold. No comparison was made; the absence of differences below does not mean nothing changed.', 'easy-mcp-ai' ),
                 );
+                if ( null !== $a_unknown ) {
+                    $out['not_compared']      = $this->term_fields_not_compared( $row_a, $a_after, array(), $a_unknown );
+                    $out['not_compared_note'] = self::unknown_note();
+                }
                 if ( $explanations ) {
                     $out['explanations'] = $explanations;
                 }
@@ -92,13 +99,17 @@ class History_Diff extends Base_Tool {
             $b_label = 'live';
         }
 
-        $explanations = array_merge( $explanations, $this->take_explanations( $b_after ) );
+        $explanations = array_merge( $explanations, $this->take_explanations( $b_after, (string) $row_a['object_type'] ) );
 
         $uncomparable = array();
         $a_keys       = array_keys( (array) $a_after );
         $b_keys       = array_keys( (array) $b_after );
 
-        if ( empty( $a_after ) || empty( $b_after ) ) {
+        $unknown = ( null !== $a_unknown || null !== $b_unknown ) ? implode( '; ', array_filter( array( $a_unknown, $b_unknown ) ) ) : null;
+        if ( null !== $unknown ) {
+            $uncomparable = $this->term_fields_not_compared( $row_a, $a_after, (array) $b_after, $unknown );
+            $keys         = array();
+        } elseif ( empty( $a_after ) || empty( $b_after ) ) {
             $keys = array_unique( array_merge( $a_keys, $b_keys ) );
         } else {
             $keys = array_values( array_intersect( $a_keys, $b_keys ) );
@@ -131,7 +142,9 @@ class History_Diff extends Base_Tool {
         );
         if ( $uncomparable ) {
             $out['not_compared'] = $uncomparable;
-            $out['not_compared_note'] = __( 'These fields appear on only one side of the comparison, so they were not compared. Each entry says why. Their absence from "diff" is a limit of the comparison, not evidence that the object changed or did not change.', 'easy-mcp-ai' );
+            $out['not_compared_note'] = null !== $unknown
+                ? self::unknown_note()
+                : __( 'These fields appear on only one side of the comparison, so they were not compared. Each entry says why. Their absence from "diff" is a limit of the comparison, not evidence that the object changed or did not change.', 'easy-mcp-ai' );
         }
         if ( $explanations ) {
             $out['explanations'] = $explanations;
@@ -139,12 +152,49 @@ class History_Diff extends Base_Tool {
         return $out;
     }
 
-    private function take_explanations( &$payload ) {
+    private function term_set_unknown( array $row, $side ) {
+        if ( 'object_terms' !== ( $row['object_type'] ?? '' ) ) {
+            return null;
+        }
+        $state = \Easy_MCP_AI\History\Change_Recorder::term_set_unknown(
+            ! empty( $row['before_value'] ) ? json_decode( (string) $row['before_value'], true ) : null,
+            ! empty( $row['after_value'] ) ? json_decode( (string) $row['after_value'], true ) : null
+        );
+        if ( 'unread' === $state ) {
+            return 'older' === $side
+                ? __( 'the older entry could not read it when it was recorded', 'easy-mcp-ai' )
+                : __( 'the newer entry could not read it when it was recorded', 'easy-mcp-ai' );
+        }
+        if ( 'earlier_version' === $state ) {
+            return 'older' === $side
+                ? __( 'an earlier version recorded the older entry, and may have kept only the terms an addition named', 'easy-mcp-ai' )
+                : __( 'an earlier version recorded the newer entry, and may have kept only the terms an addition named', 'easy-mcp-ai' );
+        }
+        return null;
+    }
+
+    private static function unknown_note() {
+        return __( 'These fields were not recorded in a form that can be compared, so they were not compared. Each entry says which side and why. Their absence from "diff" is a limit of the comparison, not evidence that the object changed or did not change.', 'easy-mcp-ai' );
+    }
+
+    private function term_fields_not_compared( array $row_a, $a_after, array $b_after, $reason ) {
+        $fields = array_diff( array_unique( array_merge( array_keys( (array) $a_after ), array_keys( $b_after ) ) ), array( 'value_unavailable', 'unresolved_term_taxonomy_ids' ) );
+        if ( ! $fields ) {
+            $fields = (array) json_decode( (string) ( $row_a['changed_fields'] ?? '' ), true );
+        }
+        return array_fill_keys( array_map( 'strval', $fields ), $reason );
+    }
+
+    private function take_explanations( &$payload, $object_type ) {
         $found = array();
         if ( ! is_array( $payload ) ) {
             return $found;
         }
-        foreach ( \Easy_MCP_AI\History\Change_Recorder::EXPLANATION_FIELDS as $field ) {
+        $fields = \Easy_MCP_AI\History\Change_Recorder::EXPLANATION_FIELDS;
+        if ( 'object_terms' === $object_type ) {
+            $fields = array_merge( $fields, \Easy_MCP_AI\History\Change_Recorder::TERM_SET_EXPLANATION_FIELDS );
+        }
+        foreach ( $fields as $field ) {
             if ( array_key_exists( $field, $payload ) ) {
                 $found[ $field ] = $payload[ $field ];
                 unset( $payload[ $field ] );

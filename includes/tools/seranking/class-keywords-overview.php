@@ -40,28 +40,24 @@ class Keywords_Overview extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'source', 'keywords' ) );
-			$source   = trim( (string) ( $arguments['source'] ?? '' ) );
-			$keywords = $arguments['keywords'] ?? array();
-			if ( ! is_array( $keywords ) ) {
-				throw new \InvalidArgumentException( 'keywords must be an array of strings.' );
-			}
-			SeRanking_Validators::validate_source( $source );
-			SeRanking_Validators::validate_keywords( $keywords );
-
-			$query = array( 'source' => $source );
-			$body  = array( 'keywords' => array_values( $keywords ) );
-			foreach ( array( 'sort', 'sort_order', 'history_from', 'history_to' ) as $opt ) {
-				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-					$body[ $opt ] = trim( (string) $arguments[ $opt ] );
-				}
-			}
-
-			$json = ( new SeRanking_Client() )->request( 'POST', '/v1/keywords/export', $query, $body );
-			return array( 'items' => $json );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'source', 'keywords' ) );
+		$source   = trim( (string) ( $arguments['source'] ?? '' ) );
+		$keywords = $arguments['keywords'] ?? array();
+		if ( ! is_array( $keywords ) ) {
+			throw new \InvalidArgumentException( 'keywords must be an array of strings.' );
 		}
+		SeRanking_Validators::validate_source( $source );
+		SeRanking_Validators::validate_keywords( $keywords );
+
+		$query = array( 'source' => $source );
+		$body  = array( 'keywords' => array_values( $keywords ) );
+		foreach ( array( 'sort', 'sort_order', 'history_from', 'history_to' ) as $opt ) {
+			if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+				$body[ $opt ] = trim( (string) $arguments[ $opt ] );
+			}
+		}
+
+		$json = ( new SeRanking_Client() )->request( 'POST', '/v1/keywords/export', $query, $body );
+		return array( 'items' => $json );
 	}
 }

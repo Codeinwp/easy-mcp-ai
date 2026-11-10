@@ -152,7 +152,7 @@ class Reorder_Menu_Items extends Base_Tool {
         if ( $response->is_error() ) {
             $error = $response->as_error();
             self::throw_if_no_route( $error );
-            throw new \RuntimeException( sprintf( 'Menu %d could not be loaded: %s', $menu_id, self::rest_error_message( $error ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw self::rest_error_exception( $error, sprintf( 'Menu %d could not be loaded: ', $menu_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 

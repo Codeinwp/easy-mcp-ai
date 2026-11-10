@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Update_Coupon extends Base_Tool {
 
+    use Product_Terms;
+
     public function get_name() {
         return 'wp_wc_update_coupon';
     }
@@ -89,12 +91,12 @@ class Update_Coupon extends Base_Tool {
                 ),
                 'product_ids' => array(
                     'type'        => 'array',
-                    'description' => 'List of product IDs the coupon applies to.',
+                    'description' => 'List of product IDs the coupon applies to. Each must be the ID of a product or a variation of this site; one that is not is refused before anything is saved.',
                     'items'       => array( 'type' => 'integer' ),
                 ),
                 'excluded_product_ids' => array(
                     'type'        => 'array',
-                    'description' => 'List of product IDs the coupon does not apply to.',
+                    'description' => 'List of product IDs the coupon does not apply to. Each must be the ID of a product or a variation of this site; one that is not is refused before anything is saved.',
                     'items'       => array( 'type' => 'integer' ),
                 ),
             ),
@@ -153,10 +155,10 @@ class Update_Coupon extends Base_Tool {
             $params['usage_limit_per_user'] = absint( $arguments['usage_limit_per_user'] );
         }
         if ( isset( $arguments['product_ids'] ) && is_array( $arguments['product_ids'] ) ) {
-            $params['product_ids'] = array_map( 'absint', $arguments['product_ids'] );
+            $params['product_ids'] = $this->product_ids_param( $arguments['product_ids'], 'product_ids' );
         }
         if ( isset( $arguments['excluded_product_ids'] ) && is_array( $arguments['excluded_product_ids'] ) ) {
-            $params['excluded_product_ids'] = array_map( 'absint', $arguments['excluded_product_ids'] );
+            $params['excluded_product_ids'] = $this->product_ids_param( $arguments['excluded_product_ids'], 'excluded_product_ids' );
         }
 
         $data = $this->rest_request( 'PUT', '/wc/v3/coupons/' . $id, $params );

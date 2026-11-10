@@ -70,8 +70,9 @@ class GA_Client extends Abstract_Google_Client {
                     "Access denied. Add the service account ({$creds['client_email']}) as a Viewer in GA4 → Admin → Property access management, and enable both the Analytics Data API and Analytics Admin API in your Google Cloud project." // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 );
             }
-            throw new \RuntimeException(
-                'Access denied by Google Analytics. The configured service account does not have access to this property. A site administrator can grant access in Easy MCP AI → Tools → Connections → Test connection.'
+            throw new \Easy_MCP_AI\MCP\Detailed_Runtime_Error(
+                'Access denied by Google Analytics. The configured service account does not have access to this property.',
+                'A site administrator can grant access in Easy MCP AI → Tools → Connections → Test connection.'
             );
         }
         if ( 404 === $code ) {
@@ -97,9 +98,13 @@ class GA_Client extends Abstract_Google_Client {
             ? $decoded['error']['message']
             : "HTTP {$code}";
         if ( 401 === $code || 403 === $code ) {
-            throw new \RuntimeException(
-                "Google Analytics refused the change: {$detail} Changing a property needs the service account to hold the Editor role on it (GA4 → Admin → Property access management); Viewer is enough only for reading." // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            );
+            $refusal = "Google Analytics refused the change: {$detail}";
+            $remedy  = 'Changing a property needs the service account to hold the Editor role on it (GA4 → Admin → Property access management); Viewer is enough only for reading.';
+            if ( \Easy_MCP_AI\MCP\Refusal_Text::fits( $refusal ) ) {
+                throw new \Easy_MCP_AI\MCP\Detailed_Runtime_Error( $refusal, $remedy ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            $shortened = \Easy_MCP_AI\MCP\Refusal_Text::fit( 'Google Analytics refused the change: %s', array( $detail ) );
+            throw new \Easy_MCP_AI\MCP\Detailed_Runtime_Error( $shortened, $refusal . ' ' . $remedy ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         if ( 404 === $code ) {
             throw new \RuntimeException(

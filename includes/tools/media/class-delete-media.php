@@ -66,11 +66,15 @@ class Delete_Media extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        self::boolean_arg( $arguments, 'force', true, 'Nothing was deleted.' );
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'media_id' ) );
 
         $media_id = $this->parse_required_id( $arguments['media_id'], 'media_id' );
-        $force    = isset( $arguments['force'] ) ? (bool) $arguments['force'] : true;
+        $force    = self::boolean_arg( $arguments, 'force', true, 'Nothing was deleted.' );
 
         $data = $this->rest_request( 'DELETE', '/wp/v2/media/' . $media_id, array( 'force' => $force ) );
 

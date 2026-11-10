@@ -66,9 +66,9 @@ class Delete_Theme_Mod extends Base_Tool {
         $raw_ok = isset( $arguments['include_unregistered'] ) && rest_sanitize_boolean( $arguments['include_unregistered'] );
 
         foreach ( $keys as $key ) {
-            $denied = Customizer_Settings::denied_reason( $key );
+            $denied = Customizer_Settings::denied_refusal( $key );
             if ( null !== $denied ) {
-                throw new \InvalidArgumentException( $denied ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw $denied;
             }
         }
         Customizer_Settings::assert_can_customize();

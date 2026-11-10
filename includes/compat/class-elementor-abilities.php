@@ -36,6 +36,10 @@ final class Elementor_Abilities extends Vendor_Abilities {
         );
     }
 
+    protected static function from_own_registration( object $ability ): bool {
+        return self::CATEGORY === $ability->get_category();
+    }
+
     protected static function ran_before_switches_dropped(): bool {
         return \Easy_MCP_AI\Meta\Meta_Exposure::is_group_enabled( 'elementor' ) || (bool) \get_option( 'elementor_mcp_enabled', false );
     }

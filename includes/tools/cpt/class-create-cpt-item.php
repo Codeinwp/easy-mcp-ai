@@ -284,9 +284,7 @@ class Create_CPT_Item extends Base_Tool {
             if ( 'rest_no_route' === $wp_error->get_error_code() ) {
                 throw new \RuntimeException( Post_Type_Tool_Hint::no_route( $rest_base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-            throw new \RuntimeException(
-                sprintf( 'Failed to create item in "%s": %s', $rest_base, self::rest_error_message( $wp_error ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            );
+            throw self::rest_error_exception( $wp_error, sprintf( 'Failed to create item in "%s": ', $rest_base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
         return $response->get_data();

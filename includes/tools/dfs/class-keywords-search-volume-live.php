@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -156,9 +157,10 @@ class Keywords_Search_Volume_Live extends Base_Tool {
 			'sort_by',
 		);
 
+		$flags = array( 'search_partners', 'include_adult_keywords' );
 		foreach ( $optional_params as $param ) {
 			if ( isset( $arguments[ $param ] ) && '' !== $arguments[ $param ] && null !== $arguments[ $param ] ) {
-				$body[ $param ] = $arguments[ $param ];
+				$body[ $param ] = in_array( $param, $flags, true ) ? External_Data_Flag::read( $param, $arguments[ $param ] ) : $arguments[ $param ];
 			}
 		}
 

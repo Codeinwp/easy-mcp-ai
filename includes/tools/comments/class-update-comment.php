@@ -135,7 +135,15 @@ class Update_Comment extends Base_Tool {
         $meta_keys = $meta_sent ? array_keys( $params['meta'] ) : array();
         $before    = self::snapshot( $existing, $comment_id, $meta_keys );
 
-        $data = $this->rest_request( 'POST', '/wp/v2/comments/' . $comment_id, $params );
+        $request = self::build_rest_request( 'POST', '/wp/v2/comments/' . $comment_id, $params );
+        $keep_ip = self::keep_unsendable_ip( $params, $existing, $request );
+        try {
+            $data = $this->dispatch_rest_request( $request );
+        } finally {
+            if ( null !== $keep_ip ) {
+                remove_filter( 'rest_preprocess_comment', $keep_ip, PHP_INT_MAX );
+            }
+        }
 
         $after = self::snapshot( get_comment( $comment_id ), $comment_id, $meta_keys );
 
@@ -169,6 +177,24 @@ class Update_Comment extends Base_Tool {
             $params['author_ip'] = (string) $existing->comment_author_IP;
         }
         return $params;
+    }
+
+    private static function keep_unsendable_ip( array $params, ?object $existing, \WP_REST_Request $for ): ?callable {
+        if ( isset( $params['author_ip'] ) || ! $existing ) {
+            return null;
+        }
+        $stored = (string) $existing->comment_author_IP;
+        if ( '' !== $stored && rest_is_ip_address( $stored ) ) {
+            return null;
+        }
+        $filter = static function ( $prepared, $request ) use ( $stored, $for ) {
+            if ( is_array( $prepared ) && $request === $for ) {
+                $prepared['comment_author_IP'] = $stored;
+            }
+            return $prepared;
+        };
+        add_filter( 'rest_preprocess_comment', $filter, PHP_INT_MAX, 2 );
+        return $filter;
     }
 
     private function field_params( array $arguments, int $comment_id ): array {
@@ -226,6 +252,9 @@ class Update_Comment extends Base_Tool {
         $post   = $this->optional_int( $arguments, 'post', 1 );
         $parent = $this->optional_int( $arguments, 'parent', 0 );
         if ( null !== $post ) {
+            if ( get_comment( $comment_id ) ) {
+                $this->refuse_missing_post( $post );
+            }
             $out['post'] = $post;
         }
         if ( null !== $parent ) {

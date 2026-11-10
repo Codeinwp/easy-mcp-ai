@@ -4,6 +4,7 @@ namespace Easy_MCP_AI\Tools\CPT;
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\Tools\Hidden_Post_Types;
 use Easy_MCP_AI\Tools\Post_Type_Tool_Hint;
+use Easy_MCP_AI\Tools\Posts\Update_Post;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -142,8 +143,21 @@ class Update_CPT_Item extends Base_Tool {
             $arguments['rest_base'] ?? null,
             function () use ( $arguments ): void {
                 $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'POST' );
+                $this->precheck_featured_media( $arguments );
             }
         );
+    }
+
+    private function precheck_featured_media( array $arguments ): void {
+        if ( ! isset( $arguments['featured_media'], $arguments['rest_base'] ) || '' === $arguments['rest_base'] ) {
+            return;
+        }
+        $id = Create_CPT_Item::parse_non_negative_int( $arguments['featured_media'], 'featured_media' );
+        list( $post_type, $post_type_object ) = Create_CPT_Item::post_type_for_rest_base( $this->resolve_post_type_rest_base( $arguments['rest_base'], 'rest_base' ) );
+        Create_CPT_Item::refuse_unsupported_fields( array( 'featured_media' ), $post_type_object, $post_type );
+        if ( $id > 0 ) {
+            Update_Post::refuse_unusable_featured_media( $id );
+        }
     }
 
     public function execute( array $arguments ) {
@@ -226,6 +240,9 @@ class Update_CPT_Item extends Base_Tool {
         list( $post_type, $post_type_object ) = Create_CPT_Item::post_type_for_rest_base( $rest_base );
         Create_CPT_Item::refuse_unsupported_fields( $sent, $post_type_object, $post_type );
         Create_CPT_Item::refuse_unsupported_fields( $clear, $post_type_object, $post_type, 'clear' );
+        if ( isset( $params['featured_media'] ) && $params['featured_media'] > 0 ) {
+            Update_Post::refuse_unusable_featured_media( (int) $params['featured_media'] );
+        }
         if ( $has_tax_input ) {
             $params += Create_CPT_Item::tax_input_params( $arguments['tax_input'], $post_type, $params );
         }
@@ -244,9 +261,7 @@ class Update_CPT_Item extends Base_Tool {
             if ( 'rest_no_route' === $wp_error->get_error_code() ) {
                 throw new \RuntimeException( Post_Type_Tool_Hint::no_route( $rest_base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-            throw new \RuntimeException(
-                sprintf( 'Failed to update item in "%s": %s', $rest_base, self::rest_error_message( $wp_error ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            );
+            throw self::rest_error_exception( $wp_error, sprintf( 'Failed to update item in "%s": ', $rest_base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
         return $response->get_data();

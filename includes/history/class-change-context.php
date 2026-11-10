@@ -48,6 +48,17 @@ class Change_Context {
         return self::$data['_recorded_fields'][ (string) $type . ':' . (string) $id ] ?? array();
     }
 
+    public static function term_checkpoint( int $object_id, string $taxonomy ) {
+        return self::$data['_term_checkpoints'][ $object_id . ':' . $taxonomy ] ?? null;
+    }
+
+    public static function set_term_checkpoint( int $object_id, string $taxonomy, $tt_ids, int $token = 0 ) {
+        if ( ! self::$active ) {
+            return;
+        }
+        self::$data['_term_checkpoints'][ $object_id . ':' . $taxonomy ] = array( 'tt_ids' => $tt_ids, 'token' => $token );
+    }
+
     public static function increment_rows_written() {
         if ( ! self::$active ) {
             return;

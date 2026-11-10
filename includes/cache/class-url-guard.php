@@ -75,7 +75,8 @@ final class Url_Guard {
         }
         $path = '' === $path ? '/' : $path;
         if ( 1 === preg_match( '#[^A-Za-z0-9._~!$&\'()*+,;=:@/%\x80-\xff-]#', $path ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Refused %s: a page address may hold only letters, digits, characters outside ASCII and - . _ ~ ! $ & \' ) + , ; = : @ / %%; a cache plugin strips other characters, which can point the clear at a different folder.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            $message = \Easy_MCP_AI\MCP\Refusal_Text::fit( 'Refused %s: a page address may hold only letters, digits, characters outside ASCII and - . _ ~ ! $ & \' ) + , ; = : @ / %%.', array( $input ) );
+            throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $message, sprintf( 'Refused %s: a cache plugin strips any other character, which can point the clear at a different folder.', $input ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         $plain = self::decoded( $path );
         if ( false !== strpos( $plain, '//' ) || 1 === preg_match( '#(^|/)\.|\.(/|$)#', $plain ) ) {

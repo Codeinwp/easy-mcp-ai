@@ -922,6 +922,18 @@ class Server {
         $sent_arguments   = $arguments;
         $arguments        = self::normalize_booleans( $tool, $arguments );
         $approval_subject = is_array( $this->approval_mode ) ? self::normalize_booleans( $tool, $this->approval_mode ) : $arguments;
+        $off_schema = Argument_Schema_Check::off_schema( $tool, $arguments );
+        $observed_id = null !== self::$active_call && isset( self::$active_call['rpc_id'] ) ? self::$active_call['rpc_id'] : $id;
+
+        $off_schema = Off_Schema_Refusal::classify( $tool, $arguments, $off_schema );
+        $refusable  = Off_Schema_Refusal::refused( $tool_name, $off_schema );
+        if ( array() !== $refusable ) {
+            $refused        = self::error_result( Off_Schema_Refusal::refusal( $tool, $refusable, $arguments ) );
+            $refusal_row_id = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'error' );
+            $this->note_audit_error( $refusal_row_id, $refused );
+            self::observe_off_schema( $off_schema, $observed_id, $tool_name, $refusal_row_id );
+            return JSON_RPC::success_response( $id, $refused );
+        }
 
         if ( 'skip' !== $this->approval_mode && method_exists( $tool, 'precheck' ) ) {
             if ( \Easy_MCP_AI\Approvals\Approval_Gate::requires_approval( $tool, $approval_subject ) ) {
@@ -931,6 +943,7 @@ class Server {
                     'token_id'      => $token_id,
                     'allowed_tools' => $allowed_tools,
                     'approval_kind' => null,
+                    'rpc_id'        => $observed_id,
                 );
                 try {
                     $refused = self::precheck_refusal( $tool, $arguments );
@@ -938,7 +951,8 @@ class Server {
                     self::$active_call = $caller_before;
                 }
                 if ( null !== $refused ) {
-                    $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'error' );
+                    $refused_audit_id = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'error' );
+                    self::observe_off_schema( $off_schema, $observed_id, $tool_name, $refused_audit_id );
                     return JSON_RPC::success_response( $id, $refused );
                 }
             }
@@ -962,12 +976,14 @@ class Server {
         }
         if ( 'refused' === $approval['kind'] ) {
             $this->last_approval = array( 'kind' => 'refused', 'approval_id' => null );
-            $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_refused' );
+            $refused_audit_id    = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_refused' );
+            self::observe_off_schema( $off_schema, $observed_id, $tool_name, $refused_audit_id );
             return JSON_RPC::success_response( $id, \Easy_MCP_AI\Approvals\Approval_Gate::refusal_result( $approval['reason'], $approval['message'] ) );
         }
         if ( 'replay' === $approval['kind'] ) {
             $this->last_approval = array( 'kind' => 'replay', 'approval_id' => $approval['row']['approval_id'] );
-            $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_replayed' );
+            $replayed_audit_id   = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_replayed' );
+            self::observe_off_schema( $off_schema, $observed_id, $tool_name, $replayed_audit_id );
             return JSON_RPC::success_response( $id, $approval['result'] );
         }
         if ( 'ask_form' === $approval['kind'] || 'ask' === $approval['kind'] ) {
@@ -975,6 +991,7 @@ class Server {
             $paused_audit_id = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'approval_required' );
             $this->note_audit_approval( $paused_audit_id, $approval['row'] );
             $this->get_approval_gate()->note_audit_id( $approval['row'], $paused_audit_id );
+            self::observe_off_schema( $off_schema, $observed_id, $tool_name, $paused_audit_id );
             if ( 'ask_form' === $approval['kind'] ) {
                 return $this->get_approval_gate()->build_input_required( $id, $approval['row'] );
             }
@@ -983,6 +1000,7 @@ class Server {
 
         $audit_id            = $this->log_tool_call( $token_id, $tool_name, $sent_arguments, 'pending' );
         $this->last_audit_id = $audit_id;
+        self::observe_off_schema( $off_schema, $observed_id, $tool_name, $audit_id );
         if ( $approval_row ) {
             $this->note_audit_approval( $audit_id, $approval_row );
         }
@@ -997,6 +1015,7 @@ class Server {
         $stack_entered      = false;
         $hook_arguments     = array();
         $call_context       = array();
+        $rows_written       = null;
 
         try {
         if ( ! $composite && class_exists( '\\Easy_MCP_AI\\History\\Change_Context' ) ) {
@@ -1034,6 +1053,7 @@ class Server {
                 'token_id'      => $token_id,
                 'allowed_tools' => $allowed_tools,
                 'approval_kind' => $this->last_approval['kind'],
+                'rpc_id'        => $observed_id,
             );
             $hook_arguments = (array) $this->redact_for_tool( $tool_name, $arguments );
             $call_context   = array(
@@ -1056,7 +1076,7 @@ class Server {
                 $file_block = $result->content_block();
                 $result     = $result->get_data();
             }
-            if ( is_array( $result ) && isset( $result['error'] ) && is_string( $result['error'] ) ) {
+            if ( is_array( $result ) && isset( $result['error'] ) && is_string( $result['error'] ) && '' !== trim( $result['error'] ) ) {
                 $result['error'] = self::sanitize_error_message( $result['error'] );
             }
             $output_schema  = method_exists( $tool, 'get_output_schema' ) ? $tool->get_output_schema() : null;
@@ -1114,6 +1134,7 @@ class Server {
                 Tool_Call_Stack::leave();
             }
             $duration_ms = null === $exec_started ? null : (int) round( ( microtime( true ) - $exec_started ) * 1000 );
+            $cleanup_finished = false;
             try {
                 $this->update_audit_status( $audit_id, null === $final_status ? 'error' : $final_status, $duration_ms );
                 if ( 'error' === $final_status ) {
@@ -1130,6 +1151,7 @@ class Server {
                     try {
                         \do_action( 'easy_mcp_ai_change_context_disarming' );
                     } finally {
+                        $rows_written = \Easy_MCP_AI\History\Change_Context::rows_written();
                         \Easy_MCP_AI\History\Change_Context::clear();
                     }
                 }
@@ -1144,20 +1166,53 @@ class Server {
                         }
                     }
                 }
+                $cleanup_finished = true;
             } finally {
                 if ( ! $composite && class_exists( '\\Easy_MCP_AI\\History\\Change_Context' ) && \Easy_MCP_AI\History\Change_Context::is_active() && $audit_id === \Easy_MCP_AI\History\Change_Context::get( 'audit_id' ) ) {
                     try {
                         \do_action( 'easy_mcp_ai_change_context_disarming' );
                     } catch ( \Throwable $ignored ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                     } finally {
+                        $rows_written = \Easy_MCP_AI\History\Change_Context::rows_written();
                         \Easy_MCP_AI\History\Change_Context::clear();
                     }
                 }
                 if ( $stack_entered ) {
                     self::fire_after_tool_call( $tool_name, $hook_arguments, $call_context, $final_status, $result, $approval_outcome, $duration_ms );
                 }
+                self::observe_after_call( $cleanup_finished ? $final_status : 'error', $rows_written, $observed_id, $tool_name, $audit_id );
             }
         }
+    }
+
+    private static function observe_off_schema( array $off_schema, $rpc_id, $tool_name, $audit_id ): void {
+        if ( array() === $off_schema ) {
+            return;
+        }
+        Call_Observations::record(
+            array(
+                'kind'      => Call_Observations::OFF_SCHEMA,
+                'tool'      => $tool_name,
+                'rpc_id'    => $rpc_id,
+                'audit_id'  => $audit_id,
+                'arguments' => $off_schema,
+            )
+        );
+    }
+
+    private static function observe_after_call( $final_status, $rows_written, $rpc_id, $tool_name, $audit_id ): void {
+        if ( 'success' !== $final_status && is_int( $rows_written ) && $rows_written > 0 ) {
+            Call_Observations::record(
+                array(
+                    'kind'     => Call_Observations::WROTE_THEN_REFUSED,
+                    'tool'     => $tool_name,
+                    'rpc_id'   => $rpc_id,
+                    'audit_id' => $audit_id,
+                    'rows'     => $rows_written,
+                )
+            );
+        }
+        Call_Observations::flush();
     }
 
     private static function fire_after_tool_call( string $tool_name, array $arguments, array $context, ?string $status, $result, ?array $outcome, ?int $duration_ms ): void {
@@ -1356,7 +1411,7 @@ class Server {
 
     private static function error_result( \Exception $e ): array {
         $content = array( array( 'type' => 'text', 'text' => 'Error: ' . self::sanitize_error_message( $e->getMessage() ) ) );
-        if ( $e instanceof Detailed_Tool_Error && '' !== trim( $e->get_details() ) ) {
+        if ( ( $e instanceof Detailed_Tool_Error || $e instanceof Detailed_Runtime_Error ) && '' !== trim( $e->get_details() ) ) {
             $content[] = array( 'type' => 'text', 'text' => self::sanitize_error_message( $e->get_details(), Detailed_Tool_Error::MAX_DETAILS ) );
         }
         return array(

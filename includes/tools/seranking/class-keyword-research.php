@@ -41,37 +41,33 @@ class Keyword_Research extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'mode', 'source', 'keyword' ) );
-			$mode = trim( (string) ( $arguments['mode'] ?? '' ) );
-			SeRanking_Validators::validate_enum( $mode, array( 'similar', 'related', 'questions', 'longtail' ) );
-			$path = '/v1/keywords/' . $mode;
+		$this->validate_required( $arguments, array( 'mode', 'source', 'keyword' ) );
+		$mode = trim( (string) ( $arguments['mode'] ?? '' ) );
+		SeRanking_Validators::validate_enum( $mode, array( 'similar', 'related', 'questions', 'longtail' ) );
+		$path = '/v1/keywords/' . $mode;
 
-			$source  = trim( (string) ( $arguments['source'] ?? '' ) );
-			$keyword = trim( (string) ( $arguments['keyword'] ?? '' ) );
-			SeRanking_Validators::validate_source( $source );
-			SeRanking_Validators::validate_keyword( $keyword );
+		$source  = trim( (string) ( $arguments['source'] ?? '' ) );
+		$keyword = trim( (string) ( $arguments['keyword'] ?? '' ) );
+		SeRanking_Validators::validate_source( $source );
+		SeRanking_Validators::validate_keyword( $keyword );
 
-			$query = array( 'source' => $source, 'keyword' => $keyword );
-			if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
-				$limit = (int) $arguments['limit'];
-				SeRanking_Validators::validate_limit( $limit, 1000 );
-				$query['limit'] = $limit;
-			}
-			if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
-				$query['offset'] = (int) $arguments['offset'];
-			}
-			if ( 'longtail' !== $mode ) {
-				foreach ( array( 'sort', 'sort_order' ) as $opt ) {
-					if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-						$query[ $opt ] = trim( (string) $arguments[ $opt ] );
-					}
+		$query = array( 'source' => $source, 'keyword' => $keyword );
+		if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
+			$limit = (int) $arguments['limit'];
+			SeRanking_Validators::validate_limit( $limit, 1000 );
+			$query['limit'] = $limit;
+		}
+		if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
+			$query['offset'] = (int) $arguments['offset'];
+		}
+		if ( 'longtail' !== $mode ) {
+			foreach ( array( 'sort', 'sort_order' ) as $opt ) {
+				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
 				}
 			}
-
-			return ( new SeRanking_Client() )->request( 'GET', $path, $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
 		}
+
+		return ( new SeRanking_Client() )->request( 'GET', $path, $query );
 	}
 }

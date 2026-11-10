@@ -45,48 +45,44 @@ class Domain_Keyword_Comparison extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'source', 'compare' ) );
-			$source  = trim( (string) ( $arguments['source'] ?? '' ) );
-			$compare = trim( (string) ( $arguments['compare'] ?? '' ) );
-			SeRanking_Validators::validate_source( $source );
-			SeRanking_Validators::validate_bare_domain( $compare );
+		$this->validate_required( $arguments, array( 'source', 'compare' ) );
+		$source  = trim( (string) ( $arguments['source'] ?? '' ) );
+		$compare = trim( (string) ( $arguments['compare'] ?? '' ) );
+		SeRanking_Validators::validate_source( $source );
+		SeRanking_Validators::validate_bare_domain( $compare );
 
-			$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
-			$url    = trim( (string) ( $arguments['url'] ?? '' ) );
-			if ( '' === $domain && '' === $url ) {
-				throw new \InvalidArgumentException( 'Provide either domain or url.' );
-			}
-
-			$query = array( 'source' => $source, 'compare' => $compare );
-			if ( '' !== $domain ) {
-				SeRanking_Validators::validate_bare_domain( $domain );
-				$query['domain'] = $domain;
-			} else {
-				$query['url'] = $url;
-			}
-
-			if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
-				$limit = (int) $arguments['limit'];
-				SeRanking_Validators::validate_limit( $limit, 1000 );
-				$query['limit'] = $limit;
-			}
-			if ( isset( $arguments['diff'] ) && '' !== $arguments['diff'] ) {
-				$query['diff'] = rest_sanitize_boolean( $arguments['diff'] ) ? 1 : 0;
-			}
-			if ( isset( $arguments['page'] ) && '' !== $arguments['page'] ) {
-				$query['page'] = (int) $arguments['page'];
-			}
-			foreach ( array( 'type', 'order_field', 'order_type', 'cols' ) as $opt ) {
-				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
-				}
-			}
-
-			$json = ( new SeRanking_Client() )->request( 'GET', '/v1/domain/keywords/comparison', $query );
-			return array( 'items' => $json );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
+		$url    = trim( (string) ( $arguments['url'] ?? '' ) );
+		if ( '' === $domain && '' === $url ) {
+			throw new \InvalidArgumentException( 'Provide either domain or url.' );
 		}
+
+		$query = array( 'source' => $source, 'compare' => $compare );
+		if ( '' !== $domain ) {
+			SeRanking_Validators::validate_bare_domain( $domain );
+			$query['domain'] = $domain;
+		} else {
+			$query['url'] = $url;
+		}
+
+		if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
+			$limit = (int) $arguments['limit'];
+			SeRanking_Validators::validate_limit( $limit, 1000 );
+			$query['limit'] = $limit;
+		}
+		if ( isset( $arguments['diff'] ) && '' !== $arguments['diff'] ) {
+			$query['diff'] = SeRanking_Validators::query_flag( 'diff', $arguments['diff'] );
+		}
+		if ( isset( $arguments['page'] ) && '' !== $arguments['page'] ) {
+			$query['page'] = (int) $arguments['page'];
+		}
+		foreach ( array( 'type', 'order_field', 'order_type', 'cols' ) as $opt ) {
+			if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+				$query[ $opt ] = trim( (string) $arguments[ $opt ] );
+			}
+		}
+
+		$json = ( new SeRanking_Client() )->request( 'GET', '/v1/domain/keywords/comparison', $query );
+		return array( 'items' => $json );
 	}
 }

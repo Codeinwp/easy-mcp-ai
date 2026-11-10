@@ -77,8 +77,9 @@ class GSC_Client extends Abstract_Google_Client {
                     "Access denied. Add the service account ({$creds['client_email']}) as a user in Search Console → Settings → Users & permissions." // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 );
             }
-            throw new \RuntimeException(
-                'Access denied by Google Search Console. The configured service account does not have access to this property. A site administrator can grant access in Easy MCP AI → Tools → Connections → Test connection.'
+            throw new \Easy_MCP_AI\MCP\Detailed_Runtime_Error(
+                'Access denied by Google Search Console. The configured service account does not have access to this property.',
+                'A site administrator can grant access in Easy MCP AI → Tools → Connections → Test connection.'
             );
         }
         if ( 404 === $code ) {

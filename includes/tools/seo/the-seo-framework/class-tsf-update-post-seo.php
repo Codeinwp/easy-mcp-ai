@@ -92,7 +92,7 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 				),
 				'social_image_id'  => array(
 					'type'        => 'integer',
-					'description' => 'The social image attachment ID (_social_image_id).',
+					'description' => 'The social image attachment ID (_social_image_id): an image in the media library; 0 clears it.',
 				),
 			),
 			'required'   => array( 'post_id' ),
@@ -110,6 +110,9 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
 		}
+
+		$qubits   = self::qubit_values( $arguments );
+		$image_id = self::social_image_id( $arguments );
 
 		$updated = array();
 
@@ -139,11 +142,33 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 			}
 		}
 
+		foreach ( $qubits as $key => $value ) {
+			update_post_meta( $post_id, $key, $value );
+			$updated[] = $key;
+		}
+
+		if ( null !== $image_id ) {
+			update_post_meta( $post_id, '_social_image_id', $image_id );
+			$updated[] = '_social_image_id';
+		}
+
+		if ( array() !== $updated ) {
+			$this->clear_page_cache( array( $post_id ) );
+		}
+
+		return array(
+			'post_id'        => $post_id,
+			'updated_fields' => $updated,
+		);
+	}
+
+	private static function qubit_values( array $arguments ): array {
 		$qubit_map = array(
 			'noindex'   => '_genesis_noindex',
 			'nofollow'  => '_genesis_nofollow',
 			'noarchive' => '_genesis_noarchive',
 		);
+		$values    = array();
 		foreach ( $qubit_map as $arg => $key ) {
 			if ( ! isset( $arguments[ $arg ] ) ) {
 				continue;
@@ -158,22 +183,29 @@ class Tsf_Update_Post_Seo extends Base_Tool {
 			if ( ! is_int( $value ) || ! in_array( $value, array( -1, 0, 1 ), true ) ) {
 				throw new \InvalidArgumentException( sprintf( 'Field "%s" must be one of -1, 0, or 1.', $arg ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			}
-			update_post_meta( $post_id, $key, $value );
-			$updated[] = $key;
+			$values[ $key ] = $value;
 		}
+		return $values;
+	}
 
-		if ( isset( $arguments['social_image_id'] ) ) {
-			update_post_meta( $post_id, '_social_image_id', (int) $arguments['social_image_id'] );
-			$updated[] = '_social_image_id';
+	private static function social_image_id( array $arguments ): ?int {
+		if ( ! isset( $arguments['social_image_id'] ) ) {
+			return null;
 		}
-
-		if ( array() !== $updated ) {
-			$this->clear_page_cache( array( $post_id ) );
+		$value = $arguments['social_image_id'];
+		if ( is_string( $value ) && '' !== $value && ctype_digit( $value ) ) {
+			$value = (int) $value;
 		}
-
-		return array(
-			'post_id'        => $post_id,
-			'updated_fields' => $updated,
-		);
+		if ( ! is_int( $value ) || $value < 0 ) {
+			throw new \InvalidArgumentException( 'social_image_id must be the attachment ID of an image in the media library (an integer), or 0 to clear it. Nothing was changed.' );
+		}
+		if ( 0 === $value ) {
+			return 0;
+		}
+		$attachment = get_post( $value );
+		if ( ! $attachment || 'attachment' !== $attachment->post_type || ! wp_attachment_is_image( $value ) ) {
+			throw new \InvalidArgumentException( sprintf( 'social_image_id: %d is not the ID of an image in the media library. Nothing was changed.', $value ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+		return $value;
 	}
 }

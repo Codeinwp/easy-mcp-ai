@@ -5,6 +5,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use Easy_MCP_AI\MCP\Detailed_Tool_Error;
+use Easy_MCP_AI\MCP\Refusal_Text;
 use Easy_MCP_AI\Option_Lock;
 use Easy_MCP_AI\Tools\Base_Tool;
 
@@ -189,7 +191,7 @@ class Yoast_Update_Settings extends Base_Tool {
 	private function separator_change( $value, object $titles ): array {
 		$separators = Yoast_Site_Settings::separators( $titles );
 		if ( ! is_string( $value ) || ! isset( $separators[ $value ] ) ) {
-			throw new \InvalidArgumentException( sprintf( 'separator must be one of the separators Yoast SEO offers: %s. Nothing was changed.', implode( ', ', array_keys( $separators ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			throw self::not_one_of( 'separator must be one of the separators Yoast SEO offers', array_map( 'strval', array_keys( $separators ) ), 'Every separator Yoast SEO offers' );
 		}
 		return array(
 			'label'  => 'separator',
@@ -258,9 +260,21 @@ class Yoast_Update_Settings extends Base_Tool {
 	private function content_type( $value, string $where, array $defaults ): string {
 		$types = Yoast_Site_Settings::content_types( $defaults );
 		if ( ! is_string( $value ) || ! in_array( $value, $types, true ) ) {
-			throw new \InvalidArgumentException( sprintf( '%s.content_type must be one Yoast SEO has settings for on this site: %s. Nothing was changed.', $where, implode( ', ', $types ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			throw self::not_one_of( $where . '.content_type must be one Yoast SEO has settings for on this site', $types, 'Every content type Yoast SEO has settings for on this site' );
 		}
 		return $value;
+	}
+
+	private static function not_one_of( string $refusal, array $values, string $label ): Detailed_Tool_Error {
+		$list  = implode( ', ', $values );
+		$whole = sprintf( '%1$s: %2$s. Nothing was changed.', $refusal, $list );
+		if ( Refusal_Text::fits( $whole ) ) {
+			return new Detailed_Tool_Error( $whole );
+		}
+		return new Detailed_Tool_Error(
+			Refusal_Text::fit( '%1$s: %2$s (every one is listed below). Nothing was changed.', array( $refusal, $list ), 1 ),
+			$label . ': ' . $list . '.'
+		);
 	}
 
 	private function image_id( $value, string $where ): int {

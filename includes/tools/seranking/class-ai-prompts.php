@@ -44,49 +44,45 @@ class Ai_Prompts extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'by', 'engine', 'source' ) );
-			$by = trim( (string) ( $arguments['by'] ?? '' ) );
-			SeRanking_Validators::validate_enum( $by, array( 'target', 'brand' ) );
-			$path = ( 'brand' === $by ) ? '/v1/ai-search/prompts-by-brand' : '/v1/ai-search/prompts-by-target';
+		$this->validate_required( $arguments, array( 'by', 'engine', 'source' ) );
+		$by = trim( (string) ( $arguments['by'] ?? '' ) );
+		SeRanking_Validators::validate_enum( $by, array( 'target', 'brand' ) );
+		$path = ( 'brand' === $by ) ? '/v1/ai-search/prompts-by-brand' : '/v1/ai-search/prompts-by-target';
 
-			$engine = trim( (string) ( $arguments['engine'] ?? '' ) );
-			$source = trim( (string) ( $arguments['source'] ?? '' ) );
-			SeRanking_Validators::validate_enum( $engine, array( 'ai-overview', 'chatgpt', 'perplexity', 'gemini', 'ai-mode' ) );
-			SeRanking_Validators::validate_source( $source );
+		$engine = trim( (string) ( $arguments['engine'] ?? '' ) );
+		$source = trim( (string) ( $arguments['source'] ?? '' ) );
+		SeRanking_Validators::validate_enum( $engine, array( 'ai-overview', 'chatgpt', 'perplexity', 'gemini', 'ai-mode' ) );
+		SeRanking_Validators::validate_source( $source );
 
-			$query = array( 'engine' => $engine, 'source' => $source );
+		$query = array( 'engine' => $engine, 'source' => $source );
 
-			if ( 'target' === $by ) {
-				$this->validate_required( $arguments, array( 'target', 'scope' ) );
-				$target = trim( (string) ( $arguments['target'] ?? '' ) );
-				$scope  = trim( (string) ( $arguments['scope'] ?? '' ) );
-				SeRanking_Validators::validate_target( $target );
-				SeRanking_Validators::validate_scope( $scope );
-				$query['target'] = $target;
-				$query['scope']  = $scope;
-			} else {
-				$this->validate_required( $arguments, array( 'brand' ) );
-				$query['brand'] = trim( (string) $arguments['brand'] );
-			}
-
-			if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
-				$limit = (int) $arguments['limit'];
-				SeRanking_Validators::validate_limit( $limit, 1000 );
-				$query['limit'] = $limit;
-			}
-			if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
-				$query['offset'] = (int) $arguments['offset'];
-			}
-			foreach ( array( 'sort', 'sort_order' ) as $opt ) {
-				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
-				}
-			}
-
-			return ( new SeRanking_Client() )->request( 'GET', $path, $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		if ( 'target' === $by ) {
+			$this->validate_required( $arguments, array( 'target', 'scope' ) );
+			$target = trim( (string) ( $arguments['target'] ?? '' ) );
+			$scope  = trim( (string) ( $arguments['scope'] ?? '' ) );
+			SeRanking_Validators::validate_target( $target );
+			SeRanking_Validators::validate_scope( $scope );
+			$query['target'] = $target;
+			$query['scope']  = $scope;
+		} else {
+			$this->validate_required( $arguments, array( 'brand' ) );
+			$query['brand'] = trim( (string) $arguments['brand'] );
 		}
+
+		if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
+			$limit = (int) $arguments['limit'];
+			SeRanking_Validators::validate_limit( $limit, 1000 );
+			$query['limit'] = $limit;
+		}
+		if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
+			$query['offset'] = (int) $arguments['offset'];
+		}
+		foreach ( array( 'sort', 'sort_order' ) as $opt ) {
+			if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+				$query[ $opt ] = trim( (string) $arguments[ $opt ] );
+			}
+		}
+
+		return ( new SeRanking_Client() )->request( 'GET', $path, $query );
 	}
 }

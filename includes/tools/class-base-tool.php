@@ -72,6 +72,10 @@ abstract class Base_Tool {
         return array();
     }
 
+    public function get_argument_targets( array $arguments ): array {
+        return Argument_Targets::of( $this->get_name() );
+    }
+
     public function get_annotations() {
         return array(
             'title'           => $this->get_title(),
@@ -239,6 +243,24 @@ abstract class Base_Tool {
             throw new \InvalidArgumentException( sprintf( '%s must be a string.', $key ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return (string) $arguments[ $key ];
+    }
+
+    protected static function boolean_arg( array $arguments, string $key, bool $default, string $nothing_done ): bool {
+        if ( ! isset( $arguments[ $key ] ) ) {
+            return $default;
+        }
+        $value = $arguments[ $key ];
+        if ( \rest_is_boolean( $value ) ) {
+            return \rest_sanitize_boolean( $value );
+        }
+        $shown = wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION );
+        throw new \InvalidArgumentException( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            \Easy_MCP_AI\MCP\Refusal_Text::fit(
+                '%1$s must be true or false, not %2$s.%3$s',
+                array( $key, is_string( $shown ) ? $shown : gettype( $value ), '' === $nothing_done ? '' : ' ' . $nothing_done ),
+                1
+            )
+        );
     }
 
     public function accepted_arguments(): ?array {
@@ -1158,6 +1180,10 @@ abstract class Base_Tool {
             if ( '' === $message ) {
                 throw new \RuntimeException( self::rest_status_message( $method, $route, $response ), self::REST_ERROR_WITHOUT_MESSAGE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
+            $data = $response->get_data();
+            if ( is_array( $data ) && isset( $data['code'] ) && 'rest_invalid_param' === $data['code'] ) {
+                throw \Easy_MCP_AI\MCP\Detailed_Runtime_Error::for_validation( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
             throw new \RuntimeException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $response;
@@ -1192,5 +1218,13 @@ abstract class Base_Tool {
             }
         }
         return empty( $reasons ) ? $message : $message . ' — ' . implode( ' ', $reasons );
+    }
+
+    protected static function rest_error_exception( $error, string $prefix = '' ): \RuntimeException {
+        $message = $prefix . self::rest_error_message( $error );
+        if ( 'rest_invalid_param' === $error->get_error_code() ) {
+            return \Easy_MCP_AI\MCP\Detailed_Runtime_Error::for_validation( $message );
+        }
+        return new \RuntimeException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 }

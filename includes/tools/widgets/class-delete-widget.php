@@ -54,12 +54,16 @@ class Delete_Widget extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
+    }
+
     public function execute( array $arguments ) {
         $this->require_widget_support();
         $this->validate_required( $arguments, array( 'widget_id' ) );
 
         $widget_id = $this->validate_rest_route_segment( $arguments['widget_id'], 'widget_id' );
-        $force     = isset( $arguments['force'] ) ? rest_sanitize_boolean( $arguments['force'] ) : false;
+        $force     = self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
 
         $data = (array) $this->rest_request( 'DELETE', '/wp/v2/widgets/' . $widget_id, array( 'force' => $force ) );
 

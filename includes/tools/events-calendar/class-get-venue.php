@@ -53,7 +53,13 @@ class Get_Venue extends Base_Tool {
         }
 
         $this->validate_required( $arguments, array( 'id' ) );
-        $id   = $this->parse_required_id( $arguments['id'], 'id' );
+        $id = $this->parse_required_id( $arguments['id'], 'id' );
+
+        $venue = get_post( $id );
+        if ( ! $venue || 'tribe_venue' !== $venue->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Venue %d not found.', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
         $data = $this->rest_request( 'GET', '/tribe/events/v1/venues/' . $id, array() );
 
         return $data;

@@ -8,9 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Customizer_Settings {
 
     const DENIED_REASONS = array(
-        'nav_menu_locations' => 'Menu locations ("nav_menu_locations") cannot be changed with this tool. Assign menus to theme locations in wp-admin (Appearance → Menus → Manage Locations); the menus themselves are managed with wp_list_menus and wp_update_menu.',
-        'custom_css_post_id' => '"custom_css_post_id" is WordPress\'s internal pointer to the Additional CSS post and cannot be edited: pointing it at another post would print that post as CSS on every page. Use wp_update_custom_css to change Additional CSS.',
+        'nav_menu_locations' => 'Menu locations ("nav_menu_locations") cannot be changed with this tool. Assign a menu to theme locations with wp_update_menu (its `locations`); wp_list_menus lists the menus.',
+        'custom_css_post_id' => '"custom_css_post_id" is WordPress\'s internal pointer to the Additional CSS post and cannot be edited. Use wp_update_custom_css to change Additional CSS.',
         'custom_css'         => 'Additional CSS is not a theme mod. Use wp_get_custom_css and wp_update_custom_css.',
+    );
+
+    const DENIED_DETAILS = array(
+        'nav_menu_locations' => 'Menus can also be assigned to theme locations in wp-admin, under Appearance → Menus → Manage Locations.',
+        'custom_css_post_id' => 'Pointing it at another post would print that post as CSS on every page.',
     );
 
     const REGISTERED_ONLY_IN_SCREEN_HINT = 'If the setting appears in Appearance → Customize, the theme registers it only inside that screen and it cannot be changed through this tool.';
@@ -76,6 +81,15 @@ final class Customizer_Settings {
     public static function denied_reason( string $key ): ?string {
         $base = self::base_of( $key );
         return isset( self::DENIED_REASONS[ $base ] ) ? self::DENIED_REASONS[ $base ] : null;
+    }
+
+    public static function denied_refusal( string $key ): ?\Easy_MCP_AI\MCP\Detailed_Tool_Error {
+        $reason = self::denied_reason( $key );
+        if ( null === $reason ) {
+            return null;
+        }
+        $base = self::base_of( $key );
+        return new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $reason, isset( self::DENIED_DETAILS[ $base ] ) ? self::DENIED_DETAILS[ $base ] : '' );
     }
 
     public static function assert_can_customize(): void {
@@ -341,9 +355,9 @@ final class Customizer_Settings {
         }
 
         $data   = $setting->id_data();
-        $denied = self::denied_reason( $data['base'] );
+        $denied = self::denied_refusal( $data['base'] );
         if ( null !== $denied ) {
-            throw new \InvalidArgumentException( $denied ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw $denied;
         }
 
         if ( 'theme_mod' !== $setting->type ) {

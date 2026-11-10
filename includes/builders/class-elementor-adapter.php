@@ -33,9 +33,11 @@ final class Elementor_Adapter extends Layout_Adapter {
 
     const ALL_FIELDS = '*';
 
+    const FRONT_END_REFUSAL = 'Elementor is treating this request as a front-end page view, where it labels every widget control (the CSS ID too) as Content, so the fields cannot be told apart. Nothing was changed.';
+
     const FALLBACK_TEXT = array( 'title', 'text', 'editor', 'title_text', 'description_text', 'description', 'content', 'caption' );
 
-    const UI_CONTROLS = array( 'section', 'tab', 'tabs', 'heading', 'notice', 'raw_html', 'deprecated_notice', 'alert', 'divider', 'button', 'hidden' );
+    const UI_CONTROLS = array( 'section', 'tab', 'tabs', 'heading', 'notice', 'raw_html', 'deprecated_notice', 'alert', 'divider', 'button', 'hidden', 'promotion_control' );
 
     const CONTROL_KINDS = array(
         'text'     => 'text',
@@ -241,17 +243,20 @@ final class Elementor_Adapter extends Layout_Adapter {
         if ( null === $widget ) {
             return null;
         }
-        self::refuse_front_end_controls();
-        return self::content_fields( (array) $widget->get_controls(), true );
+        $controls = (array) $widget->get_controls();
+        self::refuse_front_end_controls( $controls );
+        return self::content_fields( $controls, true );
     }
 
-    private static function refuse_front_end_controls(): void {
+    private static function refuse_front_end_controls( array $controls ): void {
         $performance = 'Elementor\\Core\\Frontend\\Performance';
-        if ( ! is_callable( array( $performance, 'should_optimize_controls' ) ) ) {
-            return;
+        if ( is_callable( array( $performance, 'should_optimize_controls' ) ) && true === $performance::should_optimize_controls() ) {
+            throw new \RuntimeException( self::FRONT_END_REFUSAL );
         }
-        if ( true === $performance::should_optimize_controls() ) {
-            throw new \RuntimeException( 'Elementor is treating this request as a front-end page view, where it labels every widget control (the CSS ID too) as Content, so the fields cannot be told apart. Nothing was changed.' );
+        foreach ( $controls as $control ) {
+            if ( is_array( $control ) && '_element_id' === ( $control['name'] ?? null ) && 'content' === ( $control['tab'] ?? 'content' ) ) {
+                throw new \RuntimeException( self::FRONT_END_REFUSAL );
+            }
         }
     }
 

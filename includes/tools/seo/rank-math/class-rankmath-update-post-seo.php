@@ -113,6 +113,15 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 		);
 	}
 
+	public function precheck( array $arguments ): void {
+		if ( ! function_exists( 'rank_math' ) ) {
+			return;
+		}
+		self::robots_tokens( $arguments );
+		self::advanced_robots( $arguments );
+		$this->primary_term( $arguments );
+	}
+
 	public function execute( array $arguments ) {
 		if ( ! function_exists( 'rank_math' ) ) {
 			throw new \RuntimeException( 'Rank Math SEO is not active on this site. Please install and activate Rank Math SEO to use this tool.' );
@@ -127,6 +136,10 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
 		}
+
+		$robots       = self::robots_tokens( $arguments );
+		$advanced     = self::advanced_robots( $arguments );
+		$primary_term = $this->primary_term( $arguments );
 
 		$meta_map = array(
 			'title'                => 'rank_math_title',
@@ -156,37 +169,12 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 			}
 		}
 
-		if ( isset( $arguments['robots'] ) ) {
-			$allowed_robots = array( 'index', 'noindex', 'nofollow', 'noarchive', 'noimageindex', 'nosnippet' );
-			$robots_in      = $arguments['robots'];
-			if ( is_string( $robots_in ) ) {
-				$robots_in = explode( ',', $robots_in );
-			}
-			if ( ! is_array( $robots_in ) ) {
-				throw new \InvalidArgumentException( 'robots must be an array of tokens or a comma-separated string.' );
-			}
-			$robots = array();
-			foreach ( $robots_in as $token ) {
-				$token = sanitize_text_field( trim( (string) $token ) );
-				if ( '' === $token ) {
-					continue;
-				}
-				if ( ! in_array( $token, $allowed_robots, true ) ) {
-					throw new \InvalidArgumentException( 'robots tokens must be among: ' . implode( ', ', $allowed_robots ) . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-				}
-				if ( ! in_array( $token, $robots, true ) ) {
-					$robots[] = $token;
-				}
-			}
+		if ( null !== $robots ) {
 			update_post_meta( $post_id, 'rank_math_robots', $robots );
 			$updated[] = 'robots';
 		}
 
-		if ( isset( $arguments['advanced_robots'] ) ) {
-			$advanced = $arguments['advanced_robots'];
-			if ( ! is_array( $advanced ) ) {
-				throw new \InvalidArgumentException( 'advanced_robots must be an object/array.' );
-			}
+		if ( null !== $advanced ) {
 			update_post_meta( $post_id, 'rank_math_advanced_robots', $advanced );
 			$updated[] = 'advanced_robots';
 		}
@@ -201,19 +189,8 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 			$updated[] = 'pillar_content';
 		}
 
-		if ( isset( $arguments['primary_term'] ) ) {
-			if ( empty( $arguments['taxonomy'] ) ) {
-				throw new \InvalidArgumentException( 'taxonomy is required when primary_term is provided.' );
-			}
-			$taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );
-			if ( ! taxonomy_exists( $taxonomy ) ) {
-				throw new \InvalidArgumentException( 'Unknown taxonomy: ' . $taxonomy ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-			}
-			$primary_term = (int) $arguments['primary_term'];
-			if ( ! term_exists( $primary_term, $taxonomy ) ) {
-				throw new \InvalidArgumentException( 'primary_term does not exist in taxonomy ' . $taxonomy . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-			}
-			update_post_meta( $post_id, 'rank_math_primary_' . $taxonomy, (string) $primary_term );
+		if ( null !== $primary_term ) {
+			update_post_meta( $post_id, 'rank_math_primary_' . $primary_term['taxonomy'], (string) $primary_term['term'] );
 			$updated[] = 'primary_term';
 		}
 
@@ -225,6 +202,65 @@ class Rankmath_Update_Post_Seo extends Base_Tool {
 			'post_id'        => $post_id,
 			'updated_fields' => $updated,
 			'fields'         => self::stored_fields( $post_id, $arguments, $meta_map ),
+		);
+	}
+
+	private static function robots_tokens( array $arguments ): ?array {
+		if ( ! isset( $arguments['robots'] ) ) {
+			return null;
+		}
+		$allowed_robots = array( 'index', 'noindex', 'nofollow', 'noarchive', 'noimageindex', 'nosnippet' );
+		$robots_in      = $arguments['robots'];
+		if ( is_string( $robots_in ) ) {
+			$robots_in = explode( ',', $robots_in );
+		}
+		if ( ! is_array( $robots_in ) ) {
+			throw new \InvalidArgumentException( 'robots must be an array of tokens or a comma-separated string.' );
+		}
+		$robots = array();
+		foreach ( $robots_in as $token ) {
+			$token = sanitize_text_field( trim( (string) $token ) );
+			if ( '' === $token ) {
+				continue;
+			}
+			if ( ! in_array( $token, $allowed_robots, true ) ) {
+				throw new \InvalidArgumentException( 'robots tokens must be among: ' . implode( ', ', $allowed_robots ) . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			}
+			if ( ! in_array( $token, $robots, true ) ) {
+				$robots[] = $token;
+			}
+		}
+		return $robots;
+	}
+
+	private static function advanced_robots( array $arguments ): ?array {
+		if ( ! isset( $arguments['advanced_robots'] ) ) {
+			return null;
+		}
+		if ( ! is_array( $arguments['advanced_robots'] ) ) {
+			throw new \InvalidArgumentException( 'advanced_robots must be an object/array.' );
+		}
+		return $arguments['advanced_robots'];
+	}
+
+	private function primary_term( array $arguments ): ?array {
+		if ( ! isset( $arguments['primary_term'] ) ) {
+			return null;
+		}
+		if ( empty( $arguments['taxonomy'] ) ) {
+			throw new \InvalidArgumentException( 'taxonomy is required when primary_term is provided.' );
+		}
+		$taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );
+		if ( ! taxonomy_exists( $taxonomy ) ) {
+			throw new \InvalidArgumentException( 'Unknown taxonomy: ' . $taxonomy ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+		$primary_term = (int) $arguments['primary_term'];
+		if ( ! term_exists( $primary_term, $taxonomy ) ) {
+			throw new \InvalidArgumentException( 'primary_term does not exist in taxonomy ' . $taxonomy . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+		return array(
+			'taxonomy' => $taxonomy,
+			'term'     => $primary_term,
 		);
 	}
 

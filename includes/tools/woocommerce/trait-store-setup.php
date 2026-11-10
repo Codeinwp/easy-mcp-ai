@@ -45,7 +45,10 @@ trait Store_Setup {
 
     protected function refuse_catch_all_zone( array $locations ): void {
         if ( empty( $locations ) ) {
-            throw new \InvalidArgumentException( 'A shipping zone needs at least one location: WooCommerce matches a zone with none to every address, ahead of every zone after it. For "everywhere else" use zone 0 ("Rest of the world"); to stop using a zone, delete it with wp_wc_delete_shipping_zone.' );
+            throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error(
+                'A shipping zone needs at least one location: WooCommerce matches a zone with none to every address, ahead of every zone after it. Use zone 0 for "everywhere else"; to stop using a zone, delete it.',
+                'Zone 0 is WooCommerce\'s "Rest of the world" zone: it covers every location your other zones do not. Delete a zone with wp_wc_delete_shipping_zone.'
+            );
         }
     }
 
@@ -131,7 +134,7 @@ trait Store_Setup {
 
     protected function parse_editable_zone_id( $value, string $verb ): int {
         if ( 0 === $value || '0' === $value ) {
-            throw new \InvalidArgumentException( sprintf( 'Zone 0 is WooCommerce\'s "Rest of the world" zone (locations not covered by your other zones); it cannot be %s. Its shipping methods can be changed with wp_wc_add_shipping_method and wp_wc_update_shipping_method.', $verb ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \InvalidArgumentException( sprintf( 'Zone 0 is WooCommerce\'s "Rest of the world" zone (locations no other zone covers) and cannot be %s. Change its shipping methods with wp_wc_add_shipping_method or wp_wc_update_shipping_method.', $verb ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $this->parse_required_id( $value, 'id' );
     }
@@ -381,9 +384,15 @@ trait Store_Setup {
 
     protected function refuse_unknown_keys( array $sent, array $known, string $label ): void {
         $unknown = array_diff( array_map( 'strval', array_keys( $sent ) ), $known );
-        if ( ! empty( $unknown ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Unknown %1$s: %2$s. Accepted: %3$s.', $label, implode( ', ', $unknown ), empty( $known ) ? 'none' : implode( ', ', $known ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        if ( empty( $unknown ) ) {
+            return;
         }
+        $whole = sprintf( 'Unknown %1$s: %2$s. Accepted: %3$s.', $label, implode( ', ', $unknown ), empty( $known ) ? 'none' : implode( ', ', $known ) );
+        if ( \Easy_MCP_AI\MCP\Refusal_Text::fits( $whole ) ) {
+            throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $whole ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        $message = \Easy_MCP_AI\MCP\Refusal_Text::fit( 'Unknown %2$s: %1$s. The accepted ones are listed below.', array( implode( ', ', $unknown ), $label ) );
+        throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $message, $whole ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
     protected static function changed_fields( array $before, array $after, array $fields ): array {

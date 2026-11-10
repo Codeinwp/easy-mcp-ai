@@ -164,6 +164,9 @@ class History_Get extends Base_Tool {
         if ( array_key_exists( 'value_unavailable', $before ) ) {
             $map[ array_key_exists( 'value', $before ) ? 'value' : '*' ] = 'value_unavailable';
         }
+        if ( 'object_terms' === ( $out['object_type'] ?? '' ) && 'earlier_version' === \Easy_MCP_AI\History\Change_Recorder::term_set_unknown( $before, null ) ) {
+            $map['term_ids'] = 'value_unavailable';
+        }
         $max = class_exists( '\\Easy_MCP_AI\\History\\Change_Redactor' ) ? \Easy_MCP_AI\History\Change_Redactor::MAX_BYTES : 262144;
         $this->collect_markers( $before, '', $row_truncated, $max, $map );
         if ( ! empty( $before['object_ids_truncated'] ) ) {

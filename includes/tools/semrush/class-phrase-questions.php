@@ -37,23 +37,19 @@ class Phrase_Questions extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'phrase' ) );
-			$phrase   = (string) ( $arguments['phrase'] ?? '' );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			Semrush_Validators::validate_phrase( $phrase );
-			Semrush_Validators::validate_database( $database );
-			$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
-			if ( $limit < 1 || $limit > 100000 ) {
-				throw new \InvalidArgumentException( 'display_limit must be between 1 and 100000.' );
-			}
-			return ( new Semrush_Client() )->report( 'phrase_questions', array(
-				'phrase'        => $phrase,
-				'database'      => $database,
-				'display_limit' => $limit,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'phrase' ) );
+		$phrase   = (string) ( $arguments['phrase'] ?? '' );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		Semrush_Validators::validate_phrase( $phrase );
+		Semrush_Validators::validate_database( $database );
+		$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
+		if ( $limit < 1 || $limit > 100000 ) {
+			throw new \InvalidArgumentException( 'display_limit must be between 1 and 100000.' );
 		}
+		return ( new Semrush_Client() )->report( 'phrase_questions', array(
+			'phrase'        => $phrase,
+			'database'      => $database,
+			'display_limit' => $limit,
+		) );
 	}
 }

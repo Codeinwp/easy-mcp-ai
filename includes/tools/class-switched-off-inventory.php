@@ -95,7 +95,7 @@ final class Switched_Off_Inventory {
             return array();
         }
         try {
-            $all = (array) \wp_get_abilities();
+            $all = Excluded_Abilities::without( (array) \wp_get_abilities() );
         } catch ( \Throwable $e ) {
             return array();
         }

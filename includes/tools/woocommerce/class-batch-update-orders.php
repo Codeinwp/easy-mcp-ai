@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Batch_Update_Orders extends Base_Tool {
 
+    use Product_Terms;
+
     public function get_name() {
         return 'wp_wc_batch_update_orders';
     }
@@ -61,6 +63,12 @@ class Batch_Update_Orders extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        if ( class_exists( 'WooCommerce' ) && ! empty( $arguments['create'] ) && is_array( $arguments['create'] ) ) {
+            $this->refuse_unknown_created_lines( $arguments['create'] );
+        }
+    }
+
     public function execute( array $arguments ) {
         if ( ! class_exists( 'WooCommerce' ) ) {
             throw new \RuntimeException( 'WooCommerce is not active.' );
@@ -73,6 +81,7 @@ class Batch_Update_Orders extends Base_Tool {
             if ( count( $arguments['create'] ) > $soft_cap ) {
                 throw new \InvalidArgumentException( sprintf( 'create exceeds the %d-item soft cap. Use the easy_mcp_ai_wc_batch_soft_cap filter to raise the limit.', $soft_cap ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
+            $this->refuse_unknown_created_lines( $arguments['create'] );
             $body['create'] = $arguments['create'];
         }
         if ( ! empty( $arguments['update'] ) ) {
@@ -98,5 +107,13 @@ class Batch_Update_Orders extends Base_Tool {
         }
 
         return $this->strip_response_noise( $this->rest_request( 'POST', '/wc/v3/orders/batch', $body ) );
+    }
+
+    private function refuse_unknown_created_lines( array $create ): void {
+        foreach ( $create as $key => $item ) {
+            if ( is_array( $item ) && isset( $item['line_items'] ) && is_array( $item['line_items'] ) ) {
+                $this->refuse_unknown_line_item_products( $item['line_items'], 'create[' . $key . '].line_items', false, 'Nothing was changed.' );
+            }
+        }
     }
 }

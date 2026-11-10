@@ -59,7 +59,6 @@ class Check_Tool_Visibility {
                 \get_bloginfo( 'version' ),
                 self::count_abilities( $defs ),
                 self::count_registered_abilities(),
-                self::enabled_abilities_missing_from_registry(),
                 self::enabled_vendor_abilities_not_checked()
             ),
             self::evaluate_sanitizer(
@@ -453,37 +452,14 @@ class Check_Tool_Visibility {
         return Diagnostic_Result::pass( 'd5', Diagnostic_Result::TIER_WARNING, $label, trim( $scope ), array( 'empty_grants' => array() ) );
     }
 
-    public static function evaluate_abilities( $wp_version, $ability_count, $registered_in_wp = null, $enabled_but_missing = array(), $not_checked = array() ) {
+    public static function evaluate_abilities( $wp_version, $ability_count, $registered_in_wp = null, $not_checked = array() ) {
         $label    = __( 'WordPress Abilities available', 'easy-mcp-ai' );
-        $missing  = array_values( array_filter( array_map( 'strval', (array) $enabled_but_missing ) ) );
         $evidence = array(
-            'wp_version'          => (string) $wp_version,
-            'abilities'           => (int) $ability_count,
-            'registered_in_wp'    => $registered_in_wp,
-            'enabled_but_missing' => $missing,
-            'not_checked'         => array_values( array_filter( array_map( 'strval', (array) $not_checked ) ) ),
+            'wp_version'       => (string) $wp_version,
+            'abilities'        => (int) $ability_count,
+            'registered_in_wp' => $registered_in_wp,
+            'not_checked'      => array_values( array_filter( array_map( 'strval', (array) $not_checked ) ) ),
         );
-
-        if ( $missing ) {
-            return Diagnostic_Result::warn(
-                'd6',
-                Diagnostic_Result::TIER_WARNING,
-                $label,
-                sprintf(
-                    /* translators: 1: number of abilities, 2: comma-separated ability slugs. */
-                    \_n(
-                        '%1$d ability is switched on but WordPress has no record of it, so no tool was created for it: %2$s',
-                        '%1$d abilities are switched on but WordPress has no record of them, so no tools were created for them: %2$s',
-                        count( $missing ),
-                        'easy-mcp-ai'
-                    ),
-                    count( $missing ),
-                    implode( ', ', $missing )
-                ),
-                __( 'The plugin that published these abilities may have been deactivated, renamed them, or may conflict with another plugin bundling the same abilities library. Switch them off under Easy MCP AI → Tools, or resolve the conflicting plugin. Every other tool is unaffected.', 'easy-mcp-ai' ),
-                $evidence
-            );
-        }
 
         if ( version_compare( (string) $wp_version, self::ABILITIES_MIN_WP, '<' ) ) {
             return Diagnostic_Result::warn(
@@ -504,19 +480,30 @@ class Check_Tool_Visibility {
         if ( $evidence['not_checked'] ) {
             $not_checked = $evidence['not_checked'];
             $n           = count( $not_checked );
+            $vendors     = array_unique(
+                array_filter(
+                    array_map(
+                        static function ( $slug ) {
+                            return \Easy_MCP_AI\Compat\Vendor_Abilities::vendor_of( (string) strstr( $slug, '/', true ) );
+                        },
+                        $not_checked
+                    )
+                )
+            );
             return Diagnostic_Result::unknown(
                 'd6',
                 Diagnostic_Result::TIER_INFO,
                 $label,
                 sprintf(
-                    /* translators: 1: number of abilities, 2: comma-separated ability slugs, 3: what to do next. */
+                    /* translators: 1: number of abilities, 2: comma-separated plugin names (LearnPress, Elementor, Breakdance), 3: comma-separated ability slugs, 4: what to do next. */
                     \_n(
-                        '%1$d LearnPress or Elementor ability is switched on but could not be checked here, because they are registered only on requests this plugin serves: %2$s. %3$s',
-                        '%1$d LearnPress or Elementor abilities are switched on but could not be checked here, because they are registered only on requests this plugin serves: %2$s. %3$s',
+                        '%1$d ability from %2$s is switched on but could not be checked here, because it is registered only on requests this plugin serves: %3$s. %4$s',
+                        '%1$d abilities from %2$s are switched on but could not be checked here, because they are registered only on requests this plugin serves: %3$s. %4$s',
                         $n,
                         'easy-mcp-ai'
                     ),
                     $n,
+                    implode( ', ', $vendors ),
                     implode( ', ', $not_checked ),
                     __( 'Run the diagnostics again from the Easy MCP AI dashboard to check them.', 'easy-mcp-ai' )
                 ),
@@ -864,7 +851,8 @@ class Check_Tool_Visibility {
         }
         if ( function_exists( 'wp_get_abilities' ) ) {
             $abilities = \wp_get_abilities();
-            foreach ( is_array( $abilities ) ? array_keys( $abilities ) : array() as $slug ) {
+            $abilities = is_array( $abilities ) ? \Easy_MCP_AI\Tools\Excluded_Abilities::without( $abilities ) : array();
+            foreach ( array_keys( $abilities ) as $slug ) {
                 $names[] = \Easy_MCP_AI\Tools\Dynamic_Tool_Registrar::build_tool_name( (string) $slug );
             }
         }
@@ -955,29 +943,7 @@ class Check_Tool_Visibility {
             return null;
         }
         $abilities = \wp_get_abilities();
-        return is_array( $abilities ) ? count( $abilities ) : null;
-    }
-
-    private static function enabled_abilities_missing_from_registry() {
-        if ( ! function_exists( 'wp_get_abilities' ) ) {
-            return array();
-        }
-        $enabled = \get_option( 'easy_mcp_ai_enabled_abilities', array() );
-        if ( ! is_array( $enabled ) || ! $enabled ) {
-            return array();
-        }
-        $registered = \wp_get_abilities();
-        if ( ! is_array( $registered ) ) {
-            return array();
-        }
-        $missing = array();
-        foreach ( $enabled as $slug ) {
-            $slug = (string) $slug;
-            if ( '' !== $slug && ! isset( $registered[ $slug ] ) && ! self::is_unseen_vendor_ability( $slug ) ) {
-                $missing[] = $slug;
-            }
-        }
-        return $missing;
+        return is_array( $abilities ) ? count( \Easy_MCP_AI\Tools\Excluded_Abilities::without( $abilities ) ) : null;
     }
 
     private static function enabled_vendor_abilities_not_checked() {

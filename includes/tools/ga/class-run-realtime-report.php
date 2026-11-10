@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\GA;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\GA\GA_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -54,6 +55,9 @@ class Run_Realtime_Report extends Base_Tool {
     }
 
     public function execute( array $arguments ) {
+        if ( isset( $arguments['minute_ranges'] ) && ! is_array( $arguments['minute_ranges'] ) ) {
+            throw new \RuntimeException( 'minute_ranges must be an array of {startMinutesAgo, endMinutesAgo, name?} objects, e.g. [{"startMinutesAgo": 29, "endMinutesAgo": 0}].' );
+        }
         try {
             $this->validate_required( $arguments, array( 'metrics' ) );
             if ( ! is_array( $arguments['metrics'] ) ) {
@@ -118,16 +122,17 @@ class Run_Realtime_Report extends Base_Tool {
             if ( ! empty( $arguments['metric_aggregations'] ) ) {
                 $body['metricAggregations'] = array_values( (array) $arguments['metric_aggregations'] );
             }
-            if ( ! empty( $arguments['return_property_quota'] ) ) {
+            if ( isset( $arguments['return_property_quota'] ) && External_Data_Flag::read( 'return_property_quota', $arguments['return_property_quota'] ) ) {
                 $body['returnPropertyQuota'] = true;
             }
 
             $data = GA_Client::post( "https://analyticsdata.googleapis.com/v1beta/{$property}:runRealtimeReport", $body );
         } catch ( \Exception $e ) {
             $msg = $e->getMessage();
-            if ( false !== stripos( $msg, 'minuteRange' ) || false !== stripos( $msg, 'minute_range' ) ) {
-                $msg .= ' (Hint: standard GA4 properties limit startMinutesAgo to 29. Only GA 360 supports up to 59.)';
+            if ( false === stripos( $msg, 'minuteRange' ) && false === stripos( $msg, 'minute_range' ) ) {
+                throw $e;
             }
+            $msg .= ' (Hint: standard GA4 properties limit startMinutesAgo to 29. Only GA 360 supports up to 59.)';
             throw new \RuntimeException( $msg ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 

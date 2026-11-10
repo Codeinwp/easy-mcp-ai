@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Create_Order extends Base_Tool {
 
+    use Product_Terms;
+
     public function get_name() {
         return 'wp_wc_create_order';
     }
@@ -117,6 +119,12 @@ class Create_Order extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        if ( class_exists( 'WooCommerce' ) && isset( $arguments['line_items'] ) && '' !== $arguments['line_items'] ) {
+            $this->refuse_unknown_line_item_products( $this->parse_json_param( $arguments['line_items'], 'line_items' ), 'line_items', true, 'Nothing was created.' );
+        }
+    }
+
     public function execute( array $arguments ) {
         if ( ! class_exists( 'WooCommerce' ) ) {
             throw new \RuntimeException( 'WooCommerce is not active.' );
@@ -128,6 +136,7 @@ class Create_Order extends Base_Tool {
         if ( empty( $line_items ) ) {
             throw new \InvalidArgumentException( 'line_items must contain at least one item.' );
         }
+        $this->refuse_unknown_line_item_products( $line_items, 'line_items', true, 'Nothing was created.' );
 
         $params = array(
             'line_items' => $line_items,

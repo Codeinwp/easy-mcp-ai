@@ -38,29 +38,25 @@ class Backlinks extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'target', 'target_type' ) );
-			$target      = trim( (string) $arguments['target'] );
-			$target_type = trim( (string) $arguments['target_type'] );
-			Semrush_Validators::validate_target_type( $target_type );
-			if ( 'url' === $target_type && ! \wp_http_validate_url( $target ) ) {
-				throw new \InvalidArgumentException( 'target must be a valid URL when target_type=url.' );
-			}
-			$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
-			if ( $limit < 1 || $limit > 10000 ) {
-				throw new \InvalidArgumentException( 'display_limit must be between 1 and 10000.' );
-			}
-			$params = array(
-				'target'        => $target,
-				'target_type'   => $target_type,
-				'display_limit' => $limit,
-			);
-			if ( ! empty( $arguments['display_sort'] ) ) {
-				$params['display_sort'] = (string) $arguments['display_sort'];
-			}
-			return ( new Semrush_Client() )->report( 'backlinks', $params );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'target', 'target_type' ) );
+		$target      = trim( (string) $arguments['target'] );
+		$target_type = trim( (string) $arguments['target_type'] );
+		Semrush_Validators::validate_target_type( $target_type );
+		if ( 'url' === $target_type && ! \wp_http_validate_url( $target ) ) {
+			throw new \InvalidArgumentException( 'target must be a valid URL when target_type=url.' );
 		}
+		$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
+		if ( $limit < 1 || $limit > 10000 ) {
+			throw new \InvalidArgumentException( 'display_limit must be between 1 and 10000.' );
+		}
+		$params = array(
+			'target'        => $target,
+			'target_type'   => $target_type,
+			'display_limit' => $limit,
+		);
+		if ( ! empty( $arguments['display_sort'] ) ) {
+			$params['display_sort'] = (string) $arguments['display_sort'];
+		}
+		return ( new Semrush_Client() )->report( 'backlinks', $params );
 	}
 }

@@ -38,23 +38,19 @@ class Domain_Overview extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'source', 'domain' ) );
-			$source = trim( (string) ( $arguments['source'] ?? '' ) );
-			$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
-			SeRanking_Validators::validate_source( $source );
-			SeRanking_Validators::validate_bare_domain( $domain );
-			$query = array(
-				'source'          => $source,
-				'domain'          => $domain,
-				'with_subdomains' => rest_sanitize_boolean( $arguments['with_subdomains'] ?? true ) ? 1 : 0,
-			);
-			if ( isset( $arguments['url'] ) && '' !== $arguments['url'] ) {
-				$query['url'] = trim( (string) $arguments['url'] );
-			}
-			return ( new SeRanking_Client() )->request( 'GET', '/v1/domain/overview/db', $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'source', 'domain' ) );
+		$source = trim( (string) ( $arguments['source'] ?? '' ) );
+		$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
+		SeRanking_Validators::validate_source( $source );
+		SeRanking_Validators::validate_bare_domain( $domain );
+		$query = array(
+			'source'          => $source,
+			'domain'          => $domain,
+			'with_subdomains' => SeRanking_Validators::query_flag( 'with_subdomains', $arguments['with_subdomains'] ?? true ),
+		);
+		if ( isset( $arguments['url'] ) && '' !== $arguments['url'] ) {
+			$query['url'] = trim( (string) $arguments['url'] );
 		}
+		return ( new SeRanking_Client() )->request( 'GET', '/v1/domain/overview/db', $query );
 	}
 }

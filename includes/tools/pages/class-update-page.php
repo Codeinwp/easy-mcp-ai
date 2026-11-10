@@ -136,6 +136,8 @@ class Update_Page extends Base_Tool {
 
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'page_id', 'page', 'update' );
+        self::content_params( $arguments );
+        self::detail_params( $arguments );
     }
 
     public function execute( array $arguments ) {
@@ -192,7 +194,10 @@ class Update_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['parent'] ) ) {
-            $params['parent'] = absint( $arguments['parent'] );
+            if ( ! Update_Post::is_whole_number( $arguments['parent'] ) || (int) $arguments['parent'] < 0 ) {
+                throw new \InvalidArgumentException( \Easy_MCP_AI\MCP\Refusal_Text::fit( 'parent must be the ID of a page (an integer), or 0 for the top level; got %s. Nothing was saved.', array( Update_Post::shown( $arguments['parent'] ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            $params['parent'] = (int) $arguments['parent'];
         }
 
         if ( isset( $arguments['template'] ) ) {
@@ -200,6 +205,9 @@ class Update_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['menu_order'] ) ) {
+            if ( ! Update_Post::is_whole_number( $arguments['menu_order'] ) ) {
+                throw new \InvalidArgumentException( \Easy_MCP_AI\MCP\Refusal_Text::fit( 'menu_order must be a whole number (the page\'s order, such as 0, 1 or -1); got %s. Nothing was saved.', array( Update_Post::shown( $arguments['menu_order'] ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
             $params['menu_order'] = intval( $arguments['menu_order'] );
         }
         return $params;
@@ -224,7 +232,7 @@ class Update_Page extends Base_Tool {
         }
 
         if ( isset( $arguments['featured_media'] ) ) {
-            $params['featured_media'] = absint( $arguments['featured_media'] );
+            $params['featured_media'] = Update_Post::featured_media_param( $arguments['featured_media'] );
         }
 
         if ( isset( $arguments['comment_status'] ) ) {

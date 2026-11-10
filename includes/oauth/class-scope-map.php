@@ -296,7 +296,7 @@ class Scope_Map {
     }
 
     private static function get_cached_abilities(): array {
-        return function_exists( 'wp_get_abilities' ) ? (array) \wp_get_abilities() : array();
+        return function_exists( 'wp_get_abilities' ) ? \Easy_MCP_AI\Tools\Excluded_Abilities::without( (array) \wp_get_abilities() ) : array();
     }
 
     public static function get_dynamic_ability_scopes(): array {

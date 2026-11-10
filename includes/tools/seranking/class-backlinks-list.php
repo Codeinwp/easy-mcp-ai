@@ -49,51 +49,47 @@ class Backlinks_List extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'report', 'target' ) );
-			$report = trim( (string) ( $arguments['report'] ?? '' ) );
-			SeRanking_Validators::validate_enum( $report, array( 'backlinks', 'anchors', 'refdomains' ) );
-			$paths = array(
-				'backlinks'  => '/v1/backlinks/all',
-				'anchors'    => '/v1/backlinks/anchors',
-				'refdomains' => '/v1/backlinks/refdomains',
-			);
-			$path = $paths[ $report ];
+		$this->validate_required( $arguments, array( 'report', 'target' ) );
+		$report = trim( (string) ( $arguments['report'] ?? '' ) );
+		SeRanking_Validators::validate_enum( $report, array( 'backlinks', 'anchors', 'refdomains' ) );
+		$paths = array(
+			'backlinks'  => '/v1/backlinks/all',
+			'anchors'    => '/v1/backlinks/anchors',
+			'refdomains' => '/v1/backlinks/refdomains',
+		);
+		$path = $paths[ $report ];
 
-			$target = trim( (string) ( $arguments['target'] ?? '' ) );
-			SeRanking_Validators::validate_target( $target );
+		$target = trim( (string) ( $arguments['target'] ?? '' ) );
+		SeRanking_Validators::validate_target( $target );
 
-			$query = array( 'target' => $target );
-			if ( isset( $arguments['mode'] ) && '' !== $arguments['mode'] ) {
-				$mode = trim( (string) $arguments['mode'] );
-				SeRanking_Validators::validate_mode( $mode );
-				$query['mode'] = $mode;
-			}
-			if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
-				$limit = (int) $arguments['limit'];
-				SeRanking_Validators::validate_limit( $limit, 10000 );
-				$query['limit'] = $limit;
-			}
-			if ( isset( $arguments['order_by'] ) && '' !== $arguments['order_by'] ) {
-				$query['order_by'] = trim( (string) $arguments['order_by'] );
-			}
-
-			if ( 'backlinks' === $report ) {
-				foreach ( array( 'per_domain', 'inlink_rank_from', 'inlink_rank_to', 'domain_inlink_rank_from', 'domain_inlink_rank_to' ) as $opt ) {
-					if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-						$query[ $opt ] = (int) $arguments[ $opt ];
-					}
-				}
-				foreach ( array( 'url_from_filter', 'url_from_filter_mode', 'url_to_filter', 'anchor_filter', 'nofollow_filter' ) as $opt ) {
-					if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-						$query[ $opt ] = trim( (string) $arguments[ $opt ] );
-					}
-				}
-			}
-
-			return ( new SeRanking_Client() )->request( 'GET', $path, $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$query = array( 'target' => $target );
+		if ( isset( $arguments['mode'] ) && '' !== $arguments['mode'] ) {
+			$mode = trim( (string) $arguments['mode'] );
+			SeRanking_Validators::validate_mode( $mode );
+			$query['mode'] = $mode;
 		}
+		if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
+			$limit = (int) $arguments['limit'];
+			SeRanking_Validators::validate_limit( $limit, 10000 );
+			$query['limit'] = $limit;
+		}
+		if ( isset( $arguments['order_by'] ) && '' !== $arguments['order_by'] ) {
+			$query['order_by'] = trim( (string) $arguments['order_by'] );
+		}
+
+		if ( 'backlinks' === $report ) {
+			foreach ( array( 'per_domain', 'inlink_rank_from', 'inlink_rank_to', 'domain_inlink_rank_from', 'domain_inlink_rank_to' ) as $opt ) {
+				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+					$query[ $opt ] = (int) $arguments[ $opt ];
+				}
+			}
+			foreach ( array( 'url_from_filter', 'url_from_filter_mode', 'url_to_filter', 'anchor_filter', 'nofollow_filter' ) as $opt ) {
+				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
+				}
+			}
+		}
+
+		return ( new SeRanking_Client() )->request( 'GET', $path, $query );
 	}
 }

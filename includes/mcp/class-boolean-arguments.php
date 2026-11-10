@@ -39,7 +39,11 @@ final class Boolean_Arguments {
     }
 
     private static function boolean( string $value ) {
-        return \rest_is_boolean( $value ) ? \rest_sanitize_boolean( $value ) : $value;
+        if ( '' === trim( $value ) ) {
+            return $value;
+        }
+        $flag = filter_var( $value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+        return null === $flag ? $value : $flag;
     }
 
     private static function is_list( array $value ): bool {

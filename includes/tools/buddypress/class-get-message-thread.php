@@ -58,6 +58,10 @@ class Get_Message_Thread extends Base_Tool {
         $id   = $this->parse_required_id( $arguments['id'] ?? null, 'id' );
         $data = $this->rest_request( 'GET', '/buddypress/v1/messages/' . $id );
 
+        if ( is_array( $data ) && 1 === count( $data ) && isset( $data[0] ) && is_array( $data[0] ) ) {
+            return $data[0];
+        }
+
         return $data;
     }
 }

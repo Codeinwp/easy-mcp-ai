@@ -249,7 +249,7 @@ class List_CPT_Items extends Base_Tool {
                 array( 'rest_base' => $rest_base )
             );
         }
-        throw new \RuntimeException( self::rest_error_message( $wp_error ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        throw self::rest_error_exception( $wp_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
     private static function item_row( array $item, bool $raw ): array {

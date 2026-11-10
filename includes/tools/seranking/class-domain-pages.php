@@ -43,45 +43,41 @@ class Domain_Pages extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'mode', 'target', 'scope', 'source' ) );
-			$mode = trim( (string) ( $arguments['mode'] ?? '' ) );
-			SeRanking_Validators::validate_enum( $mode, array( 'pages', 'subdomains' ) );
-			$path = ( 'subdomains' === $mode ) ? '/v1/domain/subdomains' : '/v1/domain/pages';
+		$this->validate_required( $arguments, array( 'mode', 'target', 'scope', 'source' ) );
+		$mode = trim( (string) ( $arguments['mode'] ?? '' ) );
+		SeRanking_Validators::validate_enum( $mode, array( 'pages', 'subdomains' ) );
+		$path = ( 'subdomains' === $mode ) ? '/v1/domain/subdomains' : '/v1/domain/pages';
 
-			$target = trim( (string) ( $arguments['target'] ?? '' ) );
-			$scope  = trim( (string) ( $arguments['scope'] ?? '' ) );
-			$source = trim( (string) ( $arguments['source'] ?? '' ) );
-			SeRanking_Validators::validate_target( $target );
-			SeRanking_Validators::validate_scope( $scope );
-			SeRanking_Validators::validate_source( $source );
-			if ( 'subdomains' === $mode && 'url' === $scope ) {
-				throw new \InvalidArgumentException( 'scope "url" is not supported when mode=subdomains; use base_domain or domain.' );
-			}
-
-			$query = array(
-				'target' => $target,
-				'scope'  => $scope,
-				'source' => $source,
-			);
-			foreach ( array( 'type', 'order_field', 'order_type' ) as $opt ) {
-				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
-				}
-			}
-			if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
-				$query['offset'] = (int) $arguments['offset'];
-			}
-			if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
-				$limit = (int) $arguments['limit'];
-				SeRanking_Validators::validate_limit( $limit, 10000 );
-				$query['limit'] = $limit;
-			}
-
-			$json = ( new SeRanking_Client() )->request( 'GET', $path, $query );
-			return array( 'items' => $json );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$target = trim( (string) ( $arguments['target'] ?? '' ) );
+		$scope  = trim( (string) ( $arguments['scope'] ?? '' ) );
+		$source = trim( (string) ( $arguments['source'] ?? '' ) );
+		SeRanking_Validators::validate_target( $target );
+		SeRanking_Validators::validate_scope( $scope );
+		SeRanking_Validators::validate_source( $source );
+		if ( 'subdomains' === $mode && 'url' === $scope ) {
+			throw new \InvalidArgumentException( 'scope "url" is not supported when mode=subdomains; use base_domain or domain.' );
 		}
+
+		$query = array(
+			'target' => $target,
+			'scope'  => $scope,
+			'source' => $source,
+		);
+		foreach ( array( 'type', 'order_field', 'order_type' ) as $opt ) {
+			if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+				$query[ $opt ] = trim( (string) $arguments[ $opt ] );
+			}
+		}
+		if ( isset( $arguments['offset'] ) && '' !== $arguments['offset'] ) {
+			$query['offset'] = (int) $arguments['offset'];
+		}
+		if ( isset( $arguments['limit'] ) && '' !== $arguments['limit'] ) {
+			$limit = (int) $arguments['limit'];
+			SeRanking_Validators::validate_limit( $limit, 10000 );
+			$query['limit'] = $limit;
+		}
+
+		$json = ( new SeRanking_Client() )->request( 'GET', $path, $query );
+		return array( 'items' => $json );
 	}
 }

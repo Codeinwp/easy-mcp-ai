@@ -82,6 +82,9 @@ class Query_Performance extends Base_Tool {
         if ( 'hourly_all' === $data_state && ! in_array( 'hour', $dimensions, true ) ) {
             throw new \RuntimeException( 'data_state=hourly_all requires the "hour" dimension to be included.' );
         }
+        if ( isset( $arguments['filters'] ) && ! is_array( $arguments['filters'] ) ) {
+            throw new \InvalidArgumentException( 'filters must be an array of {dimension, operator, expression} objects, e.g. [{"dimension": "query", "operator": "contains", "expression": "seo"}].' );
+        }
 
         $site_url = ! empty( $arguments['site_url'] )
             ? GSC_Client::validate_site_url( (string) $arguments['site_url'] )

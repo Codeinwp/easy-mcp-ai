@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\GA;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\GA\GA_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -121,10 +122,10 @@ class Run_Report extends Base_Tool {
         if ( ! empty( $arguments['currency_code'] ) ) {
             $body['currencyCode'] = (string) $arguments['currency_code'];
         }
-        if ( ! empty( $arguments['keep_empty_rows'] ) ) {
+        if ( isset( $arguments['keep_empty_rows'] ) && External_Data_Flag::read( 'keep_empty_rows', $arguments['keep_empty_rows'] ) ) {
             $body['keepEmptyRows'] = true;
         }
-        if ( ! empty( $arguments['return_property_quota'] ) ) {
+        if ( isset( $arguments['return_property_quota'] ) && External_Data_Flag::read( 'return_property_quota', $arguments['return_property_quota'] ) ) {
             $body['returnPropertyQuota'] = true;
         }
         if ( ! empty( $arguments['cohort_spec'] ) ) {

@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -193,10 +194,10 @@ class Serp_Google_Organic_Live extends Base_Tool {
 			$task['search_param'] = (string) $arguments['search_param'];
 		}
 		if ( isset( $arguments['calculate_rectangles'] ) ) {
-			$task['calculate_rectangles'] = (bool) $arguments['calculate_rectangles'];
+			$task['calculate_rectangles'] = External_Data_Flag::read( 'calculate_rectangles', $arguments['calculate_rectangles'] );
 		}
 		if ( isset( $arguments['load_async_ai_overview'] ) ) {
-			$task['load_async_ai_overview'] = (bool) $arguments['load_async_ai_overview'];
+			$task['load_async_ai_overview'] = External_Data_Flag::read( 'load_async_ai_overview', $arguments['load_async_ai_overview'] );
 		}
 		if ( isset( $arguments['os'] ) ) {
 			$task['os'] = (string) $arguments['os'];

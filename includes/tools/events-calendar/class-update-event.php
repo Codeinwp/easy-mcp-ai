@@ -156,8 +156,12 @@ class Update_Event extends Base_Tool {
 
         $this->validate_required( $arguments, array( 'id' ) );
         $id = $this->parse_required_id( $arguments['id'], 'id' );
+        $event = get_post( $id );
+        if ( ! $event || 'tribe_events' !== $event->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Event %d not found.', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
         if ( ! current_user_can( 'edit_post', $id ) ) {
-            throw new \RuntimeException( 'You are not allowed to edit this event, or it does not exist.' );
+            throw new \RuntimeException( 'You are not allowed to edit this event.' );
         }
         $params = $this->rest_params( $arguments );
 

@@ -53,12 +53,16 @@ class Delete_Page extends Base_Tool {
     }
 
     public function describe( array $arguments ) {
+        try {
+            $force = self::boolean_arg( $arguments, 'force', false, '' );
+        } catch ( \InvalidArgumentException $e ) {
+            return '';
+        }
         $id = isset( $arguments['page_id'] ) ? (int) $arguments['page_id'] : 0;
         $page = $id > 0 ? $this->peek( '/wp/v2/pages/' . $id, 'id,title,status' ) : null;
         if ( ! $page ) {
             return '';
         }
-        $force = ! empty( $arguments['force'] ) && \rest_sanitize_boolean( $arguments['force'] );
         return sprintf(
             /* translators: 1: page title, 2: page id, 3: page status, 4: what happens */
             __( "Delete page '%1\$s' (ID %2\$d, %3\$s) — %4\$s.", 'easy-mcp-ai' ),
@@ -69,6 +73,7 @@ class Delete_Page extends Base_Tool {
 
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'page_id', 'page', 'delete' );
+        self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
     }
 
     public function execute( array $arguments ) {
@@ -77,7 +82,7 @@ class Delete_Page extends Base_Tool {
         $page_id = $this->parse_required_id( $arguments['page_id'], 'page_id' );
         $this->refuse_other_type( $page_id, 'page', 'delete' );
 
-        $force  = isset( $arguments['force'] ) && (bool) $arguments['force'];
+        $force  = self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
         $params = array();
 
         if ( isset( $arguments['force'] ) ) {

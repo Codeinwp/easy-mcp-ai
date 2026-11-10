@@ -20,6 +20,19 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 		'twitter_image' => '_yoast_wpseo_twitter-image-id',
 	);
 
+	const ROBOTS = array(
+		'noindex'  => array(
+			'key'     => '_yoast_wpseo_meta-robots-noindex',
+			'values'  => array( '0', '1', '2' ),
+			'refusal' => 'noindex must be one of "0" (default), "1" (noindex) or "2" (index). Nothing was changed.',
+		),
+		'nofollow' => array(
+			'key'     => '_yoast_wpseo_meta-robots-nofollow',
+			'values'  => array( '0', '1' ),
+			'refusal' => 'nofollow must be one of "0" (default) or "1" (nofollow). Nothing was changed.',
+		),
+	);
+
 	public function get_name() {
 		return 'wp_yoast_update_post_seo';
 	}
@@ -136,6 +149,15 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 		);
 	}
 
+	public function precheck( array $arguments ): void {
+		if ( ! class_exists( 'WPSEO_Options' ) ) {
+			return;
+		}
+		self::robots_values( $arguments );
+		self::advanced_robots( $arguments );
+		$this->primary_term( $arguments );
+	}
+
 	public function execute( array $arguments ) {
 		if ( ! class_exists( 'WPSEO_Options' ) ) {
 			throw new \RuntimeException( 'Yoast SEO is not active on this site. Please install and activate Yoast SEO to use this tool.' );
@@ -150,6 +172,10 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			throw new \RuntimeException( 'You do not have permission to edit this post.' );
 		}
+
+		$robots       = self::robots_values( $arguments );
+		$advanced     = self::advanced_robots( $arguments );
+		$primary_term = $this->primary_term( $arguments );
 
 		$meta_map = array(
 			'seo_title'           => '_yoast_wpseo_title',
@@ -187,37 +213,13 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			$updated[] = 'is_cornerstone';
 		}
 
-		if ( isset( $arguments['noindex'] ) ) {
-			$noindex = (int) $arguments['noindex'];
-			if ( ! in_array( $noindex, array( 0, 1, 2 ), true ) ) {
-				throw new \InvalidArgumentException( 'noindex must be one of 0 (default), 1 (noindex), or 2 (index).' );
-			}
-			update_post_meta( $post_id, '_yoast_wpseo_meta-robots-noindex', (string) $noindex );
-			$updated[] = 'noindex';
+		foreach ( $robots as $field => $value ) {
+			update_post_meta( $post_id, self::ROBOTS[ $field ]['key'], $value );
+			$updated[] = $field;
 		}
 
-		if ( isset( $arguments['nofollow'] ) ) {
-			$nofollow = (int) $arguments['nofollow'];
-			if ( ! in_array( $nofollow, array( 0, 1 ), true ) ) {
-				throw new \InvalidArgumentException( 'nofollow must be one of 0 (default) or 1 (nofollow).' );
-			}
-			update_post_meta( $post_id, '_yoast_wpseo_meta-robots-nofollow', (string) $nofollow );
-			$updated[] = 'nofollow';
-		}
-
-		if ( isset( $arguments['advanced_robots'] ) ) {
-			$allowed_adv = array( 'noimageindex', 'noarchive', 'nosnippet' );
-			$tokens      = array_filter( array_map( 'trim', explode( ',', (string) $arguments['advanced_robots'] ) ) );
-			$clean       = array();
-			foreach ( $tokens as $token ) {
-				if ( ! in_array( $token, $allowed_adv, true ) ) {
-					throw new \InvalidArgumentException( 'advanced_robots tokens must be among: ' . implode( ', ', $allowed_adv ) . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-				}
-				if ( ! in_array( $token, $clean, true ) ) {
-					$clean[] = $token;
-				}
-			}
-			update_post_meta( $post_id, '_yoast_wpseo_meta-robots-adv', implode( ',', $clean ) );
+		if ( null !== $advanced ) {
+			update_post_meta( $post_id, '_yoast_wpseo_meta-robots-adv', $advanced );
 			$updated[] = 'advanced_robots';
 		}
 
@@ -241,19 +243,8 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			$updated[] = 'schema_article_type';
 		}
 
-		if ( isset( $arguments['primary_term'] ) ) {
-			if ( empty( $arguments['taxonomy'] ) ) {
-				throw new \InvalidArgumentException( 'taxonomy is required when primary_term is provided.' );
-			}
-			$taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );
-			if ( ! taxonomy_exists( $taxonomy ) ) {
-				throw new \InvalidArgumentException( 'Unknown taxonomy: ' . $taxonomy ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-			}
-			$primary_term = (int) $arguments['primary_term'];
-			if ( ! term_exists( $primary_term, $taxonomy ) ) {
-				throw new \InvalidArgumentException( 'primary_term does not exist in taxonomy ' . $taxonomy . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-			}
-			update_post_meta( $post_id, '_yoast_wpseo_primary_' . $taxonomy, (string) $primary_term );
+		if ( null !== $primary_term ) {
+			update_post_meta( $post_id, '_yoast_wpseo_primary_' . $primary_term['taxonomy'], (string) $primary_term['term'] );
 			$updated[] = 'primary_term';
 		}
 
@@ -265,6 +256,63 @@ class Yoast_Update_Post_Seo extends Base_Tool {
 			'post_id'        => $post_id,
 			'updated_fields' => $updated,
 			'fields'         => self::stored_fields( $post_id, $arguments, array_merge( $meta_map, self::IMAGE_URLS ) ),
+		);
+	}
+
+	private static function robots_values( array $arguments ): array {
+		$values = array();
+		foreach ( self::ROBOTS as $field => $robot ) {
+			if ( ! isset( $arguments[ $field ] ) ) {
+				continue;
+			}
+			$value = $arguments[ $field ];
+			if ( is_int( $value ) || is_bool( $value ) || ( is_float( $value ) && in_array( $value, array( 0.0, 1.0, 2.0 ), true ) ) ) {
+				$value = (string) (int) $value;
+			}
+			if ( ! is_string( $value ) || ! in_array( $value, $robot['values'], true ) ) {
+				throw new \InvalidArgumentException( $robot['refusal'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			}
+			$values[ $field ] = $value;
+		}
+		return $values;
+	}
+
+	private static function advanced_robots( array $arguments ): ?string {
+		if ( ! isset( $arguments['advanced_robots'] ) ) {
+			return null;
+		}
+		$allowed_adv = array( 'noimageindex', 'noarchive', 'nosnippet' );
+		$tokens      = array_filter( array_map( 'trim', explode( ',', (string) $arguments['advanced_robots'] ) ) );
+		$clean       = array();
+		foreach ( $tokens as $token ) {
+			if ( ! in_array( $token, $allowed_adv, true ) ) {
+				throw new \InvalidArgumentException( 'advanced_robots tokens must be among: ' . implode( ', ', $allowed_adv ) . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			}
+			if ( ! in_array( $token, $clean, true ) ) {
+				$clean[] = $token;
+			}
+		}
+		return implode( ',', $clean );
+	}
+
+	private function primary_term( array $arguments ): ?array {
+		if ( ! isset( $arguments['primary_term'] ) ) {
+			return null;
+		}
+		if ( empty( $arguments['taxonomy'] ) ) {
+			throw new \InvalidArgumentException( 'taxonomy is required when primary_term is provided.' );
+		}
+		$taxonomy = $this->validate_rest_route_segment( $arguments['taxonomy'], 'taxonomy' );
+		if ( ! taxonomy_exists( $taxonomy ) ) {
+			throw new \InvalidArgumentException( 'Unknown taxonomy: ' . $taxonomy ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+		$primary_term = (int) $arguments['primary_term'];
+		if ( ! term_exists( $primary_term, $taxonomy ) ) {
+			throw new \InvalidArgumentException( 'primary_term does not exist in taxonomy ' . $taxonomy . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+		return array(
+			'taxonomy' => $taxonomy,
+			'term'     => $primary_term,
 		);
 	}
 

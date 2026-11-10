@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Set_Product_Attributes extends Base_Tool {
 
+    use Product_Terms;
+
     public function get_name() {
         return 'wp_wc_set_product_attributes';
     }
@@ -54,6 +56,12 @@ class Set_Product_Attributes extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        if ( class_exists( 'WooCommerce' ) && isset( $arguments['attributes'] ) ) {
+            $this->refuse_unknown_attribute_ids( $this->parse_json_param( $arguments['attributes'], 'attributes' ), 'attributes', true, 'Nothing was saved.' );
+        }
+    }
+
     public function execute( array $arguments ) {
         if ( ! class_exists( 'WooCommerce' ) ) {
             throw new \RuntimeException( 'WooCommerce is not active.' );
@@ -62,6 +70,7 @@ class Set_Product_Attributes extends Base_Tool {
         $this->validate_required( $arguments, array( 'product_id', 'attributes' ) );
         $product_id = $this->parse_required_id( $arguments['product_id'], 'product_id' );
         $attributes = $this->parse_json_param( $arguments['attributes'], 'attributes' );
+        $this->refuse_unknown_attribute_ids( $attributes, 'attributes', true, 'Nothing was saved.' );
 
         return $this->strip_response_noise(
             $this->rest_request( 'PUT', '/wc/v3/products/' . $product_id, array(

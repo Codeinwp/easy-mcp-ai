@@ -12,6 +12,8 @@ class Check_Observability {
 
     const MAX_TOKENS_LISTED = 20;
 
+    const MAX_OBSERVATIONS_LISTED = 5;
+
     public static function run() {
         $audit_enabled = (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_enabled', true );
 
@@ -23,6 +25,11 @@ class Check_Observability {
                 self::table_counts(),
                 (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_audit_log_retention', 30 ),
                 (int) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_retention', 30 )
+            ),
+            self::evaluate_call_observations(
+                self::call_observations(),
+                (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_enabled', true ),
+                (bool) \Easy_MCP_AI\Config::get( 'easy_mcp_ai_change_log_capture_db', false )
             ),
         );
     }
@@ -181,12 +188,117 @@ class Check_Observability {
         );
     }
 
+    public static function evaluate_call_observations( $inspected, $history_on = true, $capture_db = false ) {
+        $label = __( 'Tool call observations', 'easy-mcp-ai' );
+
+        if ( ! is_array( $inspected ) || ! isset( $inspected['state'], $inspected['log']['counts'], $inspected['log']['recent'] )
+            || ! is_array( $inspected['log']['counts'] ) || ! is_array( $inspected['log']['recent'] ) ) {
+            return Diagnostic_Result::unknown( 'h5', Diagnostic_Result::TIER_INFO, $label, __( 'Could not read the record of tool calls.', 'easy-mcp-ai' ) );
+        }
+        if ( 'malformed' === $inspected['state'] ) {
+            return Diagnostic_Result::unknown(
+                'h5',
+                Diagnostic_Result::TIER_INFO,
+                $label,
+                __( 'The record of tool calls holds a value this plugin did not write, so it is read as empty. The next observation starts it again.', 'easy-mcp-ai' ),
+                array( 'state' => 'malformed' )
+            );
+        }
+
+        $log   = $inspected['log'];
+        $off   = isset( $log['counts']['off_schema'] ) ? (int) $log['counts']['off_schema'] : 0;
+        $wrote = isset( $log['counts']['wrote_then_refused'] ) ? (int) $log['counts']['wrote_then_refused'] : 0;
+        $since = isset( $log['since'] ) ? (int) $log['since'] : 0;
+
+        $recent = array();
+        $named  = array();
+        foreach ( array_reverse( array_slice( $log['recent'], -self::MAX_OBSERVATIONS_LISTED ) ) as $entry ) {
+            if ( ! is_array( $entry ) || ! isset( $entry['kind'], $entry['tool'] ) ) {
+                continue;
+            }
+            $tool = (string) $entry['tool'];
+            if ( 'off_schema' === $entry['kind'] ) {
+                $names    = array_map( 'strval', array_column( isset( $entry['arguments'] ) && is_array( $entry['arguments'] ) ? $entry['arguments'] : array(), 'name' ) );
+                $recent[] = array(
+                    'kind'      => 'off_schema',
+                    'tool'      => $tool,
+                    'time'      => isset( $entry['time'] ) ? (int) $entry['time'] : 0,
+                    'arguments' => $names,
+                );
+                /* translators: 1: MCP tool name, 2: comma-separated argument names. */
+                $named[] = sprintf( __( '%1$s sent %2$s', 'easy-mcp-ai' ), $tool, implode( ', ', $names ) );
+            } else {
+                $rows     = isset( $entry['rows'] ) ? (int) $entry['rows'] : 0;
+                $recent[] = array(
+                    'kind' => 'wrote_then_refused',
+                    'tool' => $tool,
+                    'time' => isset( $entry['time'] ) ? (int) $entry['time'] : 0,
+                    'rows' => $rows,
+                );
+                /* translators: 1: MCP tool name, 2: number of change-history rows. */
+                $named[] = sprintf( __( '%1$s ended in an error after %2$d change-history row(s)', 'easy-mcp-ai' ), $tool, $rows );
+            }
+        }
+
+        $sentences = array();
+        if ( 0 === $off && 0 === $wrote ) {
+            $sentences[] = __( 'Nothing recorded yet. Each tool call\'s arguments are compared with the types and values its tool declares, and a call that ends in an error after it changed the site is noted. Calls are answered exactly as before: this is a record, and refuses nothing.', 'easy-mcp-ai' );
+        } else {
+            $sentences[] = sprintf(
+                /* translators: 1: date the record starts, 2: number of calls with an off-schema argument, 3: number of refused calls that changed the site. */
+                __( 'Since %1$s: %2$d call(s) sent an argument outside the types or values its tool declares, and %3$d call(s) ended in an error after they had changed the site.', 'easy-mcp-ai' ),
+                $since > 0 ? \wp_date( \get_option( 'date_format', 'Y-m-d' ), $since ) : __( 'the record began', 'easy-mcp-ai' ),
+                $off,
+                $wrote
+            );
+            if ( array() !== $named ) {
+                /* translators: %s: the most recent calls, separated by semicolons. */
+                $sentences[] = sprintf( __( 'Latest: %s.', 'easy-mcp-ai' ), implode( '; ', $named ) );
+            }
+            $sentences[] = __( 'These calls were answered as before; nothing is refused because of this record.', 'easy-mcp-ai' );
+            if ( $wrote > 0 ) {
+                $sentences[] = __( 'What a refused call changed is listed under Easy MCP AI → Activity → Change history, with its audit row.', 'easy-mcp-ai' );
+            }
+        }
+        if ( ! $history_on ) {
+            $sentences[] = __( 'Change history is off, so a call that changed the site and then failed cannot be noticed.', 'easy-mcp-ai' );
+        } elseif ( ! $capture_db ) {
+            $sentences[] = __( 'Changes to other plugins\' own database tables are noticed only while database capture is on.', 'easy-mcp-ai' );
+        }
+
+        return Diagnostic_Result::pass(
+            'h5',
+            Diagnostic_Result::TIER_INFO,
+            $label,
+            implode( ' ', $sentences ),
+            array(
+                'state'          => (string) $inspected['state'],
+                'since'          => $since > 0 ? $since : null,
+                'counts'         => array(
+                    'off_schema'         => $off,
+                    'wrote_then_refused' => $wrote,
+                ),
+                'recent'         => $recent,
+                'change_history' => (bool) $history_on,
+                'capture_db'     => (bool) $capture_db,
+            )
+        );
+    }
+
     private static function wpdb( $method = 'get_var' ) {
         global $wpdb;
         if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, $method ) ) {
             return null;
         }
         return $wpdb;
+    }
+
+    private static function call_observations() {
+        try {
+            return \Easy_MCP_AI\MCP\Call_Observations::inspect();
+        } catch ( \Throwable $e ) {
+            return null;
+        }
     }
 
     private static function count_auth_failures() {

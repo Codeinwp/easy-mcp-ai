@@ -4,7 +4,7 @@ Tags: mcp, claude, chatgpt, wordpress-mcp, connector
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.4.0
+Stable tag: 2.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -227,63 +227,24 @@ Flexible SSL sends requests to your server over plain HTTP, so the OAuth sign-in
 
 == Changelog ==
 
-= 2.4.0 =
-- Added optional file download to media item responses.
-- Added Rank Math tools to manage noindex settings and robots.txt.
-- Added Rank Math tools to read and update site-wide settings and robots.txt.
-- Added read and update support for ACF options page fields.
-- Added insert, remove, move and duplicate actions for Flatsome layouts.
-- Added a Breakdance switch that enables Breakdance builder tools.
-- Added Breakdance page reading and editing to the layout tools.
-- Added Divi layout editing, Theme Builder listing and menu locations
-- Added support for managing post types hidden from the REST API.
-- Added one-time upload links for sending local files without base64
-- Added Elementor repeater-item editing and page layout building tools.
-- Added Rank Math Local SEO settings to site settings tools.
-- Added a tool that puts a reviewed copy live on the original page
-- Added Match a role access level on the connection approval screen.
-- Added a Tools summary above Connect showing enabled tool counts.
-- Improved the Tools screen with Read, Write, Destructive and Unrestricted groups.
-- Added a hold policy for tools from newly installed plugins.
-- Added MCP tools to read and update Divi performance settings.
-- Fixed updating theme page settings stored as hidden post meta.
-- Fixed Elementor HTML widget guidance to point to the correct update operation.
-- Fixed small text edits failing on pages larger than 200 KB
-- Fixed Claude setup steps to use the Customize Connectors screen.
-- Fixed Elementor edits refused over fields every save removes.
-- Fixed write tools silently ignoring arguments they do not support
-- Fixed the Authorization header check warning incorrectly behind LiteSpeed Cache blocks.
-- Fixed missing posts and images reporting no permission instead of not found.
-- Fixed Site Health warning listing switched-off plugin abilities.
-- Fixed diagnostics naming SQLite databases as MySQL.
-- Fixed cache check accepting LiteSpeed wildcard endpoint exclusions.
-- Fixed refused product images changing earlier images before failing.
-- Fixed Yoast post social images keeping the old image after updating.
-- Fixed approval previews cutting off long request details before approval
-- Fixed blocked-tool messages to name the setting that blocks access.
-- Fixed secret keys overwritten when [REDACTED] text was sent back.
-- Fixed Elementor multi-select fields rejecting lists of valid options
-- Fixed Yoast social images staying on the old image after meta updates.
-- Fixed Yoast social images from resized copies showing different images.
-- Fixed quoted search snippets showing the opening instead of the match.
-- Fixed media, category, tag, user and menu text losing HTML formatting.
-- Fixed post text replacement losing simultaneous edits and accepting damaging edits.
-- Fixed cut-off error messages hiding the correct tool for blocked post edits.
-- Fixed the consent screen privileged rows to show what each box grants.
-- Fixed privileged notices repeating actions and naming actions that are off.
-- Fixed disabled-tools replies hiding tools the API key blocks.
-- Fixed the consent screen placing write-access boxes in the Read column.
-- Fixed role-limited connections keeping super admin rights on multisite networks.
-- Fixed the permissions list showing wrong selections under Match a role.
-- Fixed Site Kit status reporting Search Console as connected before setup
-- Fixed Elementor HTML widget text edits corrupting the CSS ID.
-- Fixed Claude sign-in failing on hosts blocking web addresses.
-- Fixed post custom field updates re-saving the whole post
-- Fixed refused custom fields still saving on full post saves
-- Fixed the menu list showing block-theme navigation menus with guidance.
-- Fixed OAuth asking non-admin users for permissions that could never work.
-- Fixed block-theme menus keeping the old title after republishing.
-- Fixed republished menus hiding hooked blocks in headers.
+= 2.4.1 =
+- Fixed tools reading no and off as on for yes-or-no settings.
+- Fixed tools accepting values of the wrong type or outside their allowed list.
+- Fixed user tools misreading text sent for roles and user IDs.
+- Fixed post, term, product, order and menu edits accepting missing IDs and invalid values.
+- Fixed missing items reporting no permission or an empty list instead of not found.
+- Fixed SEO plugin tools saving some fields before refusing others.
+- Fixed error messages losing allowed values or the suggested fix, and results reporting the wrong outcome.
+- Fixed menu item titles, the site title and the tagline losing HTML, and imported media keeping an old slug.
+- Fixed approval previews missing values, and comment and Contact Form 7 updates changing unchanged data.
+- Fixed BuddyPress tools returning lists instead of items and activity updates dropping values silently.
+- Fixed MCP Adapter and Angie abilities bypassing switched-off tools.
+- Fixed repeated missing-ability errors and unclear Site Health warnings about other plugins abilities.
+- Fixed Elementor 3.x heading edits rejected as page views.
+- Fixed Elementor field lists showing unwritable Pro upsell controls.
+- Fixed Semrush filters losing plus signs and the delete menu item guidance.
+- Fixed successful tool calls wrongly reporting Tool execution failed.
+- Fixed appended terms showing an empty before value and failing undo.
 - Updated dependencies
 
 [See changelog for all versions](https://easymcpai.com/changelog).

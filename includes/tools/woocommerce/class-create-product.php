@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Create_Product extends Base_Tool {
 
     use Product_Images;
+    use Product_Terms;
 
     public function get_name() {
         return 'wp_wc_create_product';
@@ -177,17 +178,23 @@ class Create_Product extends Base_Tool {
                 ),
                 'upsell_ids'         => array(
                     'type'        => 'array',
-                    'description' => 'Array of upsell product IDs.',
+                    'description' => 'Array of upsell product IDs. Each must be the ID of a product or a variation of this site; one that is not is refused before anything is saved.',
                     'items'       => array( 'type' => 'integer' ),
                 ),
                 'cross_sell_ids'     => array(
                     'type'        => 'array',
-                    'description' => 'Array of cross-sell product IDs.',
+                    'description' => 'Array of cross-sell product IDs. Each must be the ID of a product or a variation of this site; one that is not is refused before anything is saved.',
                     'items'       => array( 'type' => 'integer' ),
                 ),
             ),
             'required'   => array( 'name' ),
         );
+    }
+
+    public function precheck( array $arguments ): void {
+        if ( class_exists( 'WooCommerce' ) && ! empty( $arguments['attributes'] ) ) {
+            $this->refuse_unknown_attribute_ids( $this->parse_json_param( $arguments['attributes'], 'attributes' ), 'attributes', true, 'Nothing was saved.' );
+        }
     }
 
     public function execute( array $arguments ) {
@@ -227,7 +234,7 @@ class Create_Product extends Base_Tool {
             $params['stock_status'] = sanitize_text_field( $arguments['stock_status'] );
         }
         if ( ! empty( $arguments['categories'] ) ) {
-            $params['categories'] = $this->parse_json_param( $arguments['categories'], 'categories' );
+            $params['categories'] = $this->product_terms_param( $arguments['categories'], 'categories', 'product_cat', 'product category' );
         }
         if ( isset( $arguments['images'] ) ) {
             $params['images'] = $this->product_images_param( $arguments['images'] );
@@ -236,7 +243,7 @@ class Create_Product extends Base_Tool {
             $params['sale_price'] = sanitize_text_field( $arguments['sale_price'] );
         }
         if ( ! empty( $arguments['tags'] ) ) {
-            $params['tags'] = $this->parse_json_param( $arguments['tags'], 'tags' );
+            $params['tags'] = $this->product_terms_param( $arguments['tags'], 'tags', 'product_tag', 'product tag' );
         }
         if ( isset( $arguments['weight'] ) ) {
             $params['weight'] = sanitize_text_field( $arguments['weight'] );
@@ -276,14 +283,13 @@ class Create_Product extends Base_Tool {
         }
         if ( ! empty( $arguments['attributes'] ) ) {
             $params['attributes'] = $this->parse_json_param( $arguments['attributes'], 'attributes' );
+            $this->refuse_unknown_attribute_ids( $params['attributes'], 'attributes', true, 'Nothing was saved.' );
         }
         if ( ! empty( $arguments['upsell_ids'] ) ) {
-            $upsell_ids = $this->parse_json_param( $arguments['upsell_ids'], 'upsell_ids' );
-            $params['upsell_ids'] = array_map( 'absint', $upsell_ids );
+            $params['upsell_ids'] = $this->product_ids_param( $this->parse_json_param( $arguments['upsell_ids'], 'upsell_ids' ), 'upsell_ids' );
         }
         if ( ! empty( $arguments['cross_sell_ids'] ) ) {
-            $cross_sell_ids = $this->parse_json_param( $arguments['cross_sell_ids'], 'cross_sell_ids' );
-            $params['cross_sell_ids'] = array_map( 'absint', $cross_sell_ids );
+            $params['cross_sell_ids'] = $this->product_ids_param( $this->parse_json_param( $arguments['cross_sell_ids'], 'cross_sell_ids' ), 'cross_sell_ids' );
         }
 
         $this->maybe_force_draft( $params );

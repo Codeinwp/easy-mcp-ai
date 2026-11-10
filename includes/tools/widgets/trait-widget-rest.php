@@ -17,7 +17,7 @@ trait Widget_Rest {
 
     protected function require_widget_support(): void {
         if ( ! $this->theme_supports_widgets() ) {
-            throw new \RuntimeException( 'The active theme does not support widgets, so there are no widget areas to manage (Appearance > Widgets refuses the same way). ' . self::block_theme_hint() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( 'The active theme does not support widgets: it has no widget areas, and Appearance > Widgets refuses too. On a block theme, find the template parts with wp_list_templates (type "template_part").', self::block_theme_hint() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 

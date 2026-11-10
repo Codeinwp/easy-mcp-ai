@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\Taxonomy;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\Tools\Hidden_Post_Types;
+use Easy_MCP_AI\Tools\Posts\Update_Post;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -121,13 +122,32 @@ class Update_Term extends Base_Tool {
 
     private function update_params( array $arguments ): array {
         $params = array_merge( $this->name_and_slug_params( $arguments ), $this->description_param( $arguments ) );
-        if ( array_key_exists( 'parent', $arguments ) ) {
-            $params['parent'] = absint( $arguments['parent'] );
+        $parent = self::parent_param( $arguments );
+        if ( null !== $parent ) {
+            $params['parent'] = $parent;
         }
         if ( empty( $params ) ) {
             throw new \InvalidArgumentException( 'At least one updateable field (name, slug, description, parent, clear_description) must be provided.' );
         }
         return $params;
+    }
+
+    private static function parent_param( array $arguments ): ?int {
+        if ( ! array_key_exists( 'parent', $arguments ) ) {
+            return null;
+        }
+        if ( null === $arguments['parent'] ) {
+            return 0;
+        }
+        if ( ! Update_Post::is_whole_number( $arguments['parent'] ) || (int) $arguments['parent'] < 0 ) {
+            $taxonomy = isset( $arguments['taxonomy'] ) && is_string( $arguments['taxonomy'] ) ? $arguments['taxonomy'] : '';
+            throw new \InvalidArgumentException( \Easy_MCP_AI\MCP\Refusal_Text::fit( 'parent must be the ID of a term%2$s (an integer), or 0 for the top level; got %1$s. Nothing was saved.', array( Update_Post::shown( $arguments['parent'] ), '' !== $taxonomy && sanitize_key( $taxonomy ) === $taxonomy ? ' in ' . $taxonomy : '' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        return (int) $arguments['parent'];
+    }
+
+    public function precheck( array $arguments ): void {
+        self::parent_param( $arguments );
     }
 
     private function name_and_slug_params( array $arguments ): array {

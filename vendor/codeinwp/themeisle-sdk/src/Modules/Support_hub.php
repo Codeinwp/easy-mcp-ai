@@ -90,8 +90,8 @@ class Support_Hub extends Abstract_Module {
 	const MAX_MESSAGE_LENGTH = 5000;
 
 	/**
-	 * Intended production URL, once the backend and public rewrite are deployed.
-	 * Delivery remains a dry run unless the endpoint filter supplies a URL.
+	 * Production URL of the tracking API, used unless the endpoint filter
+	 * supplies another one.
 	 */
 	const ENDPOINT = 'https://api.themeisle.com/tracking/support';
 
@@ -874,15 +874,16 @@ class Support_Hub extends Abstract_Module {
 	}
 
 	/**
-	 * Deliver to an explicitly configured endpoint. The empty default keeps
-	 * delivery a dry run: the payload is logged and returned to the browser.
+	 * Deliver to the tracking API. An endpoint filtered to an empty value
+	 * (QA sites, tests) makes it a dry run: the payload is logged and
+	 * returned to the browser.
 	 *
 	 * @param Payload $payload Message payload.
 	 *
 	 * @return DeliveryResult|\WP_Error
 	 */
 	public static function deliver( $payload ) {
-		$endpoint = apply_filters( 'themeisle_sdk_support_hub_endpoint', '' );
+		$endpoint = apply_filters( 'themeisle_sdk_support_hub_endpoint', self::ENDPOINT );
 		if ( empty( $endpoint ) ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( '[TISDK_SUPPORT] ' . wp_json_encode( $payload ) ); //phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

@@ -55,7 +55,7 @@ class Ability_Seed {
     }
 
     public static function is_seedable( string $name, $annotations ): bool {
-        if ( '' === $name ) {
+        if ( '' === $name || Tools\Excluded_Abilities::excludes( $name ) ) {
             return false;
         }
         foreach ( self::EXCLUDED_PREFIXES as $prefix ) {

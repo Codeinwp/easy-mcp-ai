@@ -67,7 +67,11 @@ class List_Menu_Items extends Base_Tool {
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'menu_id' ) );
 
-        $menu_id  = $this->parse_required_id( $arguments['menu_id'], 'menu_id' );
+        $menu_id = $this->parse_required_id( $arguments['menu_id'], 'menu_id' );
+        $menu = get_term( $menu_id, 'nav_menu' );
+        if ( ! $menu || is_wp_error( $menu ) || 'nav_menu' !== $menu->taxonomy ) {
+            throw new \InvalidArgumentException( self::not_a_menu( $menu_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
         $per_page = isset( $arguments['per_page'] ) ? max( 1, min( 100, (int) $arguments['per_page'] ) ) : 100;
         $page     = isset( $arguments['page'] ) ? max( 1, (int) $arguments['page'] ) : 1;
 
@@ -94,6 +98,14 @@ class List_Menu_Items extends Base_Tool {
             array( 'items' => $result ),
             $this->pagination_meta( $response, $page, $per_page, count( $items ) )
         );
+    }
+
+    private static function not_a_menu( int $menu_id ): string {
+        $post = get_post( $menu_id );
+        if ( $post && 'wp_navigation' === $post->post_type ) {
+            return sprintf( 'Menu %1$d is a block menu, not a classic menu: its links are blocks in its content. Read them with wp_get_cpt_item { "rest_base": "navigation", "item_id": %1$d }.', $menu_id );
+        }
+        return sprintf( 'Menu %d not found.', $menu_id );
     }
 
     private function empty_page_or_throw( \WP_Error $error, int $page, int $per_page ): array {
@@ -211,7 +223,7 @@ class List_Menu_Items extends Base_Tool {
             if ( 'rest_no_route' === $error->get_error_code() ) {
                 throw new \RuntimeException( 'Menu endpoints are not available. This requires WordPress 5.9 or later with navigation menu support.' );
             }
-            throw new \RuntimeException( sprintf( 'The items of menu %d could not be read: %s', $menu_id, self::rest_error_message( $error ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw self::rest_error_exception( $error, sprintf( 'The items of menu %d could not be read: ', $menu_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
         return $response;
     }

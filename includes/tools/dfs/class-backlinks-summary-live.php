@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -129,13 +130,13 @@ class Backlinks_Summary_Live extends Base_Tool {
 			$task['backlinks_status_type'] = (string) $arguments['backlinks_status_type'];
 		}
 		if ( isset( $arguments['include_subdomains'] ) ) {
-			$task['include_subdomains'] = (bool) $arguments['include_subdomains'];
+			$task['include_subdomains'] = External_Data_Flag::read( 'include_subdomains', $arguments['include_subdomains'] );
 		}
 		if ( isset( $arguments['include_indirect_links'] ) ) {
-			$task['include_indirect_links'] = (bool) $arguments['include_indirect_links'];
+			$task['include_indirect_links'] = External_Data_Flag::read( 'include_indirect_links', $arguments['include_indirect_links'] );
 		}
 		if ( isset( $arguments['exclude_internal_backlinks'] ) ) {
-			$task['exclude_internal_backlinks'] = (bool) $arguments['exclude_internal_backlinks'];
+			$task['exclude_internal_backlinks'] = External_Data_Flag::read( 'exclude_internal_backlinks', $arguments['exclude_internal_backlinks'] );
 		}
 		if ( isset( $arguments['backlinks_filters'] ) ) {
 			$task['backlinks_filters'] = (array) $arguments['backlinks_filters'];

@@ -318,9 +318,13 @@ class Update_Post_Blocks extends Base_Tool {
             }
             if ( $has_markup && ! in_array( $key, self::DELIMITER_ONLY_ATTRIBUTES, true ) ) {
                 if ( ! $force ) {
-                    throw new \InvalidArgumentException(
+                    throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error(
+                        \Easy_MCP_AI\MCP\Refusal_Text::fit(
+                            'ops[%2$s]: %1$s at path "%3$s" has editor-generated HTML, so changing "%4$s" in the delimiter alone breaks it in the editor. Use replace, or force: true. Nothing was saved.',
+                            array( (string) $name, (string) $i, (string) $path_label, $key )
+                        ),
                         sprintf(
-                            'ops[%d]: %s at path "%s" has editor-generated HTML, so changing "%s" in the delimiter alone would leave the block invalid in the editor ("Block contains unexpected or invalid content. Attempt recovery"). Use replace with the full new block markup (read it with wp_get_post_blocks or wp_get_post and edit it), or pass force: true to write the delimiter anyway. Only metadata and lock can be set on such a block without force; a block whose saved form is empty (e.g. <!-- wp:latest-posts /-->) is rendered from its attributes and takes them freely.',
+                            'ops[%d]: %s at path "%s" has editor-generated HTML, so changing "%s" in the delimiter alone would leave the block invalid in the editor ("Block contains unexpected or invalid content. Attempt recovery"). Use replace with the full new block markup (read it with wp_get_post_blocks or wp_get_post and edit it), or pass force: true to write the delimiter anyway. Only metadata and lock can be set on such a block without force; a block whose saved form is empty (e.g. <!-- wp:latest-posts /-->) is rendered from its attributes and takes them freely. Nothing was saved.',
                             $i,
                             $name, // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                             $path_label, // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

@@ -2,6 +2,7 @@
 namespace Easy_MCP_AI\Tools\Taxonomy;
 
 use Easy_MCP_AI\Tools\Base_Tool;
+use Easy_MCP_AI\Tools\Posts\Update_Post;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -63,10 +64,25 @@ class Update_Category extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        self::parent_param( $arguments );
+    }
+
+    private static function parent_param( array $arguments ): ?int {
+        if ( ! isset( $arguments['parent'] ) ) {
+            return null;
+        }
+        if ( ! Update_Post::is_whole_number( $arguments['parent'] ) || (int) $arguments['parent'] < 0 ) {
+            throw new \InvalidArgumentException( \Easy_MCP_AI\MCP\Refusal_Text::fit( 'parent must be the ID of a category (an integer), or 0 for the top level; got %s. Nothing was saved.', array( Update_Post::shown( $arguments['parent'] ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        return (int) $arguments['parent'];
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'category_id' ) );
 
         $category_id = $this->parse_required_id( $arguments['category_id'], 'category_id' );
+        $parent      = self::parent_param( $arguments );
         $params      = array();
 
         if ( isset( $arguments['name'] ) ) {
@@ -81,8 +97,8 @@ class Update_Category extends Base_Tool {
             $params['description'] = self::markup_arg( $arguments, 'description' );
         }
 
-        if ( isset( $arguments['parent'] ) ) {
-            $params['parent'] = absint( $arguments['parent'] );
+        if ( null !== $parent ) {
+            $params['parent'] = $parent;
         }
 
         $data = $this->rest_request( 'POST', '/wp/v2/categories/' . $category_id, $params );

@@ -36,25 +36,21 @@ class Domain_Overview extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'domain' ) );
-			$domain   = trim( (string) ( $arguments['domain'] ?? '' ) );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			Semrush_Validators::validate_bare_domain( $domain );
-			Semrush_Validators::validate_database( $database );
-			$client = new Semrush_Client();
-			$out    = $client->report( 'domain_rank', array(
-				'domain'         => $domain,
-				'database'       => $database,
-				'export_columns' => 'Dn,Rk,Or,Ot,Oc,Ad,At,Ac',
-			) );
-			$first = $out['items'][0] ?? array();
-			return array_merge( $first, array(
-				'_units_cost'     => $out['_units_cost'],
-				'_cost_estimated' => true,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
-		}
+		$this->validate_required( $arguments, array( 'domain' ) );
+		$domain   = trim( (string) ( $arguments['domain'] ?? '' ) );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		Semrush_Validators::validate_bare_domain( $domain );
+		Semrush_Validators::validate_database( $database );
+		$client = new Semrush_Client();
+		$out    = $client->report( 'domain_rank', array(
+			'domain'         => $domain,
+			'database'       => $database,
+			'export_columns' => 'Dn,Rk,Or,Ot,Oc,Ad,At,Ac',
+		) );
+		$first = $out['items'][0] ?? array();
+		return array_merge( $first, array(
+			'_units_cost'     => $out['_units_cost'],
+			'_cost_estimated' => true,
+		) );
 	}
 }

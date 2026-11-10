@@ -44,7 +44,7 @@ class Delete_Tag extends Base_Tool {
                 ),
                 'reassign' => array(
                     'type'        => 'integer',
-                    'description' => 'Optional: ID of the tag to reassign posts to, but ONLY for posts left with zero tags after deletion (i.e. this was their only tag). Posts that also have other tags are unaffected.',
+                    'description' => 'Optional: ID of the tag to reassign posts to, but ONLY for posts left with zero tags after deletion (i.e. this was their only tag). Posts that also have other tags are unaffected. An ID that is not a tag is refused before anything is deleted.',
                 ),
             ),
             'required'   => array( 'tag_id' ),
@@ -62,6 +62,10 @@ class Delete_Tag extends Base_Tool {
             if ( $reassign_id > 0 ) {
                 $args['default'] = $reassign_id;
             }
+        }
+
+        if ( isset( $args['default'] ) && term_exists( $tag_id, 'post_tag' ) && ! term_exists( $args['default'], 'post_tag' ) ) {
+            throw new \InvalidArgumentException( sprintf( 'reassign: tag %d not found, so WordPress would leave posts whose only tag this is with none. Pass an existing tag ID, or omit reassign.', $args['default'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
         $result = wp_delete_term( $tag_id, 'post_tag', $args );

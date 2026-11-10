@@ -95,6 +95,7 @@ $options = array( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.N
     'easy_mcp_ai_yoast_settings_lock',
     'easy_mcp_ai_rank_math_settings_lock',
     'easy_mcp_ai_last_tool_call',
+    'easy_mcp_ai_call_observations',
     'easy_mcp_ai_change_log_db_version',
     'easy_mcp_ai_tasks_db_version',
     'easy_mcp_ai_tasks_tick_budget_seconds',

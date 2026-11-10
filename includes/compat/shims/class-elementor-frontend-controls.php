@@ -21,30 +21,36 @@ final class Elementor_Frontend_Controls extends Compat_Shim {
     }
 
     public function is_needed() {
-        return defined( 'REST_REQUEST' ) && REST_REQUEST && null !== self::controls_manager() && true === self::cached();
+        return defined( 'REST_REQUEST' ) && REST_REQUEST && null !== self::controls_manager() && self::readable() && false !== self::cached();
     }
 
     public function enter( array $arguments = array(), $tool = null ) {
         $manager = self::controls_manager();
-        if ( null === $manager || true !== self::cached() ) {
+        if ( null === $manager || ! self::readable() || false === self::cached() ) {
             return null;
         }
-        self::write_cache( null );
+        $state           = new \stdClass();
+        $state->previous = self::cached();
+        self::write_cache( false );
         $manager->clear_stack_cache();
-        return new \stdClass();
+        return $state;
     }
 
     public function leave( $state = null ): void {
         $manager = self::controls_manager();
-        if ( ! $state instanceof \stdClass || null === $manager ) {
+        if ( ! $state instanceof \stdClass || ! property_exists( $state, 'previous' ) || null === $manager ) {
             return;
         }
-        self::write_cache( true );
+        self::write_cache( $state->previous );
         $manager->clear_stack_cache();
     }
 
+    private static function readable(): bool {
+        return class_exists( self::PERFORMANCE ) && property_exists( self::PERFORMANCE, 'is_frontend' );
+    }
+
     private static function cached(): ?bool {
-        if ( ! class_exists( self::PERFORMANCE, false ) || ! property_exists( self::PERFORMANCE, 'is_frontend' ) ) {
+        if ( ! self::readable() ) {
             return null;
         }
         $value = \Closure::bind(

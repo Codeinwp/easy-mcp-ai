@@ -44,7 +44,7 @@ class Delete_Category extends Base_Tool {
                 ),
                 'reassign'    => array(
                     'type'        => 'integer',
-                    'description' => 'Optional: ID of the category to reassign posts to, but ONLY for posts left with zero categories after deletion (i.e. this was their only category). Posts that also have other categories are unaffected. Defaults to "Uncategorized" if omitted.',
+                    'description' => 'Optional: ID of the category to reassign posts to, but ONLY for posts left with zero categories after deletion (i.e. this was their only category). Posts that also have other categories are unaffected. Defaults to "Uncategorized" if omitted. An ID that is not a category is refused before anything is deleted.',
                 ),
             ),
             'required'   => array( 'category_id' ),
@@ -67,6 +67,10 @@ class Delete_Category extends Base_Tool {
             if ( $reassign_id > 0 ) {
                 $args['default'] = $reassign_id;
             }
+        }
+
+        if ( isset( $args['default'] ) && term_exists( $category_id, 'category' ) && ! term_exists( $args['default'], 'category' ) ) {
+            throw new \InvalidArgumentException( sprintf( 'reassign: category %d not found, so WordPress would leave posts whose only category this is with none. Pass an existing category ID, or omit reassign to use Uncategorized.', $args['default'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
         $result = wp_delete_term( $category_id, 'category', $args );

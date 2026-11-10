@@ -28,7 +28,6 @@ class Plugin {
         Config_Admin::register();
         Admin\Review_Ask::register();
         \add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-        \add_action( 'rest_api_init', array( __CLASS__, 'maybe_seed_abilities' ), 1 );
         \add_action( 'admin_init', array( __CLASS__, 'maybe_seed_abilities' ) );
         \add_action( 'init', array( $this, 'handle_well_known' ), 0 );
         \add_filter( 'rest_pre_serve_request', array( Cache\Page_Cache_Opt_Out::class, 'on_rest_pre_serve_request' ), 1, 4 );
@@ -593,15 +592,16 @@ class Plugin {
 
     private function register_ability_tools( Tools\Tool_Registry $registry ): void {
         $dynamic_registrar = new Tools\Dynamic_Tool_Registrar();
-        if ( \doing_action( 'init' ) ) {
-            \add_action(
-                'wp_loaded',
-                static function () use ( $dynamic_registrar, $registry ) {
-                    $dynamic_registrar->register_to( $registry );
-                }
-            );
-        } else {
+        $read              = static function () use ( $dynamic_registrar, $registry ) {
+            self::maybe_seed_abilities();
             $dynamic_registrar->register_to( $registry );
+        };
+        if ( \doing_action( 'init' ) ) {
+            \add_action( 'wp_loaded', $read );
+        } elseif ( \doing_action( 'rest_api_init' ) ) {
+            \add_action( 'rest_api_init', $read, PHP_INT_MAX );
+        } else {
+            $read();
         }
     }
 

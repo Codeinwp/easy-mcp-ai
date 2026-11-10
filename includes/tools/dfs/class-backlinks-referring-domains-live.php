@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -153,7 +154,7 @@ class Backlinks_Referring_Domains_Live extends Base_Tool {
 			$task['backlinks_status_type'] = (string) $arguments['backlinks_status_type'];
 		}
 		if ( isset( $arguments['include_subdomains'] ) ) {
-			$task['include_subdomains'] = (bool) $arguments['include_subdomains'];
+			$task['include_subdomains'] = External_Data_Flag::read( 'include_subdomains', $arguments['include_subdomains'] );
 		}
 		if ( isset( $arguments['internal_list_limit'] ) ) {
 			$task['internal_list_limit'] = (int) $arguments['internal_list_limit'];

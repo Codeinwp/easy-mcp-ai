@@ -211,14 +211,19 @@ class Create_Post extends Base_Tool {
         return $params;
     }
 
+    public function precheck( array $arguments ): void {
+        $params = $this->term_and_media_params( $arguments );
+        self::prepare_term_arguments( $arguments, $params );
+    }
+
     private function term_and_media_params( array $arguments ): array {
         $params = array();
         if ( ! empty( $arguments['categories'] ) ) {
-            $params['categories'] = array_map( 'absint', $this->parse_json_param( $arguments['categories'], 'categories' ) );
+            $params['categories'] = self::checked_term_ids( $this->parse_json_param( $arguments['categories'], 'categories' ), 'categories', 'category' );
         }
 
         if ( ! empty( $arguments['tags'] ) ) {
-            $params['tags'] = array_map( 'absint', $this->parse_json_param( $arguments['tags'], 'tags' ) );
+            $params['tags'] = self::checked_term_ids( $this->parse_json_param( $arguments['tags'], 'tags' ), 'tags', 'post_tag' );
         }
 
         if ( isset( $arguments['featured_media'] ) ) {
@@ -361,7 +366,33 @@ class Create_Post extends Base_Tool {
                 throw new \InvalidArgumentException( sprintf( 'tax_input names %s, which another argument already sets (%s); send it once.', $taxonomy, 'post_tag' === $taxonomy ? 'tags or tag_names' : $base ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
             $params[ $base ] = self::parse_term_ids( $ids, 'tax_input.' . $taxonomy );
+            self::refuse_missing_tax_input_terms( $ids, $taxonomy );
         }
+    }
+
+    private static function refuse_missing_tax_input_terms( $ids, string $taxonomy ): void {
+        foreach ( is_array( $ids ) ? $ids : array( $ids ) as $index => $id ) {
+            if ( ! term_exists( (int) $id, $taxonomy ) ) {
+                throw new \InvalidArgumentException( sprintf( 'tax_input.%1$s[%2$s]: term %3$d not found in %1$s. Nothing was saved.', $taxonomy, $index, (int) $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+        }
+    }
+
+    public static function checked_term_ids( array $ids, string $label, string $taxonomy ): array {
+        $noun = 'category' === $taxonomy ? 'category' : 'tag';
+        $out  = array();
+        foreach ( $ids as $index => $raw ) {
+            $id = Update_Post::is_whole_number( $raw ) ? (int) $raw : 0;
+            if ( $id < 1 ) {
+                $hint = 'post_tag' === $taxonomy && is_string( $raw ) && '' !== trim( $raw ) && ! is_numeric( $raw ) ? '; send tag names in tag_names' : '';
+                throw new \InvalidArgumentException( \Easy_MCP_AI\MCP\Refusal_Text::fit( '%2$s[%3$s]: %1$s is not a ' . $noun . ' ID' . $hint . '. Nothing was saved.', array( Update_Post::shown( $raw ), $label, (string) $index ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            if ( ! term_exists( $id, $taxonomy ) ) {
+                throw new \InvalidArgumentException( sprintf( '%1$s[%2$s]: %3$s %4$d not found. Nothing was saved.', $label, $index, $noun, $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            $out[ $index ] = $id;
+        }
+        return $out;
     }
 
     public static function resolve_tag_names( array $tag_names, array &$params ): array {

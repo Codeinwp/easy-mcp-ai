@@ -40,24 +40,20 @@ class Domain_Overview_Worldwide extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'domain' ) );
-			$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
-			SeRanking_Validators::validate_bare_domain( $domain );
-			$query = array( 'domain' => $domain );
-			foreach ( array( 'currency', 'fields', 'url' ) as $opt ) {
-				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-					$query[ $opt ] = trim( (string) $arguments[ $opt ] );
-				}
+		$this->validate_required( $arguments, array( 'domain' ) );
+		$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
+		SeRanking_Validators::validate_bare_domain( $domain );
+		$query = array( 'domain' => $domain );
+		foreach ( array( 'currency', 'fields', 'url' ) as $opt ) {
+			if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+				$query[ $opt ] = trim( (string) $arguments[ $opt ] );
 			}
-			foreach ( array( 'show_zones_list', 'with_subdomains' ) as $opt ) {
-				if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
-					$query[ $opt ] = rest_sanitize_boolean( $arguments[ $opt ] ) ? 1 : 0;
-				}
-			}
-			return ( new SeRanking_Client() )->request( 'GET', '/v1/domain/overview/worldwide', $query );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
 		}
+		foreach ( array( 'show_zones_list', 'with_subdomains' ) as $opt ) {
+			if ( isset( $arguments[ $opt ] ) && '' !== $arguments[ $opt ] ) {
+				$query[ $opt ] = SeRanking_Validators::query_flag( $opt, $arguments[ $opt ] );
+			}
+		}
+		return ( new SeRanking_Client() )->request( 'GET', '/v1/domain/overview/worldwide', $query );
 	}
 }

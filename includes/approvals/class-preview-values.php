@@ -49,6 +49,13 @@ final class Preview_Values {
         return self::is_long( $value ) ? self::size( $value ) : self::inline( $value );
     }
 
+    public static function named( string $name, $value ): string {
+        if ( self::is_long( $value ) ) {
+            return $name . ' ' . self::size( $value );
+        }
+        return is_string( $value ) ? sprintf( "%s '%s'", $name, $value ) : $name . ' ' . self::inline( $value );
+    }
+
     public static function mask( array $values, array $top_level = array() ): array {
         foreach ( $values as $key => $value ) {
             if ( in_array( $key, $top_level, true ) || ( is_string( $key ) && self::is_secret_name( $key ) ) ) {

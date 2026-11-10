@@ -411,9 +411,15 @@ class Rankmath_Update_Settings extends Base_Tool {
 				$reasons[] = $field . ': ' . $reason;
 			}
 		}
-		if ( $reasons ) {
-			throw new \RuntimeException( implode( ' ', $reasons ) . ' Nothing was changed.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		if ( ! $reasons ) {
+			return;
 		}
+		$whole = implode( ' ', $reasons ) . ' Nothing was changed.';
+		if ( \Easy_MCP_AI\MCP\Refusal_Text::fits( $whole ) ) {
+			throw new \RuntimeException( $whole ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+		$message = \Easy_MCP_AI\MCP\Refusal_Text::fit( 1 === count( $reasons ) ? '%s Nothing was changed; the whole reason is below.' : '%s Nothing was changed; every reason is below.', array( implode( ' ', $reasons ) ) );
+		throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $message, implode( "\n", $reasons ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 	}
 
 	private static function current( array $wanted ): array {

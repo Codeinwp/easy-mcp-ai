@@ -77,8 +77,7 @@ class Change_Log_Repository {
             $format_values[] = isset( $formats[ $col ] ) ? $formats[ $col ] : '%s';
         }
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table direct insert for change log.
-        $wpdb->insert( $this->table(), $row, $format_values );
-        return (int) $wpdb->insert_id;
+        return false === $wpdb->insert( $this->table(), $row, $format_values ) ? 0 : (int) $wpdb->insert_id;
     }
 
     public function update_revision_id( $row_id, $revision_id ) {

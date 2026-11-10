@@ -59,7 +59,11 @@ final class Option_Guard {
             return;
         }
         if ( self::is_protected( $option ) || self::is_database_alias( $option ) ) {
-            throw new \RuntimeException( sprintf( 'This call tried to change %s, an Easy MCP AI setting; tool calls cannot change it, so the call was stopped at that write. An administrator can change it in the plugin\'s settings.', $option ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            $message = Refusal_Text::fit( 'The call was stopped at a write to %s, an Easy MCP AI setting, which tool calls cannot change. An administrator can change it in the plugin\'s settings.', array( $option ) );
+            if ( ! Refusal_Text::fits( $message ) ) {
+                $message = Refusal_Text::fit( 'The call was stopped at a write to %s, a setting of this plugin, which tool calls cannot change. An administrator can change it in the plugin\'s settings.', array( $option ) );
+            }
+            throw new \RuntimeException( $message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
     }
 

@@ -99,11 +99,16 @@ abstract class Vendor_Abilities {
     protected static function any_registered(): bool {
         foreach ( (array) wp_get_abilities() as $ability ) {
             $name = is_object( $ability ) && method_exists( $ability, 'get_name' ) ? (string) $ability->get_name() : '';
-            if ( 0 === strpos( $name, static::PREFIX ) ) {
+            if ( 0 === strpos( $name, static::PREFIX ) && static::from_own_registration( $ability ) ) {
                 return true;
             }
         }
         return false;
+    }
+
+    protected static function from_own_registration( object $ability ): bool {
+        unset( $ability );
+        return true;
     }
 
     protected static function run( callable $registration, string $what ): void {

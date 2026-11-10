@@ -36,25 +36,21 @@ class Backlinks_Overview extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'target', 'target_type' ) );
-			$target      = trim( (string) $arguments['target'] );
-			$target_type = trim( (string) $arguments['target_type'] );
-			Semrush_Validators::validate_target_type( $target_type );
-			if ( 'url' === $target_type && ! \wp_http_validate_url( $target ) ) {
-				throw new \InvalidArgumentException( 'target must be a valid URL when target_type=url.' );
-			}
-			$out = ( new Semrush_Client() )->report( 'backlinks_overview', array(
-				'target'      => $target,
-				'target_type' => $target_type,
-			) );
-			$first = $out['items'][0] ?? array();
-			return array_merge( $first, array(
-				'_units_cost'     => $out['_units_cost'],
-				'_cost_estimated' => true,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'target', 'target_type' ) );
+		$target      = trim( (string) $arguments['target'] );
+		$target_type = trim( (string) $arguments['target_type'] );
+		Semrush_Validators::validate_target_type( $target_type );
+		if ( 'url' === $target_type && ! \wp_http_validate_url( $target ) ) {
+			throw new \InvalidArgumentException( 'target must be a valid URL when target_type=url.' );
 		}
+		$out = ( new Semrush_Client() )->report( 'backlinks_overview', array(
+			'target'      => $target,
+			'target_type' => $target_type,
+		) );
+		$first = $out['items'][0] ?? array();
+		return array_merge( $first, array(
+			'_units_cost'     => $out['_units_cost'],
+			'_cost_estimated' => true,
+		) );
 	}
 }

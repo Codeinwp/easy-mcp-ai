@@ -211,6 +211,8 @@ class List_Comments extends Base_Tool {
 
         $details = ! empty( $arguments['include_details'] ) && rest_sanitize_boolean( $arguments['include_details'] );
 
+        $this->refuse_notes_of_missing_posts( $params );
+
         $request = new \WP_REST_Request( 'GET', '/wp/v2/comments' );
         foreach ( $params as $key => $value ) {
             $request->set_param( $key, $value );
@@ -236,6 +238,17 @@ class List_Comments extends Base_Tool {
             ),
             $offset
         );
+    }
+
+    private function refuse_notes_of_missing_posts( array $params ): void {
+        if ( ! isset( $params['type'], $params['post'] ) || 'note' !== $params['type'] ) {
+            return;
+        }
+        foreach ( (array) $params['post'] as $post_id ) {
+            if ( (int) $post_id > 0 ) {
+                $this->refuse_missing_post( (int) $post_id );
+            }
+        }
     }
 
     private function post_param( array $arguments ): array {

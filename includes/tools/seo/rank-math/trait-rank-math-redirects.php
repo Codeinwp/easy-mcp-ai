@@ -125,7 +125,8 @@ trait Rank_Math_Redirects {
 			}
 		}
 		if ( array() !== $dropped ) {
-			throw new \InvalidArgumentException( 'Rank Math does not accept these sources, so they would not be saved: ' . implode( ', ', $dropped ) . '. A source is a path on this site (not "/" and not another domain), or a valid regular expression with comparison "regex".' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			$message = \Easy_MCP_AI\MCP\Refusal_Text::fit( 'Rank Math does not accept these sources, so they would not be saved: %s. What it accepts is below.', array( implode( ', ', $dropped ) ) );
+			throw new \Easy_MCP_AI\MCP\Detailed_Tool_Error( $message, 'A source is a path on this site (not "/" and not another domain), or a valid regular expression with comparison "regex". The sources it would drop: ' . implode( ', ', $dropped ) . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 		return \RankMath\Redirections\Redirection::from( $data );
 	}

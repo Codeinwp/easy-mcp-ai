@@ -3,6 +3,7 @@ namespace Easy_MCP_AI\Tools\DFS;
 
 use Easy_MCP_AI\Tools\Base_Tool;
 use Easy_MCP_AI\DFS\DataforSEO_Client;
+use Easy_MCP_AI\External_Data_Flag;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -162,8 +163,8 @@ class On_Page_Instant_Pages extends Base_Tool {
 		}
 
 		$has_preset = isset( $arguments['browser_preset'] );
-		$has_js     = isset( $arguments['enable_javascript'] ) && $arguments['enable_javascript'];
-		$has_render = isset( $arguments['enable_browser_rendering'] ) && $arguments['enable_browser_rendering'];
+		$has_js     = isset( $arguments['enable_javascript'] ) && External_Data_Flag::read( 'enable_javascript', $arguments['enable_javascript'] );
+		$has_render = isset( $arguments['enable_browser_rendering'] ) && External_Data_Flag::read( 'enable_browser_rendering', $arguments['enable_browser_rendering'] );
 		if ( $has_preset && ! $has_js && ! $has_render ) {
 			throw new \RuntimeException(
 				'browser_preset requires enable_javascript=true or enable_browser_rendering=true.'
@@ -179,7 +180,7 @@ class On_Page_Instant_Pages extends Base_Tool {
 			);
 		}
 
-		if ( isset( $arguments['enable_xhr'] ) && $arguments['enable_xhr'] && ! $has_js ) {
+		if ( isset( $arguments['enable_xhr'] ) && External_Data_Flag::read( 'enable_xhr', $arguments['enable_xhr'] ) && ! $has_js ) {
 			throw new \RuntimeException(
 				'enable_xhr requires enable_javascript=true.'
 			);
@@ -209,31 +210,31 @@ class On_Page_Instant_Pages extends Base_Tool {
 			$task['browser_screen_scale_factor'] = (float) $arguments['browser_screen_scale_factor'];
 		}
 		if ( isset( $arguments['store_raw_html'] ) ) {
-			$task['store_raw_html'] = (bool) $arguments['store_raw_html'];
+			$task['store_raw_html'] = External_Data_Flag::read( 'store_raw_html', $arguments['store_raw_html'] );
 		}
 		if ( isset( $arguments['accept_language'] ) ) {
 			$task['accept_language'] = (string) $arguments['accept_language'];
 		}
 		if ( isset( $arguments['load_resources'] ) ) {
-			$task['load_resources'] = (bool) $arguments['load_resources'];
+			$task['load_resources'] = External_Data_Flag::read( 'load_resources', $arguments['load_resources'] );
 		}
 		if ( isset( $arguments['enable_javascript'] ) ) {
-			$task['enable_javascript'] = (bool) $arguments['enable_javascript'];
+			$task['enable_javascript'] = External_Data_Flag::read( 'enable_javascript', $arguments['enable_javascript'] );
 		}
 		if ( isset( $arguments['enable_browser_rendering'] ) ) {
-			$task['enable_browser_rendering'] = (bool) $arguments['enable_browser_rendering'];
+			$task['enable_browser_rendering'] = External_Data_Flag::read( 'enable_browser_rendering', $arguments['enable_browser_rendering'] );
 		}
 		if ( isset( $arguments['enable_xhr'] ) ) {
-			$task['enable_xhr'] = (bool) $arguments['enable_xhr'];
+			$task['enable_xhr'] = External_Data_Flag::read( 'enable_xhr', $arguments['enable_xhr'] );
 		}
 		if ( isset( $arguments['custom_js'] ) ) {
 			$task['custom_js'] = (string) $arguments['custom_js'];
 		}
 		if ( isset( $arguments['validate_micromarkup'] ) ) {
-			$task['validate_micromarkup'] = (bool) $arguments['validate_micromarkup'];
+			$task['validate_micromarkup'] = External_Data_Flag::read( 'validate_micromarkup', $arguments['validate_micromarkup'] );
 		}
 		if ( isset( $arguments['check_spell'] ) ) {
-			$task['check_spell'] = (bool) $arguments['check_spell'];
+			$task['check_spell'] = External_Data_Flag::read( 'check_spell', $arguments['check_spell'] );
 		}
 		if ( isset( $arguments['checks_threshold'] ) && is_array( $arguments['checks_threshold'] ) ) {
 			$task['checks_threshold'] = $arguments['checks_threshold'];

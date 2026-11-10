@@ -40,38 +40,34 @@ class Domain_Organic_Keywords extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'domain' ) );
-			$domain   = trim( (string) ( $arguments['domain'] ?? '' ) );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			Semrush_Validators::validate_bare_domain( $domain );
-			Semrush_Validators::validate_database( $database );
+		$this->validate_required( $arguments, array( 'domain' ) );
+		$domain   = trim( (string) ( $arguments['domain'] ?? '' ) );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		Semrush_Validators::validate_bare_domain( $domain );
+		Semrush_Validators::validate_database( $database );
 
-			$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
-			if ( $limit < 1 || $limit > 100000 ) {
-				throw new \InvalidArgumentException( 'display_limit must be between 1 and 100000.' );
-			}
-
-			$params = array(
-				'domain'         => $domain,
-				'database'       => $database,
-				'display_limit'  => $limit,
-				'export_columns' => 'Ph,Po,Pp,Pd,Nq,Cp,Ur,Tr,Tc,Co,Nr,Td',
-			);
-			if ( isset( $arguments['display_offset'] ) ) {
-				$params['display_offset'] = (int) $arguments['display_offset'];
-			}
-			if ( ! empty( $arguments['display_sort'] ) ) {
-				$params['display_sort'] = (string) $arguments['display_sort'];
-			}
-			if ( ! empty( $arguments['display_filter'] ) ) {
-				Semrush_Validators::validate_display_filter( (string) $arguments['display_filter'] );
-				$params['display_filter'] = (string) $arguments['display_filter'];
-			}
-
-			return ( new Semrush_Client() )->report( 'domain_organic', $params );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$limit = isset( $arguments['display_limit'] ) ? (int) $arguments['display_limit'] : 100;
+		if ( $limit < 1 || $limit > 100000 ) {
+			throw new \InvalidArgumentException( 'display_limit must be between 1 and 100000.' );
 		}
+
+		$params = array(
+			'domain'         => $domain,
+			'database'       => $database,
+			'display_limit'  => $limit,
+			'export_columns' => 'Ph,Po,Pp,Pd,Nq,Cp,Ur,Tr,Tc,Co,Nr,Td',
+		);
+		if ( isset( $arguments['display_offset'] ) ) {
+			$params['display_offset'] = (int) $arguments['display_offset'];
+		}
+		if ( ! empty( $arguments['display_sort'] ) ) {
+			$params['display_sort'] = (string) $arguments['display_sort'];
+		}
+		if ( ! empty( $arguments['display_filter'] ) ) {
+			Semrush_Validators::validate_display_filter( (string) $arguments['display_filter'] );
+			$params['display_filter'] = (string) $arguments['display_filter'];
+		}
+
+		return ( new Semrush_Client() )->report( 'domain_organic', $params );
 	}
 }

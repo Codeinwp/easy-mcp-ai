@@ -62,6 +62,11 @@ class Delete_User extends Base_Tool {
     }
 
     public function describe( array $arguments ) {
+        try {
+            $this->precheck( $arguments );
+        } catch ( \InvalidArgumentException $e ) {
+            return '';
+        }
         $id   = isset( $arguments['user_id'] ) ? (int) $arguments['user_id'] : 0;
         $user = $id > 0 ? $this->peek( '/wp/v2/users/' . $id, 'id,name,slug,username', array( 'context' => 'edit' ) ) : null;
         if ( ! $user ) {
@@ -98,6 +103,11 @@ class Delete_User extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        self::flag( $arguments, 'network' );
+        self::flag( $arguments, 'delete_content' );
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'user_id' ) );
 
@@ -124,7 +134,7 @@ class Delete_User extends Base_Tool {
     }
 
     private static function flag( array $arguments, string $name ): bool {
-        return ! empty( $arguments[ $name ] ) && rest_sanitize_boolean( $arguments[ $name ] );
+        return self::boolean_arg( $arguments, $name, false, 'Nothing was deleted.' );
     }
 
     private function reassign_argument( array $arguments, bool $network ): ?int {

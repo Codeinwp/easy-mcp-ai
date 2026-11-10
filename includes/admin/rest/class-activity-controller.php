@@ -3,6 +3,7 @@
 namespace Easy_MCP_AI\Admin\Rest;
 
 use Easy_MCP_AI\History\Change_Log_Repository;
+use Easy_MCP_AI\History\Change_Recorder;
 use Easy_MCP_AI\Rest_Routes\Route_Gate;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -373,12 +374,34 @@ class Activity_Controller extends Admin_Rest_Controller {
             'fields'        => self::fields_of( $row ),
             'changedFields' => self::changed_fields( $row ),
             'revisionUrl'   => $revision_id > 0 ? \admin_url( 'revision.php?revision=' . $revision_id ) : null,
+            'termSetNote'   => self::term_set_note( $row ),
         ) );
+    }
+
+    public static function term_set_note( array $row ) {
+        if ( 'object_terms' !== ( $row['object_type'] ?? '' ) ) {
+            return null;
+        }
+        $state = Change_Recorder::term_set_unknown( self::decode_side( $row['before_value'] ?? null ), self::decode_side( $row['after_value'] ?? null ) );
+        if ( 'unread' === $state ) {
+            return __( 'The terms could not be read when this change was recorded, so its before and after are not known.', 'easy-mcp-ai' );
+        }
+        if ( 'earlier_version' === $state ) {
+            return __( 'An earlier version recorded this change. When terms were added it kept only the added ones and an empty before, so these may not be the whole sets.', 'easy-mcp-ai' );
+        }
+        return null;
     }
 
     public static function fields_of( array $row ) {
         $before = self::decode_side( $row['before_value'] ?? null );
         $after  = self::decode_side( $row['after_value'] ?? null );
+        if ( 'object_terms' === ( $row['object_type'] ?? '' ) && is_array( $before ) && is_array( $after ) ) {
+            foreach ( array_merge( Change_Recorder::TERM_SET_EXPLANATION_FIELDS, array( 'value_unavailable' ) ) as $note ) {
+                unset( $before[ $note ], $after[ $note ] );
+            }
+            $before = $before ?: null;
+            $after  = $after ?: null;
+        }
         if ( null === $before && null === $after ) {
             return array();
         }

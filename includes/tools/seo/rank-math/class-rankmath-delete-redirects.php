@@ -54,7 +54,8 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 			return '';
 		}
 		try {
-			$ids = $this->parse_ids( $arguments['redirect_ids'] ?? null );
+			$ids   = $this->parse_ids( $arguments['redirect_ids'] ?? null );
+			$force = self::boolean_arg( $arguments, 'force', false, '' );
 		} catch ( \Throwable $e ) {
 			return '';
 		}
@@ -68,7 +69,7 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		}
 		$count = count( $lines );
 		$list  = implode( '; ', $lines );
-		if ( isset( $arguments['force'] ) && rest_sanitize_boolean( $arguments['force'] ) ) {
+		if ( $force ) {
 			/* translators: 1: number of redirects, 2: list of redirects */
 			return sprintf( _n( 'Permanently delete %1$d Rank Math redirect: %2$s', 'Permanently delete %1$d Rank Math redirects: %2$s', $count, 'easy-mcp-ai' ), $count, $list );
 		}
@@ -84,11 +85,15 @@ class Rankmath_Delete_Redirects extends Base_Tool {
 		return sprintf( 'These redirects take %1$d characters to list and the approval page shows %2$d, so the call was not sent for approval: a person must see every redirect they approve deleting. Send fewer redirect_ids per call.', $length, \Easy_MCP_AI\Approvals\Approval_Gate::PREVIEW_MAX );
 	}
 
+	public function precheck( array $arguments ): void {
+		self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
+	}
+
 	public function execute( array $arguments ) {
 		$this->require_rank_math_redirects();
 
 		$ids   = $this->parse_ids( $arguments['redirect_ids'] ?? null );
-		$force = isset( $arguments['force'] ) && rest_sanitize_boolean( $arguments['force'] );
+		$force = self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
 
 		$missing = array();
 		$trashed = array();

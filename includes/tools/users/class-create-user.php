@@ -1,6 +1,7 @@
 <?php
 namespace Easy_MCP_AI\Tools\Users;
 
+use Easy_MCP_AI\Approvals\Preview_Values;
 use Easy_MCP_AI\Tools\Base_Tool;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -107,9 +108,7 @@ class Create_User extends Base_Tool {
 
     public function get_approval_policy( array $arguments ) {
         try {
-            $roles = ( isset( $arguments['roles'] ) && is_array( $arguments['roles'] ) && ! empty( $arguments['roles'] ) )
-                ? $arguments['roles']
-                : array( (string) get_option( 'default_role' ) );
+            $roles = Update_User::parse_roles( $arguments, '' ) ?? array( (string) get_option( 'default_role' ) );
             foreach ( $roles as $role ) {
                 if ( is_string( $role ) && Update_User::role_is_takeover_grant( sanitize_text_field( $role ) ) ) {
                     return 'always';
@@ -129,6 +128,17 @@ class Create_User extends Base_Tool {
                 isset( $arguments['email'] ) && is_scalar( $arguments['email'] ) ? sanitize_email( (string) $arguments['email'] ) : '?',
                 self::describe_roles( $arguments )
             );
+            foreach ( array( 'name', 'first_name', 'last_name', 'nickname', 'slug', 'url', 'description', 'user_registered' ) as $field ) {
+                if ( isset( $arguments[ $field ] ) && is_scalar( $arguments[ $field ] ) ) {
+                    $text .= '; ' . Preview_Values::named( $field, (string) $arguments[ $field ] );
+                }
+            }
+            if ( isset( $arguments['rich_editing'] ) ) {
+                $text .= '; rich_editing ' . ( rest_sanitize_boolean( $arguments['rich_editing'] ) ? 'on' : 'off' );
+            }
+            if ( isset( $arguments['password'] ) && '' !== $arguments['password'] ) {
+                $text .= '; set its password';
+            }
             if ( ! empty( $arguments['send_email'] ) && rest_sanitize_boolean( $arguments['send_email'] ) ) {
                 $text .= '; email the new account details';
             }
@@ -138,14 +148,20 @@ class Create_User extends Base_Tool {
         }
     }
 
+    public function approval_details( array $arguments ): ?array {
+        return self::generic_details( $this, $arguments );
+    }
+
     private static function describe_roles( array $arguments ): string {
-        $roles = ( isset( $arguments['roles'] ) && is_array( $arguments['roles'] ) && ! empty( $arguments['roles'] ) )
-            ? array_map( 'strval', $arguments['roles'] )
-            : array();
+        $roles = array_map( 'strval', (array) Update_User::parse_roles( $arguments, '' ) );
         sort( $roles, SORT_STRING );
         return empty( $roles )
             ? sprintf( "the default role '%s'", (string) get_option( 'default_role' ) )
             : sprintf( 'role(s) %s', implode( ', ', $roles ) );
+    }
+
+    public function precheck( array $arguments ): void {
+        Update_User::parse_roles( $arguments, 'Nothing was created.' );
     }
 
     public function execute( array $arguments ) {
@@ -197,8 +213,9 @@ class Create_User extends Base_Tool {
             $params['last_name'] = sanitize_text_field( $arguments['last_name'] );
         }
 
-        if ( ! empty( $arguments['roles'] ) ) {
-            $params['roles'] = $this->validate_assignable_roles( array_map( 'sanitize_text_field', $arguments['roles'] ) );
+        $roles = Update_User::parse_roles( $arguments, 'Nothing was created.' );
+        if ( null !== $roles ) {
+            $params['roles'] = $this->validate_assignable_roles( array_map( 'sanitize_text_field', $roles ) );
         }
 
         $params = array_merge( $params, self::string_params( $arguments ) );

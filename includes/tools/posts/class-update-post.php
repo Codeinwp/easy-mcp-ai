@@ -153,6 +153,8 @@ class Update_Post extends Base_Tool {
 
     public function precheck( array $arguments ): void {
         $this->precheck_other_type( $arguments, 'post_id', 'post', 'update' );
+        $params = $this->term_and_media_params( $arguments );
+        Create_Post::prepare_term_arguments( $arguments, $params );
     }
 
     public function execute( array $arguments ) {
@@ -217,17 +219,59 @@ class Update_Post extends Base_Tool {
     private function term_and_media_params( array $arguments ): array {
         $params = array();
         if ( isset( $arguments['categories'] ) ) {
-            $params['categories'] = array_map( 'absint', $this->parse_json_param( $arguments['categories'], 'categories' ) );
+            $params['categories'] = Create_Post::checked_term_ids( $this->parse_json_param( $arguments['categories'], 'categories' ), 'categories', 'category' );
         }
 
         if ( isset( $arguments['tags'] ) ) {
-            $params['tags'] = array_map( 'absint', $this->parse_json_param( $arguments['tags'], 'tags' ) );
+            $params['tags'] = Create_Post::checked_term_ids( $this->parse_json_param( $arguments['tags'], 'tags' ), 'tags', 'post_tag' );
         }
 
         if ( isset( $arguments['featured_media'] ) ) {
-            $params['featured_media'] = absint( $arguments['featured_media'] );
+            $params['featured_media'] = self::featured_media_param( $arguments['featured_media'] );
         }
         return $params;
+    }
+
+    public static function is_whole_number( $value ): bool {
+        if ( is_int( $value ) ) {
+            return true;
+        }
+        if ( is_string( $value ) && 1 === preg_match( '/^\s*[+-]?[0-9]+\s*$/', $value ) ) {
+            return true;
+        }
+        if ( ( ! is_float( $value ) && ! is_string( $value ) ) || ! is_numeric( $value ) ) {
+            return false;
+        }
+        $number = (float) $value;
+        return is_finite( $number ) && abs( $number ) < PHP_INT_MAX && floor( $number ) === $number;
+    }
+
+    public static function shown( $value ): string {
+        $json = wp_json_encode( $value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+        if ( is_string( $json ) ) {
+            return $json;
+        }
+        return is_float( $value ) ? (string) $value : gettype( $value );
+    }
+
+    public static function featured_media_param( $value ): int {
+        if ( ! self::is_whole_number( $value ) || (int) $value < 0 ) {
+            throw new \InvalidArgumentException( \Easy_MCP_AI\MCP\Refusal_Text::fit( 'featured_media must be the ID of an image in the media library (a positive integer), or 0 to remove the featured image; got %s. Nothing was saved.', array( self::shown( $value ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        $id = (int) $value;
+        if ( $id > 0 ) {
+            self::refuse_unusable_featured_media( $id );
+        }
+        return $id;
+    }
+
+    public static function refuse_unusable_featured_media( int $id ): void {
+        if ( ! get_post( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'featured_media: %d not found. Nothing was saved.', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        if ( ! wp_get_attachment_image( $id, 'thumbnail' ) ) {
+            throw new \InvalidArgumentException( sprintf( 'featured_media: %d is not an image in the media library, so WordPress would remove the featured image. Nothing was saved.', $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
     }
 
     private static function detail_params( array $arguments ): array {

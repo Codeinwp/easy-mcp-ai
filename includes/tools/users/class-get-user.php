@@ -53,7 +53,7 @@ class Get_User extends Base_Tool {
             throw new \InvalidArgumentException( 'Missing required parameters: user_id' );
         }
 
-        $user_id = (int) $arguments['user_id'];
+        $user_id = self::user_id_argument( $arguments['user_id'] );
         if ( $user_id < 0 ) {
             throw new \InvalidArgumentException( 'Invalid user_id: must be 0 (current user) or a positive integer.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -83,6 +83,28 @@ class Get_User extends Base_Tool {
         $result = array_merge( $result, self::user_columns( (int) $data['id'] ) );
 
         return Row_Extension::apply( Row_Extension::USER, $result, $data, $this->get_name(), false );
+    }
+
+    private static function user_id_argument( $value ): int {
+        if ( null === $value ) {
+            return 0;
+        }
+        if ( is_int( $value ) ) {
+            return $value;
+        }
+        if ( is_string( $value ) && 1 === preg_match( '/^\s*[+-]?[0-9]+\s*$/', $value ) ) {
+            return (int) $value;
+        }
+        if ( ( is_float( $value ) || is_string( $value ) ) && is_numeric( $value ) ) {
+            $number = (float) $value;
+            if ( is_finite( $number ) && floor( $number ) === $number && abs( $number ) < PHP_INT_MAX ) {
+                return (int) $number;
+            }
+        }
+        $shown = wp_json_encode( $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION );
+        throw new \InvalidArgumentException( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            \Easy_MCP_AI\MCP\Refusal_Text::fit( 'user_id must be a user ID (an integer), or 0 for your own account; got %s.', array( is_string( $shown ) ? $shown : gettype( $value ) ) )
+        );
     }
 
     public static function user_columns( int $user_id ): array {

@@ -56,8 +56,12 @@ class Get_Group extends Base_Tool {
             throw new \RuntimeException( 'The BuddyPress Groups component is not enabled. Go to Settings → BuddyPress → Components and enable it.' );
         }
 
-        $id   = $this->parse_required_id( $arguments['id'] ?? null, 'id' );
-        $data = $this->rest_request( 'GET', '/buddypress/v1/groups/' . $id );
+        $id = $this->parse_required_id( $arguments['id'] ?? null, 'id' );
+        $data = $this->rest_request( 'GET', '/buddypress/v1/groups/' . $id, array( 'populate_extras' => true ) );
+
+        if ( is_array( $data ) && 1 === count( $data ) && isset( $data[0] ) && is_array( $data[0] ) ) {
+            return $data[0];
+        }
 
         return $data;
     }

@@ -52,11 +52,15 @@ class Delete_Block extends Base_Tool {
         );
     }
 
+    public function precheck( array $arguments ): void {
+        self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
+    }
+
     public function execute( array $arguments ) {
         $this->validate_required( $arguments, array( 'block_id' ) );
 
         $block_id = $this->parse_required_id( $arguments['block_id'], 'block_id' );
-        $force    = isset( $arguments['force'] ) && (bool) $arguments['force'];
+        $force    = self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
         $params   = array();
 
         if ( isset( $arguments['force'] ) ) {

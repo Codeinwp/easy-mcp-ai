@@ -1,6 +1,7 @@
 <?php
 namespace Easy_MCP_AI\Tools\Media;
 
+use Easy_MCP_AI\Approvals\Preview_Values;
 use Easy_MCP_AI\Tools\Base_Tool;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -131,7 +132,7 @@ class Edit_Media_Image extends Base_Tool {
             return parent::describe( $arguments );
         }
         $file = isset( $media['source_url'] ) ? basename( (string) $media['source_url'] ) : '';
-        return sprintf(
+        $text = sprintf(
             /* translators: 1: media title, 2: file name, 3: media id, 4: list of edits */
             __( "Create an edited copy of media '%1\$s' (%2\$s, ID %3\$d): %4\$s. The original is not changed.", 'easy-mcp-ai' ),
             self::rest_title( $media ),
@@ -139,6 +140,21 @@ class Edit_Media_Image extends Base_Tool {
             $id,
             implode( '; ', array_map( array( $this, 'summarize_operation' ), $operations ) )
         );
+        $copy = array();
+        foreach ( array( 'title', 'alt_text', 'caption' ) as $field ) {
+            if ( isset( $arguments[ $field ] ) && is_scalar( $arguments[ $field ] ) && '' !== (string) $arguments[ $field ] ) {
+                $copy[] = Preview_Values::named( $field, (string) $arguments[ $field ] );
+            }
+        }
+        if ( empty( $copy ) ) {
+            return $text;
+        }
+        /* translators: %s: the copy's fields, e.g. "title 'Banner'; caption 'Summer sale'" */
+        return $text . ' ' . sprintf( __( 'The copy: %s.', 'easy-mcp-ai' ), implode( '; ', $copy ) );
+    }
+
+    public function approval_details( array $arguments ): ?array {
+        return self::generic_details( $this, $arguments );
     }
 
     public function execute( array $arguments ) {

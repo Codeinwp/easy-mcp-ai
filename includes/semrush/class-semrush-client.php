@@ -56,6 +56,11 @@ class Semrush_Client {
 		'url_organic'            => array( 'base' => 10, 'shape' => 'per_row' ),
 	);
 
+	const QUERY_LITERALS = array(
+		'%2C' => ',',
+		'%3B' => ';',
+	);
+
 	const CIPHER_VERSION    = "v2\x00";
 	const CIPHER_PREFIX_LEN = 3;
 	const HKDF_INFO         = 'easy_mcp_ai_semrush_v2';
@@ -133,7 +138,7 @@ class Semrush_Client {
 
 		$api_key   = $this->get_api_key();
 		$query     = array_merge( array( 'type' => $type, 'key' => $api_key ), $params );
-		$full_url  = \add_query_arg( $query, $url );
+		$full_url  = \add_query_arg( self::encode_query( $query ), $url );
 
 		$response = \wp_remote_get( $full_url, array(
 			'timeout'             => 30,
@@ -170,6 +175,15 @@ class Semrush_Client {
 		}
 
 		return $this->parse_csv( $body );
+	}
+
+	private static function encode_query( array $query ): array {
+		foreach ( $query as $name => $value ) {
+			if ( is_string( $value ) || is_int( $value ) || is_float( $value ) ) {
+				$query[ $name ] = strtr( rawurlencode( (string) $value ), self::QUERY_LITERALS );
+			}
+		}
+		return $query;
 	}
 
 	public function parse_error( int $code, string $msg, string $api_key = '' ): void {
@@ -268,7 +282,7 @@ class Semrush_Client {
 		}
 
 		$api_key = $this->get_api_key();
-		$full    = \add_query_arg( array( 'key' => $api_key ), $url );
+		$full    = \add_query_arg( self::encode_query( array( 'key' => $api_key ) ), $url );
 
 		$response = \wp_remote_get( $full, array(
 			'timeout'             => 15,

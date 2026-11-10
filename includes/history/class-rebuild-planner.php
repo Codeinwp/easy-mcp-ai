@@ -602,6 +602,9 @@ class Rebuild_Planner {
             return self::refuse( __( 'the entry does not name the taxonomy', 'easy-mcp-ai' ) );
         }
         $before = self::before( $row );
+        if ( ! empty( $before['value_unavailable'] ) ) {
+            return self::refuse( __( 'the previous set could not be read when the change was recorded', 'easy-mcp-ai' ), array( 'term_ids' => 'value_unavailable' ) );
+        }
         if ( ! empty( $before['unresolved_term_taxonomy_ids'] ) ) {
             return self::refuse( __( 'the previous set includes terms that could not be identified', 'easy-mcp-ai' ), array( 'term_ids' => 'value_unavailable' ) );
         }
@@ -610,6 +613,9 @@ class Rebuild_Planner {
         $ids      = $this->term_ids( $before['term_ids'] ?? array() );
         if ( ! $ids ) {
             if ( 'post_tag' === $taxonomy ) {
+                if ( empty( $before['whole_set'] ) ) {
+                    return self::refuse( __( 'an earlier version recorded this entry, and recorded an added tag with an empty previous set whatever tags the post had, so restoring it could remove them', 'easy-mcp-ai' ), array( 'term_ids' => 'value_unavailable' ) );
+                }
                 return self::restore( array( array( 'tool' => 'wp_update_post', 'arguments' => array( 'post_id' => $post_id, 'tags' => array() ) ) ), array(), array( 'term_ids' ) );
             }
             if ( 'category' === $taxonomy ) {

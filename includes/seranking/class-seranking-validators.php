@@ -92,4 +92,8 @@ class SeRanking_Validators {
 			throw new \InvalidArgumentException( 'limit must be between 1 and ' . $max . '.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
+
+	public static function query_flag( string $name, $value ): int {
+		return \Easy_MCP_AI\External_Data_Flag::read( $name, $value ) ? 1 : 0;
+	}
 }

@@ -54,6 +54,9 @@ class List_Order_Refunds extends Base_Tool {
 
         $this->validate_required( $arguments, array( 'order_id' ) );
         $order_id = $this->parse_required_id( $arguments['order_id'], 'order_id' );
+        if ( ! wc_get_order( $order_id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Order %d not found.', $order_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
 
         $data = $this->rest_request( 'GET', '/wc/v3/orders/' . $order_id . '/refunds' );
 

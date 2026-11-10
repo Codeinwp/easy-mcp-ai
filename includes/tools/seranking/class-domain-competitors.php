@@ -37,20 +37,16 @@ class Domain_Competitors extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'source', 'domain' ) );
-			$source = trim( (string) ( $arguments['source'] ?? '' ) );
-			$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
-			SeRanking_Validators::validate_source( $source );
-			SeRanking_Validators::validate_bare_domain( $domain );
-			$query = array( 'source' => $source, 'domain' => $domain );
-			if ( isset( $arguments['type'] ) && '' !== $arguments['type'] ) {
-				$query['type'] = trim( (string) $arguments['type'] );
-			}
-			$json = ( new SeRanking_Client() )->request( 'GET', '/v1/domain/competitors', $query );
-			return array( 'items' => $json );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
+		$this->validate_required( $arguments, array( 'source', 'domain' ) );
+		$source = trim( (string) ( $arguments['source'] ?? '' ) );
+		$domain = trim( (string) ( $arguments['domain'] ?? '' ) );
+		SeRanking_Validators::validate_source( $source );
+		SeRanking_Validators::validate_bare_domain( $domain );
+		$query = array( 'source' => $source, 'domain' => $domain );
+		if ( isset( $arguments['type'] ) && '' !== $arguments['type'] ) {
+			$query['type'] = trim( (string) $arguments['type'] );
 		}
+		$json = ( new SeRanking_Client() )->request( 'GET', '/v1/domain/competitors', $query );
+		return array( 'items' => $json );
 	}
 }

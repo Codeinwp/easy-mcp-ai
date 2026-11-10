@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Update_Menu_Item extends Base_Tool {
 
     const UPDATE_FIELDS = array(
-        'title'       => array( 'title', 'text' ),
+        'title'       => array( 'title', 'markup' ),
         'url'         => array( 'url', 'url' ),
         'position'    => array( 'menu_order', 'int' ),
         'parent'      => array( 'parent', 'int' ),
@@ -120,7 +120,7 @@ class Update_Menu_Item extends Base_Tool {
                 ),
                 'object_id' => array(
                     'type'        => 'integer',
-                    'description' => 'When re-linking, the database ID of the object this item points to. Set together with `object_type` and `object`.',
+                    'description' => 'When re-linking, the database ID of the object this item points to, usually with `object_type` and `object` (the stored ones apply where they are not sent). For a post_type item it must be a post of that post type, for a taxonomy item a term of that taxonomy. A custom link or a post type archive never reads it, so a new one is refused there.',
                 ),
             ),
             'required'   => array( 'item_id' ),
@@ -135,10 +135,12 @@ class Update_Menu_Item extends Base_Tool {
 
         $before = $this->read_item( $item_id );
 
+        self::refuse_unlinked_object_id( $arguments, $before, $item_id );
+
         $request = new \WP_REST_Request( 'POST', '/wp/v2/menu-items/' . $item_id );
         foreach ( self::UPDATE_FIELDS as $argument => list( $param, $kind ) ) {
             if ( isset( $arguments[ $argument ] ) ) {
-                $request->set_param( $param, self::param_value( $kind, $arguments[ $argument ] ) );
+                $request->set_param( $param, 'markup' === $kind ? self::markup_arg( $arguments, $argument ) : self::param_value( $kind, $arguments[ $argument ] ) );
             }
         }
 
@@ -162,6 +164,50 @@ class Update_Menu_Item extends Base_Tool {
         }
         $result['changed'] = self::comparable( $before ) !== self::comparable( $data );
         return $result;
+    }
+
+    private static function refuse_unlinked_object_id( array $arguments, array $before, int $item_id ): void {
+        if ( ! isset( $arguments['object_id'] ) ) {
+            return;
+        }
+        $object_id     = absint( $arguments['object_id'] );
+        $stored_type   = (string) ( $before['type'] ?? '' );
+        $stored_object = (string) ( $before['object'] ?? '' );
+        $type          = isset( $arguments['object_type'] ) ? sanitize_text_field( $arguments['object_type'] ) : $stored_type;
+        $object = isset( $arguments['object'] ) ? sanitize_key( sanitize_text_field( $arguments['object'] ) ) : $stored_object;
+        if ( $type === $stored_type && $object === $stored_object && isset( $before['object_id'] ) && $object_id === (int) $before['object_id'] ) {
+            return;
+        }
+        $shown = strlen( $object ) > 32 ? substr( $object, 0, 32 ) . '…' : $object;
+        if ( ( 'post_type' === $type || 'taxonomy' === $type ) && $type !== $stored_type && ! isset( $arguments['object'] ) ) {
+            throw new \InvalidArgumentException( sprintf( 'object_id %1$d: send object with object_type %2$s, naming the %3$s the item links to.', $object_id, $type, 'post_type' === $type ? 'post type' : 'taxonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+        if ( 'post_type' === $type ) {
+            $post = $object_id > 0 ? get_post( $object_id ) : null;
+            if ( ! $post ) {
+                throw new \InvalidArgumentException( sprintf( 'object_id: post %d not found.', $object_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            if ( '' !== $object && $object !== $post->post_type ) {
+                throw new \InvalidArgumentException( sprintf( 'object_id: %1$d is a %2$s, not a %3$s.', $object_id, $post->post_type, $shown ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+        } elseif ( 'taxonomy' === $type ) {
+            $term = $object_id > 0 ? get_term( $object_id ) : null;
+            if ( ! is_object( $term ) || is_wp_error( $term ) ) {
+                throw new \InvalidArgumentException( sprintf( 'object_id: term %d not found.', $object_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+            if ( '' !== $object && $object !== $term->taxonomy ) {
+                throw new \InvalidArgumentException( sprintf( 'object_id: %1$d is a term of %2$s, not of %3$s.', $object_id, $term->taxonomy, $shown ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            }
+        } elseif ( $object_id > 0 && ( ( 'custom' === $type && $object_id !== $item_id ) || 'post_type_archive' === $type ) ) {
+            throw new \InvalidArgumentException( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                sprintf(
+                    'object_id %1$d: WordPress never reads object_id for menu item %2$d, a %3$s. Leave object_id out, or re-link the item with object_type post_type or taxonomy and its object.',
+                    $object_id,
+                    $item_id,
+                    'custom' === $type ? 'custom link' : 'post type archive'
+                )
+            );
+        }
     }
 
     private static function param_value( string $kind, $value ) {

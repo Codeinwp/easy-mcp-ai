@@ -36,23 +36,19 @@ class Keyword_Overview extends Base_Tool {
 		);
 	}
 	public function execute( array $arguments ) {
-		try {
-			$this->validate_required( $arguments, array( 'phrase' ) );
-			$phrase   = (string) ( $arguments['phrase'] ?? '' );
-			$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
-			Semrush_Validators::validate_phrase( $phrase );
-			Semrush_Validators::validate_database( $database );
-			$out = ( new Semrush_Client() )->report( 'phrase_this', array(
-				'phrase'   => $phrase,
-				'database' => $database,
-			) );
-			$first = $out['items'][0] ?? array();
-			return array_merge( $first, array(
-				'_units_cost'     => $out['_units_cost'],
-				'_cost_estimated' => true,
-			) );
-		} catch ( \Exception $e ) {
-			return array( 'error' => $e->getMessage() );
-		}
+		$this->validate_required( $arguments, array( 'phrase' ) );
+		$phrase   = (string) ( $arguments['phrase'] ?? '' );
+		$database = trim( (string) ( $arguments['database'] ?? 'us' ) );
+		Semrush_Validators::validate_phrase( $phrase );
+		Semrush_Validators::validate_database( $database );
+		$out = ( new Semrush_Client() )->report( 'phrase_this', array(
+			'phrase'   => $phrase,
+			'database' => $database,
+		) );
+		$first = $out['items'][0] ?? array();
+		return array_merge( $first, array(
+			'_units_cost'     => $out['_units_cost'],
+			'_cost_estimated' => true,
+		) );
 	}
 }

@@ -65,6 +65,7 @@ class Delete_CPT_Item extends Base_Tool {
                 $this->precheck_post_type_route( $arguments, 'rest_base', '', 'item_id', 'DELETE' );
             }
         );
+        self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
     }
 
     public function execute( array $arguments ) {
@@ -81,10 +82,11 @@ class Delete_CPT_Item extends Base_Tool {
 
         $rest_base = $this->resolve_post_type_rest_base( $arguments['rest_base'], 'rest_base' );
         $item_id   = $this->parse_required_id( $arguments['item_id'], 'item_id' );
+        $force     = self::boolean_arg( $arguments, 'force', false, 'Nothing was deleted.' );
 
         $request = new \WP_REST_Request( 'DELETE', self::post_type_route( $rest_base, $item_id, 'DELETE' ) );
         if ( isset( $arguments['force'] ) ) {
-            $request->set_param( 'force', (bool) $arguments['force'] );
+            $request->set_param( 'force', $force );
         }
 
         $response = rest_do_request( $request );
